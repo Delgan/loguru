@@ -12,6 +12,10 @@ python:
   # - 'pypy'
   # - 'pypy3'
 install:
+  - pip install pytest pytest-cov coveralls
   - pip install -e .
 script:
   - pytest
+after_success:
+  - pytest --verbose --cov loguru/
+  - coveralls
