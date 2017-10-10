@@ -1,0 +1,17 @@
+language: python
+
+python:
+  # - '2.7'
+  # - '3.4'
+  # - '3.5'
+  # - '3.5-dev'
+  - '3.6'
+  # - '3.6-dev'
+  # - '3.7-dev'
+  # - 'nightly'
+  # - 'pypy'
+  # - 'pypy3'
+install:
+  - pip install -e .
+script:
+  - pytest
