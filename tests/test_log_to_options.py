@@ -72,22 +72,6 @@ def test_colored_option(message, format, expected, colored, logger, writter):
     logger.debug(message)
     assert writter.read() == expected + '\n'
 
-@pytest.mark.parametrize('message, encoding, expect_encode_error', [
-    ('😄', 'utf-8', False),
-    ('😄', 'ascii', True)
-])
-def test_encoding_option(message, encoding, expect_encode_error, logger, tmpdir):
-    file = tmpdir.join('test.log')
-    writter = open(file.realpath(), 'w', encoding=encoding)
-    logger.log_to(writter, encoding=encoding, format='{message}')
-    if expect_encode_error:
-        with pytest.raises(UnicodeEncodeError):
-            logger.debug(message)
-    else:
-        logger.debug(message)
-        assert file.read() == message + '\n'
-
-
 @pytest.mark.parametrize('better_exceptions, startswith', [
     (False, 'Traceback (most recent call last):\n  File'),
     (True, 'Traceback (most recent call last):\n\n  File'),

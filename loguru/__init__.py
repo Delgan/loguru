@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from inspect import isclass
 from logging import getLevelName, addLevelName
 from os import getpid, PathLike
 from os.path import normcase, basename, splitext
@@ -55,8 +56,8 @@ else:
 
 class Handler:
 
-    def __init__(self, *, function, level, format, filter, colored, encoding, better_exceptions):
-        self.function = function
+    def __init__(self, *, writter, level, format, filter, colored, better_exceptions):
+        self.writter = writter
         self.level = level
         self.format = format
         self.filter = filter
@@ -64,7 +65,7 @@ class Handler:
         self.better_exceptions = better_exceptions
 
         self.formats_per_level = self.generate_formats(format, colored)
-        self.exception_formatter = ExceptionFormatter(colored=colored, encoding=encoding)
+        self.exception_formatter = ExceptionFormatter(colored=colored)
 
     def generate_formats(self, format, colored):
         formats_per_level = {}
@@ -95,13 +96,13 @@ class Handler:
 
         message = self.formats_per_level[level.name].format_map(record) + '\n'
 
-        self.function(message)
+        self.writter(message)
         if exception:
             if self.better_exceptions:
                 for part in self.exception_formatter.format_exception(*exception):
-                    self.function(part)
+                    self.writter(part)
             else:
-                self.function(''.join(format_exception(*exception)))
+                self.writter(''.join(format_exception(*exception)))
 
 
 class LevelRecattr(str):
@@ -120,25 +121,49 @@ class ProcessRecattr(str):
     __slots__ = ('id', 'name')
 
 
+class FileSink:
+
+    def __init__(self, path, *, mode='a', encoding='utf8', delay=False, buffering=1):
+        f = open(path, mode=mode, encoding=encoding, buffering=buffering)
+        self.write = f.write
+
+
 class Logger:
 
     def __init__(self):
         self.handlers = []
 
-    def log_to(self, sink, *, level=DEBUG, format=VERBOSE_FORMAT, filter=None, colored=None, encoding=None, better_exceptions=True, **kwargs):
-        if callable(sink):
-            function = sink
+    def log_to(self, sink, *, level=DEBUG, format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
+        if isclass(sink):
+            sink = sink(**kwargs)
+            return self.log_to(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
+        elif callable(sink):
+            if kwargs:
+                writter = lambda m: sink(m, **kwargs)
+            else:
+                # Specialized for performances of main use case
+                writter = sink
             if colored is None:
                 colored = False
         elif isinstance(sink, (str, PathLike)):
-            function = open(sink, 'a', encoding=encoding , buffering=1).write
+            path = sink
+            sink = FileSink(path, **kwargs)
             if colored is None:
                 colored = False
+            return self.log_to(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
         elif hasattr(sink, 'write'):
-            if hasattr(sink, 'flush'):
-                function = lambda m: sink.write(m) and sink.flush()
+            sink_write = sink.write
+            if kwargs:
+                write = lambda m: sink_write(m, **kwargs)
             else:
-                function = sink.write
+                # Specialized for performances of main use case
+                write = sink_write
+
+            if hasattr(sink, 'flush'):
+                sink_flush = sink.flush
+                writter = lambda m: write(m) and sink_flush()
+            else:
+                writter = write
 
             if colored is None:
                 try:
@@ -147,8 +172,6 @@ class Logger:
                     # The sys.stderr defined by the Python Interface to Vim doesn't
                     # have an isatty() method.
                     colored = False
-            if encoding is None and hasattr(sink, 'encoding'):
-                encoding = sink.encoding
         else:
             type_name = type(sink).__name__
             raise TypeError("Cannot log to objects of type '{}'.".format(type_name))
@@ -159,12 +182,11 @@ class Logger:
             filter = lambda r: (r['name'] + '.')[:length] == parent
 
         handler = Handler(
-            function=function,
+            writter=writter,
             level=level,
             format=format,
             filter=filter,
             colored=colored,
-            encoding=encoding,
             better_exceptions=better_exceptions,
         )
 
@@ -232,6 +254,8 @@ class Logger:
                 handler.emit(record, exception=exception)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(level_name)
+        if log_exception:
+            doc += ' Log also current traceback.'
         log_function.__doc__ = doc
 
         return log_function
