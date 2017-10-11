@@ -174,7 +174,7 @@ class Logger:
                     colored = False
         else:
             type_name = type(sink).__name__
-            raise TypeError("Cannot log to objects of type '{}'.".format(type_name))
+            raise ValueError("Cannot log to objects of type '{}'.".format(type_name))
 
         if isinstance(filter, str):
             parent = filter + '.' * bool(filter)

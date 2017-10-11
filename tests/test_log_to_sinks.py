@@ -7,7 +7,7 @@ import loguru
 
 import pytest
 
-MESSAGES = ['ASCII test', '色 ᚠ ȝ î ರ 😄']
+MESSAGES = ['ASCII test']
 PARAMS = [(message, message + '\n') for message in MESSAGES]
 
 messages = pytest.mark.parametrize('message, expected', PARAMS)
@@ -40,9 +40,9 @@ def test_stderr_sink(message, expected, rep, capsys):
 @messages
 @repetitions
 @pytest.mark.parametrize("sink_from_path", [
-    lambda path: str(path),
+    str,
+    pathlib.Path,
     lambda path: open(path, 'a'),
-    lambda path: pathlib.Path(path),
     lambda path: pathlib.Path(path).open('a'),
 ])
 def test_file_sink(message, expected, rep, sink_from_path, tmpdir):
@@ -60,7 +60,26 @@ def test_function_sink(message, expected, rep):
     log(func, message, rep)
     assert a == [expected] * rep
 
-@pytest.mark.parametrize('sink', [123, object(), sys])
+@messages
+@repetitions
+def test_class_sink(message, expected, rep):
+    out = []
+    class A:
+        def write(self, m): out.append(m)
+    log(A, message, rep)
+    assert out == [expected] * rep
+
+@messages
+@repetitions
+def test_file_object_sink(message, expected, rep):
+    class A:
+        def __init__(self): self.out = ""
+        def write(self, m): self.out += m
+    a = A()
+    log(a, message, rep)
+    assert a.out == expected * rep
+
+@pytest.mark.parametrize('sink', [123, sys, object(), loguru.Logger(), loguru.Logger])
 def test_invalid_sink(sink):
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         log(sink, "")
