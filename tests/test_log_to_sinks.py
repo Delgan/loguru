@@ -18,7 +18,7 @@ def log(sink, message, rep=1):
     logger = loguru.Logger()
     logger.debug("This shouldn't be printed.")
     logger.log_to(sink, format='{message}')
-    for i in range(rep):
+    for _ in range(rep):
         logger.debug(message)
 
 @messages

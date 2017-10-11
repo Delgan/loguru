@@ -43,16 +43,21 @@ __version__ = "0.0.1"
 
 start_time = now()
 
-if hasattr(sys, '_getframe'):
-    get_frame = sys._getframe
-else:
-    def get_frame(_):
-        """Return the frame object for the caller's stack frame."""
-        try:
-            raise Exception
-        except Exception:
-            return exc_info()[2].tb_frame.f_back
+def get_frame_fallback(_):
+    """Return the frame object for the caller's stack frame."""
+    try:
+        raise Exception
+    except Exception:
+        return exc_info()[2].tb_frame.f_back.f_back
 
+def get_get_frame_function():
+    if hasattr(sys, '_getframe'):
+        get_frame = sys._getframe
+    else:
+        get_frame = get_frame_fallback
+    return get_frame
+
+get_frame = get_get_frame_function()
 
 class Handler:
 
@@ -67,7 +72,8 @@ class Handler:
         self.formats_per_level = self.generate_formats(format, colored)
         self.exception_formatter = ExceptionFormatter(colored=colored)
 
-    def generate_formats(self, format, colored):
+    @staticmethod
+    def generate_formats(format, colored):
         formats_per_level = {}
 
         for level_name, level_color in LEVELS_COLORS.items():
