@@ -59,6 +59,9 @@ def get_get_frame_function():
 
 get_frame = get_get_frame_function()
 
+class StrRecord(str):
+    pass
+
 class Handler:
 
     def __init__(self, *, writter, level, format, filter, colored, better_exceptions):
@@ -91,7 +94,7 @@ class Handler:
     #     loguru_record = RecordUtils.to_loguru_record(record)
     #     self.emit(loguru_record)
 
-    def emit(self, record, exception):
+    def emit(self, record):
         level = record['level']
         if self.level > level.no:
             return
@@ -100,16 +103,19 @@ class Handler:
             if not self.filter(record):
                 return
 
-        message = self.formats_per_level[level.name].format_map(record) + '\n'
+        exception = record['exception']
 
-        self.writter(message)
+        formatted = self.formats_per_level[level.name].format_map(record) + '\n'
         if exception:
             if self.better_exceptions:
-                for part in self.exception_formatter.format_exception(*exception):
-                    self.writter(part)
+                formatted += ''.join(self.exception_formatter.format_exception(*exception))
             else:
-                self.writter(''.join(format_exception(*exception)))
+                formatted += ''.join(format_exception(*exception))
 
+        message = StrRecord(formatted)
+        message.record = record
+
+        self.writter(message)
 
 class LevelRecattr(str):
     __slots__ = ('no', 'name')
@@ -134,10 +140,16 @@ class FileSink:
         self.write = f.write
 
 
+    def stop(self):
+        if self.file is not None:
+            self.file.close()
+            self.file = None
+
 class Logger:
 
     def __init__(self):
-        self.handlers = []
+        self.handlers_count = 0
+        self.handlers = {}
 
     def log_to(self, sink, *, level=DEBUG, format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
         if isclass(sink):
@@ -147,25 +159,21 @@ class Logger:
             if kwargs:
                 writter = lambda m: sink(m, **kwargs)
             else:
-                # Specialized for performances of main use case
                 writter = sink
             if colored is None:
                 colored = False
         elif isinstance(sink, (str, PathLike)):
             path = sink
             sink = FileSink(path, **kwargs)
-            if colored is None:
-                colored = False
             return self.log_to(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
-        elif hasattr(sink, 'write'):
+        elif hasattr(sink, 'write') and callable(sink.write):
             sink_write = sink.write
             if kwargs:
                 write = lambda m: sink_write(m, **kwargs)
             else:
-                # Specialized for performances of main use case
                 write = sink_write
 
-            if hasattr(sink, 'flush'):
+            if hasattr(sink, 'flush') and callable(sink.flush):
                 sink_flush = sink.flush
                 writter = lambda m: write(m) and sink_flush()
             else:
@@ -175,8 +183,6 @@ class Logger:
                 try:
                     colored = sink.isatty()
                 except Exception:
-                    # The sys.stderr defined by the Python Interface to Vim doesn't
-                    # have an isatty() method.
                     colored = False
         else:
             type_name = type(sink).__name__
@@ -196,9 +202,26 @@ class Logger:
             better_exceptions=better_exceptions,
         )
 
-        self.handlers.append(handler)
+        self.handlers[self.handlers_count] = handler
+        self.handlers_count += 1
 
-        return handler
+        return self.handlers_count - 1
+
+    def stop(self, handler_id=None):
+        if handler_id is None:
+            for handler in self.handlers.values():
+                if hasattr(handler, 'stop') and callable(handler.stop):
+                    handler.stop()
+            count = len(self.handlers)
+            self.handlers.clear()
+            return count
+        elif handler_id in self.handlers:
+            handler = self.handlers.pop(handler_id)
+            if hasattr(handler, 'stop') and callable(handler.stop):
+                handler.stop()
+            return 1
+
+        return 0
 
     @staticmethod
     def make_log_function(level, log_exception=False):
@@ -237,6 +260,8 @@ class Logger:
             process_recattr = ProcessRecattr(process.ident)
             process_recattr.id, process_recattr.name = process.ident, process.name
 
+            exception = exc_info() if log_exception else None
+
             record = {
                 'name': name,
                 'message': message,
@@ -249,15 +274,11 @@ class Logger:
                 'module': module_name,
                 'thread': thread_recattr,
                 'process': process_recattr,
-                'frame': frame,
+                'exception': exception,
             }
 
-            exception = None
-            if log_exception:
-                exception = exc_info()
-
-            for handler in self.handlers:
-                handler.emit(record, exception=exception)
+            for handler in self.handlers.values():
+                handler.emit(record)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(level_name)
         if log_exception:

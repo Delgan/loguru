@@ -5,22 +5,6 @@ import loguru
 import pytest
 
 
-@pytest.fixture
-def logger():
-    return loguru.Logger()
-
-@pytest.fixture
-def writer():
-
-    def w(message):
-        w.written.append(message)
-
-    w.written = []
-    w.read = lambda: ''.join(w.written)
-
-    return w
-
-
 @pytest.mark.parametrize('level, function, should_output', [
     (0,              lambda x: x.trace,    True),
     (loguru.TRACE,   lambda x: x.debug,    True),
