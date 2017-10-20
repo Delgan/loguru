@@ -2,6 +2,7 @@
 
 import pathlib
 import sys
+import os
 
 import loguru
 
@@ -37,6 +38,10 @@ def test_stderr_sink(rep, capsys):
     assert err == expected * rep
 
 @repetitions
+def test_devnull(rep):
+    log(os.devnull, rep)
+
+@repetitions
 @pytest.mark.parametrize("sink_from_path", [
     str,
     pathlib.Path,
@@ -48,6 +53,12 @@ def test_file_sink(rep, sink_from_path, tmpdir):
     path = file.realpath()
     sink = sink_from_path(path)
     log(sink, rep)
+    assert file.read() == expected * rep
+
+@repetitions
+def test_file_sink_folder_creation(rep, tmpdir):
+    file = tmpdir.join('some', 'sub', 'folder', 'not', 'existing', 'test.log')
+    log(file.realpath(), rep)
     assert file.read() == expected * rep
 
 @repetitions
@@ -78,46 +89,3 @@ def test_file_object_sink(rep):
 def test_invalid_sink(sink):
     with pytest.raises(ValueError):
         log(sink, "")
-
-def test_stop_all(tmpdir, writer, capsys):
-    logger = loguru.Logger()
-    file = tmpdir.join("test.log")
-
-    logger.debug("This shouldn't be printed.")
-
-    logger.log_to(file.realpath(), format='{message}')
-    logger.log_to(sys.stdout, format='{message}')
-    logger.log_to(sys.stderr, format='{message}')
-    logger.log_to(writer, format='{message}')
-
-    logger.debug(message)
-
-    logger.stop()
-
-    logger.debug("This shouldn't be printed neither.")
-
-    out, err = capsys.readouterr()
-
-    assert file.read() == expected
-    assert out == expected
-    assert err == expected
-    assert writer.read() == expected
-
-def test_stop_count(logger, writer):
-    n = logger.stop()
-    assert n == 0
-
-    n = logger.stop(42)
-    assert n == 0
-
-    i = logger.log_to(writer)
-    n = logger.stop(i)
-    assert n == 1
-
-    logger.log_to(writer)
-    logger.log_to(writer)
-    n = logger.stop()
-    assert n == 2
-
-    n = logger.stop(0)
-    assert n == 0
