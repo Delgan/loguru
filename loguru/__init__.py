@@ -48,6 +48,8 @@ LEVELS_COLORS = {
 
 VERBOSE_FORMAT = "<green>{time}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
 
+DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+
 __version__ = "0.0.1"
 
 start_time = now()
@@ -151,53 +153,31 @@ class ProcessRecattr(str):
 
 class FileSink:
 
-    def __init__(self, path, *, size=None, when=None, backups=math.inf, **kwargs):
-        kwargs.setdefault('mode', 'a')
-        kwargs.setdefault('buffering', 1)
-        self.path = str(path)
-        self.kwargs = kwargs
-        self.backups = self.parse_backups(backups)
-        self.file = None
-        self.size_based_rollover = size is not None
-        self.when_based_rollover = when is not None
-        self.rotating = self.size_based_rollover or self.when_based_rollover
-        self.created = 0
+    def __init__(self, path, *, rotation=None, backups=None, **kwargs):
         self.start_time = now()
         patch_datetime_file(self.start_time)
+        self.kwargs = kwargs.copy()
+        self.kwargs.setdefault('mode', 'a')
+        self.kwargs.setdefault('buffering', 1)
+        self.path = str(path)
+        self.file = None
+        self.created = 0
+        self.rotation_time = None
 
-        self.rollover_size = None
-        self.rollover_day = None
-        self.rollover_time = None
-        self.rollover_interval = None
-        self.rollover_at = None
+        self.should_rotate = self.make_should_rotate_function(rotation)
+        self.manage_backups = self.make_manage_backups_function(backups)
+        self.regex_file_name = self.make_regex_file_name(os.path.basename(self.path))
 
-        self.regex_file_name = self.make_regex_file_name(os.path.basename(path))
+        self.rotate()
 
-        self.rollover()
-
-        if not self.rotating:
+        if self.should_rotate is None:
             self.write = self.file.write
-            return
-
-        self.write = self.rotating_write
-
-        if self.size_based_rollover:
-            if callable(size):
-                self.should_rollover_size = size
-            else:
-                self.rollover_size = self.parse_size(size)
-
-        if self.when_based_rollover:
-            if callable(when):
-                self.next_rollover_time = when
-            else:
-                self.rollover_day, self.rollover_time, self.rollover_interval = self.parse_when(when)
-
-            self.rollover_at = self.next_rollover_time(None, self.start_time)
-            patch_datetime_file(self.rollover_at)
+        else:
+            self.write = self.rotating_write
 
     def stop(self):
         if self.file is not None:
+            # compress
             self.file.close()
             self.file = None
 
@@ -208,7 +188,7 @@ class FileSink:
         info = {
             "time": now_,
             "start_time": self.start_time,
-            "rotation_time": self.rollover_at,
+            "rotation_time": self.rotation_time,
             "n": self.created,
             "n+1": self.created + 1,
         }
@@ -222,79 +202,162 @@ class FileSink:
         regex_name += '(?:\.\d+)?'
         return re.compile(regex_name)
 
-    @staticmethod
-    def parse_backups(backups):
-        if isinstance(backups, (int, datetime.timedelta)) or backups == math.inf:
-            pass
-        elif isinstance(backups, str):
-            backups_ = backups.strip()
-            if all(c.isalpha() for c in backups_):
-                backups_ = '1 ' + backups_
-            seconds = FileSink.parse_duration(backups_)
-            if seconds is None:
-                raise ValueError("Invalid interval specified for 'backups': '{}'".format(backups))
-            backups = pendulum.Interval(seconds=seconds)
+    def make_should_rotate_function(self, rotation):
+        if rotation is None:
+            return None
+        elif isinstance(rotation, str):
+            size = self.parse_size(rotation)
+            if size is not None:
+                return self.make_should_rotate_function(size)
+            interval = self.parse_duration(rotation)
+            if interval is not None:
+                return self.make_should_rotate_function(interval)
+            daytime = self.parse_daytime(rotation)
+            if daytime is not None:
+                day, time = daytime
+                if day is None:
+                    return self.make_should_rotate_function(time)
+                elif time is None:
+                    time = pendulum.parse('00:00', strict=True)
+                day = getattr(pendulum, DAYS_NAMES[day])
+                time_limit = self.start_time.at(time.hour, time.minute, time.second, time.microsecond)
+                if time_limit <= self.start_time:
+                    time_limit = time_limit.next(day, keep_time=True)
+                self.rotation_time = time_limit
+                def function(message):
+                    nonlocal time_limit
+                    record_time = message.record['time']
+                    if record_time >= time_limit:
+                        while time_limit <= record_time:
+                            time_limit = time_limit.next(day, keep_time=True)
+                        self.rotation_time = time_limit
+                        return True
+                    return False
+            else:
+                raise ValueError("Cannot parse rotation from: '%s'" % rotation)
+        elif isinstance(rotation, Number):
+            size_limit = rotation
+            def function(message):
+                file = self.file
+                file.seek(0, 2)
+                return file.tell() + len(message) >= size_limit
+        elif isinstance(rotation, datetime.time):
+            time = pendulum.Time.instance(rotation)
+            time_limit = self.start_time.at(time.hour, time.minute, time.second, time.microsecond)
+            if time_limit <= self.start_time:
+                time_limit.add(days=1)
+            self.rotation_time = time_limit
+            def function(message):
+                nonlocal time_limit
+                record_time = message.record['time']
+                if record_time >= time_limit:
+                    while time_limit <= record_time:
+                        time_limit = time_limit.add(days=1)
+                    self.rotation_time = time_limit
+                    return True
+                return False
+        elif isinstance(rotation, datetime.timedelta):
+            time_delta = pendulum.Interval.instance(rotation)
+            time_limit = self.start_time + time_delta
+            self.rotation_time = time_limit
+            def function(message):
+                nonlocal time_limit
+                record_time = message.record['time']
+                if record_time >= time_limit:
+                    while time_limit <= record_time:
+                        time_limit += time_delta
+                    self.rotation_time = time_limit
+                    return True
+                return False
         else:
-            raise ValueError("Cannot parse 'backups' for objects of type '{}'".format(type(backups)))
+            raise ValueError("Cannot infer rotation for objects of type: '%s'" % type(rotation))
 
-        return backups
+        return function
+
+    def make_manage_backups_function(self, backups):
+        if backups is None:
+            return None
+        elif isinstance(backups, str):
+            interval = self.parse_duration(backups)
+            if interval is None:
+                raise ValueError("Cannot parse backups from: '%s'" % backups)
+            return self.make_manage_backups_function(interval)
+        elif isinstance(backups, int):
+            def function(logs):
+                return sorted(logs, key=lambda log: (-log.stat().st_mtime, log.name))[backups:]
+        elif isinstance(backups, datetime.timedelta):
+            seconds = backups.total_seconds()
+            def function(logs):
+                t = now().timestamp()
+                limit = t - seconds
+                return [log for log in logs if log.stat().st_mtime <= limit]
+        else:
+            raise ValueError("Cannot infer backups for objects of type: '%s'" % type(backups))
+
+        return function
+
+    @staticmethod
+    def parse_daytime(daytime):
+        daytime = daytime.strip()
+
+        daytime_reg = re.compile(r'(.*?)\s+at\s+(.*)', flags=re.I)
+        day_reg = re.compile(r'w\d+', flags=re.I)
+        time_reg = re.compile(r'[\d\.\:\,]+(?:\s*[ap]m)?', flags=re.I)
+
+        daytime_match = daytime_reg.fullmatch(daytime)
+        if daytime_match:
+            day, time = daytime_match.groups()
+        elif time_reg.fullmatch(daytime):
+            day, time = None, daytime
+        elif day_reg.fullmatch(daytime) or daytime.upper() in DAYS_NAMES:
+            day, time = daytime, None
+        else:
+            return None
+
+        if day is not None:
+            if day_reg.fullmatch(day):
+                day = int(day[1:])
+                if not 0 <= day <= 6:
+                    raise ValueError("Invalid weekday index while parsing daytime: '%d'" % day)
+            elif day.upper() in DAYS_NAMES:
+                day = DAYS_NAMES.index(day.upper())
+            else:
+                raise ValueError("Invalid weekday value while parsing daytime: '%s'" % day)
+
+        if time is not None:
+            time_ = time
+            try:
+                time = pendulum.parse(time, strict=True)
+            except Exception as e:
+                raise ValueError("Invalid time while parsing daytime: '%s'" % time) from e
+            else:
+                if not isinstance(time, datetime.time):
+                    raise ValueError("Cannot strictly parse time from: '%s'" % time_)
+
+        return day, time
 
     @staticmethod
     def parse_size(size):
-        if isinstance(size, str):
-            reg = r'^([e\+\-\.\d]+?)\s*([kmgtpezy])?(i)?(b)?$'
-            match = re.match(reg, size.strip(), flags=re.I)
-            if not match:
-                raise ValueError("Invalid size specified: '{}'".format(size))
-            s, u, i, b = match.groups()
+        size = size.strip()
+        reg = r'([e\+\-\.\d]+)\s*([kmgtpezy])?(i)?(b)'
+        match = re.fullmatch(reg, size, flags=re.I)
+        if not match:
+            return None
+        s, u, i, b = match.groups()
+        try:
             s = float(s)
-            u = 'kmgtpezy'.index(u.lower()) + 1 if u else 0
-            i = 1024 if i else 1000
-            b = {'b': 8, 'B': 1}[b] if b else 1
-            size = s * i**u / b
-
-        if not isinstance(size, Number):
-            raise ValueError("Cannot parse 'size' for objects of type '{}'".format(type(size)))
+        except ValueError:
+            raise ValueError("Invalid float value while parsing size: '%s'" % s)
+        u = 'kmgtpezy'.index(u.lower()) + 1 if u else 0
+        i = 1024 if i else 1000
+        b = {'b': 8, 'B': 1}[b] if b else 1
+        size = s * i**u / b
 
         return size
 
     @staticmethod
-    def parse_when(when):
-        day = time = interval = None
-        if isinstance(when, str):
-            when_ = when.strip()
-            reg = r'(?:({0})\s*({1})?|({1})\s*({0})?)'.format(r'w[0-6]', r'[\d\.\:\,]+(?:\s*[ap]m)?')
-            match = re.fullmatch(reg, when_, flags=re.I)
-            if match:
-                w1, t1, t2, w2 = match.groups()
-                w, t = (w1, t1) if (w2 is None and t2 is None) else (w2, t2)
-                day = int(w[1]) if w else None
-                date = pendulum.parse(t if t else '0', strict=True)
-                time = pendulum.Time(date.hour, date.minute, date.second, date.microsecond)
-            else:
-                if all(c.isalpha() for c in when_):
-                    when_ = '1 ' + when_
-                seconds = FileSink.parse_duration(when_)
-                if seconds is None:
-                    raise ValueError("Invalid time or interval specified for 'when': '{}'".format(when))
-                interval = pendulum.Interval(seconds=seconds)
-        elif isinstance(when, datetime.timedelta):
-            interval = pendulum.Interval.instance(when)
-        elif isinstance(when, (datetime.datetime, datetime.time)):
-            time = pendulum.Time(when.hour, when.minute, when.second, when.microsecond)
-        elif isinstance(when, Number):
-            interval = pendulum.Interval(hours=when)
-        else:
-            raise ValueError("Cannot parse 'when' for objects of type '{}'".format(type(when)))
-
-        return day, time, interval
-
-    @staticmethod
     def parse_duration(duration):
         duration = duration.strip()
-        reg = r'(?:\s*([e\+\-\.\d]+)\s*([a-z]+)[\s\,\/]*)'
-        if not re.fullmatch(reg + '+', duration, flags=re.I):
-            return None
 
         units = [
             ('y|years?', 31536000),
@@ -308,112 +371,69 @@ class FileSink:
             ('us|microseconds?', 0.000001),
         ]
 
-        total = 0
+        if duration.isalpha():
+            if any(re.fullmatch(r, duration, flags=re.I) for r, _ in units):
+                duration = "1 " + duration
+            else:
+                return None
+
+        reg = r'(?:([e\+\-\.\d]+)\s*([a-z]+)[\s\,]*)'
+        if not re.fullmatch(reg + '+', duration, flags=re.I):
+            return None
+
+        seconds = 0
 
         for value, unit in re.findall(reg, duration, flags=re.I):
             try:
                 value = float(value)
             except ValueError:
-                return None
+                raise ValueError("Invalid float value while parsing duration: '%s'" % value)
 
             try:
                 unit = next(u for r, u in units if re.fullmatch(r, unit, flags=re.I))
             except StopIteration:
-                return None
+                raise ValueError("Invalid unit value while parsing duration: '%s'" % unit)
 
-            total += value * unit
+            seconds += value * unit
 
-        return total
+        return pendulum.Interval(seconds=seconds)
 
     def rotating_write(self, message):
-        if self.should_rollover(message):
-            self.rollover()
+        if self.should_rotate(message):
+            self.rotate()
         self.file.write(message)
 
-    def should_rollover_size(self, file, message):
-        # See https://github.com/python/cpython/blob/277c84067ff5dfa271725ee9da1a9d75a7c0bcd8/Lib/logging/handlers.py#L174-L188
-        file.seek(0, 2)
-        return file.tell() + len(message) >= self.rollover_size
-
-    def next_rollover_time(self, current_rollover, time):
-        if current_rollover is None:
-            rollover_time = self.rollover_time
-            if rollover_time is None:
-                current_rollover = self.start_time
-            else:
-                start_time = self.start_time
-                year, month, day = start_time.year, start_time.month, start_time.day
-                hour, minute, second, microsecond = rollover_time.hour, rollover_time.minute, rollover_time.second, rollover_time.microsecond
-                current_rollover = pendulum.create(year=year, month=month, day=day, hour=hour, minute=minute, second=second, microsecond=microsecond)
-
-        if self.rollover_interval is not None:
-            while current_rollover <= time:
-                current_rollover += self.rollover_interval
-            return current_rollover
-
-        if self.rollover_day is None:
-            while current_rollover <= time:
-                current_rollover = current_rollover.add(days=1)
-            return current_rollover
-
-        days_names = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-        day = [getattr(pendulum, day) for day in days_names][self.rollover_day]
-
-        while current_rollover <= time:
-            current_rollover = current_rollover.next(day, keep_time=True)
-        return current_rollover
-
-    def should_rollover(self, message):
-        if self.size_based_rollover and self.should_rollover_size(self.file, message):
-            return True
-
-        if self.when_based_rollover and message.record['time'] >= self.rollover_at:
-            self.rollover_at = self.next_rollover_time(self.rollover_at, message.record['time'])
-            patch_datetime_file(self.rollover_at)
-            return True
-
-        return False
-
-    def rollover(self):
-        if self.file is not None:
-            self.file.close()
+    def rotate(self):
+        self.stop()
         file_path = os.path.abspath(self.format_path())
         file_dir = os.path.dirname(file_path)
 
         os.makedirs(file_dir, exist_ok=True)
 
-        if self.rotating and self.created > 0:
-            if self.backups != math.inf:
-                with os.scandir(file_dir) as it:
-                    logs = [f for f in it if f.is_file() and self.regex_file_name.fullmatch(f.name)]
+        if self.manage_backups is not None:
+            regex_file_name = self.regex_file_name
+            with os.scandir(file_dir) as it:
+                logs = [f for f in it if regex_file_name.fullmatch(f.name) and f.is_file()]
 
-                if isinstance(self.backups, datetime.timedelta):
-                    t = now().timestamp()
-                    limit = t - self.backups.total_seconds()
-                    for log in logs:
-                        if log.stat().st_mtime <= limit:
-                            os.remove(log)
-                elif len(logs) > self.backups:
-                    logs.sort(key=lambda log: (-log.stat().st_mtime, log.name))
-                    for log in logs[self.backups:]:
-                        os.remove(log)
+            for log in self.manage_backups(logs):
+                os.remove(log.path)
 
-            if os.path.exists(file_path):
-                basename = os.path.basename(file_path)
-                reg = re.escape(basename) + '\.\d+'
-                with os.scandir(file_dir) as it:
-                    logs = [f for f in it if f.is_file() and re.fullmatch(reg, f.name)]
-                    logs.sort(key=lambda f: -int(f.name.split('.')[-1]))
+        if self.created > 0 and os.path.exists(file_path):
+            basename = os.path.basename(file_path)
+            reg = re.escape(basename) + '\.\d+'
+            with os.scandir(file_dir) as it:
+                logs = [f for f in it if f.is_file() and re.fullmatch(reg, f.name)]
+            logs.sort(key=lambda f: -int(f.name.split('.')[-1]))
 
-                n = len(logs) + 1
-                z = len(str(n))
-                for i, log in enumerate(logs):
-                    j = n - i
-                    os.replace(log.path, file_path + '.' + str(j).zfill(z))
-                os.replace(file_path, file_path + "." + "1".zfill(z))
+            n = len(logs) + 1
+            z = len(str(n))
+            for i, log in enumerate(logs):
+                os.replace(log.path, file_path + '.%s' % str(n - i).zfill(z))
+            os.replace(file_path, file_path + ".%s" % "1".zfill(z))
 
         self.file = open(file_path, **self.kwargs)
         self.created += 1
+
 
 class Logger:
 
