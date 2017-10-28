@@ -269,6 +269,16 @@ class FileSink:
                     self.rotation_time = time_limit
                     return True
                 return False
+        elif callable(rotation):
+            time_limit = rotation(self.start_time)
+            def function(message):
+                nonlocal time_limit
+                record_time = message.record['time']
+                if record_time >= time_limit:
+                    time_limit = rotation(record_time)
+                    self.rotation_time = time_limit
+                    return True
+                return False
         else:
             raise ValueError("Cannot infer rotation for objects of type: '%s'" % type(rotation))
 

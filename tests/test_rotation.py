@@ -90,6 +90,7 @@ def test_size_rotation(tmpdir, logger, size):
     ("1.222 hours, 3.44s", [1.222, 0.1, 1, 1.2, 2]),
     (datetime.timedelta(hours=1), [0.9, 0.2, 0.7, 0.5, 3]),
     (pendulum.Interval(minutes=30), [0.48, 0.04, 0.07, 0.44, 0.5]),
+    (lambda t: t.add(months=1).start_of('month').at(13, 00, 00), [12 * 24, 26, 31 * 24 - 2, 2, 24 * 60]),
 ])
 def test_time_rotation(monkeypatch, tmpdir, when, hours, logger):
     now = pendulum.parse("2017-06-18 12:00:00")  # Sunday
