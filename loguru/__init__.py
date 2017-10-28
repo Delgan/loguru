@@ -291,6 +291,8 @@ class FileSink:
                 t = now().timestamp()
                 limit = t - seconds
                 return [log for log in logs if log.stat().st_mtime <= limit]
+        elif callable(backups):
+            function = backups
         else:
             raise ValueError("Cannot infer backups for objects of type: '%s'" % type(backups))
 
