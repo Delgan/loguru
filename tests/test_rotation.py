@@ -174,6 +174,16 @@ def test_backups_function(tmpdir, logger):
         assert len(tmpdir.listdir()) == 1
         assert tmpdir.join('test.log').read() == '%d\n' % i
 
+def test_backups_at_initialization(tmpdir, logger):
+    for i in reversed(range(1, 10)):
+        tmpdir.join('test.log.%d' % i).write(str(i))
+
+    logger.log_to(tmpdir.join('test.log'), backups=1)
+
+    assert len(tmpdir.listdir()) == 2
+    assert tmpdir.join('test.log').read() == ''
+    assert tmpdir.join('test.log.1').read() == '1'
+
 @pytest.mark.parametrize('previous', [1, 5, 9, 20])
 def test_backups_with_previous_files(tmpdir, logger, previous):
     log_count = 5
