@@ -82,35 +82,28 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writter, level, format, filter, colored, better_exceptions):
+    def __init__(self, *, writter, level, format_, filter, colored, better_exceptions):
         self.writter = writter
         self.level = level
-        self.format = format
+        self.format = format_
         self.filter = filter
         self.colored = colored
         self.better_exceptions = better_exceptions
 
-        self.formats_per_level = self.generate_formats(format, colored)
+        self.formats_per_level = self.generate_formats(format_, colored)
         self.exception_formatter = ExceptionFormatter(colored=colored)
 
     @staticmethod
-    def generate_formats(format, colored):
+    def generate_formats(format_, colored):
         formats_per_level = {}
 
         for level_name, level_color in LEVELS_COLORS.items():
             color = ansimarkup.parse(level_color)
             custom_markup = dict(level=color, lvl=color)
             am = ansimarkup.AnsiMarkup(tags=custom_markup)
-            formats_per_level[level_name] = am.parse(format) if colored else am.strip(format)
+            formats_per_level[level_name] = am.parse(format_) if colored else am.strip(format_)
 
         return formats_per_level
-
-    # def format_exception(self, type, value, tb):
-    #     ...
-
-    # def handle(self, record):
-    #     loguru_record = RecordUtils.to_loguru_record(record)
-    #     self.emit(loguru_record)
 
     def emit(self, record):
         level = record['level']
@@ -513,7 +506,7 @@ class Logger:
         handler = Handler(
             writter=writter,
             level=level,
-            format=format,
+            format_=format,
             filter=filter,
             colored=colored,
             better_exceptions=better_exceptions,
