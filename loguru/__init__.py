@@ -212,6 +212,9 @@ class FileSink:
             interval = self.parse_duration(rotation)
             if interval is not None:
                 return self.make_should_rotate_function(interval)
+            frequency = self.parse_frequency(rotation)
+            if frequency is not None:
+                return self.make_should_rotate_function(frequency)
             daytime = self.parse_daytime(rotation)
             if daytime is not None:
                 day, time = daytime
@@ -309,46 +312,6 @@ class FileSink:
         return function
 
     @staticmethod
-    def parse_daytime(daytime):
-        daytime = daytime.strip()
-
-        daytime_reg = re.compile(r'(.*?)\s+at\s+(.*)', flags=re.I)
-        day_reg = re.compile(r'w\d+', flags=re.I)
-        time_reg = re.compile(r'[\d\.\:\,]+(?:\s*[ap]m)?', flags=re.I)
-
-        daytime_match = daytime_reg.fullmatch(daytime)
-        if daytime_match:
-            day, time = daytime_match.groups()
-        elif time_reg.fullmatch(daytime):
-            day, time = None, daytime
-        elif day_reg.fullmatch(daytime) or daytime.upper() in DAYS_NAMES:
-            day, time = daytime, None
-        else:
-            return None
-
-        if day is not None:
-            if day_reg.fullmatch(day):
-                day = int(day[1:])
-                if not 0 <= day <= 6:
-                    raise ValueError("Invalid weekday index while parsing daytime: '%d'" % day)
-            elif day.upper() in DAYS_NAMES:
-                day = DAYS_NAMES.index(day.upper())
-            else:
-                raise ValueError("Invalid weekday value while parsing daytime: '%s'" % day)
-
-        if time is not None:
-            time_ = time
-            try:
-                time = pendulum.parse(time, strict=True)
-            except Exception as e:
-                raise ValueError("Invalid time while parsing daytime: '%s'" % time) from e
-            else:
-                if not isinstance(time, datetime.time):
-                    raise ValueError("Cannot strictly parse time from: '%s'" % time_)
-
-        return day, time
-
-    @staticmethod
     def parse_size(size):
         size = size.strip()
         reg = r'([e\+\-\.\d]+)\s*([kmgtpezy])?(i)?(b)'
@@ -403,6 +366,64 @@ class FileSink:
             seconds += value * unit
 
         return pendulum.Interval(seconds=seconds)
+
+    @staticmethod
+    def parse_frequency(frequency):
+        frequency = frequency.strip().lower()
+        function = None
+
+        if frequency == 'hourly':
+            function = lambda t: t.add(hours=1).start_of('hour')
+        elif frequency == 'daily':
+            function = '00:00'
+        elif frequency == 'weekly':
+            function = 'w0'
+        elif frequency == 'monthly':
+            function = lambda t: t.add(months=1).start_of('month')
+        elif frequency == 'yearly':
+            function = lambda t: t.add(years=1).start_of('year')
+
+        return function
+
+    @staticmethod
+    def parse_daytime(daytime):
+        daytime = daytime.strip()
+
+        daytime_reg = re.compile(r'(.*?)\s+at\s+(.*)', flags=re.I)
+        day_reg = re.compile(r'w\d+', flags=re.I)
+        time_reg = re.compile(r'[\d\.\:\,]+(?:\s*[ap]m)?', flags=re.I)
+
+        daytime_match = daytime_reg.fullmatch(daytime)
+        if daytime_match:
+            day, time = daytime_match.groups()
+        elif time_reg.fullmatch(daytime):
+            day, time = None, daytime
+        elif day_reg.fullmatch(daytime) or daytime.upper() in DAYS_NAMES:
+            day, time = daytime, None
+        else:
+            return None
+
+        if day is not None:
+            if day_reg.fullmatch(day):
+                day = int(day[1:])
+                if not 0 <= day <= 6:
+                    raise ValueError("Invalid weekday index while parsing daytime: '%d'" % day)
+            elif day.upper() in DAYS_NAMES:
+                day = DAYS_NAMES.index(day.upper())
+            else:
+                raise ValueError("Invalid weekday value while parsing daytime: '%s'" % day)
+
+        if time is not None:
+            time_ = time
+            try:
+                time = pendulum.parse(time, strict=True)
+            except Exception as e:
+                raise ValueError("Invalid time while parsing daytime: '%s'" % time) from e
+            else:
+                if not isinstance(time, datetime.time):
+                    raise ValueError("Cannot strictly parse time from: '%s'" % time_)
+
+        return day, time
 
     def rotating_write(self, message):
         if self.should_rotate(message):
