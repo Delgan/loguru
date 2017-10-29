@@ -82,11 +82,11 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writter, level, format_, filter, colored, better_exceptions):
+    def __init__(self, *, writter, level, format_, filter_, colored, better_exceptions):
         self.writter = writter
         self.level = level
         self.format = format_
-        self.filter = filter
+        self.filter = filter_
         self.colored = colored
         self.better_exceptions = better_exceptions
 
@@ -507,7 +507,7 @@ class Logger:
             writter=writter,
             level=level,
             format_=format,
-            filter=filter,
+            filter_=filter,
             colored=colored,
             better_exceptions=better_exceptions,
         )
