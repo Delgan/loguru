@@ -383,12 +383,6 @@ class FileSink:
             ('us|microseconds?', 0.000001),
         ]
 
-        if duration.isalpha():
-            if any(re.fullmatch(r, duration, flags=re.I) for r, _ in units):
-                duration = "1 " + duration
-            else:
-                return None
-
         reg = r'(?:([e\+\-\.\d]+)\s*([a-z]+)[\s\,]*)'
         if not re.fullmatch(reg + '+', duration, flags=re.I):
             return None

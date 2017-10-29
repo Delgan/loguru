@@ -84,8 +84,6 @@ def test_size_rotation(tmpdir, logger, size):
     ("7 days", [24 * 7 - 1, 1, 48, 24 * 10, 24 * 365]),
     ("1h 30 minutes", [1.4, 0.2, 1, 2, 10]),
     ("1 w, 2D", [24 * 8, 24 * 2, 24, 24 * 9, 24 * 9]),
-    ("mo", [24 * 29, 24 * 7, 0, 24 * 25, 24 * 300]),
-    ("d", [23, 23, 1, 48, 24]),
     ("1.5d", [30, 10, 0.9, 48, 35]),
     ("1.222 hours, 3.44s", [1.222, 0.1, 1, 1.2, 2]),
     (datetime.timedelta(hours=1), [0.9, 0.2, 0.7, 0.5, 3]),
@@ -115,7 +113,7 @@ def test_time_rotation(monkeypatch, tmpdir, when, hours, logger):
     assert file_3.read() == m2 + '\n' + m3 + '\n'
     assert file_4.read() == m1 + '\n'
 
-@pytest.mark.parametrize('backups', ['1 hour', '1H', 'h', datetime.timedelta(hours=1), pendulum.Interval(hours=1.0)])
+@pytest.mark.parametrize('backups', ['1 hour', '1H', ' 1 h ', datetime.timedelta(hours=1), pendulum.Interval(hours=1.0)])
 def test_backups_time(monkeypatch, tmpdir, logger, backups):
     monkeypatch.setattr(loguru, 'now', lambda *a, **k: pendulum.now().add(hours=23))
 
@@ -293,7 +291,7 @@ def test_mode(tmpdir, logger, mode, backups):
     assert tmpdir.join('test.log.1').read() == 'a' * (mode == 'a') + 'b\n'
 
 @pytest.mark.parametrize('rotation', [
-    "w7", "w10", "w-1",
+    "w7", "w10", "w-1", "h", "M",
     "w1at13", "www", "13 at w2",
     "K", "tufy MB", "111.111.111 kb", "3 Ki",
     "2017.11.12", "11:99", "monday at 2017",
@@ -305,8 +303,8 @@ def test_invalid_rotation(logger, rotation):
         logger.log_to('test.log', rotation=rotation)
 
 @pytest.mark.parametrize('backups', [
-    "W5", "monday at 14:00", "sunday",
-    "nope", "5 MB", "3 hours 2 dayz",
+    "W5", "monday at 14:00", "sunday", "nope",
+    "5 MB", "3 hours 2 dayz", "d", "H",
     datetime.time(12, 12, 12), os, object(),
 ])
 def test_invalid_backups(logger, backups):
