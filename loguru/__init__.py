@@ -175,7 +175,7 @@ class FileSink:
         now_ = now()
         patch_datetime_file(now_)
 
-        info = {
+        record = {
             "time": now_,
             "start_time": self.start_time,
             "rotation_time": self.rotation_time,
@@ -183,7 +183,7 @@ class FileSink:
             "n+1": self.created + 1,
         }
 
-        return self.path.format_map(info)
+        return self.path.format_map(record)
 
     @staticmethod
     def make_regex_file_name(file_name):
@@ -600,6 +600,52 @@ class Logger:
             return 1
 
         return 0
+
+    def catch(self, *args, **kwargs):
+
+        def catch_decorator(wrapped_function,
+                            message="An error has been caught in function '{function}', "
+                                    "process '{process.name}' ({process.id}), "
+                                    "thread '{thread.name}' ({thread.id}):", *,
+                                    level=None, re_raise=False, exception=BaseException):
+
+            if level is not None:
+                # TODO: Call log function accordingly
+                raise NotImplementedError
+
+            @functools.wraps(wrapped_function)
+            def catch_wrapper(*args, **kwargs):
+                try:
+                    wrapped_function(*args, **kwargs)
+                except exception as e:
+                    thread = current_thread()
+                    thread_recattr = ThreadRecattr(thread.ident)
+                    thread_recattr.id, thread_recattr.name = thread.ident, thread.name
+
+                    process = current_process()
+                    process_recattr = ProcessRecattr(process.ident)
+                    process_recattr.id, process_recattr.name = process.ident, process.name
+
+                    function_name = wrapped_function.__name__
+
+                    record = {
+                        'process': process_recattr,
+                        'thread': thread_recattr,
+                        'function': function_name,
+                    }
+
+                    # TODO: Use the stacktrace from 'e' rather than calling sys.exc_info() in
+                    self.exception(message.format_map(record))
+
+                    if re_raise:
+                        raise
+
+            return catch_wrapper
+
+        if not kwargs and len(args) == 1 and callable(args[0]):
+            return catch_decorator(args[0])
+        else:
+            return lambda f: catch_decorator(f, *args, **kwargs)
 
     @staticmethod
     def make_log_function(level, log_exception=False):
