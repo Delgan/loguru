@@ -10,6 +10,7 @@ from multiprocessing import current_process
 from threading import current_thread
 from traceback import format_exception
 from numbers import Number
+import shutil
 import re
 import os
 import glob
@@ -146,7 +147,7 @@ class ProcessRecattr(str):
 
 class FileSink:
 
-    def __init__(self, path, *, rotation=None, backups=None, **kwargs):
+    def __init__(self, path, *, rotation=None, backups=None, compression=None, **kwargs):
         self.start_time = now()
         patch_datetime_file(self.start_time)
         self.kwargs = kwargs.copy()
@@ -154,11 +155,13 @@ class FileSink:
         self.kwargs.setdefault('buffering', 1)
         self.path = str(path)
         self.file = None
+        self.file_path = None
         self.created = 0
         self.rotation_time = None
 
         self.should_rotate = self.make_should_rotate_function(rotation)
         self.manage_backups = self.make_manage_backups_function(backups)
+        self.compress_file = self.make_compress_file_function(compression)
         self.regex_file_name = self.make_regex_file_name(os.path.basename(self.path))
 
         self.rotate()
@@ -167,12 +170,6 @@ class FileSink:
             self.write = self.file.write
         else:
             self.write = self.rotating_write
-
-    def stop(self):
-        if self.file is not None:
-            # compress
-            self.file.close()
-            self.file = None
 
     def format_path(self):
         now_ = now()
@@ -193,6 +190,7 @@ class FileSink:
         tokens = Formatter().parse(file_name)
         regex_name = ''.join(re.escape(t[0]) + '.*' * (t[1] is not None) for t in tokens)
         regex_name += '(?:\.\d+)?'
+        regex_name += '(?:\.(?:gz(?:ip)?|bz(?:ip)?2|xz|lzma|zip))?'
         return re.compile(regex_name)
 
     def make_should_rotate_function(self, rotation):
@@ -303,6 +301,59 @@ class FileSink:
             raise ValueError("Cannot infer backups for objects of type: '%s'" % type(backups))
 
         return function
+
+    def make_compress_file_function(self, compression):
+        if compression is None or compression is False:
+            return None
+        elif compression is True:
+            return self.make_compress_file_function('gz')
+        elif isinstance(compression, str):
+            compress_format = compression.strip().lstrip('.')
+            compress_format_lower = compress_format.lower()
+
+            compress_module = None
+            compress_args = {}
+            compress_func = shutil.copyfileobj
+
+            if compress_format_lower in ['gz', 'gzip']:
+                import gzip
+                compress_module = gzip
+            elif compress_format_lower in ['bz2', 'bzip2']:
+                import bz2
+                compress_module = bz2
+            elif compress_format_lower == 'xz':
+                import lzma
+                compress_module = lzma
+                compress_args = dict(format=lzma.FORMAT_ALONE)
+            elif compress_format_lower == 'lzma':
+                import lzma
+                compress_module = lzma
+                compress_args = dict(format=lzma.FORMAT_XZ)
+            elif compress_format_lower == 'zip':
+                import zlib  # Used by zipfile, so check it's available
+                import zipfile
+                def func(path):
+                    compress_path = '%s.%s' % (path, compress_format)
+                    with zipfile.ZipFile(compress_path, 'w', compression=zipfile.ZIP_DEFLATED) as z:
+                        z.write(path)
+                    os.remove(path)
+                return func
+            else:
+                raise ValueError("Invalid compression format: '%s'" % compress_format)
+
+            def func(path):
+                with open(path, 'rb') as f_in:
+                    compress_path = '%s.%s' % (path, compress_format)
+                    with compress_module.open(compress_path, 'wb', **compress_args) as f_out:
+                        compress_func(f_in, f_out)
+                os.remove(path)
+
+            return func
+
+        elif callable(compression):
+            return compression
+        else:
+            raise ValueError("Cannot infer compression for objects of type: '%s'" % type(compression))
 
     @staticmethod
     def parse_size(size):
@@ -424,6 +475,7 @@ class FileSink:
         self.file.write(message)
 
     def rotate(self):
+        old_path = self.file_path
         self.stop()
         file_path = os.path.abspath(self.format_path())
         file_dir = os.path.dirname(file_path)
@@ -440,20 +492,36 @@ class FileSink:
 
         if self.created > 0 and os.path.exists(file_path):
             basename = os.path.basename(file_path)
-            reg = re.escape(basename) + '\.\d+'
+            reg = re.escape(basename) + '(?:\.(\d+))?(\.(?:gz(?:ip)?|bz(?:ip)?2|xz|lzma|zip))?'
+            reg = re.compile(reg, flags=re.I)
             with os.scandir(file_dir) as it:
-                logs = [f for f in it if f.is_file() and re.fullmatch(reg, f.name)]
-            logs.sort(key=lambda f: -int(f.name.split('.')[-1]))
+                logs = [f for f in it if f.is_file() and reg.fullmatch(f.name) and f.name != basename]
+            logs.sort(key=lambda f: -int(reg.fullmatch(f.name).group(1) or 0))
 
             n = len(logs) + 1
             z = len(str(n))
             for i, log in enumerate(logs):
-                os.replace(log.path, file_path + '.%s' % str(n - i).zfill(z))
-            os.replace(file_path, file_path + ".%s" % "1".zfill(z))
+                os.replace(log.path, file_path + '.%s' % str(n - i).zfill(z) + (reg.fullmatch(log.name).group(2) or ''))
+            new_path = file_path + ".%s" % "1".zfill(z)
+            os.replace(file_path, new_path)
+
+            if file_path == old_path:
+                old_path = new_path
+
+        if self.compress_file is not None and old_path is not None and os.path.exists(old_path):
+            self.compress_file(old_path)
 
         self.file = open(file_path, **self.kwargs)
+        self.file_path = file_path
         self.created += 1
 
+    def stop(self):
+        if self.file is not None:
+            if self.compress_file is not None and self.should_rotate is None:
+                self.compress_file(self.file_path)
+            self.file.close()
+            self.file = None
+            self.file_path = None
 
 class Logger:
 
