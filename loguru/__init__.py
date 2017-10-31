@@ -607,7 +607,7 @@ class Logger:
                             message="An error has been caught in function '{function}', "
                                     "process '{process.name}' ({process.id}), "
                                     "thread '{thread.name}' ({thread.id}):", *,
-                                    level=None, re_raise=False, exception=BaseException):
+                                    level=None, reraise=False, exception=BaseException):
 
             if level is not None:
                 # TODO: Call log function accordingly
@@ -637,7 +637,7 @@ class Logger:
                     # TODO: Use the stacktrace from 'e' rather than calling sys.exc_info() in
                     self.exception(message.format_map(record))
 
-                    if re_raise:
+                    if reraise:
                         raise
 
             return catch_wrapper

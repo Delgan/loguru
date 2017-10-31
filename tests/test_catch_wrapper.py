@@ -47,10 +47,10 @@ def test_custom_message(logger, writer):
 
     assert writer.read().startswith('An error occured:\n')
 
-def test_re_raise(logger, writer):
+def test_reraise(logger, writer):
     logger.log_to(writer)
 
-    @logger.catch(re_raise=True)
+    @logger.catch(reraise=True)
     def a():
         1 / 0
 
@@ -78,6 +78,9 @@ def test_exception(logger, writer, exception, should_raise):
     else:
         a()
         assert writer.read().endswith('ZeroDivisionError: division by zero\n')
+
+def test_frame(logger, writer):
+    pass
 
 @pytest.mark.xfail
 def test_custom_level(logger, writter):
