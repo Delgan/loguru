@@ -604,10 +604,11 @@ class Logger:
     def catch(self, *args, **kwargs):
 
         def catch_decorator(wrapped_function,
+                            exception=BaseException, *,
                             message="An error has been caught in function '{function}', "
                                     "process '{process.name}' ({process.id}), "
-                                    "thread '{thread.name}' ({thread.id}):", *,
-                                    level=None, reraise=False, exception=BaseException):
+                                    "thread '{thread.name}' ({thread.id}):",
+                                    level=None, reraise=False):
 
             if level is not None:
                 # TODO: Call log function accordingly
@@ -642,10 +643,12 @@ class Logger:
 
             return catch_wrapper
 
-        if not kwargs and len(args) == 1 and callable(args[0]):
-            return catch_decorator(args[0])
-        else:
-            return lambda f: catch_decorator(f, *args, **kwargs)
+        if not kwargs and len(args) == 1:
+            arg = args[0]
+            if callable(arg) and (not isclass(arg) or not issubclass(arg, BaseException)):
+                return catch_decorator(arg)
+
+        return lambda f: catch_decorator(f, *args, **kwargs)
 
     @staticmethod
     def make_log_function(level, log_exception=False):

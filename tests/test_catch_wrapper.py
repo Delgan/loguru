@@ -63,13 +63,20 @@ def test_reraise(logger, writer):
     (ZeroDivisionError, False),
     (ValueError, True),
     ((ZeroDivisionError, ValueError), False),
+    ((SyntaxError, TypeError), True),
 ])
-def test_exception(logger, writer, exception, should_raise):
+@pytest.mark.parametrize('keyword', [True, False])
+def test_exception(logger, writer, exception, should_raise, keyword):
     logger.log_to(writer)
 
-    @logger.catch(exception=exception)
-    def a():
-        1 / 0
+    if keyword:
+        @logger.catch(exception=exception)
+        def a():
+            1 / 0
+    else:
+        @logger.catch(exception)
+        def a():
+            1 / 0
 
     if should_raise:
         with pytest.raises(ZeroDivisionError):
