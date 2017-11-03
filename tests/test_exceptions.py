@@ -8,22 +8,7 @@ import re
 @pytest.fixture
 def compare_outputs(tmpdir):
 
-    def compare_outputs(to_exec, caught_scope_index, caught_trace_index=0):
-        loguru_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        cfg_loguru = ('import sys;'
-                      'sys.path.append("' + loguru_path + '");'
-                      'from loguru import logger;'
-                      'logger.stop();'
-                      'logger.log_to(sys.stdout, better_exceptions=False, colored=False, format="{message}")\n')
-
-        without_loguru = with_loguru = textwrap.dedent(to_exec)
-        without_loguru = re.sub('try:', 'if 1:', without_loguru)
-        without_loguru = re.sub('except:', '# padding', without_loguru)
-        without_loguru = re.sub('.*logger.*', '# padding', without_loguru)
-
-        with_loguru = cfg_loguru + with_loguru
-        without_loguru = '# padding\n' + without_loguru
-
+    def compare_outputs(with_loguru, without_loguru, caught_scope_index, caught_trace_index=0):
         print("=== Comparing outputs with and without loguru ===")
         print(with_loguru)
         print("==========")
@@ -35,14 +20,14 @@ def compare_outputs(tmpdir):
         def run():
             return py.process.cmdexec('python %s' % file.realpath())
 
+        file.write(with_loguru)
+        result_with_loguru = run().strip()
+
         try:
             file.write(without_loguru)
             run()
         except py.error.Error as e:
             result_without_loguru = e.err.strip()
-
-        file.write(with_loguru)
-        result_with_loguru = run().strip()
 
         print("--- Compared outputs with and without loguru ---")
         print(result_with_loguru)
@@ -69,229 +54,255 @@ def compare_outputs(tmpdir):
 
     return compare_outputs
 
-def test_simple_explicit(compare_outputs):
-    to_exec = """
-    try:
-        1 / 0
-    except:
-        logger.exception('')
-    """
+@pytest.fixture(params=['explicit', 'decorator'])
+def compare(compare_outputs, request):
+    mode = request.param
 
-    compare_outputs(to_exec, 0)
+    loguru_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    cfg_loguru = ('import sys;'
+                  'sys.path.append("' + loguru_path + '");'
+                  'from loguru import logger;'
+                  'logger.stop();'
+                  'logger.log_to(sys.stdout, better_exceptions=False, colored=False, format="{message}")\n')
 
-def test_func_explicit(compare_outputs):
-    to_exec = """
+    def compare(template, caught_scope_index, caught_trace_index=0, *, disabled=[]):
+        template = textwrap.dedent(template)
+
+        without_dict = {
+            "try": "if 1",
+            "except": "if 1",
+            "catch": "# padding",
+            "log": "pass",
+        }
+
+        if mode == 'explicit':
+            with_dict = {
+                "try": "try",
+                "except": "except",
+                "catch": "# padding",
+                "log": "logger.exception('')",
+            }
+        elif mode == 'decorator':
+            with_dict = {
+                "try": "if 1",
+                "except": "if 1",
+                "catch": "@logger.catch(message='')",
+                "log": "pass",
+            }
+
+        without_loguru = template.format_map(without_dict)
+        with_loguru = template.format_map(with_dict)
+
+        with_loguru = cfg_loguru + with_loguru
+        without_loguru = '# padding\n' + without_loguru
+
+        compare_outputs(with_loguru, without_loguru, caught_scope_index, caught_trace_index)
+
+    return compare
+
+
+def test_func(compare):
+    template = """
+    {catch}
     def f():
-        try:
-            1 / 0
-        except:
-            logger.exception('')
-    f()
-    """
-
-    compare_outputs(to_exec, 1)
-
-def test_func_decorator(compare_outputs):
-    to_exec = """
-    @logger.catch(message='')
-    def f():
         1 / 0
-    f()
+
+    {try}:
+        f()
+    {except}:
+        {log}
     """
 
-    compare_outputs(to_exec, 0)
+    compare(template, 0)
 
-def test_nested_explicit(compare_outputs):
-    to_exec = """
+def test_nested(compare):
+    template = """
     def a(k):
+
+        {catch}
         def b(i):
             1 / i
-        try:
+
+        {try}:
             b(k)
-        except:
-            logger.exception("")
+        {except}:
+            {log}
+
     a(5)
     a(0)
     """
 
-    compare_outputs(to_exec, 1)
+    compare(template, 1)
 
-def test_nested_decorator(compare_outputs):
-    to_exec = """
-    def a(k):
-        @logger.catch(message="")
-        def b(i):
-            1 / i
-        b(k)
-    a(5)
-    a(0)
+def test_chaining_first(compare):
+    template = """
+    {catch}
+    def a(): b()
+
+    def b(): c()
+
+    def c(): 1 / 0
+
+    {try}:
+        a()
+    {except}:
+        {log}
     """
 
-    compare_outputs(to_exec, 1)
+    compare(template, 0)
 
-@pytest.mark.parametrize('catch_index', [-1, 0, 1, 2])
-def test_chaining_explicit(compare_outputs, catch_index):
-    to_exec = """
-    def a(): b()
-    def b(): c()
-    def c(): 1 / 0
-    if 1: a()""".strip('\n')
-
-    calls = to_exec.splitlines()
-
-    func, exe = calls[catch_index].split(': ')
-    func += ':'
-
-    calls[catch_index] = func + """
-        try:
-            %s
-        except:
-            logger.exception('')
-    """ % exe
-    to_exec = '\n'.join(calls)
-
-    compare_outputs(to_exec, catch_index + 1)
-
-@pytest.mark.parametrize('catch_index', [0, 1, 2, 3])
-def test_chaining_decorator(compare_outputs, catch_index):
-    to_exec = """
-    def main(): a()
-    def a(): b()
-    def b(): c()
-    def c(): 1 / 0
-    main()""".strip('\n')
-
-    calls = to_exec.splitlines()
-    call = calls[catch_index].strip()
-
-    calls[catch_index] = """
-    @logger.catch(message='')
-    %s""" % call
-    to_exec = '\n'.join(calls)
-
-    compare_outputs(to_exec, catch_index)
-
-@pytest.mark.parametrize('rec', [1, 2, 3])
-def test_tail_recursion_explicit(compare_outputs, rec):
-    to_exec = """
-    def f(n):
-        1 / n
-        try:
-            f(n - 1)
-        except:
-            logger.exception("")
-    f(%d)
-    """ % rec
-
-    compare_outputs(to_exec, rec)
-
-@pytest.mark.parametrize('rec', [0, 1, 2, 3])
-def test_tail_recursion_decorator(compare_outputs, rec):
-    to_exec = """
-    @logger.catch(message="")
-    def f(n):
-        1 / n
-        f(n - 1)
-    f(%d)
-    """ % rec
-
-    compare_outputs(to_exec, rec)
-
-@pytest.mark.parametrize('rec', [1, 2, 3])
-def test_head_recursion_explicit(compare_outputs, rec):
-    to_exec = """
-    def f(n):
-        if n:
-            try:
-                f(n - 1)
-            except:
-                logger.exception("")
-        1 / n
-    f(%d)
-    """ % rec
-
-    compare_outputs(to_exec, rec)
-
-@pytest.mark.parametrize('rec', [0, 1, 2, 3])
-def test_head_recursion_decorator(compare_outputs, rec):
-    to_exec = """
-    @logger.catch(message="")
-    def f(n):
-        if n:
-            f(n - 1)
-        1 / n
-    f(%d)
-    """ % rec
-
-    compare_outputs(to_exec, rec)
-
-def test_chained_exception_explicit(compare_outputs):
-    to_exec = """
+def test_chaining_second(compare):
+    template = """
     def a():
-        try :
-            1 / 0
-        except :
-            raise ValueError("NOK")
+        {try}:
+            b()
+        {except}:
+            {log}
+
+    {catch}
+    def b(): c()
+
+    def c(): 1 / 0
+
+    a()
+    """
+
+    compare(template, 1)
+
+def test_chaining_third(compare):
+    template = """
+    def a(): b()
+
     def b():
+        {try}:
+            c()
+        {except}:
+            {log}
+
+    {catch}
+    def c(): 1 / 0
+
+    a()
+    """
+
+    compare(template, 2)
+
+@pytest.mark.parametrize('rec', [1, 2, 3])
+def test_tail_recursion(compare, rec):
+    template = """
+    {catch}
+    def f(n):
+        1 / n
+        {try}:
+            f(n - 1)
+        {except}:
+            {log}
+    f(%d)
+    """ % rec
+
+    compare(template, rec)
+
+@pytest.mark.parametrize('rec', [1, 2, 3])
+def test_head_recursion(compare, rec):
+    template = """
+    {catch}
+    def f(n):
+        if n:
+            {try}:
+                f(n - 1)
+            {except}:
+                {log}
+        1 / n
+    f(%d)
+    """ % rec
+
+    compare(template, rec)
+
+def test_chained_exception_direct(compare):
+    template = """
+    {catch}
+    def a():
         try:
-            a()
+            1 / 0
         except:
-            logger.exception('')
+            raise ValueError("NOK")
+
+    def b():
+        {try}:
+            a()
+        {except}:
+            {log}
+
     b()
     """
 
-    compare_outputs(to_exec, 1, 1)
+    compare(template, 1, 1)
 
-def test_chained_exception_decorator(compare_outputs):
-    to_exec = """
+def test_chained_exception_indirect(compare):
+    template = """
     def a():
-        try :
+        try:
             1 / 0
-        except :
+        except:
             raise ValueError("NOK")
-    @logger.catch(message='')
+
+    {catch}
     def b():
         a()
-    b()
+
+    {try}:
+        b()
+    {except}:
+        {log}
     """
 
-    compare_outputs(to_exec, 0, 1)
+    compare(template, 0, 1)
 
-def test_suppressed_exception_explicit(compare_outputs):
-    to_exec = """
+def test_suppressed_exception_direct(compare):
+    template = """
     def a(x, y):
         x / y
+
+    {catch}
     def b():
         try :
             a(1, 0)
         except ZeroDivisionError as e:
             raise ValueError("NOK") from e
+
     def c():
-        try:
+        {try}:
             b()
-        except:
-            logger.exception('')
+        {except}:
+            {log}
+
     c()
     """
 
-    compare_outputs(to_exec, 1, 1)
+    compare(template, 1, 1)
 
-def test_suppressed_exception_decorator(compare_outputs):
-    to_exec = """
+def test_suppressed_exception_indirect(compare):
+    template = """
     def a(x, y):
         x / y
+
     def b():
         try :
             a(1, 0)
         except ZeroDivisionError as e:
             raise ValueError("NOK") from e
-    @logger.catch(message='')
+
+    {catch}
     def c():
         b()
-    c()
+
+    {try}:
+        c()
+    {except}:
+        {log}
     """
 
-    compare_outputs(to_exec, 0, 1)
+    compare(template, 0, 1)
 
 @pytest.mark.parametrize('rec', [1, 2, 3])
 def test_raising_recursion_explicit(logger, writer, rec):
