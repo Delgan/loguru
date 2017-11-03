@@ -19,5 +19,6 @@ def writer():
 
     w.written = []
     w.read = lambda: ''.join(w.written)
+    w.clear = lambda: w.written.clear()
 
     return w

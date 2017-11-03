@@ -56,18 +56,25 @@ def test_colored_option(message, format, expected, colored, logger, writer):
     logger.debug(message)
     assert writer.read() == expected + '\n'
 
-@pytest.mark.parametrize('better_exceptions, startswith', [
-    (False, 'Traceback (most recent call last):\n  File'),
-    (True, 'Traceback (most recent call last):\n\n  File'),
-])
-def test_better_exceptions_option(better_exceptions, startswith, logger, writer):
-    logger.log_to(writer, format='{message}', better_exceptions=better_exceptions)
+def test_better_exceptions_option(logger, writer):
+    logger.log_to(writer, format='{message}', better_exceptions=True)
     try:
         1 / 0
     except:
         logger.exception('')
-    assert writer.read().startswith('\n' + startswith)
+    result_with = writer.read().strip()
 
+    logger.stop()
+    writer.clear()
+
+    logger.log_to(writer, format='{message}', better_exceptions=False)
+    try:
+        1 / 0
+    except:
+        logger.exception('')
+    result_without = writer.read().strip()
+
+    assert len(result_with) > len(result_without)
 
 @pytest.mark.parametrize('sink_type', ['function', 'class', 'file_object', 'str_a', 'str_w'])
 @pytest.mark.parametrize('test_invalid', [False, True])
