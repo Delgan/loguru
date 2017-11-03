@@ -56,21 +56,24 @@ __version__ = "0.0.1"
 
 start_time = now()
 
-def get_frame_fallback(_):
+def getframe_fallback(n):
     """Return the frame object for the caller's stack frame."""
     try:
         raise Exception
     except Exception:
-        return exc_info()[2].tb_frame.f_back.f_back
+        frame = exc_info()[2].tb_frame.f_back
+        for _ in range(n):
+            frame = frame.f_back
+        return frame
 
-def get_get_frame_function():
+def get_getframe_function():
     if hasattr(sys, '_getframe'):
-        get_frame = sys._getframe
+        getframe = sys._getframe
     else:
-        get_frame = get_frame_fallback
-    return get_frame
+        getframe = getframe_fallback
+    return getframe
 
-get_frame = get_get_frame_function()
+getframe = get_getframe_function()
 
 def patch_datetime(date):
     date._FORMATTER = 'alternative'
@@ -707,7 +710,7 @@ class Logger:
         level_name = getLevelName(level)
 
         def log_function(self, message, *args, **kwargs):
-            frame = get_frame(1)
+            frame = getframe(1)
             name = frame.f_globals['__name__']
 
             # TODO: Early exit if no handler
