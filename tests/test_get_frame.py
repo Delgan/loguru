@@ -1,5 +1,4 @@
 import sys
-import pytest
 import loguru
 
 def test_with_sys_getframe(monkeypatch):

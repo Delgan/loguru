@@ -578,11 +578,84 @@ class FileSink:
             self.file = None
             self.file_path = None
 
+class Catcher:
+
+    def __init__(self, logger, exception=BaseException, *, level=None, reraise=False,
+                       message="An error has been caught in function '{function}', "
+                               "process '{process.name}' ({process.id}), "
+                               "thread '{thread.name}' ({thread.id}):"):
+        self.logger = logger
+        self.exception = exception
+        self.level = level
+        self.reraise = reraise
+        self.message = message
+
+        self.function_name = None
+        self.exception_logger = self.logger.exception
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, type_, value, traceback_):
+        if type_ is None:
+            return
+
+        if not issubclass(type_, self.exception):
+            return False
+
+        thread = current_thread()
+        thread_recattr = ThreadRecattr(thread.ident)
+        thread_recattr.id, thread_recattr.name = thread.ident, thread.name
+
+        process = current_process()
+        process_recattr = ProcessRecattr(process.ident)
+        process_recattr.id, process_recattr.name = process.ident, process.name
+
+        function_name = self.function_name
+        if function_name is None:
+            function_name = getframe(1).f_code.co_name
+
+        record = {
+            'process': process_recattr,
+            'thread': thread_recattr,
+            'function': function_name,
+        }
+
+        if self.level is not None:
+            # TODO: Use logger function accordingly
+            raise NotImplementedError
+
+        self.exception_logger(self.message.format_map(record))
+
+        return not self.reraise
+
+    def __call__(self, *args, **kwargs):
+        if not kwargs and len(args) == 1:
+            arg = args[0]
+            if callable(arg) and (not isclass(arg) or not issubclass(arg, BaseException)):
+                function = arg
+                function_name = function.__name__
+
+                @functools.wraps(function)
+                def catch_wrapper(*args, **kwargs):
+                    # TODO: Check it could be any conflict with multiprocessing because of self modification
+                    self.function_name = function_name
+                    self.exception_logger = self.logger._exception_catcher
+                    with self:
+                        function(*args, **kwargs)
+                    self.function_name = None
+                    self.exception_logger = self.logger.exception
+
+                return catch_wrapper
+
+        return Catcher(self.logger, *args, **kwargs)
+
 class Logger:
 
     def __init__(self):
         self.handlers_count = 0
         self.handlers = {}
+        self.catch = Catcher(self)
 
     def log_to(self, sink, *, level=DEBUG, format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
         if isclass(sink):
@@ -656,54 +729,6 @@ class Logger:
 
         return 0
 
-    def catch(self, *args, **kwargs):
-
-        def catch_decorator(wrapped_function,
-                            exception=BaseException, *,
-                            message="An error has been caught in function '{function}', "
-                                    "process '{process.name}' ({process.id}), "
-                                    "thread '{thread.name}' ({thread.id}):",
-                                    level=None, reraise=False):
-
-            if level is not None:
-                # TODO: Call log function accordingly
-                raise NotImplementedError
-
-            @functools.wraps(wrapped_function)
-            def catch_wrapper(*args, **kwargs):
-                try:
-                    wrapped_function(*args, **kwargs)
-                except exception:
-                    thread = current_thread()
-                    thread_recattr = ThreadRecattr(thread.ident)
-                    thread_recattr.id, thread_recattr.name = thread.ident, thread.name
-
-                    process = current_process()
-                    process_recattr = ProcessRecattr(process.ident)
-                    process_recattr.id, process_recattr.name = process.ident, process.name
-
-                    function_name = wrapped_function.__name__
-
-                    record = {
-                        'process': process_recattr,
-                        'thread': thread_recattr,
-                        'function': function_name,
-                    }
-
-                    self._exception_catcher(message.format_map(record))
-
-                    if reraise:
-                        raise
-
-            return catch_wrapper
-
-        if not kwargs and len(args) == 1:
-            arg = args[0]
-            if callable(arg) and (not isclass(arg) or not issubclass(arg, BaseException)):
-                return catch_decorator(arg)
-
-        return lambda f: catch_decorator(f, *args, **kwargs)
-
     @staticmethod
     def make_log_function(level, log_exception=0):
 
@@ -759,19 +784,23 @@ class Logger:
                         loguru_tb = new_tb
                     tb = tb.tb_next
 
-                caught_tb_marked = False
-
-                if log_exception == 1:
-                    root_tb.__is_caught_point__ = True
-                    caught_tb_marked = True
+                caught_tb = root_tb
 
                 while root_frame:
                     if root_frame.f_code.co_filename != __file__:
                         root_tb = loguru_traceback(root_frame, root_frame.f_lasti, root_frame.f_lineno, root_tb)
-                        if not caught_tb_marked:
-                            root_tb.__is_caught_point__ = True
-                            caught_tb_marked = True
                     root_frame = root_frame.f_back
+
+                if log_exception == 1:
+                    caught_tb.__is_caught_point__ = True
+                else:
+                    tb_prev = tb_next = root_tb
+                    while tb_next:
+                        if tb_next == caught_tb:
+                            break
+                        tb_prev, tb_next = tb_next, tb_next.tb_next
+                    tb_prev.__is_caught_point__ = True
+
 
                 exception = (ex_type, ex, root_tb)
 

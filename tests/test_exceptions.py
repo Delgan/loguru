@@ -54,9 +54,9 @@ def compare_outputs(tmpdir):
 
     return compare_outputs
 
-@pytest.fixture(params=['explicit', 'decorator'])
+@pytest.fixture(params=['explicit', 'decorator', 'context_manager'])
 def compare(compare_outputs, request):
-    mode = request.param
+    catch_mode = request.param
 
     loguru_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     cfg_loguru = ('import sys;'
@@ -75,18 +75,25 @@ def compare(compare_outputs, request):
             "log": "pass",
         }
 
-        if mode == 'explicit':
+        if catch_mode == 'explicit':
             with_dict = {
                 "try": "try",
                 "except": "except",
                 "catch": "# padding",
                 "log": "logger.exception('')",
             }
-        elif mode == 'decorator':
+        elif catch_mode == 'decorator':
             with_dict = {
                 "try": "if 1",
                 "except": "if 1",
                 "catch": "@logger.catch(message='')",
+                "log": "pass",
+            }
+        elif catch_mode == 'context_manager':
+            with_dict = {
+                "try": "with logger.catch(message='')",
+                "except": "if 1",
+                "catch": "# padding",
                 "log": "pass",
             }
 
@@ -305,39 +312,40 @@ def test_suppressed_exception_indirect(compare):
     compare(template, 0, 1)
 
 @pytest.mark.parametrize('rec', [1, 2, 3])
-def test_raising_recursion_explicit(logger, writer, rec):
+@pytest.mark.parametrize('catch_mode', ['explicit', 'decorator', 'context_manager'])
+def test_raising_recursion(logger, writer, rec, catch_mode):
     logger.log_to(writer, format='{message}', better_exceptions=False)
 
-    def f(n):
-        if n:
+    if catch_mode == 'explicit':
+        def f(n):
             try:
-                f(n - 1)
+                if n:
+                    f(n - 1)
+                n / 0
             except:
                 logger.exception("")
-        n / 0
-    try :
-        f(rec)
-    except :
-        pass
+    elif catch_mode == 'decorator':
+        @logger.catch(message='')
+        def f(n):
+            if n:
+                f(n - 1)
+            n / 0
+    elif catch_mode == 'context_manager':
+        def f(n):
+            with logger.catch(message=''):
+                if n:
+                    f(n - 1)
+                n / 0
 
-    lines = writer.read().splitlines()
-
-    assert sum(line.startswith("Traceback") for line in lines) == rec
-
-@pytest.mark.parametrize('rec', [0, 1, 2, 3])
-def test_raising_recursion_decorator(logger, writer, rec):
-    logger.log_to(writer, format='{message}', better_exceptions=False)
-
-    @logger.catch(message="")
-    def f(n):
-        if n:
-            f(n - 1)
-        n / 0
     f(rec)
 
     lines = writer.read().splitlines()
 
     assert sum(line.startswith("Traceback") for line in lines) == rec + 1
+    assert sum(line.startswith("> File") for line in lines) == rec + 1
+    for line in lines:
+        if line.startswith("> File"):
+            assert line.endswith("in f")
 
 def test_carret_not_masked(logger, writer):
     logger.log_to(writer, better_exceptions=False, colored=False)

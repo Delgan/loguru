@@ -1,6 +1,5 @@
 import loguru
 import pytest
-import sys
 
 @pytest.fixture
 def logger():

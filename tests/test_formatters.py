@@ -80,3 +80,33 @@ def test_file_formatters(tmpdir, format, validator, part, logger):
     elif part == 'both':
         assert validator(file.basename)
         assert validator(file.dirpath().basename)
+
+@pytest.mark.parametrize('message, validator', [
+    ('{function}', lambda r: r == 'my_func'),
+    ('{thread}', lambda r: re.fullmatch(r'\d+', r)),
+    ('{thread.id}', lambda r: re.fullmatch(r'\d+', r)),
+    ('{thread.name}', lambda r: isinstance(r, str) and r != ""),
+    ('{process}', lambda r: re.fullmatch(r'\d+', r)),
+    ('{process.id}', lambda r: re.fullmatch(r'\d+', r)),
+    ('{process.name}', lambda r: isinstance(r, str) and r != ""),
+])
+@pytest.mark.parametrize('catcher', ['decorator', 'context_manager'])
+def test_catch_formatters(message, validator, logger, writer, catcher):
+    logger.log_to(writer, format='{message}')
+
+    if catcher == 'decorator':
+        @logger.catch(message=message)
+        def my_func():
+            1 / 0
+    elif catcher == 'context_manager':
+        def my_func():
+            with logger.catch(message=message):
+                1 / 0
+
+    my_func()
+
+    result = writer.read().strip().splitlines()[0]
+
+    assert validator(result)
+
+
