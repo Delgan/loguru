@@ -62,7 +62,7 @@ def compare(compare_outputs, request):
     cfg_loguru = ('import sys;'
                   'sys.path.append("' + loguru_path + '");'
                   'from loguru import logger;'
-                  'logger.stop();'
+                  'logger.clear();'
                   'logger.log_to(sys.stdout, better_exceptions=False, colored=False, format="{message}")\n')
 
     def compare(template, caught_scope_index, caught_trace_index=0, *, disabled=[]):

@@ -20,7 +20,7 @@ def log(sink, rep=1):
     i = logger.log_to(sink, format='{message}')
     for _ in range(rep):
         logger.debug(message)
-    logger.stop(i)
+    logger.clear(i)
     logger.debug("This shouldn't be printed neither.")
 
 @repetitions

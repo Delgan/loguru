@@ -638,7 +638,7 @@ class Catcher:
 
                 @functools.wraps(function)
                 def catch_wrapper(*args, **kwargs):
-                    # TODO: Check it could be any conflict with multiprocessing because of self modification
+                    # TODO: Fix it to avoid any conflict with threading because of self modification
                     self.function_name = function_name
                     self.exception_logger = self.logger._exception_catcher
                     with self:
@@ -713,7 +713,7 @@ class Logger:
 
         return self.handlers_count - 1
 
-    def stop(self, handler_id=None):
+    def clear(self, handler_id=None):
         if handler_id is None:
             for sink, _ in self.handlers.values():
                 if hasattr(sink, 'stop') and callable(sink.stop):

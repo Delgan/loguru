@@ -64,7 +64,7 @@ def test_better_exceptions_option(logger, writer):
         logger.exception('')
     result_with = writer.read().strip()
 
-    logger.stop()
+    logger.clear()
     writer.clear()
 
     logger.log_to(writer, format='{message}', better_exceptions=False)

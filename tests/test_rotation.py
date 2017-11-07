@@ -320,7 +320,7 @@ def test_compression_rotation(tmpdir, logger):
 
     for i in range(10):
         logger.debug(str(i))
-    logger.stop(n)
+    logger.clear(n)
 
     assert tmpdir.join('test.log').read() == '9\n'
 
@@ -333,7 +333,7 @@ def test_compression_without_rotation(tmpdir, logger):
     import gzip
     n = logger.log_to(tmpdir.join('test.log'), compression=True, format='{message}')
     logger.debug("Test")
-    logger.stop(n)
+    logger.clear(n)
 
     assert len(tmpdir.listdir()) == 1
     archive = tmpdir.join('test.log.gz')

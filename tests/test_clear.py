@@ -3,7 +3,7 @@ import sys
 message = 'some message'
 expected = message + '\n'
 
-def test_stop_all(tmpdir, writer, capsys, logger):
+def test_clear_all(tmpdir, writer, capsys, logger):
     file = tmpdir.join("test.log")
 
     logger.debug("This shouldn't be printed.")
@@ -15,7 +15,7 @@ def test_stop_all(tmpdir, writer, capsys, logger):
 
     logger.debug(message)
 
-    logger.stop()
+    logger.clear()
 
     logger.debug("This shouldn't be printed neither.")
 
@@ -26,21 +26,21 @@ def test_stop_all(tmpdir, writer, capsys, logger):
     assert err == expected
     assert writer.read() == expected
 
-def test_stop_count(logger, writer):
-    n = logger.stop()
+def test_clear_count(logger, writer):
+    n = logger.clear()
     assert n == 0
 
-    n = logger.stop(42)
+    n = logger.clear(42)
     assert n == 0
 
     i = logger.log_to(writer)
-    n = logger.stop(i)
+    n = logger.clear(i)
     assert n == 1
 
     logger.log_to(writer)
     logger.log_to(writer)
-    n = logger.stop()
+    n = logger.clear()
     assert n == 2
 
-    n = logger.stop(0)
+    n = logger.clear(0)
     assert n == 0
