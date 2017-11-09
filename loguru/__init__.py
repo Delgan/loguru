@@ -19,6 +19,7 @@ from string import Formatter
 import math
 import functools
 import uuid
+import importlib
 
 import ansimarkup
 from better_exceptions_fork import ExceptionFormatter
@@ -652,7 +653,8 @@ class Catcher:
 
 class Logger:
 
-    def __init__(self):
+    def __init__(self, *, dummy=None):
+        self.dummy = dummy
         self.handlers_count = 0
         self.handlers = {}
         self.catch = Catcher(self)
@@ -726,8 +728,38 @@ class Logger:
             if hasattr(sink, 'stop') and callable(sink.stop):
                 sink.stop()
             return 1
-
         return 0
+
+    def config(self, source=None, *, sinks=None, dummy=None):
+        if source is None:
+            dict_config = {}
+        elif isinstance(source, dict):
+            dict_config = source
+        elif isinstance(source, (str, PathLike)):
+            source = str(source)
+            name = 'loguru.dynamic_config_loader'
+            loader = importlib.machinery.SourceFileLoader(name, source)
+            spec = importlib.util.spec_from_loader(name, loader)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            dict_config = module.config
+        else:
+            raise ValueError("Cannot get dict config for objects of type: '%s'" % type(source))
+
+        kwargs = {
+            'sinks': sinks,
+            'dummy': dummy,
+        }
+
+        for key, value in kwargs.items():
+            if value is not None:
+                dict_config[key] = value
+
+        self.clear()
+        self.dummy = dict_config.get('dummy', False)
+        sinks_ids = [self.log_to(**params) for params in dict_config.get('sinks', [])]
+
+        return sinks_ids
 
     @staticmethod
     def make_log_function(level, log_exception=0):
