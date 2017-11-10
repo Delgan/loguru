@@ -1,7 +1,5 @@
-import logging
 import datetime
 from inspect import isclass
-from logging import getLevelName, addLevelName
 from os import getpid, PathLike
 from os.path import normcase, basename, splitext
 import sys
@@ -35,19 +33,6 @@ SUCCESS = 25
 WARNING = 30
 ERROR = 40
 CRITICAL = 50
-
-addLevelName(TRACE, "TRACE")
-addLevelName(SUCCESS, "SUCCESS")
-
-LEVELS_COLORS = {
-    getLevelName(TRACE): "<cyan><bold>",
-    getLevelName(DEBUG): "<blue><bold>",
-    getLevelName(INFO): "<bold>",
-    getLevelName(SUCCESS): "<green><bold>",
-    getLevelName(WARNING): "<yellow><bold>",
-    getLevelName(ERROR): "<red><bold>",
-    getLevelName(CRITICAL): "<RED><bold>",
-}
 
 VERBOSE_FORMAT = "<green>{time}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
 
@@ -93,7 +78,6 @@ class loguru_traceback:
         self.tb_next = next_
         self.__is_caught_point__ = is_caught_point
 
-
 class StrRecord(str):
     pass
 
@@ -111,7 +95,7 @@ class HackyInt(int):
 
 class Handler:
 
-    def __init__(self, *, writter, level, format_, filter_, colored, better_exceptions):
+    def __init__(self, *, writter, level, format_, filter_, colored, better_exceptions, levels={}):
         self.writter = writter
         self.level = level
         self.format = format_
@@ -119,20 +103,44 @@ class Handler:
         self.colored = colored
         self.better_exceptions = better_exceptions
 
-        self.formats_per_level = self.generate_formats(format_, colored)
+        if colored:
+            self.decolorized_format = None
+            self.precolorized_formats = self.precolorize_formats(levels)
+        else:
+            self.decolorized_format = self.decolorize(format_)
+            self.precolorized_formats = None
+
         self.exception_formatter = ExceptionFormatter(colored=colored)
 
     @staticmethod
-    def generate_formats(format_, colored):
-        formats_per_level = {}
+    def make_ansimarkup(color):
+        color = ansimarkup.parse(color)
+        custom_markup = dict(level=color, lvl=color)
+        am = ansimarkup.AnsiMarkup(tags=custom_markup)
+        return am
 
-        for level_name, level_color in LEVELS_COLORS.items():
-            color = ansimarkup.parse(level_color)
-            custom_markup = dict(level=color, lvl=color)
-            am = ansimarkup.AnsiMarkup(tags=custom_markup)
-            formats_per_level[level_name] = am.parse(format_) if colored else am.strip(format_)
+    @staticmethod
+    def decolorize(format_):
+        am = Handler.make_ansimarkup('')
+        return am.strip(format_)
 
-        return formats_per_level
+    @staticmethod
+    def colorize(format_, color):
+        am = Handler.make_ansimarkup(color)
+        return am.parse(format_)
+
+    def update_format(self, level_no, level_color):
+        if not self.colored:
+            return
+        self.precolorized_formats[level_no] = self.colorize(self.format, level_color)
+
+    def precolorize_formats(self, levels):
+        precomputed_formats = defaultdict(lambda: self.colorize(self.format, ''))
+
+        for no, color in levels.items():
+            precomputed_formats[no] = self.colorize(self.format, color)
+
+        return precomputed_formats
 
     def emit(self, record):
         level = record['level']
@@ -145,7 +153,12 @@ class Handler:
 
         exception = record['exception']
 
-        formatted = self.formats_per_level[level.name].format_map(record) + '\n'
+        if self.colored:
+            precomputed_format = self.precolorized_formats[level.no]
+        else:
+            precomputed_format = self.decolorized_format
+
+        formatted = precomputed_format.format_map(record) + '\n'
 
         if exception:
             hacked = None
@@ -657,7 +670,27 @@ class Logger:
         self.dummy = dummy
         self.handlers_count = 0
         self.handlers = {}
+        self.levels = defaultdict(lambda: ('UNKNOWN', ''))
         self.catch = Catcher(self)
+
+        self.set_level(TRACE, "TRACE", "<cyan><bold>")
+        self.set_level(DEBUG, "DEBUG", "<blue><bold>")
+        self.set_level(INFO, "INFO", "<bold>")
+        self.set_level(SUCCESS, "SUCCESS", "<green><bold>")
+        self.set_level(WARNING, "WARNING", "<yellow><bold>")
+        self.set_level(ERROR, "ERROR", "<red><bold>")
+        self.set_level(CRITICAL, "CRITICAL", "<RED><bold>")
+
+    def set_level(self, level, name, color=""):
+        if not isinstance(level, Number):
+            raise ValueError("Invalid level value, it should be a number, not: '%s'" % type(level))
+
+        if not isinstance(name, str):
+            raise ValueError("Invalid level name, it should be a string, not: '%s'" % type(name))
+
+        self.levels[level] = (name, color)
+        for _, handler in self.handlers.values():
+            handler.update_format(level, color)
 
     def log_to(self, sink, *, level=DEBUG, format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
         if isclass(sink):
@@ -708,6 +741,7 @@ class Logger:
             filter_=filter,
             colored=colored,
             better_exceptions=better_exceptions,
+            levels={level: color for level, (_, color) in self.levels.items()},
         )
 
         self.handlers[self.handlers_count] = (sink, handler)
@@ -761,10 +795,12 @@ class Logger:
 
         return sinks_ids
 
-    @staticmethod
-    def make_log_function(level, log_exception=0):
+    def log(self, level, message, *args, **kwargs):
+        function = self.make_log_function(level, 'CUSTOM')
+        function(self, message, *args, **kwargs)
 
-        level_name = getLevelName(level)
+    @staticmethod
+    def make_log_function(level, severity, log_exception=0):
 
         def log_function(self, message, *args, **kwargs):
             frame = getframe(1)
@@ -777,6 +813,7 @@ class Logger:
 
             message = message.format(*args, **kwargs)
 
+            level_name, _ = self.levels[level]
             code = frame.f_code
             file_path = normcase(code.co_filename)
             file_name = basename(file_path)
@@ -854,22 +891,22 @@ class Logger:
             for _, handler in self.handlers.values():
                 handler.emit(record)
 
-        doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(level_name)
+        doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(severity)
         if log_exception:
             doc += ' Log also current traceback.'
         log_function.__doc__ = doc
 
         return log_function
 
-    trace = make_log_function.__func__(TRACE)
-    debug = make_log_function.__func__(DEBUG)
-    info = make_log_function.__func__(INFO)
-    success = make_log_function.__func__(SUCCESS)
-    warning = make_log_function.__func__(WARNING)
-    error = make_log_function.__func__(ERROR)
-    exception = make_log_function.__func__(ERROR, 1)
-    _exception_catcher = make_log_function.__func__(ERROR, 2)
-    critical = make_log_function.__func__(CRITICAL)
+    trace = make_log_function.__func__(TRACE, 'TRACE')
+    debug = make_log_function.__func__(DEBUG, 'DEBUG')
+    info = make_log_function.__func__(INFO, 'INFO')
+    success = make_log_function.__func__(SUCCESS, 'SUCCESS')
+    warning = make_log_function.__func__(WARNING, 'WARNING')
+    error = make_log_function.__func__(ERROR, 'ERROR')
+    exception = make_log_function.__func__(ERROR, 'ERROR', 1)
+    _exception_catcher = make_log_function.__func__(ERROR, 'ERROR', 2)
+    critical = make_log_function.__func__(CRITICAL, 'CRITICAL')
 
 logger = Logger()
 logger.log_to(STDERR)
