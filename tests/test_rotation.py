@@ -367,7 +367,7 @@ def test_compression_0_backups(tmpdir, logger):
     "K", "tufy MB", "111.111.111 kb", "3 Ki",
     "2017.11.12", "11:99", "monday at 2017",
     "e days", "2 days 8 pouooi", "foobar",
-    object(), os, pendulum.Date(2017, 11, 11), pendulum.now(),
+    object(), os, pendulum.Date(2017, 11, 11), pendulum.now(), 1j,
 ])
 def test_invalid_rotation(logger, rotation):
     with pytest.raises(ValueError):

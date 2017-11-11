@@ -7,7 +7,8 @@ from sys import exc_info, stdout as STDOUT, stderr as STDERR
 from multiprocessing import current_process
 from threading import current_thread
 import traceback
-from numbers import Number
+import numbers
+import decimal
 import shutil
 import re
 import os
@@ -41,6 +42,8 @@ DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'
 __version__ = "0.0.1"
 
 start_time = now()
+
+Real = (numbers.Real, decimal.Decimal)
 
 def getframe_fallback(n):
     """Return the frame object for the caller's stack frame."""
@@ -95,9 +98,9 @@ class HackyInt(int):
 
 class Handler:
 
-    def __init__(self, *, writter, level, format_, filter_, colored, better_exceptions, levels={}):
+    def __init__(self, *, writter, levelno, format_, filter_, colored, better_exceptions, levelno_to_color={}):
         self.writter = writter
-        self.level = level
+        self.levelno = levelno
         self.format = format_
         self.filter = filter_
         self.colored = colored
@@ -105,7 +108,7 @@ class Handler:
 
         if colored:
             self.decolorized_format = None
-            self.precolorized_formats = self.precolorize_formats(levels)
+            self.precolorized_formats = self.precolorize_formats(levelno_to_color)
         else:
             self.decolorized_format = self.decolorize(format_)
             self.precolorized_formats = None
@@ -129,22 +132,22 @@ class Handler:
         am = Handler.make_ansimarkup(color)
         return am.parse(format_)
 
-    def update_format(self, level_no, level_color):
+    def update_format(self, levelno, level_color):
         if not self.colored:
             return
-        self.precolorized_formats[level_no] = self.colorize(self.format, level_color)
+        self.precolorized_formats[levelno] = self.colorize(self.format, level_color)
 
-    def precolorize_formats(self, levels):
+    def precolorize_formats(self, levelno_to_color):
         precomputed_formats = defaultdict(lambda: self.colorize(self.format, ''))
 
-        for no, color in levels.items():
+        for no, color in levelno_to_color.items():
             precomputed_formats[no] = self.colorize(self.format, color)
 
         return precomputed_formats
 
     def emit(self, record):
         level = record['level']
-        if self.level > level.no:
+        if self.levelno > level.no:
             return
 
         if self.filter is not None:
@@ -298,7 +301,7 @@ class FileSink:
                     return False
             else:
                 raise ValueError("Cannot parse rotation from: '%s'" % rotation)
-        elif isinstance(rotation, Number):
+        elif isinstance(rotation, Real):
             size_limit = rotation
             def function(message):
                 file = self.file
@@ -670,25 +673,29 @@ class Logger:
         self.dummy = dummy
         self.handlers_count = 0
         self.handlers = {}
-        self.levels = defaultdict(lambda: ('UNKNOWN', ''))
+        self.names_to_levels = {}
+        self.levels = {}
         self.catch = Catcher(self)
 
-        self.set_level(TRACE, "TRACE", "<cyan><bold>")
-        self.set_level(DEBUG, "DEBUG", "<blue><bold>")
-        self.set_level(INFO, "INFO", "<bold>")
-        self.set_level(SUCCESS, "SUCCESS", "<green><bold>")
-        self.set_level(WARNING, "WARNING", "<yellow><bold>")
-        self.set_level(ERROR, "ERROR", "<red><bold>")
-        self.set_level(CRITICAL, "CRITICAL", "<RED><bold>")
+        self.add_level(TRACE, "TRACE", "<cyan><bold>")
+        self.add_level(DEBUG, "DEBUG", "<blue><bold>")
+        self.add_level(INFO, "INFO", "<bold>")
+        self.add_level(SUCCESS, "SUCCESS", "<green><bold>")
+        self.add_level(WARNING, "WARNING", "<yellow><bold>")
+        self.add_level(ERROR, "ERROR", "<red><bold>")
+        self.add_level(CRITICAL, "CRITICAL", "<RED><bold>")
 
-    def set_level(self, level, name, color=""):
-        if not isinstance(level, Number):
+    def add_level(self, level, name, color=""):
+        if not isinstance(level, Real):
             raise ValueError("Invalid level value, it should be a number, not: '%s'" % type(level))
 
         if not isinstance(name, str):
             raise ValueError("Invalid level name, it should be a string, not: '%s'" % type(name))
 
+        name = name.upper()
+        self.names_to_levels[name] = level
         self.levels[level] = (name, color)
+
         for _, handler in self.handlers.values():
             handler.update_format(level, color)
 
@@ -734,14 +741,18 @@ class Logger:
             length = len(parent)
             filter = lambda r: (r['name'] + '.')[:length] == parent
 
+        if isinstance(level, str):
+            level = level.upper()
+            level = self.names_to_levels[level]
+
         handler = Handler(
             writter=writter,
-            level=level,
+            levelno=level,
             format_=format,
             filter_=filter,
             colored=colored,
             better_exceptions=better_exceptions,
-            levels={level: color for level, (_, color) in self.levels.items()},
+            levelno_to_color={levelno: color for levelno, (_, color) in self.levels.items()},
         )
 
         self.handlers[self.handlers_count] = (sink, handler)
@@ -796,11 +807,16 @@ class Logger:
         return sinks_ids
 
     def log(self, level, message, *args, **kwargs):
-        function = self.make_log_function(level, 'CUSTOM')
+        if isinstance(level, str):
+            level = level.upper()
+            level = self.names_to_levels[level]
+        function = self.make_log_function(level)
         function(self, message, *args, **kwargs)
 
     @staticmethod
-    def make_log_function(level, severity, log_exception=0):
+    def make_log_function(levelno, log_exception=0):
+
+        default_level = ('Level %d' % levelno, None)
 
         def log_function(self, message, *args, **kwargs):
             frame = getframe(1)
@@ -813,7 +829,7 @@ class Logger:
 
             message = message.format(*args, **kwargs)
 
-            level_name, _ = self.levels[level]
+            level_name, _ = self.levels.get(levelno, default_level)
             code = frame.f_code
             file_path = normcase(code.co_filename)
             file_name = basename(file_path)
@@ -823,7 +839,7 @@ class Logger:
             elapsed = pendulum.Interval(microseconds=diff.microseconds)
 
             level_recattr = LevelRecattr(level_name)
-            level_recattr.no, level_recattr.name = level, level_name
+            level_recattr.no, level_recattr.name = levelno, level_name
 
             file_recattr = FileRecattr(file_name)
             file_recattr.name, file_recattr.path = file_name, file_path
@@ -891,22 +907,22 @@ class Logger:
             for _, handler in self.handlers.values():
                 handler.emit(record)
 
-        doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(severity)
+        doc = "Log 'message.format(*args, **kwargs)' with severity {}.".format(levelno)
         if log_exception:
             doc += ' Log also current traceback.'
         log_function.__doc__ = doc
 
         return log_function
 
-    trace = make_log_function.__func__(TRACE, 'TRACE')
-    debug = make_log_function.__func__(DEBUG, 'DEBUG')
-    info = make_log_function.__func__(INFO, 'INFO')
-    success = make_log_function.__func__(SUCCESS, 'SUCCESS')
-    warning = make_log_function.__func__(WARNING, 'WARNING')
-    error = make_log_function.__func__(ERROR, 'ERROR')
-    exception = make_log_function.__func__(ERROR, 'ERROR', 1)
-    _exception_catcher = make_log_function.__func__(ERROR, 'ERROR', 2)
-    critical = make_log_function.__func__(CRITICAL, 'CRITICAL')
+    trace = make_log_function.__func__(TRACE)
+    debug = make_log_function.__func__(DEBUG)
+    info = make_log_function.__func__(INFO)
+    success = make_log_function.__func__(SUCCESS)
+    warning = make_log_function.__func__(WARNING)
+    error = make_log_function.__func__(ERROR)
+    exception = make_log_function.__func__(ERROR, 1)
+    _exception_catcher = make_log_function.__func__(ERROR, 2)
+    critical = make_log_function.__func__(CRITICAL)
 
 logger = Logger()
 logger.log_to(STDERR)
