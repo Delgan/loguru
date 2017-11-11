@@ -202,7 +202,7 @@ class Handler:
         self.writter(message)
 
 class LevelRecattr(str):
-    __slots__ = ('no', 'name')
+    __slots__ = ('no', 'name', 'icon')
 
 
 class FileRecattr(str):
@@ -677,15 +677,15 @@ class Logger:
         self.levels = {}
         self.catch = Catcher(self)
 
-        self.add_level(TRACE, "TRACE", "<cyan><bold>")
-        self.add_level(DEBUG, "DEBUG", "<blue><bold>")
-        self.add_level(INFO, "INFO", "<bold>")
-        self.add_level(SUCCESS, "SUCCESS", "<green><bold>")
-        self.add_level(WARNING, "WARNING", "<yellow><bold>")
-        self.add_level(ERROR, "ERROR", "<red><bold>")
-        self.add_level(CRITICAL, "CRITICAL", "<RED><bold>")
+        self.add_level(TRACE, "TRACE", "<cyan><bold>", "✏️")        # Pencil
+        self.add_level(DEBUG, "DEBUG", "<blue><bold>", "🐞")        # Lady Beetle
+        self.add_level(INFO, "INFO", "<bold>", "ℹ️")                # Information
+        self.add_level(SUCCESS, "SUCCESS", "<green><bold>", "✔️")   # Heavy Check Mark
+        self.add_level(WARNING, "WARNING", "<yellow><bold>", "⚠️")  # Warning
+        self.add_level(ERROR, "ERROR", "<red><bold>", "❌")          # Cross Mark
+        self.add_level(CRITICAL, "CRITICAL", "<RED><bold>", "☠️")   # Skull and Crossbones
 
-    def add_level(self, level, name, color=""):
+    def add_level(self, level, name, color="", icon=" "):
         if not isinstance(level, Real):
             raise ValueError("Invalid level value, it should be a number, not: '%s'" % type(level))
 
@@ -694,7 +694,7 @@ class Logger:
 
         name = name.upper()
         self.names_to_levels[name] = level
-        self.levels[level] = (name, color)
+        self.levels[level] = (name, color, icon)
 
         for _, handler in self.handlers.values():
             handler.update_format(level, color)
@@ -752,7 +752,7 @@ class Logger:
             filter_=filter,
             colored=colored,
             better_exceptions=better_exceptions,
-            levelno_to_color={levelno: color for levelno, (_, color) in self.levels.items()},
+            levelno_to_color={levelno: color for levelno, (_, color, _) in self.levels.items()},
         )
 
         self.handlers[self.handlers_count] = (sink, handler)
@@ -816,7 +816,7 @@ class Logger:
     @staticmethod
     def make_log_function(levelno, log_exception=0):
 
-        default_level = ('Level %d' % levelno, None)
+        default_level = ('Level %d' % levelno, "", " ")
 
         def log_function(self, message, *args, **kwargs):
             frame = getframe(1)
@@ -829,7 +829,7 @@ class Logger:
 
             message = message.format(*args, **kwargs)
 
-            level_name, _ = self.levels.get(levelno, default_level)
+            level_name, _, level_icon = self.levels.get(levelno, default_level)
             code = frame.f_code
             file_path = normcase(code.co_filename)
             file_name = basename(file_path)
@@ -839,7 +839,7 @@ class Logger:
             elapsed = pendulum.Interval(microseconds=diff.microseconds)
 
             level_recattr = LevelRecattr(level_name)
-            level_recattr.no, level_recattr.name = levelno, level_name
+            level_recattr.no, level_recattr.name, level_recattr.icon = levelno, level_name, level_icon
 
             file_recattr = FileRecattr(file_name)
             file_recattr.name, file_recattr.path = file_name, file_path

@@ -17,6 +17,7 @@ import pytest
     ('{level}', lambda r: r == 'DEBUG'),
     ('{level.name}', lambda r: r == 'DEBUG'),
     ('{level.no}', lambda r: r == str(loguru.DEBUG)),
+    ('{level.icon}', lambda r: r == '🐞'),
     ('{file}', lambda r: r == 'test_formatters.py'),
     ('{file.name}', lambda r: r == 'test_formatters.py'),
     ('{file.path}', lambda r: r.endswith('test_formatters.py')),
