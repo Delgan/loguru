@@ -137,7 +137,7 @@ class Handler:
 
         return precomputed_formats
 
-    def emit(self, record):
+    def emit(self, record, exception=None):
         level = record['level']
         if self.levelno > level.no:
             return
@@ -145,8 +145,6 @@ class Handler:
         if self.filter is not None:
             if not self.filter(record):
                 return
-
-        exception = record['exception']
 
         if self.colored:
             precomputed_format = self.precolorized_formats[level.name]
@@ -630,7 +628,7 @@ class Catcher:
             'function': function_name,
         }
 
-        if self.level is not None:
+        if self.level is not None: # pragma: no cover
             # TODO: Use logger function accordingly
             raise NotImplementedError
 
@@ -931,11 +929,10 @@ class Logger:
                 'module': splitext(file_name)[0],
                 'thread': thread_recattr,
                 'process': process_recattr,
-                'exception': exception,
             }
 
             for _, handler in _self.handlers.values():
-                handler.emit(record)
+                handler.emit(record, exception)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(level_name)
         if log_exception:
