@@ -828,6 +828,7 @@ class Logger:
         function(self, message, *args, **kwargs)
 
     @staticmethod
+    @functools.lru_cache()
     def make_log_function(level, log_exception=0):
 
         if isinstance(level, str):
