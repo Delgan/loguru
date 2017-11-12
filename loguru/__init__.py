@@ -823,9 +823,9 @@ class Logger:
 
         return sinks_ids
 
-    def log(self, level, message, *args, **kwargs):
-        function = self.make_log_function(level)
-        function(self, message, *args, **kwargs)
+    def log(_self, _level, _message, *args, **kwargs):
+        function = _self.make_log_function(_level)
+        function(_self, _message, *args, **kwargs)
 
     @staticmethod
     @functools.lru_cache()
@@ -841,7 +841,7 @@ class Logger:
         else:
             raise ValueError("Invalid level, it should be an int or a string, not: '%s'" % type(level))
 
-        def log_function(self, message, *args, **kwargs):
+        def log_function(_self, _message, *args, **kwargs):
             frame = getframe(1)
             name = frame.f_globals['__name__']
 
@@ -850,12 +850,12 @@ class Logger:
             now_ = now()
             patch_datetime(now_)
 
-            message = message.format(*args, **kwargs)
+            message = _message.format(*args, **kwargs)
 
             if level_id is None:
                 level_no, level_icon = level, ' '
             else:
-                level_no, _, level_icon = self.levels[level_name]
+                level_no, _, level_icon = _self.levels[level_name]
 
             code = frame.f_code
             file_path = normcase(code.co_filename)
@@ -931,7 +931,7 @@ class Logger:
                 'exception': exception,
             }
 
-            for _, handler in self.handlers.values():
+            for _, handler in _self.handlers.values():
                 handler.emit(record)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(level_name)

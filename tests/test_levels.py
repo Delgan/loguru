@@ -4,7 +4,7 @@ import pytest
 
 @pytest.mark.parametrize('message, args, kwargs', [
     ('{} + {} = {}', [1, 2, 3], {}),
-    ('{one} + {two} = {three}', [], dict(one=1, two=2, three=3)),
+    ('{self} + {level} = {message}', [], dict(self=1, level="2", message=3)),
     ('{0} + {two} = {1}', [1, 3], dict(two=2, nope=4)),
 ])
 @pytest.mark.parametrize('use_log_function', [False, True])
