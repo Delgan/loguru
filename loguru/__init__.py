@@ -19,6 +19,7 @@ import math
 import functools
 import uuid
 import importlib
+import atexit
 
 import ansimarkup
 from better_exceptions_fork import ExceptionFormatter
@@ -674,6 +675,8 @@ class Logger:
         self.add_level("WARNING", 30, "<yellow><bold>", "⚠️")  # Warning
         self.add_level("ERROR", 40, "<red><bold>", "❌")          # Cross Mark
         self.add_level("CRITICAL", 50, "<RED><bold>", "☠️")   # Skull and Crossbones
+
+        atexit.register(self.clear)
 
     def add_level(self, name, level, color="", icon=" "):
         if not isinstance(name, str):

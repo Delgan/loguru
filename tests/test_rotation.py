@@ -7,7 +7,7 @@ import datetime
 import math
 import os
 import re
-
+import py
 
 @pytest.mark.parametrize('name, should_rename', [
     ('test.log', True),
@@ -360,6 +360,35 @@ def test_compression_0_backups(tmpdir, logger):
         logger.debug(m)
         assert len(tmpdir.listdir()) == 1
         assert tmpdir.join('test.log').read() == m + '\n'
+
+@pytest.mark.parametrize('rotate', [True, False])
+def test_compression_atexit(tmpdir, logger, rotate):
+    import gzip
+    loguru_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    file_py = tmpdir.join("test.py")
+    file_log = tmpdir.join("test.log")
+    file_gz = tmpdir.join("test.log.gz")
+
+    log_to = str(file_log.realpath())
+    rotation = '50' if rotate else 'None'
+
+    cfg_loguru = ('import sys;'
+                  'sys.path.append("' + loguru_path + '");'
+                  'from loguru import logger;'
+                  'logger.clear();'
+                  'logger.log_to("' + log_to + '", format="{message}", compression="gz", rotation=' + rotation + ');'
+                  'logger.info("It works.")')
+
+    file_py.write(cfg_loguru)
+    py.process.cmdexec('python %s' % file_py.realpath())
+
+    if rotate:
+        assert file_gz.check(exists=0)
+        assert file_log.read() == "It works.\n"
+    else:
+        assert file_log.check(exists=0)
+        with gzip.open(file_gz.realpath()) as gz:
+            assert gz.read() == b'It works.\n'
 
 @pytest.mark.parametrize('rotation', [
     "w7", "w10", "w-1", "h", "M",
