@@ -89,6 +89,39 @@ def test_add_existing_level(logger, writer):
                              '  + Level 10\x1b[0m + 10 = c\n'
                              '  + Level 45\x1b[0m + 45 = d\n')
 
+def test_edit_level(logger, writer):
+    logger.add_level("foo", level=-1, color="<bold>", icon="[?]")
+    logger.log_to(writer, format="<level>->{level.no}, {level.name}, {level.icon}, {message}<-</level>", colored=True)
+
+    logger.log("foo", "nope")
+
+    logger.edit_level("FOO", level=11)
+    logger.log("foo", "a")
+
+    logger.edit_level("foo", icon="[!]")
+    logger.log("FOO", "b")
+
+    logger.edit_level("fOO", color="<red>")
+    logger.log("fOO", "c")
+
+    assert writer.read() == ("\x1b[1m->11, FOO, [?], a<-\x1b[0m\n"
+                             "\x1b[1m->11, FOO, [!], b<-\x1b[0m\n"
+                             "\x1b[31m->11, FOO, [!], c<-\x1b[0m\n")
+
+def test_edit_existing_level(logger, writer):
+    logger.edit_level("debug", level=20, icon="!")
+    logger.log_to(writer, format="{level.no}, <level>{level.name}</level>, {level.icon}, {message}", colored=False)
+    logger.debug("a")
+    assert writer.read() == "20, DEBUG, !, a\n"
+
+def test_get_level(logger):
+    level = (11, "<red>", "[!]")
+    logger.add_level("lvl", *level)
+    assert logger.get_level("lvl") == logger.get_level("LVL") == level
+
+def test_get_existing_level(logger):
+    assert logger.get_level("debug") == logger.get_level("DEBUG") == (10, "<blue><bold>", "🐞")
+
 @pytest.mark.parametrize('level', ['foo', 'FOO', 17])
 def test_log_to_custom_level(logger, writer, level):
     logger.add_level("foo", 17, color="<yellow>")
@@ -116,3 +149,11 @@ def test_add_level_invalid_value(logger, level):
 def test_add_level_invalid_name(logger, name):
     with pytest.raises(ValueError):
         logger.add_level(25, name)
+
+def test_get_level_invalid_name(logger):
+    with pytest.raises(KeyError):
+        logger.get_level("foo")
+
+def test_edit_level_invalid_name(logger):
+    with pytest.raises(KeyError):
+        logger.edit_level("foo", level=1)

@@ -688,6 +688,24 @@ class Logger:
         for _, handler in self.handlers.values():
             handler.update_format(name, color)
 
+
+    def edit_level(self, name, level=None, color=None, icon=None):
+        old_level, old_color, old_icon = self.get_level(name)
+
+        if level is None:
+            level = old_level
+
+        if color is None:
+            color = old_color
+
+        if icon is None:
+            icon = old_icon
+
+        self.add_level(name, level, color, icon)
+
+    def get_level(self, name):
+        return self.levels[name.upper()]
+
     def log_to(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
         if isclass(sink):
             sink = sink(**kwargs)
