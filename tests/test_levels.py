@@ -90,7 +90,7 @@ def test_add_existing_level(logger, writer):
                              '  + Level 45\x1b[0m + 45 = d\n')
 
 def test_edit_level(logger, writer):
-    logger.add_level("foo", level=-1, color="<bold>", icon="[?]")
+    logger.add_level("foo", level=0, color="<bold>", icon="[?]")
     logger.log_to(writer, format="<level>->{level.no}, {level.name}, {level.icon}, {message}<-</level>", colored=True)
 
     logger.log("foo", "nope")
@@ -132,28 +132,48 @@ def test_log_to_custom_level(logger, writer, level):
 
     assert writer.read() == 'INFO + 20 + yes\n'
 
-def test_log_invalid_level_name(logger, writer):
+def test_log_not_existing_level_name(logger):
     with pytest.raises(KeyError):
         logger.log("foo", "test")
 
-def test_log_to_invalid_level_name(logger, writer):
+def test_log_to_not_existing_level_name(logger, writer):
     with pytest.raises(KeyError):
         logger.log_to(writer, level="FOO")
 
-@pytest.mark.parametrize("level", ["100", object(), {}])
-def test_add_level_invalid_value(logger, level):
-    with pytest.raises(ValueError):
-        logger.add_level(level, "TEST")
-
-@pytest.mark.parametrize("name", [100, object(), {}])
-def test_add_level_invalid_name(logger, name):
-    with pytest.raises(ValueError):
-        logger.add_level(25, name)
-
-def test_get_level_invalid_name(logger):
+def test_get_not_existing_level(logger):
     with pytest.raises(KeyError):
         logger.get_level("foo")
 
-def test_edit_level_invalid_name(logger):
+def test_edit_not_existing_level(logger):
     with pytest.raises(KeyError):
         logger.edit_level("foo", level=1)
+
+@pytest.mark.parametrize("level", [-1, 3.4, object()])
+def test_log_invalid_level(logger, level):
+    with pytest.raises(ValueError):
+        logger.log(level, "test")
+
+@pytest.mark.parametrize("level", [-1, 3.4, object()])
+def test_log_to_invalid_level(logger, writer, level):
+    with pytest.raises(ValueError):
+        logger.log_to(writer, level=level)
+
+@pytest.mark.parametrize("level_name", [10, object()])
+def test_add_invalid_level_name(logger, level_name):
+    with pytest.raises(ValueError):
+        logger.add_level(level_name, 11)
+
+@pytest.mark.parametrize("level_value", ["1", -1, 3.4, object()])
+def test_add_invalid_level_value(logger, level_value):
+    with pytest.raises(ValueError):
+        logger.add_level("test", level_value)
+
+@pytest.mark.parametrize("level", [10, object()])
+def test_get_invalid_level(logger, level):
+    with pytest.raises(Exception):
+        logger.get_level(level)
+
+@pytest.mark.parametrize("level", [10, object()])
+def test_edit_invalid_level(logger, level):
+    with pytest.raises(Exception):
+        logger.edit_level(level, icon="?")

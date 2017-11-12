@@ -679,8 +679,11 @@ class Logger:
         if not isinstance(name, str):
             raise ValueError("Invalid level name, it should be a string, not: '%s'" % type(name))
 
-        if not isinstance(level, Real):
-            raise ValueError("Invalid level value, it should be a number, not: '%s'" % type(level))
+        if not isinstance(level, int):
+            raise ValueError("Invalid level value, it should be an int, not: '%s'" % type(level))
+
+        if level < 0:
+            raise ValueError("Invalid level value (%d), it should be a positive number" % level)
 
         name = name.upper()
         self.levels[name] = (level, color, icon)
@@ -751,8 +754,13 @@ class Logger:
         if isinstance(level, str):
             level = level.upper()
             levelno, _, _ = self.levels[level]
-        else:
+        elif isinstance(level, int):
             levelno = level
+        else:
+            raise ValueError("Invalid level, it should be an int or a string, not: '%s'" % type(level))
+
+        if levelno < 0:
+            raise ValueError("Invalid level value (%d), it should be a positive number" % levelno)
 
         handler = Handler(
             writter=writter,
@@ -824,9 +832,13 @@ class Logger:
 
         if isinstance(level, str):
             level_id = level_name = level.upper()
-        else:
+        elif isinstance(level, int):
+            if level < 0:
+                raise ValueError("Invalid level value (%d), it should be a positive number" % level)
             level_id = None
-            level_name = 'Level %s' % str(level)
+            level_name = 'Level %d' % level
+        else:
+            raise ValueError("Invalid level, it should be an int or a string, not: '%s'" % type(level))
 
         def log_function(self, message, *args, **kwargs):
             frame = getframe(1)

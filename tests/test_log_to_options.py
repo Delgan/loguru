@@ -12,14 +12,12 @@ import pytest
     (10,             lambda x: x.debug,    True),
     ("WARNING",      lambda x: x.success,  False),
     (50,             lambda x: x.error,    False),
-    (float('inf'),   lambda x: x.critical, False),
 ])
 def test_level_option(level, function, should_output, logger, writer):
     message = "Test Level"
     logger.log_to(writer, level=level, format='{message}')
     function(logger)(message)
     assert writer.read() == (message + '\n') * should_output
-
 
 @pytest.mark.parametrize('message, format, expected', [
     ('a', 'Message: {message}', 'Message: a'),
