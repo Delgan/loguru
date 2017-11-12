@@ -7,9 +7,11 @@ import pytest
 
 @pytest.mark.parametrize('level, function, should_output', [
     (0,              lambda x: x.trace,    True),
-    (loguru.TRACE,   lambda x: x.debug,    True),
-    (loguru.INFO,    lambda x: x.info,     True),
-    (loguru.WARNING, lambda x: x.success,  False),
+    ("trace",        lambda x: x.debug,    True),
+    ("INFO",         lambda x: x.info,     True),
+    (10,             lambda x: x.debug,    True),
+    ("WARNING",      lambda x: x.success,  False),
+    (50,             lambda x: x.error,    False),
     (float('inf'),   lambda x: x.critical, False),
 ])
 def test_level_option(level, function, should_output, logger, writer):
@@ -23,7 +25,7 @@ def test_level_option(level, function, should_output, logger, writer):
     ('a', 'Message: {message}', 'Message: a'),
     ('b', 'Nope', 'Nope'),
     ('c', '{level} {message} {level}', 'DEBUG c DEBUG'),
-    ('d', '{message} {level} {level.no} {level.name}', 'd DEBUG %d DEBUG' % loguru.DEBUG)
+    ('d', '{message} {level} {level.no} {level.name}', 'd DEBUG %d DEBUG' % 10)
 ])
 def test_format_option(message, format, expected, logger, writer):
     logger.log_to(writer, format=format)
@@ -39,7 +41,7 @@ def test_format_option(message, format, expected, logger, writer):
     (lambda r: True, True),
     (lambda r: False, False),
     (lambda r: r['level'] == "DEBUG", True),
-    (lambda r: r['level'].no != loguru.DEBUG, False),
+    (lambda r: r['level'].no != 10, False),
 ])
 def test_filter_option(filter, should_output, logger, writer):
     message = "Test Filter"

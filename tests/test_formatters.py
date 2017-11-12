@@ -16,7 +16,7 @@ import pytest
     ('{line}', lambda r: re.fullmatch(r'\d+', r)),
     ('{level}', lambda r: r == 'DEBUG'),
     ('{level.name}', lambda r: r == 'DEBUG'),
-    ('{level.no}', lambda r: r == str(loguru.DEBUG)),
+    ('{level.no}', lambda r: r == "10"),
     ('{level.icon}', lambda r: r == '🐞'),
     ('{file}', lambda r: r == 'test_formatters.py'),
     ('{file.name}', lambda r: r == 'test_formatters.py'),

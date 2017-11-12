@@ -25,16 +25,6 @@ from better_exceptions_fork import ExceptionFormatter
 from pendulum import now
 import pendulum
 
-
-NOTSET = 0
-TRACE = 5
-DEBUG = 10
-INFO = 20
-SUCCESS = 25
-WARNING = 30
-ERROR = 40
-CRITICAL = 50
-
 VERBOSE_FORMAT = "<green>{time}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
 
 DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
@@ -98,7 +88,7 @@ class HackyInt(int):
 
 class Handler:
 
-    def __init__(self, *, writter, levelno, format_, filter_, colored, better_exceptions, levelno_to_color={}):
+    def __init__(self, *, writter, levelno, format_, filter_, colored, better_exceptions, levelname_to_color={}):
         self.writter = writter
         self.levelno = levelno
         self.format = format_
@@ -108,7 +98,7 @@ class Handler:
 
         if colored:
             self.decolorized_format = None
-            self.precolorized_formats = self.precolorize_formats(levelno_to_color)
+            self.precolorized_formats = self.precolorize_formats(levelname_to_color)
         else:
             self.decolorized_format = self.decolorize(format_)
             self.precolorized_formats = None
@@ -132,16 +122,17 @@ class Handler:
         am = Handler.make_ansimarkup(color)
         return am.parse(format_)
 
-    def update_format(self, levelno, level_color):
+    def update_format(self, levelname, color):
         if not self.colored:
             return
-        self.precolorized_formats[levelno] = self.colorize(self.format, level_color)
+        self.precolorized_formats[levelname] = self.colorize(self.format, color)
 
-    def precolorize_formats(self, levelno_to_color):
-        precomputed_formats = defaultdict(lambda: self.colorize(self.format, ''))
+    def precolorize_formats(self, levelname_to_color):
+        precolorized = self.colorize(self.format, '')
+        precomputed_formats = defaultdict(lambda: precolorized)
 
-        for no, color in levelno_to_color.items():
-            precomputed_formats[no] = self.colorize(self.format, color)
+        for levelname, color in levelname_to_color.items():
+            precomputed_formats[levelname] = self.colorize(self.format, color)
 
         return precomputed_formats
 
@@ -157,7 +148,7 @@ class Handler:
         exception = record['exception']
 
         if self.colored:
-            precomputed_format = self.precolorized_formats[level.no]
+            precomputed_format = self.precolorized_formats[level.name]
         else:
             precomputed_format = self.decolorized_format
 
@@ -673,33 +664,31 @@ class Logger:
         self.dummy = dummy
         self.handlers_count = 0
         self.handlers = {}
-        self.names_to_levels = {}
         self.levels = {}
         self.catch = Catcher(self)
 
-        self.add_level(TRACE, "TRACE", "<cyan><bold>", "✏️")        # Pencil
-        self.add_level(DEBUG, "DEBUG", "<blue><bold>", "🐞")        # Lady Beetle
-        self.add_level(INFO, "INFO", "<bold>", "ℹ️")                # Information
-        self.add_level(SUCCESS, "SUCCESS", "<green><bold>", "✔️")   # Heavy Check Mark
-        self.add_level(WARNING, "WARNING", "<yellow><bold>", "⚠️")  # Warning
-        self.add_level(ERROR, "ERROR", "<red><bold>", "❌")          # Cross Mark
-        self.add_level(CRITICAL, "CRITICAL", "<RED><bold>", "☠️")   # Skull and Crossbones
+        self.add_level("TRACE", 5, "<cyan><bold>", "✏️")        # Pencil
+        self.add_level("DEBUG", 10, "<blue><bold>", "🐞")        # Lady Beetle
+        self.add_level("INFO", 20, "<bold>", "ℹ️")                # Information
+        self.add_level("SUCCESS", 25, "<green><bold>", "✔️")   # Heavy Check Mark
+        self.add_level("WARNING", 30, "<yellow><bold>", "⚠️")  # Warning
+        self.add_level("ERROR", 40, "<red><bold>", "❌")          # Cross Mark
+        self.add_level("CRITICAL", 50, "<RED><bold>", "☠️")   # Skull and Crossbones
 
-    def add_level(self, level, name, color="", icon=" "):
-        if not isinstance(level, Real):
-            raise ValueError("Invalid level value, it should be a number, not: '%s'" % type(level))
-
+    def add_level(self, name, level, color="", icon=" "):
         if not isinstance(name, str):
             raise ValueError("Invalid level name, it should be a string, not: '%s'" % type(name))
 
+        if not isinstance(level, Real):
+            raise ValueError("Invalid level value, it should be a number, not: '%s'" % type(level))
+
         name = name.upper()
-        self.names_to_levels[name] = level
-        self.levels[level] = (name, color, icon)
+        self.levels[name] = (level, color, icon)
 
         for _, handler in self.handlers.values():
-            handler.update_format(level, color)
+            handler.update_format(name, color)
 
-    def log_to(self, sink, *, level=DEBUG, format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
+    def log_to(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
         if isclass(sink):
             sink = sink(**kwargs)
             return self.log_to(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
@@ -743,16 +732,18 @@ class Logger:
 
         if isinstance(level, str):
             level = level.upper()
-            level = self.names_to_levels[level]
+            levelno, _, _ = self.levels[level]
+        else:
+            levelno = level
 
         handler = Handler(
             writter=writter,
-            levelno=level,
+            levelno=levelno,
             format_=format,
             filter_=filter,
             colored=colored,
             better_exceptions=better_exceptions,
-            levelno_to_color={levelno: color for levelno, (_, color, _) in self.levels.items()},
+            levelname_to_color={name: color for name, (_, color, _) in self.levels.items()},
         )
 
         self.handlers[self.handlers_count] = (sink, handler)
@@ -807,16 +798,17 @@ class Logger:
         return sinks_ids
 
     def log(self, level, message, *args, **kwargs):
-        if isinstance(level, str):
-            level = level.upper()
-            level = self.names_to_levels[level]
         function = self.make_log_function(level)
         function(self, message, *args, **kwargs)
 
     @staticmethod
-    def make_log_function(levelno, log_exception=0):
+    def make_log_function(level, log_exception=0):
 
-        default_level = ('Level %d' % levelno, "", " ")
+        if isinstance(level, str):
+            level_id = level_name = level.upper()
+        else:
+            level_id = None
+            level_name = 'Level %s' % str(level)
 
         def log_function(self, message, *args, **kwargs):
             frame = getframe(1)
@@ -829,7 +821,11 @@ class Logger:
 
             message = message.format(*args, **kwargs)
 
-            level_name, _, level_icon = self.levels.get(levelno, default_level)
+            if level_id is None:
+                level_no, level_icon = level, ' '
+            else:
+                level_no, _, level_icon = self.levels[level_name]
+
             code = frame.f_code
             file_path = normcase(code.co_filename)
             file_name = basename(file_path)
@@ -839,7 +835,7 @@ class Logger:
             elapsed = pendulum.Interval(microseconds=diff.microseconds)
 
             level_recattr = LevelRecattr(level_name)
-            level_recattr.no, level_recattr.name, level_recattr.icon = levelno, level_name, level_icon
+            level_recattr.no, level_recattr.name, level_recattr.icon = level_no, level_name, level_icon
 
             file_recattr = FileRecattr(file_name)
             file_recattr.name, file_recattr.path = file_name, file_path
@@ -907,22 +903,22 @@ class Logger:
             for _, handler in self.handlers.values():
                 handler.emit(record)
 
-        doc = "Log 'message.format(*args, **kwargs)' with severity {}.".format(levelno)
+        doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(level_name)
         if log_exception:
             doc += ' Log also current traceback.'
         log_function.__doc__ = doc
 
         return log_function
 
-    trace = make_log_function.__func__(TRACE)
-    debug = make_log_function.__func__(DEBUG)
-    info = make_log_function.__func__(INFO)
-    success = make_log_function.__func__(SUCCESS)
-    warning = make_log_function.__func__(WARNING)
-    error = make_log_function.__func__(ERROR)
-    exception = make_log_function.__func__(ERROR, 1)
-    _exception_catcher = make_log_function.__func__(ERROR, 2)
-    critical = make_log_function.__func__(CRITICAL)
+    trace = make_log_function.__func__("TRACE")
+    debug = make_log_function.__func__("DEBUG")
+    info = make_log_function.__func__("INFO")
+    success = make_log_function.__func__("SUCCESS")
+    warning = make_log_function.__func__("WARNING")
+    error = make_log_function.__func__("ERROR")
+    exception = make_log_function.__func__("ERROR", 1)
+    _exception_catcher = make_log_function.__func__("ERROR", 2)
+    critical = make_log_function.__func__("CRITICAL")
 
 logger = Logger()
 logger.log_to(STDERR)
