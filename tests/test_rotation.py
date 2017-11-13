@@ -362,25 +362,19 @@ def test_compression_0_backups(tmpdir, logger):
         assert tmpdir.join('test.log').read() == m + '\n'
 
 @pytest.mark.parametrize('rotate', [True, False])
-def test_compression_atexit(tmpdir, logger, rotate):
+def test_compression_atexit(tmpdir, logger, rotate, pyexec):
     import gzip
-    loguru_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    file_py = tmpdir.join("test.py")
+
     file_log = tmpdir.join("test.log")
     file_gz = tmpdir.join("test.log.gz")
 
     log_to = str(file_log.realpath())
     rotation = '50' if rotate else 'None'
 
-    cfg_loguru = ('import sys;'
-                  'sys.path.append("' + loguru_path + '");'
-                  'from loguru import logger;'
-                  'logger.clear();'
-                  'logger.log_to("' + log_to + '", format="{message}", compression="gz", rotation=' + rotation + ');'
-                  'logger.info("It works.")')
+    code = ('logger.log_to("' + log_to + '", format="{message}", compression="gz", rotation=' + rotation + ')\n'
+            'logger.info("It works.")')
 
-    file_py.write(cfg_loguru)
-    py.process.cmdexec('python %s' % file_py.realpath())
+    pyexec(code, True)
 
     if rotate:
         assert file_gz.check(exists=0)

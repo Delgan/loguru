@@ -6,7 +6,7 @@ from itertools import zip_longest, dropwhile
 import re
 
 @pytest.fixture
-def compare_outputs(tmpdir):
+def compare_outputs(tmpdir, pyexec):
 
     def compare_outputs(with_loguru, without_loguru, caught_scope_index, caught_trace_index=0):
         print("=== Comparing outputs with and without loguru ===")
@@ -15,17 +15,10 @@ def compare_outputs(tmpdir):
         print(without_loguru)
         print("=================================================")
 
-        file = tmpdir.join('test.py')
-
-        def run():
-            return py.process.cmdexec('python %s' % file.realpath())
-
-        file.write(with_loguru)
-        result_with_loguru = run().strip()
+        result_with_loguru = pyexec(with_loguru, True).strip()
 
         try:
-            file.write(without_loguru)
-            run()
+            pyexec(without_loguru, False)
         except py.error.Error as e:
             result_without_loguru = e.err.strip()
 
@@ -58,12 +51,7 @@ def compare_outputs(tmpdir):
 def compare(compare_outputs, request):
     catch_mode = request.param
 
-    loguru_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    cfg_loguru = ('import sys;'
-                  'sys.path.append("' + loguru_path + '");'
-                  'from loguru import logger;'
-                  'logger.clear();'
-                  'logger.log_to(sys.stdout, better_exceptions=False, colored=False, format="{message}")\n')
+    log_to = 'logger.log_to(sys.stdout, better_exceptions=False, colored=False, format="{message}")\n'
 
     def compare(template, caught_scope_index, caught_trace_index=0, *, disabled=[]):
         template = textwrap.dedent(template)
@@ -100,7 +88,7 @@ def compare(compare_outputs, request):
         without_loguru = template.format_map(without_dict)
         with_loguru = template.format_map(with_dict)
 
-        with_loguru = cfg_loguru + with_loguru
+        with_loguru = log_to + with_loguru
         without_loguru = '# padding\n' + without_loguru
 
         compare_outputs(with_loguru, without_loguru, caught_scope_index, caught_trace_index)
