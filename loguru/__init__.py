@@ -13,11 +13,11 @@ import shutil
 import re
 import os
 import glob
+import random
 from collections import defaultdict, OrderedDict
 from string import Formatter
 import math
 import functools
-import uuid
 import importlib
 import atexit
 
@@ -77,12 +77,10 @@ class StrRecord(str):
 
 class HackyInt(int):
 
-    rand = str(uuid.uuid4().int) + str(uuid.uuid4().int)  # 32 bytes
+    rand = '0' + str(random.randrange(10**32, 10**33))
 
     def __str__(self):
-        self.true_value = int(repr(self))
-        self.false_value = '0' + repr(self) + self.rand
-        return self.false_value
+        return self.rand
 
     def __eq__(self, other):
         return False
@@ -154,36 +152,44 @@ class Handler:
         formatted = precomputed_format.format_map(record) + '\n'
 
         if exception:
-            hacked = None
+            hacky_int = None
             tb = exception[2]
             while tb:
                 if tb.__is_caught_point__:
-                    hacked = HackyInt(tb.tb_lineno)
-                    tb.tb_lineno = hacked
+                    hacky_int = HackyInt(tb.tb_lineno)
+                    tb.tb_lineno = hacky_int
                     break
                 tb = tb.tb_next
 
             if self.better_exceptions:
-                formatted_exception = self.exception_formatter.format_exception(*exception)
+                formatted_exc = self.exception_formatter.format_exception(*exception)
             else:
-                formatted_exception = traceback.format_exception(*exception)
+                formatted_exc = traceback.format_exception(*exception)
 
-            formatted_exception = ''.join(formatted_exception)
+            formatted_exc = ''.join(formatted_exc)
 
-            tb_reg = r'Traceback \(most recent call last\):'
-            ansi_reg = r'[a-zA-Z0-9;\\\[]*'
-            hacky_reg = r'^({ansi})({tb})({ansi})$((?:(?!^{ansi}{tb}{ansi}$)[\s\S])*)^({ansi})(  )({ansi}File.*line{ansi} {ansi})({line})({ansi},.*)$'.format(tb=tb_reg, ansi=ansi_reg, line=str(hacked.false_value))
+            reg = r'(?:^\S*(Traceback \(most recent call last\):)\S*$|^\S*  \S*File.*\D(%s)\D.*$)' % str(hacky_int)
+            matches = re.finditer(reg, formatted_exc, flags=re.M)
 
-            def mark_catch_point(match):
-                m_1, tb, m_2, m_3, m_4, s, m_5, line, m_6 = match.groups()
-                tb = 'Traceback (most recent call last, catch point marked):'
-                s = '> '
-                line = str(hacked.true_value)
-                return ''.join([m_1, tb, m_2, m_3, m_4, s, m_5, line, m_6])
+            tb_match = None
 
-            formatted_exception = re.sub(hacky_reg, mark_catch_point, formatted_exception, count=1, flags=re.M)
+            for match in matches:
+                tb, line = match.groups()
+                if tb is not None:
+                    tb_match = match
+                if line is not None:
+                    s, e = match.span(2)
+                    formatted_exc = formatted_exc[:s] + str(int(hacky_int)) + formatted_exc[e:]
+                    s = match.start(0)
+                    formatted_exc = formatted_exc[:s] + formatted_exc[s:].replace(" ", ">", 1)
+                    if tb_match is not None:
+                        old = "Traceback (most recent call last):"
+                        new = "Traceback (most recent call last, catch point marked):"
+                        s = tb_match.start(0)
+                        formatted_exc = formatted_exc[:s] + formatted_exc[s:].replace(old, new, 1)
+                    break
 
-            formatted += formatted_exception
+            formatted += formatted_exc
 
 
         message = StrRecord(formatted)
@@ -563,7 +569,9 @@ class FileSink:
             n = len(logs) + 1
             z = len(str(n))
             for i, log in enumerate(logs):
-                os.replace(log.path, file_path + '.%s' % str(n - i).zfill(z) + (reg.fullmatch(log.name).group(2) or ''))
+                num = '.%s' % str(n - i).zfill(z)
+                ext = reg.fullmatch(log.name).group(2) or ''
+                os.replace(log.path, file_path + num + ext)
             new_path = file_path + ".%s" % "1".zfill(z)
             os.replace(file_path, new_path)
 

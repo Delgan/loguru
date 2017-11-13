@@ -349,6 +349,25 @@ def test_carret_not_masked(logger, writer):
 
     assert sum(line.startswith('> File') for line in lines) == 1
 
+def test_postprocess_colored(logger, writer, pyexec, tmpdir):
+    file = tmpdir.join("test.log")
+
+    code = """
+    logger.log_to('%s', colored=True, better_exceptions=True)
+    def f():
+        1 / 0
+    with logger.catch:
+        f()
+    """ % str(file.realpath())
+
+    code = textwrap.dedent(code)
+    pyexec(code, True)
+
+    lines = file.read().strip().splitlines()
+
+    assert re.match(r"^\S*Traceback \(most recent call last, catch point marked\):\S*$", lines[1])
+    assert re.match(r"^\S*>.*line.*\D7\D.*$", lines[3])
+
 def test_frame_values_backward(logger, writer):
     logger.log_to(writer, better_exceptions=True, colored=False)
 
