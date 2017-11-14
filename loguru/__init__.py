@@ -3,7 +3,7 @@ from inspect import isclass
 from os import getpid, PathLike
 from os.path import normcase, basename, splitext
 import sys
-from sys import exc_info, stdout as STDOUT, stderr as STDERR
+from sys import exc_info
 from multiprocessing import current_process
 from threading import current_thread
 import traceback
@@ -190,7 +190,6 @@ class Handler:
                     break
 
             formatted += formatted_exc
-
 
         message = StrRecord(formatted)
         message.record = record
@@ -640,7 +639,7 @@ class Catcher:
             # TODO: Use logger function accordingly
             raise NotImplementedError
 
-        self.exception_logger(self.message.format_map(record))
+        self.logger.exception(self.message.format_map(record))
 
         return not self.reraise
 
@@ -655,11 +654,9 @@ class Catcher:
                 def catch_wrapper(*args, **kwargs):
                     # TODO: Fix it to avoid any conflict with threading because of self modification
                     self.function_name = function_name
-                    self.exception_logger = self.logger._exception_catcher
                     with self:
                         function(*args, **kwargs)
                     self.function_name = None
-                    self.exception_logger = self.logger.exception
 
                 return catch_wrapper
 
@@ -838,7 +835,7 @@ class Logger:
 
     @staticmethod
     @functools.lru_cache()
-    def make_log_function(level, log_exception=0):
+    def make_log_function(level, log_exception=False):
 
         if isinstance(level, str):
             level_id = level_name = level.upper()
@@ -892,36 +889,45 @@ class Logger:
 
                 root_frame = tb.tb_frame.f_back
 
-                # TODO: Test edge cases (look in CPython source code for traceback objects and exc.__traceback__ usages)
-
-                loguru_tb = root_tb = None
-                while tb:
-                    if tb.tb_frame.f_code.co_filename != __file__:
-                        new_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
-                        if loguru_tb:
-                            loguru_tb.tb_next = new_tb
-                        else:
-                            root_tb = new_tb
-                        loguru_tb = new_tb
+                if tb.tb_frame.f_code.co_filename != __file__:
+                    decorated = False
+                else:
+                    decorated = True
                     tb = tb.tb_next
 
-                caught_tb = root_tb
+                # TODO: Test edge cases (look in CPython source code for traceback objects and exc.__traceback__ usages)
 
+                loguru_tracebacks = []
+                while tb:
+                    loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
+                    loguru_tracebacks.append(loguru_tb)
+                    tb = tb.tb_next
+
+                for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
+                    prev_tb.tb_next = next_tb
+
+                root_tb = loguru_tracebacks[0] if loguru_tracebacks else None
+
+                forward_tb = root_tb
+                backward_tb = None
+
+                init = True
                 while root_frame:
                     if root_frame.f_code.co_filename != __file__:
                         root_tb = loguru_traceback(root_frame, root_frame.f_lasti, root_frame.f_lineno, root_tb)
+                        if init:
+                            init = False
+                            backward_tb = root_tb
+
                     root_frame = root_frame.f_back
 
-                if log_exception == 1:
-                    caught_tb.__is_caught_point__ = True
+                if decorated:
+                    caught_tb = backward_tb
                 else:
-                    tb_prev = tb_next = root_tb
-                    while tb_next:
-                        if tb_next == caught_tb:
-                            break
-                        tb_prev, tb_next = tb_next, tb_next.tb_next
-                    tb_prev.__is_caught_point__ = True
+                    caught_tb = forward_tb
 
+                if caught_tb:
+                    caught_tb.__is_caught_point__ = True
 
                 exception = (ex_type, ex, root_tb)
 
@@ -955,9 +961,8 @@ class Logger:
     success = make_log_function.__func__("SUCCESS")
     warning = make_log_function.__func__("WARNING")
     error = make_log_function.__func__("ERROR")
-    exception = make_log_function.__func__("ERROR", 1)
-    _exception_catcher = make_log_function.__func__("ERROR", 2)
+    exception = make_log_function.__func__("ERROR", True)
     critical = make_log_function.__func__("CRITICAL")
 
 logger = Logger()
-logger.log_to(STDERR)
+logger.log_to(sys.stderr)

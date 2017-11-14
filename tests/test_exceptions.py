@@ -328,12 +328,21 @@ def test_raising_recursion(logger, writer, rec, catch_mode):
     f(rec)
 
     lines = writer.read().splitlines()
-
     assert sum(line.startswith("Traceback") for line in lines) == rec + 1
     assert sum(line.startswith("> File") for line in lines) == rec + 1
-    for line in lines:
-        if line.startswith("> File"):
-            assert line.endswith("in f")
+    caughts = [(line, next_line) for line, next_line in zip(lines, lines[1:]) if line.startswith("> File")]
+
+    for i, (line, next_line) in enumerate(caughts):
+        expected_end = "in f"
+        epected_next = "    n / 0"
+        if catch_mode == "decorator":
+            epected_next = "    f(n - 1)"
+            if i == len(caughts) - 1:
+                expected_end = "in test_raising_recursion"
+                epected_next = "    f(rec)"
+
+        assert line.endswith(expected_end)
+        assert next_line == epected_next
 
 def test_carret_not_masked(logger, writer):
     logger.log_to(writer, better_exceptions=False, colored=False)
