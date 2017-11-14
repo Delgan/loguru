@@ -5,7 +5,6 @@ import loguru
 import pytest
 
 @pytest.mark.parametrize('format, validator', [
-    ('{message}', lambda r: r == 'Message'),
     ('{name}', lambda r: r == 'tests.test_formatters'),
     ('{time}', lambda r: re.fullmatch(r'\d+-\d+-\d+T\d+:\d+:\d+[.,]\d+[+-]\d+:\d+', r)),
     ('{time:HH[h] mm[m] ss[s]}', lambda r: re.fullmatch(r'\d+h \d+m \d+s', r)),
@@ -29,15 +28,19 @@ import pytest
     ('{process}', lambda r: re.fullmatch(r'\d+', r)),
     ('{process.id}', lambda r: re.fullmatch(r'\d+', r)),
     ('{process.name}', lambda r: isinstance(r, str) and r != ""),
-    ('%s {message} %d', lambda r: r == '%s Message %d'),
-    ('{{a}} {message} {{1}}', lambda r: r == '{a} Message {1}'),
-    ('天 {message} 天', lambda r: r == '天 Message 天'),
+    ('%s {{a}} 天 {{1}} %d', lambda r: r == '%s {a} 天 {1} %d'),
 ])
 def test_log_formatters(format, validator, logger, writer):
+    message = format.replace("{", "{{").replace("}", "}}")
+
+    format += " --- {message}"
     logger.log_to(writer, format=format)
-    logger.debug("Message")
-    result = writer.read().rstrip('\n')
-    assert validator(result)
+
+    logger.debug(message)
+
+    start, end = writer.read().rstrip('\n').split(" --- ")
+    assert validator(start)
+    assert validator(end)
 
 @pytest.mark.parametrize('format, validator', [
     ('{time}.log', lambda r: re.fullmatch(r'\d+-\d+-\d+_\d+-\d+-\d+\.log', r)),
@@ -51,9 +54,7 @@ def test_log_formatters(format, validator, logger, writer):
     ('{n: <2}', lambda r: r == '0 '),
     ('{n+1}', lambda r: r == '1'),
     ('{n+1:0>2}', lambda r: r == '01'),
-    ('%s_{n}_%d', lambda r: r == '%s_0_%d'),
-    ('{{a}}_{n}_{{1}}', lambda r: r == '{a}_0_{1}'),
-    ('天_{n}_天', lambda r: r == '天_0_天'),
+    ('%s_{{a}}_天_{{1}}_%d', lambda r: r == '%s_{a}_天_{1}_%d'),
 ])
 @pytest.mark.parametrize('part', ["file", "dir", "both"])
 def test_file_formatters(tmpdir, format, validator, part, logger):
@@ -81,33 +82,3 @@ def test_file_formatters(tmpdir, format, validator, part, logger):
     elif part == 'both':
         assert validator(file.basename)
         assert validator(file.dirpath().basename)
-
-@pytest.mark.parametrize('message, validator', [
-    ('{function}', lambda r: r == 'my_func'),
-    ('{thread}', lambda r: re.fullmatch(r'\d+', r)),
-    ('{thread.id}', lambda r: re.fullmatch(r'\d+', r)),
-    ('{thread.name}', lambda r: isinstance(r, str) and r != ""),
-    ('{process}', lambda r: re.fullmatch(r'\d+', r)),
-    ('{process.id}', lambda r: re.fullmatch(r'\d+', r)),
-    ('{process.name}', lambda r: isinstance(r, str) and r != ""),
-])
-@pytest.mark.parametrize('catcher', ['decorator', 'context_manager'])
-def test_catch_formatters(message, validator, logger, writer, catcher):
-    logger.log_to(writer, format='{message}')
-
-    if catcher == 'decorator':
-        @logger.catch(message=message)
-        def my_func():
-            1 / 0
-    elif catcher == 'context_manager':
-        def my_func():
-            with logger.catch(message=message):
-                1 / 0
-
-    my_func()
-
-    result = writer.read().strip().splitlines()[0]
-
-    assert validator(result)
-
-

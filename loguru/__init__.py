@@ -595,17 +595,14 @@ class FileSink:
 class Catcher:
 
     def __init__(self, logger, exception=BaseException, *, level=None, reraise=False,
-                       message="An error has been caught in function '{function}', "
-                               "process '{process.name}' ({process.id}), "
-                               "thread '{thread.name}' ({thread.id}):"):
+                       message="An error has been caught in function '{{function}}', "
+                               "process '{{process.name}}' ({{process.id}}), "
+                               "thread '{{thread.name}}' ({{thread.id}}):"):
         self.logger = logger
         self.exception = exception
         self.level = level
         self.reraise = reraise
         self.message = message
-
-        self.function_name = None
-        self.exception_logger = self.logger.exception
 
     def __enter__(self):
         pass
@@ -617,29 +614,11 @@ class Catcher:
         if not issubclass(type_, self.exception):
             return False
 
-        thread = current_thread()
-        thread_recattr = ThreadRecattr(thread.ident)
-        thread_recattr.id, thread_recattr.name = thread.ident, thread.name
-
-        process = current_process()
-        process_recattr = ProcessRecattr(process.ident)
-        process_recattr.id, process_recattr.name = process.ident, process.name
-
-        function_name = self.function_name
-        if function_name is None:
-            function_name = getframe(1).f_code.co_name
-
-        record = {
-            'process': process_recattr,
-            'thread': thread_recattr,
-            'function': function_name,
-        }
-
         if self.level is not None: # pragma: no cover
             # TODO: Use logger function accordingly
             raise NotImplementedError
 
-        self.logger.exception(self.message.format_map(record))
+        self.logger.exception(self.message)
 
         return not self.reraise
 
@@ -648,15 +627,11 @@ class Catcher:
             arg = args[0]
             if callable(arg) and (not isclass(arg) or not issubclass(arg, BaseException)):
                 function = arg
-                function_name = function.__name__
 
                 @functools.wraps(function)
                 def catch_wrapper(*args, **kwargs):
-                    # TODO: Fix it to avoid any conflict with threading because of self modification
-                    self.function_name = function_name
                     with self:
                         function(*args, **kwargs)
-                    self.function_name = None
 
                 return catch_wrapper
 
@@ -944,6 +919,8 @@ class Logger:
                 'thread': thread_recattr,
                 'process': process_recattr,
             }
+
+            record['message'] = record['message'].format_map(record)
 
             for _, handler in _self.handlers.values():
                 handler.emit(record, exception)
