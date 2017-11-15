@@ -4,7 +4,7 @@ import textwrap
 import re
 
 zero_division_error = 'ZeroDivisionError: division by zero\n'
-use_decorator = pytest.mark.parametrize('use_decorator', [True, False])
+wrap_mode = pytest.mark.parametrize('wrap_mode', ['decorator', 'function', 'context_manager'])
 
 @pytest.mark.parametrize('use_parentheses', [True, False])
 def test_decorator(logger, writer, use_parentheses):
@@ -35,6 +35,17 @@ def test_context_manager(logger, writer, use_parentheses):
             1 / 0
 
     assert writer.read().endswith(zero_division_error)
+
+def test_function(logger, writer):
+        logger.log_to(writer)
+
+        def a():
+            1 / 0
+
+        a = logger.catch(a)
+        a()
+
+        assert writer.read().endswith(zero_division_error)
 
 def test_with_better_exceptions(logger, writer):
     logger.log_to(writer, better_exceptions=True)
@@ -70,25 +81,33 @@ def test_with_better_exceptions(logger, writer):
     ((SyntaxError, TypeError), True),
 ])
 @pytest.mark.parametrize('keyword', [True, False])
-@use_decorator
-def test_exception(logger, writer, exception, should_raise, keyword, use_decorator):
+@wrap_mode
+def test_exception(logger, writer, exception, should_raise, keyword, wrap_mode):
     logger.log_to(writer)
 
     if keyword:
-        if use_decorator:
+        if wrap_mode == "decorator":
             @logger.catch(exception=exception)
             def a():
                 1 / 0
-        else:
+        elif wrap_mode == "function":
+            def a():
+                1 / 0
+            a = logger.catch(a, exception=exception)
+        elif wrap_mode == "context_manager":
             def a():
                 with logger.catch(exception=exception):
                     1 / 0
     else:
-        if use_decorator:
+        if wrap_mode == "decorator":
             @logger.catch(exception)
             def a():
                 1 / 0
-        else:
+        elif wrap_mode == "function":
+            def a():
+                1 / 0
+            a = logger.catch(a, exception)
+        elif wrap_mode == "context_manager":
             def a():
                 with logger.catch(exception):
                     1 / 0
@@ -102,35 +121,44 @@ def test_exception(logger, writer, exception, should_raise, keyword, use_decorat
         assert writer.read().endswith(zero_division_error)
 
 
-@use_decorator
-def test_message(logger, writer, use_decorator):
+@wrap_mode
+def test_message(logger, writer, wrap_mode):
     logger.log_to(writer, format='{message}')
     message = 'An error occured:'
 
-    if use_decorator:
+    if wrap_mode == 'decorator':
         @logger.catch(message=message)
         def a():
             1 / 0
         a()
-    else:
+    elif wrap_mode == 'function':
+        def a():
+            1 / 0
+        a = logger.catch(a, message=message)
+        a()
+    elif wrap_mode == "context_manager":
         with logger.catch(message=message):
             1 / 0
 
     assert writer.read().startswith(message + '\n')
 
-@use_decorator
+@wrap_mode
 @pytest.mark.parametrize("level, expected", [
     (13, "Level 13 | 13"),
     ("DEBUG", "DEBUG | 10")
 ])
-def test_level(logger, writer, use_decorator, level, expected):
+def test_level(logger, writer, wrap_mode, level, expected):
     logger.log_to(writer, format="{level.name} | {level.no}")
 
-    if use_decorator:
+    if wrap_mode == "decorator":
         @logger.catch(level=level)
         def a():
             1 / 0
-    else:
+    elif wrap_mode == "function":
+        def a():
+            1 / 0
+        a = logger.catch(a, level=level)
+    elif wrap_mode == "context_manager":
         def a():
             with logger.catch(level=level):
                 1 / 0
@@ -140,15 +168,19 @@ def test_level(logger, writer, use_decorator, level, expected):
     lines = writer.read().strip().splitlines()
     assert lines[0] == expected
 
-@use_decorator
-def test_reraise(logger, writer, use_decorator):
+@wrap_mode
+def test_reraise(logger, writer, wrap_mode):
     logger.log_to(writer)
 
-    if use_decorator:
+    if wrap_mode == "decorator":
         @logger.catch(reraise=True)
         def a():
             1 / 0
-    else:
+    elif wrap_mode == "function":
+        def a():
+            1 / 0
+        a = logger.catch(a, reraise=True)
+    elif wrap_mode == "context_manager":
         def a():
             with logger.catch(reraise=True):
                 1 / 0
@@ -158,17 +190,22 @@ def test_reraise(logger, writer, use_decorator):
 
     assert writer.read().endswith(zero_division_error)
 
-@use_decorator
-def test_not_raising(logger, writer, use_decorator):
+@wrap_mode
+def test_not_raising(logger, writer, wrap_mode):
     logger.log_to(writer, format='{message}')
     message = "It's ok"
 
-    if use_decorator:
+    if wrap_mode == "decorator":
         @logger.catch
         def a():
             logger.debug(message)
         a()
-    else:
+    elif wrap_mode == "function":
+        def a():
+            logger.debug(message)
+        a = logger.catch(a)
+        a()
+    elif wrap_mode == "context_manager":
         with logger.catch:
             logger.debug(message)
 
@@ -179,22 +216,28 @@ def test_not_raising(logger, writer, use_decorator):
     ("{file}", "test.py", "test.py"),
     ("{function}", "<module>", "myfunc"),
     ("{module}", "test", "test"),
-    ("{line}", "9", "8"),
+    ("{line}", "10", "8"),
 ])
-@use_decorator
-def test_formatting(logger, tmpdir, pyexec, use_decorator, format, expected_dec, expected_ctx):
+@wrap_mode
+def test_formatting(logger, tmpdir, pyexec, wrap_mode, format, expected_dec, expected_ctx):
     message = format.replace("{", "{{").replace("}", "}}")
     format += " --- {message}"
     logfile = tmpdir.join("test.log")
     pyfile = tmpdir.join("folder", "test.py")
     pyfile.write("", ensure=True)
 
-    if use_decorator:
+    if wrap_mode == "decorator":
         catch = "@logger.catch(message='%s')" % message
         ctx = "if 1"
-    else:
+        post = "# padding"
+    elif wrap_mode == "function":
+        catch = "# padding"
+        ctx = "if 1"
+        post = "myfunc = logger.catch(myfunc, message='%s')" % message
+    elif wrap_mode == "context_manager":
         catch = "# padding"
         ctx = "with logger.catch(message='%s')" % message
+        post = "# padding"
 
     code = """
     from loguru import logger
@@ -205,9 +248,10 @@ def test_formatting(logger, tmpdir, pyexec, use_decorator, format, expected_dec,
     def myfunc():
         {ctx}:
             k()
+    {post}
     myfunc()
     """
-    code = code.format(logfile=str(logfile.realpath()), fmt=format, catch=catch, ctx=ctx)
+    code = code.format(logfile=str(logfile.realpath()), fmt=format, catch=catch, ctx=ctx, post=post)
     code = textwrap.dedent(code).strip()
 
     pyfile.write(code)
@@ -217,7 +261,7 @@ def test_formatting(logger, tmpdir, pyexec, use_decorator, format, expected_dec,
     lines = logfile.read().strip().splitlines()
     start, end = lines[0].split(" --- ")
 
-    expected = expected_dec if use_decorator else expected_ctx
+    expected = expected_dec if wrap_mode in ['decorator', 'function'] else expected_ctx
 
     assert start == expected
     assert end == expected

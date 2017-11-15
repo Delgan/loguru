@@ -620,24 +620,25 @@ class Catcher:
         return not self.reraise
 
     def __call__(self, *args, **kwargs):
-        if not kwargs and len(args) == 1:
-            arg = args[0]
-            if callable(arg) and (not isclass(arg) or not issubclass(arg, BaseException)):
-                function = arg
+        if args and callable(args[0]) and (not isclass(args[0]) or not issubclass(args[0], BaseException)):
+            function, args = args[0], args[1:]
 
+            if args or kwargs:
+                catcher = Catcher(self.logger, *args, **kwargs)
+            else:
                 catcher = Catcher(self.logger,
                                   exception=self.exception,
                                   level=self.level,
                                   reraise=self.reraise,
                                   message=self.message)
-                catcher.frame_idx = 4
+            catcher.frame_idx = 4
 
-                @functools.wraps(function)
-                def catch_wrapper(*args, **kwargs):
-                    with catcher:
-                        function(*args, **kwargs)
+            @functools.wraps(function)
+            def catch_wrapper(*args, **kwargs):
+                with catcher:
+                    function(*args, **kwargs)
 
-                return catch_wrapper
+            return catch_wrapper
 
         return Catcher(self.logger, *args, **kwargs)
 
