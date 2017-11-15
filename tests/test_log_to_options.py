@@ -7,7 +7,7 @@ import pytest
 
 @pytest.mark.parametrize('level, function, should_output', [
     (0,              lambda x: x.trace,    True),
-    ("trace",        lambda x: x.debug,    True),
+    ("TRACE",        lambda x: x.debug,    True),
     ("INFO",         lambda x: x.info,     True),
     (10,             lambda x: x.debug,    True),
     ("WARNING",      lambda x: x.success,  False),

@@ -24,10 +24,9 @@ def test_log_int_level(logger, writer):
 
     assert writer.read() == "Level 10 -> 10 -> test\n"
 
-@pytest.mark.parametrize('lower', [True, False])
-def test_log_str_level(logger, writer, lower):
+def test_log_str_level(logger, writer):
     logger.log_to(writer, format='{level.name} -> {level.no} -> {message}', colored=False)
-    logger.log("debug" if lower else "DEBUG", "test")
+    logger.log("DEBUG", "test")
 
     assert writer.read() == "DEBUG -> 10 -> test\n"
 
@@ -36,7 +35,7 @@ def test_add_level(logger, writer):
     icon = "[o]"
     level = 10
 
-    logger.add_level(name.lower(), level, color="<red>", icon=icon)
+    logger.add_level(name, level, color="<red>", icon=icon)
     logger.log_to(writer, format='{level.icon} <level>{level.name}</level> -> {level.no} -> {message}', colored=True)
 
     logger.log(name, "test")
@@ -44,12 +43,12 @@ def test_add_level(logger, writer):
 
 @pytest.mark.parametrize('colored', [True, False])
 def test_add_level_after_log_to(logger, writer, colored):
-    logger.log_to(writer, level="debug", format='<level>{level.name} | {level.no} | {message}</level>', colored=colored)
+    logger.log_to(writer, level="DEBUG", format='<level>{level.name} | {level.no} | {message}</level>', colored=colored)
     logger.add_level("foo", 10, color="<red>")
 
     logger.log("foo", "a")
 
-    expected = "FOO | 10 | a"
+    expected = "foo | 10 | a"
     if colored:
         expected = "\x1b[31m%s\x1b[0m" % expected
 
@@ -73,14 +72,14 @@ def test_add_malicious_level(logger, writer):
     logger.log(name, ' B ')
 
     assert writer.read() == ('Level 15 & 15 &  A \x1b[0m\n'
-                             'LEVEL 15 & 45 & \x1b[31m B \x1b[0m\n')
+                             'Level 15 & 45 & \x1b[31m B \x1b[0m\n')
 
 def test_add_existing_level(logger, writer):
-    logger.add_level("info", 45, color="<red>")
+    logger.add_level("INFO", 45, color="<red>")
     logger.log_to(writer, format='{level.icon} + <level>{level.name}</level> + {level.no} = {message}', colored=True)
 
     logger.info("a")
-    logger.log("info", "b")
+    logger.log("INFO", "b")
     logger.log(10, "c")
     logger.log(45, "d")
 
@@ -90,26 +89,26 @@ def test_add_existing_level(logger, writer):
                              '  + Level 45\x1b[0m + 45 = d\n')
 
 def test_edit_level(logger, writer):
-    logger.add_level("foo", level=0, color="<bold>", icon="[?]")
+    logger.add_level("info", level=0, color="<bold>", icon="[?]")
     logger.log_to(writer, format="<level>->{level.no}, {level.name}, {level.icon}, {message}<-</level>", colored=True)
 
-    logger.log("foo", "nope")
+    logger.log("info", "nope")
 
-    logger.edit_level("FOO", level=11)
-    logger.log("foo", "a")
+    logger.edit_level("info", level=11)
+    logger.log("info", "a")
 
-    logger.edit_level("foo", icon="[!]")
-    logger.log("FOO", "b")
+    logger.edit_level("info", icon="[!]")
+    logger.log("info", "b")
 
-    logger.edit_level("fOO", color="<red>")
-    logger.log("fOO", "c")
+    logger.edit_level("info", color="<red>")
+    logger.log("info", "c")
 
-    assert writer.read() == ("\x1b[1m->11, FOO, [?], a<-\x1b[0m\n"
-                             "\x1b[1m->11, FOO, [!], b<-\x1b[0m\n"
-                             "\x1b[31m->11, FOO, [!], c<-\x1b[0m\n")
+    assert writer.read() == ("\x1b[1m->11, info, [?], a<-\x1b[0m\n"
+                             "\x1b[1m->11, info, [!], b<-\x1b[0m\n"
+                             "\x1b[31m->11, info, [!], c<-\x1b[0m\n")
 
 def test_edit_existing_level(logger, writer):
-    logger.edit_level("debug", level=20, icon="!")
+    logger.edit_level("DEBUG", level=20, icon="!")
     logger.log_to(writer, format="{level.no}, <level>{level.name}</level>, {level.icon}, {message}", colored=False)
     logger.debug("a")
     assert writer.read() == "20, DEBUG, !, a\n"
@@ -117,15 +116,14 @@ def test_edit_existing_level(logger, writer):
 def test_get_level(logger):
     level = (11, "<red>", "[!]")
     logger.add_level("lvl", *level)
-    assert logger.get_level("lvl") == logger.get_level("LVL") == level
+    assert logger.get_level("lvl") == level
 
 def test_get_existing_level(logger):
-    assert logger.get_level("debug") == logger.get_level("DEBUG") == (10, "<blue><bold>", "🐞")
+    assert logger.get_level("DEBUG") == (10, "<blue><bold>", "🐞")
 
-@pytest.mark.parametrize('level', ['foo', 'FOO', 17])
-def test_log_to_custom_level(logger, writer, level):
+def test_log_to_custom_level(logger, writer):
     logger.add_level("foo", 17, color="<yellow>")
-    logger.log_to(writer, level=level, format='<level>{level.name} + {level.no} + {message}</level>', colored=False)
+    logger.log_to(writer, level="foo", format='<level>{level.name} + {level.no} + {message}</level>', colored=False)
 
     logger.debug("nope")
     logger.info("yes")

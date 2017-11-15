@@ -87,20 +87,19 @@ class HackyInt(int):
 
 class Handler:
 
-    def __init__(self, *, writter, levelno, format_, filter_, colored, better_exceptions, levelname_to_color={}):
+    def __init__(self, *, writter, levelno, format_, filter_, colored, better_exceptions, colors=[]):
         self.writter = writter
         self.levelno = levelno
         self.format = format_
         self.filter = filter_
         self.colored = colored
         self.better_exceptions = better_exceptions
+        self.decolorized_format = self.decolorize(format_)
+        self.precolorized_formats = {}
 
         if colored:
-            self.decolorized_format = None
-            self.precolorized_formats = self.precolorize_formats(levelname_to_color)
-        else:
-            self.decolorized_format = self.decolorize(format_)
-            self.precolorized_formats = None
+            for color in colors:
+                self.update_format(color)
 
         self.exception_formatter = ExceptionFormatter(colored=colored)
 
@@ -121,21 +120,12 @@ class Handler:
         am = Handler.make_ansimarkup(color)
         return am.parse(format_)
 
-    def update_format(self, levelname, color):
-        if not self.colored:
+    def update_format(self, color):
+        if not self.colored or color in self.precolorized_formats:
             return
-        self.precolorized_formats[levelname] = self.colorize(self.format, color)
+        self.precolorized_formats[color] = self.colorize(self.format, color)
 
-    def precolorize_formats(self, levelname_to_color):
-        precolorized = self.colorize(self.format, '')
-        precomputed_formats = defaultdict(lambda: precolorized)
-
-        for levelname, color in levelname_to_color.items():
-            precomputed_formats[levelname] = self.colorize(self.format, color)
-
-        return precomputed_formats
-
-    def emit(self, record, exception=None):
+    def emit(self, record, exception=None, level_color=None):
         level = record['level']
         if self.levelno > level.no:
             return
@@ -145,7 +135,7 @@ class Handler:
                 return
 
         if self.colored:
-            precomputed_format = self.precolorized_formats[level.name]
+            precomputed_format = self.precolorized_formats[level_color]
         else:
             precomputed_format = self.decolorized_format
 
@@ -671,11 +661,10 @@ class Logger:
         if level < 0:
             raise ValueError("Invalid level value (%d), it should be a positive number" % level)
 
-        name = name.upper()
         self.levels[name] = (level, color, icon)
 
         for _, handler in self.handlers.values():
-            handler.update_format(name, color)
+            handler.update_format(color)
 
 
     def edit_level(self, name, level=None, color=None, icon=None):
@@ -693,7 +682,7 @@ class Logger:
         self.add_level(name, level, color, icon)
 
     def get_level(self, name):
-        return self.levels[name.upper()]
+        return self.levels[name]
 
     def log_to(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
         if isclass(sink):
@@ -738,7 +727,6 @@ class Logger:
             filter = lambda r: (r['name'] + '.')[:length] == parent
 
         if isinstance(level, str):
-            level = level.upper()
             levelno, _, _ = self.levels[level]
         elif isinstance(level, int):
             levelno = level
@@ -755,7 +743,7 @@ class Logger:
             filter_=filter,
             colored=colored,
             better_exceptions=better_exceptions,
-            levelname_to_color={name: color for name, (_, color, _) in self.levels.items()},
+            colors=[color for _, color, _ in self.levels.values()] + [''],
         )
 
         self.handlers[self.handlers_count] = (sink, handler)
@@ -821,7 +809,7 @@ class Logger:
     def make_log_function(level, log_exception=False, frame_idx=1):
 
         if isinstance(level, str):
-            level_id = level_name = level.upper()
+            level_id = level_name = level
         elif isinstance(level, int):
             if level < 0:
                 raise ValueError("Invalid level value (%d), it should be a positive number" % level)
@@ -842,9 +830,9 @@ class Logger:
             message = _message.format(*args, **kwargs)
 
             if level_id is None:
-                level_no, level_icon = level, ' '
+                level_no, level_color, level_icon = level, '', ' '
             else:
-                level_no, _, level_icon = _self.levels[level_name]
+                level_no, level_color, level_icon = _self.levels[level_name]
 
             code = frame.f_code
             file_path = normcase(code.co_filename)
@@ -931,7 +919,7 @@ class Logger:
             record['message'] = record['message'].format_map(record)
 
             for _, handler in _self.handlers.values():
-                handler.emit(record, exception)
+                handler.emit(record, exception, level_color)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(level_name)
         if log_exception:
