@@ -2,22 +2,6 @@ import loguru
 import pytest
 
 
-@pytest.mark.parametrize('message, args, kwargs', [
-    ('{} + {} = {}', [1, 2, 3], {}),
-    ('{self} + {level} = {message}', [], dict(self=1, level="2", message=3)),
-    ('{0} + {two} = {1}', [1, 3], dict(two=2, nope=4)),
-])
-@pytest.mark.parametrize('use_log_function', [False, True])
-def test_basic_logging(logger, writer, message, args, kwargs, use_log_function):
-    logger.log_to(writer, format='{message}', colored=False)
-
-    if use_log_function:
-        logger.log(10, message, *args, **kwargs)
-    else:
-        logger.debug(message, *args, **kwargs)
-
-    assert writer.read() == '1 + 2 = 3\n'
-
 def test_log_int_level(logger, writer):
     logger.log_to(writer, format='{level.name} -> {level.no} -> {message}', colored=False)
     logger.log(10, "test")

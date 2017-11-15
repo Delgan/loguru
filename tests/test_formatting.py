@@ -4,8 +4,30 @@ import re
 import loguru
 import pytest
 
+@pytest.mark.parametrize('message, args, kwargs, expected', [
+    ('{} + {} = {}', [1, 2, 3], {}, '1 + 2 = 3'),
+    ('{a} + {b} = {c}', [], dict(a=1, b=2, c=3), '1 + 2 = 3'),
+    ('{0} + {two} = {1}', [1, 3], dict(two=2, nope=4), '1 + 2 = 3'),
+    ('{self} or {message} or {level}', [], dict(self="a", message="b", level="c"), 'a or b or c'),
+    ('{:.2f}', [1], {}, "1.00"),
+    ('{0:0{three}d}', [5], dict(three=3), '005'),
+    ('{{{{nope}}}} {my_dict}', [], dict(my_dict={'a': 1}), "{nope} {'a': 1}"),
+
+])
+@pytest.mark.parametrize('use_log_function', [False, True])
+def test_log_formatting(logger, writer, message, args, kwargs, expected, use_log_function):
+    logger.log_to(writer, format='{message}', colored=False)
+
+    if use_log_function:
+        logger.log(10, message, *args, **kwargs)
+    else:
+        logger.debug(message, *args, **kwargs)
+
+    assert writer.read() == expected + '\n'
+
+
 @pytest.mark.parametrize('format, validator', [
-    ('{name}', lambda r: r == 'tests.test_formatters'),
+    ('{name}', lambda r: r == 'tests.test_formatting'),
     ('{time}', lambda r: re.fullmatch(r'\d+-\d+-\d+T\d+:\d+:\d+[.,]\d+[+-]\d+:\d+', r)),
     ('{time:HH[h] mm[m] ss[s]}', lambda r: re.fullmatch(r'\d+h \d+m \d+s', r)),
     ('{time:HH}x{time:mm}x{time:ss}', lambda r: re.fullmatch(r'\d+x\d+x\d+', r)),
@@ -17,11 +39,11 @@ import pytest
     ('{level.name}', lambda r: r == 'DEBUG'),
     ('{level.no}', lambda r: r == "10"),
     ('{level.icon}', lambda r: r == '🐞'),
-    ('{file}', lambda r: r == 'test_formatters.py'),
-    ('{file.name}', lambda r: r == 'test_formatters.py'),
-    ('{file.path}', lambda r: re.fullmatch(r'.*tests[/\\]test_formatters.py', r)),
+    ('{file}', lambda r: r == 'test_formatting.py'),
+    ('{file.name}', lambda r: r == 'test_formatting.py'),
+    ('{file.path}', lambda r: re.fullmatch(r'.*tests[/\\]test_formatting.py', r)),
     ('{function}', lambda r: r == 'test_log_formatters'),
-    ('{module}', lambda r: r == 'test_formatters'),
+    ('{module}', lambda r: r == 'test_formatting'),
     ('{thread}', lambda r: re.fullmatch(r'\d+', r)),
     ('{thread.id}', lambda r: re.fullmatch(r'\d+', r)),
     ('{thread.name}', lambda r: isinstance(r, str) and r != ""),

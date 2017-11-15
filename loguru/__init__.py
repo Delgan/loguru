@@ -632,6 +632,11 @@ class Catcher:
 
         return Catcher(self.logger, *args, **kwargs)
 
+class EscapingFormatter(Formatter):
+
+    def format_field(self, value, spec):
+        return Formatter.format_field(self, value, spec).replace("{", "{{").replace("}", "}}")
+
 class Logger:
 
     def __init__(self, *, dummy=None):
@@ -818,6 +823,8 @@ class Logger:
         else:
             raise ValueError("Invalid level, it should be an int or a string, not: '%s'" % type(level))
 
+        escaping_formatter = EscapingFormatter()
+
         def log_function(_self, _message, *args, **kwargs):
             frame = getframe(frame_idx)
             name = frame.f_globals['__name__']
@@ -827,7 +834,7 @@ class Logger:
             now_ = now()
             patch_datetime(now_)
 
-            message = _message.format(*args, **kwargs)
+            message = escaping_formatter.vformat(_message, args, kwargs)
 
             if level_id is None:
                 level_no, level_color, level_icon = level, '', ' '
