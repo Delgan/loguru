@@ -594,7 +594,7 @@ class FileSink:
 
 class Catcher:
 
-    def __init__(self, logger, exception=BaseException, *, level=None, reraise=False,
+    def __init__(self, logger, exception=BaseException, *, level="ERROR", reraise=False,
                        message="An error has been caught in function '{{function}}', "
                                "process '{{process.name}}' ({{process.id}}), "
                                "thread '{{thread.name}}' ({{thread.id}}):"):
@@ -603,6 +603,7 @@ class Catcher:
         self.level = level
         self.reraise = reraise
         self.message = message
+        self.frame_idx = 3
 
     def __enter__(self):
         pass
@@ -614,11 +615,7 @@ class Catcher:
         if not issubclass(type_, self.exception):
             return False
 
-        if self.level is not None: # pragma: no cover
-            # TODO: Use logger function accordingly
-            raise NotImplementedError
-
-        self.logger.exception(self.message)
+        self.logger._log(self.level, True, self.frame_idx, self.message)
 
         return not self.reraise
 
@@ -628,9 +625,16 @@ class Catcher:
             if callable(arg) and (not isclass(arg) or not issubclass(arg, BaseException)):
                 function = arg
 
+                catcher = Catcher(self.logger,
+                                  exception=self.exception,
+                                  level=self.level,
+                                  reraise=self.reraise,
+                                  message=self.message)
+                catcher.frame_idx = 4
+
                 @functools.wraps(function)
                 def catch_wrapper(*args, **kwargs):
-                    with self:
+                    with catcher:
                         function(*args, **kwargs)
 
                 return catch_wrapper
@@ -805,12 +809,15 @@ class Logger:
         return sinks_ids
 
     def log(_self, _level, _message, *args, **kwargs):
-        function = _self.make_log_function(_level)
+        _self._log(_level, False, 3, _message, *args, **kwargs)
+
+    def _log(_self, _level, _log_exception, _frame_idx, _message, *args, **kwargs):
+        function = _self.make_log_function(_level, log_exception=_log_exception, frame_idx=_frame_idx)
         function(_self, _message, *args, **kwargs)
 
     @staticmethod
     @functools.lru_cache()
-    def make_log_function(level, log_exception=False):
+    def make_log_function(level, log_exception=False, frame_idx=1):
 
         if isinstance(level, str):
             level_id = level_name = level.upper()
@@ -823,7 +830,7 @@ class Logger:
             raise ValueError("Invalid level, it should be an int or a string, not: '%s'" % type(level))
 
         def log_function(_self, _message, *args, **kwargs):
-            frame = getframe(1)
+            frame = getframe(frame_idx)
             name = frame.f_globals['__name__']
 
             # TODO: Early exit if no handler

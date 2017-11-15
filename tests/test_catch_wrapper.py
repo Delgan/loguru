@@ -1,5 +1,7 @@
 import pytest
 import traceback
+import textwrap
+import re
 
 zero_division_error = 'ZeroDivisionError: division by zero\n'
 use_decorator = pytest.mark.parametrize('use_decorator', [True, False])
@@ -61,40 +63,6 @@ def test_with_better_exceptions(logger, writer):
     assert result_with.endswith(zero_division_error)
     assert result_without.endswith(zero_division_error)
 
-@use_decorator
-def test_custom_message(logger, writer, use_decorator):
-    logger.log_to(writer, format='{message}')
-    message = 'An error occured:'
-
-    if use_decorator:
-        @logger.catch(message=message)
-        def a():
-            1 / 0
-        a()
-    else:
-        with logger.catch(message=message):
-            1 / 0
-
-    assert writer.read().startswith(message + '\n')
-
-@use_decorator
-def test_reraise(logger, writer, use_decorator):
-    logger.log_to(writer)
-
-    if use_decorator:
-        @logger.catch(reraise=True)
-        def a():
-            1 / 0
-    else:
-        def a():
-            with logger.catch(reraise=True):
-                1 / 0
-
-    with pytest.raises(ZeroDivisionError):
-        a()
-
-    assert writer.read().endswith(zero_division_error)
-
 @pytest.mark.parametrize('exception, should_raise', [
     (ZeroDivisionError, False),
     (ValueError, True),
@@ -133,6 +101,63 @@ def test_exception(logger, writer, exception, should_raise, keyword, use_decorat
         a()
         assert writer.read().endswith(zero_division_error)
 
+
+@use_decorator
+def test_message(logger, writer, use_decorator):
+    logger.log_to(writer, format='{message}')
+    message = 'An error occured:'
+
+    if use_decorator:
+        @logger.catch(message=message)
+        def a():
+            1 / 0
+        a()
+    else:
+        with logger.catch(message=message):
+            1 / 0
+
+    assert writer.read().startswith(message + '\n')
+
+@use_decorator
+@pytest.mark.parametrize("level, expected", [
+    (13, "Level 13 | 13"),
+    ("DEBUG", "DEBUG | 10")
+])
+def test_level(logger, writer, use_decorator, level, expected):
+    logger.log_to(writer, format="{level.name} | {level.no}")
+
+    if use_decorator:
+        @logger.catch(level=level)
+        def a():
+            1 / 0
+    else:
+        def a():
+            with logger.catch(level=level):
+                1 / 0
+
+    a()
+
+    lines = writer.read().strip().splitlines()
+    assert lines[0] == expected
+
+@use_decorator
+def test_reraise(logger, writer, use_decorator):
+    logger.log_to(writer)
+
+    if use_decorator:
+        @logger.catch(reraise=True)
+        def a():
+            1 / 0
+    else:
+        def a():
+            with logger.catch(reraise=True):
+                1 / 0
+
+    with pytest.raises(ZeroDivisionError):
+        a()
+
+    assert writer.read().endswith(zero_division_error)
+
 @use_decorator
 def test_not_raising(logger, writer, use_decorator):
     logger.log_to(writer, format='{message}')
@@ -149,18 +174,50 @@ def test_not_raising(logger, writer, use_decorator):
 
     assert writer.read() == message + '\n'
 
-@pytest.mark.xfail
+@pytest.mark.parametrize("format, expected_dec, expected_ctx", [
+    ("{name}", "folder.test", "folder.test"),
+    ("{file}", "test.py", "test.py"),
+    ("{function}", "<module>", "myfunc"),
+    ("{module}", "test", "test"),
+    ("{line}", "9", "8"),
+])
 @use_decorator
-def test_custom_level(logger, writter, use_decorator):
-    logger.log_to(writer)
+def test_formatting(logger, tmpdir, pyexec, use_decorator, format, expected_dec, expected_ctx):
+    message = format.replace("{", "{{").replace("}", "}}")
+    format += " --- {message}"
+    logfile = tmpdir.join("test.log")
+    pyfile = tmpdir.join("folder", "test.py")
+    pyfile.write("", ensure=True)
 
     if use_decorator:
-        @logger.catch(level=10)
-        def a():
-            1 / 0
+        catch = "@logger.catch(message='%s')" % message
+        ctx = "if 1"
     else:
-        def a():
-            with logger.catch(level=10):
-                1 / 0
+        catch = "# padding"
+        ctx = "with logger.catch(message='%s')" % message
 
-    a()
+    code = """
+    from loguru import logger
+    logger.log_to("{logfile}", format="{fmt}")
+    def k():
+        1 / 0
+    {catch}
+    def myfunc():
+        {ctx}:
+            k()
+    myfunc()
+    """
+    code = code.format(logfile=str(logfile.realpath()), fmt=format, catch=catch, ctx=ctx)
+    code = textwrap.dedent(code).strip()
+
+    pyfile.write(code)
+
+    pyexec("import folder.test", True, pyfile=tmpdir.join("main.py"))
+
+    lines = logfile.read().strip().splitlines()
+    start, end = lines[0].split(" --- ")
+
+    expected = expected_dec if use_decorator else expected_ctx
+
+    assert start == expected
+    assert end == expected

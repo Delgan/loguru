@@ -28,14 +28,16 @@ def pyexec(tmpdir):
                      'from loguru import logger;'
                      'logger.clear();\n')
 
-    def pyexec(code, import_loguru=False):
+    def pyexec(code, import_loguru=False, *, pyfile=None):
         if import_loguru:
             code = loguru_config + code
         else:
             code = "# padding\n" + code
 
-        file.write(code)
-        out = py.process.cmdexec('python %s' % file.realpath())
+        if pyfile is None:
+            pyfile = file
+        pyfile.write(code)
+        out = py.process.cmdexec('python %s' % pyfile.realpath())
         return out
 
     return pyexec

@@ -19,7 +19,7 @@ import pytest
     ('{level.icon}', lambda r: r == '🐞'),
     ('{file}', lambda r: r == 'test_formatters.py'),
     ('{file.name}', lambda r: r == 'test_formatters.py'),
-    ('{file.path}', lambda r: r.endswith('test_formatters.py')),
+    ('{file.path}', lambda r: re.fullmatch(r'.*tests[/\\]test_formatters.py', r)),
     ('{function}', lambda r: r == 'test_log_formatters'),
     ('{module}', lambda r: r == 'test_formatters'),
     ('{thread}', lambda r: re.fullmatch(r'\d+', r)),
@@ -30,13 +30,17 @@ import pytest
     ('{process.name}', lambda r: isinstance(r, str) and r != ""),
     ('%s {{a}} 天 {{1}} %d', lambda r: r == '%s {a} 天 {1} %d'),
 ])
-def test_log_formatters(format, validator, logger, writer):
+@pytest.mark.parametrize("use_log", [False, True])
+def test_log_formatters(format, validator, logger, writer, use_log):
     message = format.replace("{", "{{").replace("}", "}}")
 
     format += " --- {message}"
     logger.log_to(writer, format=format)
 
-    logger.debug(message)
+    if use_log:
+        logger.log("DEBUG", message)
+    else:
+        logger.debug(message)
 
     start, end = writer.read().rstrip('\n').split(" --- ")
     assert validator(start)
