@@ -95,10 +95,10 @@ def test_size_rotation(tmpdir, logger, size):
     (' mOnthLY', [0, 24 * 13, 29 * 24, 60 * 24, 24 * 35]),
     ('yearly ', [100, 24 * 7 * 30, 24 * 300, 24 * 100, 24 * 400]),
 ])
-def test_time_rotation(monkeypatch, tmpdir, when, hours, logger):
+def test_time_rotation(monkeypatch_now, tmpdir, when, hours, logger):
     now = pendulum.parse("2017-06-18 12:00:00")  # Sunday
 
-    monkeypatch.setattr(loguru, 'now', lambda *a, **k: now)
+    monkeypatch_now(lambda *a, **k: now)
 
     file_1 = tmpdir.join("test.log")
     file_2 = tmpdir.join("test.log.1")
@@ -119,8 +119,8 @@ def test_time_rotation(monkeypatch, tmpdir, when, hours, logger):
     assert file_4.read() == m1 + '\n'
 
 @pytest.mark.parametrize('backups', ['1 hour', '1H', ' 1 h ', datetime.timedelta(hours=1), pendulum.Interval(hours=1.0)])
-def test_backups_time(monkeypatch, tmpdir, logger, backups):
-    monkeypatch.setattr(loguru, 'now', lambda *a, **k: pendulum.now().add(hours=23))
+def test_backups_time(monkeypatch_now, tmpdir, logger, backups):
+    monkeypatch_now(lambda *a, **k: pendulum.now().add(hours=23))
 
     file = tmpdir.join('test.log')
 

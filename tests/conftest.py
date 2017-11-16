@@ -5,7 +5,7 @@ import os
 
 @pytest.fixture
 def logger():
-    return loguru.Logger()
+    return loguru._logger.Logger()
 
 @pytest.fixture
 def writer():
@@ -41,3 +41,12 @@ def pyexec(tmpdir):
         return out
 
     return pyexec
+
+@pytest.fixture
+def monkeypatch_now(monkeypatch):
+
+    def monkeypatch_now(func):
+        monkeypatch.setattr(loguru._logger, 'pendulum_now', func)
+        monkeypatch.setattr(loguru._file_sink, 'pendulum_now', func)
+
+    return monkeypatch_now

@@ -197,7 +197,7 @@ def test_tail_recursion(compare, rec):
 
     compare(template, rec)
 
-@pytest.mark.parametrize('rec', [1, 2, 3])
+@pytest.mark.parametrize('rec', [2])
 def test_head_recursion(compare, rec):
     template = """
     {catch}

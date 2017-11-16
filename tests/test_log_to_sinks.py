@@ -15,7 +15,7 @@ expected = message + "\n"
 repetitions = pytest.mark.parametrize('rep', [0, 1, 2])
 
 def log(sink, rep=1):
-    logger = loguru.Logger()
+    logger = loguru._logger.Logger()
     logger.debug("This shouldn't be printed.")
     i = logger.log_to(sink, format='{message}')
     for _ in range(rep):
@@ -85,7 +85,7 @@ def test_file_object_sink(rep):
     log(a, rep)
     assert a.out == expected * rep
 
-@pytest.mark.parametrize('sink', [123, sys, object(), loguru.Logger(), loguru.Logger])
+@pytest.mark.parametrize('sink', [123, sys, object(), int])
 def test_invalid_sink(sink):
     with pytest.raises(ValueError):
         log(sink, "")
