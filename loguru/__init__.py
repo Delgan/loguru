@@ -805,6 +805,9 @@ class Logger:
     def log(_self, _level, _message, *args, **kwargs):
         _self._log(_level, False, 3, _message, *args, **kwargs)
 
+    def log_exception(_self, _level, _message, *args, **kwargs):
+        _self._log(_level, True, 3, _message, *args, **kwargs)
+
     def _log(_self, _level, _log_exception, _frame_idx, _message, *args, **kwargs):
         function = _self.make_log_function(_level, log_exception=_log_exception, frame_idx=_frame_idx)
         function(_self, _message, *args, **kwargs)

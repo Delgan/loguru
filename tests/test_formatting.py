@@ -4,28 +4,6 @@ import re
 import loguru
 import pytest
 
-@pytest.mark.parametrize('message, args, kwargs, expected', [
-    ('{} + {} = {}', [1, 2, 3], {}, '1 + 2 = 3'),
-    ('{a} + {b} = {c}', [], dict(a=1, b=2, c=3), '1 + 2 = 3'),
-    ('{0} + {two} = {1}', [1, 3], dict(two=2, nope=4), '1 + 2 = 3'),
-    ('{self} or {message} or {level}', [], dict(self="a", message="b", level="c"), 'a or b or c'),
-    ('{:.2f}', [1], {}, "1.00"),
-    ('{0:0{three}d}', [5], dict(three=3), '005'),
-    ('{{{{nope}}}} {my_dict}', [], dict(my_dict={'a': 1}), "{nope} {'a': 1}"),
-
-])
-@pytest.mark.parametrize('use_log_function', [False, True])
-def test_log_formatting(logger, writer, message, args, kwargs, expected, use_log_function):
-    logger.log_to(writer, format='{message}', colored=False)
-
-    if use_log_function:
-        logger.log(10, message, *args, **kwargs)
-    else:
-        logger.debug(message, *args, **kwargs)
-
-    assert writer.read() == expected + '\n'
-
-
 @pytest.mark.parametrize('format, validator', [
     ('{name}', lambda r: r == 'tests.test_formatting'),
     ('{time}', lambda r: re.fullmatch(r'\d+-\d+-\d+T\d+:\d+:\d+[.,]\d+[+-]\d+:\d+', r)),
@@ -52,14 +30,14 @@ def test_log_formatting(logger, writer, message, args, kwargs, expected, use_log
     ('{process.name}', lambda r: isinstance(r, str) and r != ""),
     ('%s {{a}} 天 {{1}} %d', lambda r: r == '%s {a} 天 {1} %d'),
 ])
-@pytest.mark.parametrize("use_log", [False, True])
-def test_log_formatters(format, validator, logger, writer, use_log):
+@pytest.mark.parametrize("use_log_function", [False, True])
+def test_log_formatters(format, validator, logger, writer, use_log_function):
     message = format.replace("{", "{{").replace("}", "}}")
 
     format += " --- {message}"
     logger.log_to(writer, format=format)
 
-    if use_log:
+    if use_log_function:
         logger.log("DEBUG", message)
     else:
         logger.debug(message)
@@ -108,3 +86,38 @@ def test_file_formatters(tmpdir, format, validator, part, logger):
     elif part == 'both':
         assert validator(file.basename)
         assert validator(file.dirpath().basename)
+
+@pytest.mark.parametrize('message, args, kwargs, expected', [
+    ('{} + {} = {}', [1, 2, 3], {}, '1 + 2 = 3'),
+    ('{a} + {b} = {c}', [], dict(a=1, b=2, c=3), '1 + 2 = 3'),
+    ('{0} + {two} = {1}', [1, 3], dict(two=2, nope=4), '1 + 2 = 3'),
+    ('{self} or {message} or {level}', [], dict(self="a", message="b", level="c"), 'a or b or c'),
+    ('{:.2f}', [1], {}, "1.00"),
+    ('{0:0{three}d}', [5], dict(three=3), '005'),
+    ('{{{{nope}}}} {my_dict} {}', ["{{!}}"], dict(my_dict={'a': 1}), "{nope} {'a': 1} {{!}}"),
+
+])
+@pytest.mark.parametrize('use_log_function', [False, True])
+def test_log_formatting(logger, writer, message, args, kwargs, expected, use_log_function):
+    logger.log_to(writer, format='{message}', colored=False)
+
+    if use_log_function:
+        logger.log(10, message, *args, **kwargs)
+    else:
+        logger.debug(message, *args, **kwargs)
+
+    assert writer.read() == expected + '\n'
+
+def test_log_exception_formatting(logger, writer):
+    logger.log_to(writer, format="{level} + {line} + {function} => {message}")
+
+    try:
+        1 / 0
+    except:
+        logger.log_exception("INFO", "{{level}} + {{line}} + {{function}} => {0} * {x}", 1, x=2)
+
+    lines = writer.read().strip().splitlines()
+
+    expected = "INFO + 117 + test_log_exception_formatting"
+    assert lines[0] == "{0} => {0} => 1 * 2".format(expected)
+    assert lines[-1] == "ZeroDivisionError: division by zero"
