@@ -1,4 +1,5 @@
 import sys
+import pytest
 
 message = 'some message'
 expected = message + '\n'
@@ -44,3 +45,24 @@ def test_clear_count(logger, writer):
 
     n = logger.clear(0)
     assert n == 0
+
+def test_reset_handler(logger, writer):
+    logger.log_to(writer)
+
+    logger.reset()
+
+    logger.debug("nope")
+    assert writer.read() == ""
+
+def test_reset_level(logger, writer):
+    logger.add_level("foo", 12)
+
+    logger.reset()
+
+    with pytest.raises(Exception):
+        logger.log("foo", "nope")
+
+    logger.log_to(writer, format="{message}")
+    logger.log("DEBUG", "1")
+    logger.debug("2")
+    assert writer.read() == "1\n2\n"

@@ -63,14 +63,7 @@ class Logger:
         self._handlers = {}
         self._levels = {}
         self.catch = Catcher(self)
-
-        self.add_level("TRACE", 5, "<cyan><bold>", "✏️")        # Pencil
-        self.add_level("DEBUG", 10, "<blue><bold>", "🐞")        # Lady Beetle
-        self.add_level("INFO", 20, "<bold>", "ℹ️")                # Information
-        self.add_level("SUCCESS", 25, "<green><bold>", "✔️")   # Heavy Check Mark
-        self.add_level("WARNING", 30, "<yellow><bold>", "⚠️")  # Warning
-        self.add_level("ERROR", 40, "<red><bold>", "❌")          # Cross Mark
-        self.add_level("CRITICAL", 50, "<RED><bold>", "☠️")   # Skull and Crossbones
+        self._init_levels()
 
         atexit.register(self.clear)
 
@@ -106,6 +99,20 @@ class Logger:
 
     def get_level(self, name):
         return self._levels[name]
+
+    def _init_levels(self):
+        self.add_level("TRACE", 5, "<cyan><bold>", "✏️")        # Pencil
+        self.add_level("DEBUG", 10, "<blue><bold>", "🐞")        # Lady Beetle
+        self.add_level("INFO", 20, "<bold>", "ℹ️")                # Information
+        self.add_level("SUCCESS", 25, "<green><bold>", "✔️")   # Heavy Check Mark
+        self.add_level("WARNING", 30, "<yellow><bold>", "⚠️")  # Warning
+        self.add_level("ERROR", 40, "<red><bold>", "❌")          # Cross Mark
+        self.add_level("CRITICAL", 50, "<RED><bold>", "☠️")   # Skull and Crossbones
+
+    def reset(self):
+        self.clear()
+        self._levels.clear()
+        self._init_levels()
 
     def log_to(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
         if isclass(sink):
