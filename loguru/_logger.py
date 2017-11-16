@@ -1,6 +1,5 @@
 import atexit
 import functools
-import importlib
 import string
 from inspect import isclass
 from multiprocessing import current_process
@@ -59,8 +58,7 @@ class ProcessRecattr(str):
 
 class Logger:
 
-    def __init__(self, *, dummy=None):
-        self._dummy = dummy
+    def __init__(self):
         self._handlers_count = 0
         self._handlers = {}
         self._levels = {}
@@ -190,35 +188,9 @@ class Logger:
             return 1
         return 0
 
-    def config(self, source=None, *, sinks=None, dummy=None):
-        if source is None:
-            dict_config = {}
-        elif isinstance(source, dict):
-            dict_config = source
-        elif isinstance(source, (str, PathLike)):
-            source = str(source)
-            name = 'loguru.dynamic_config_loader'
-            loader = importlib.machinery.SourceFileLoader(name, source)
-            spec = importlib.util.spec_from_loader(name, loader)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            dict_config = module.config
-        else:
-            raise ValueError("Cannot get dict config for objects of type: '%s'" % type(source).__name__)
-
-        kwargs = {
-            'sinks': sinks,
-            'dummy': dummy,
-        }
-
-        for key, value in kwargs.items():
-            if value is not None:
-                dict_config[key] = value
-
+    def config(self, config_dict):
         self.clear()
-        self.dummy = dict_config.get('dummy', False)
-        sinks_ids = [self.log_to(**params) for params in dict_config.get('sinks', [])]
-
+        sinks_ids = [self.log_to(**params) for params in config_dict.get('sinks', [])]
         return sinks_ids
 
     def log(_self, _level, _message, *args, **kwargs):
