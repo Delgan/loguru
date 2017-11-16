@@ -12,7 +12,7 @@ def test_sinks(logger, capsys, tmpdir):
         ]
     }
 
-    logger.log_to(sys.stderr)
+    logger.log_to(sys.stderr, format='StderrSink: {message}')
     res = logger.config(config)
     logger.debug('test')
     for sink_id in res:
@@ -24,4 +24,20 @@ def test_sinks(logger, capsys, tmpdir):
     assert len(res) == 2
     assert file.read() == 'FileSink: test\n'
     assert out == 'StdoutSink: test\n'
-    assert err == ''
+    assert err == 'StderrSink: test\nStderrSink: nope\n'
+
+def test_levels(logger, writer):
+    config = {
+        'levels': [
+            {'name': 'my_level', 'icon': 'X', 'level': 12},
+        ]
+    }
+
+    logger.add_level('abc', 11)
+    logger.config(config)
+    logger.log_to(writer, format="{level.no}|{level.name}|{level.icon}|{message}")
+
+    logger.log('my_level', 'test')
+    logger.log("abc", "wow")
+
+    assert writer.read() == '12|my_level|X|test\n11|abc| |wow\n'

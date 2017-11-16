@@ -196,7 +196,8 @@ class Logger:
         return 0
 
     def config(self, config_dict):
-        self.clear()
+        for params in config_dict.get('levels', []):
+            self.add_level(**params)
         sinks_ids = [self.log_to(**params) for params in config_dict.get('sinks', [])]
         return sinks_ids
 
