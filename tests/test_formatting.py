@@ -121,3 +121,11 @@ def test_log_exception_formatting(logger, writer):
     expected = "INFO + 117 + test_log_exception_formatting"
     assert lines[0] == "{0} => {0} => 1 * 2".format(expected)
     assert lines[-1] == "ZeroDivisionError: division by zero"
+
+
+def test_extra_formatting(logger, writer):
+    logger.start(writer, format="{extra[test]} -> {extra[dict]} -> {message}")
+    logger.extra["test"] = "my_test"
+    logger.extra["dict"] = {"a": 10}
+    logger.debug("level: {{level.name}}")
+    assert writer.read() == "my_test -> {'a': 10} -> level: DEBUG\n"

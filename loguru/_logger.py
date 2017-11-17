@@ -63,6 +63,7 @@ class Logger:
         self._handlers = {}
         self._levels = {}
         self.catch = Catcher(self)
+        self.extra = {}
         self._init_levels()
 
         atexit.register(self.stop)
@@ -322,6 +323,7 @@ class Logger:
                 'module': splitext(file_name)[0],
                 'thread': thread_recattr,
                 'process': process_recattr,
+                'extra': _self.extra,
             }
 
             record['message'] = record['message'].format_map(record)
