@@ -4,19 +4,19 @@ import pytest
 message = 'some message'
 expected = message + '\n'
 
-def test_clear_all(tmpdir, writer, capsys, logger):
+def test_stop_all(tmpdir, writer, capsys, logger):
     file = tmpdir.join("test.log")
 
     logger.debug("This shouldn't be printed.")
 
-    logger.log_to(file.realpath(), format='{message}')
-    logger.log_to(sys.stdout, format='{message}')
-    logger.log_to(sys.stderr, format='{message}')
-    logger.log_to(writer, format='{message}')
+    logger.start(file.realpath(), format='{message}')
+    logger.start(sys.stdout, format='{message}')
+    logger.start(sys.stderr, format='{message}')
+    logger.start(writer, format='{message}')
 
     logger.debug(message)
 
-    logger.clear()
+    logger.stop()
 
     logger.debug("This shouldn't be printed neither.")
 
@@ -27,27 +27,27 @@ def test_clear_all(tmpdir, writer, capsys, logger):
     assert err == expected
     assert writer.read() == expected
 
-def test_clear_count(logger, writer):
-    n = logger.clear()
+def test_stop_count(logger, writer):
+    n = logger.stop()
     assert n == 0
 
-    n = logger.clear(42)
+    n = logger.stop(42)
     assert n == 0
 
-    i = logger.log_to(writer)
-    n = logger.clear(i)
+    i = logger.start(writer)
+    n = logger.stop(i)
     assert n == 1
 
-    logger.log_to(writer)
-    logger.log_to(writer)
-    n = logger.clear()
+    logger.start(writer)
+    logger.start(writer)
+    n = logger.stop()
     assert n == 2
 
-    n = logger.clear(0)
+    n = logger.stop(0)
     assert n == 0
 
 def test_reset_handler(logger, writer):
-    logger.log_to(writer)
+    logger.start(writer)
 
     logger.reset()
 
@@ -62,7 +62,7 @@ def test_reset_level(logger, writer):
     with pytest.raises(Exception):
         logger.log("foo", "nope")
 
-    logger.log_to(writer, format="{message}")
+    logger.start(writer, format="{message}")
     logger.log("DEBUG", "1")
     logger.debug("2")
     assert writer.read() == "1\n2\n"

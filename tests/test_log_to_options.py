@@ -15,7 +15,7 @@ import pytest
 ])
 def test_level_option(level, function, should_output, logger, writer):
     message = "Test Level"
-    logger.log_to(writer, level=level, format='{message}')
+    logger.start(writer, level=level, format='{message}')
     function(logger)(message)
     assert writer.read() == (message + '\n') * should_output
 
@@ -26,7 +26,7 @@ def test_level_option(level, function, should_output, logger, writer):
     ('d', '{message} {level} {level.no} {level.name}', 'd DEBUG %d DEBUG' % 10)
 ])
 def test_format_option(message, format, expected, logger, writer):
-    logger.log_to(writer, format=format)
+    logger.start(writer, format=format)
     logger.debug(message)
     assert writer.read() == expected + '\n'
 
@@ -43,7 +43,7 @@ def test_format_option(message, format, expected, logger, writer):
 ])
 def test_filter_option(filter, should_output, logger, writer):
     message = "Test Filter"
-    logger.log_to(writer, filter=filter, format='{message}')
+    logger.start(writer, filter=filter, format='{message}')
     logger.debug(message)
     assert writer.read() == (message + '\n') * should_output
 
@@ -52,22 +52,22 @@ def test_filter_option(filter, should_output, logger, writer):
     ('b', '<red>{message}</red>', '\x1b[31mb\x1b[0m', True),
 ])
 def test_colored_option(message, format, expected, colored, logger, writer):
-    logger.log_to(writer, format=format, colored=colored)
+    logger.start(writer, format=format, colored=colored)
     logger.debug(message)
     assert writer.read() == expected + '\n'
 
 def test_better_exceptions_option(logger, writer):
-    logger.log_to(writer, format='{message}', better_exceptions=True)
+    logger.start(writer, format='{message}', better_exceptions=True)
     try:
         1 / 0
     except:
         logger.exception('')
     result_with = writer.read().strip()
 
-    logger.clear()
+    logger.stop()
     writer.clear()
 
-    logger.log_to(writer, format='{message}', better_exceptions=False)
+    logger.start(writer, format='{message}', better_exceptions=False)
     try:
         1 / 0
     except:
@@ -141,7 +141,7 @@ def test_kwargs_option(sink_type, test_invalid, logger, tmpdir):
             kwargs = {"foo": 1, "bar": 2}
 
     def test():
-        logger.log_to(writer, format='{message}', **kwargs)
+        logger.start(writer, format='{message}', **kwargs)
         logger.debug(msg)
 
     if test_invalid:

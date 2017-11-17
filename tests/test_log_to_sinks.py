@@ -17,10 +17,10 @@ repetitions = pytest.mark.parametrize('rep', [0, 1, 2])
 def log(sink, rep=1):
     logger = loguru._logger.Logger()
     logger.debug("This shouldn't be printed.")
-    i = logger.log_to(sink, format='{message}')
+    i = logger.start(sink, format='{message}')
     for _ in range(rep):
         logger.debug(message)
-    logger.clear(i)
+    logger.stop(i)
     logger.debug("This shouldn't be printed neither.")
 
 @repetitions

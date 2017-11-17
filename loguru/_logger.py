@@ -65,7 +65,7 @@ class Logger:
         self.catch = Catcher(self)
         self._init_levels()
 
-        atexit.register(self.clear)
+        atexit.register(self.stop)
 
     def add_level(self, name, level, color="", icon=" "):
         if not isinstance(name, str):
@@ -110,14 +110,14 @@ class Logger:
         self.add_level("CRITICAL", 50, "<RED><bold>", "☠️")   # Skull and Crossbones
 
     def reset(self):
-        self.clear()
+        self.stop()
         self._levels.clear()
         self._init_levels()
 
-    def log_to(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
+    def start(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
         if isclass(sink):
             sink = sink(**kwargs)
-            return self.log_to(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
+            return self.start(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
         elif callable(sink):
             if kwargs:
                 writer = lambda m: sink(m, **kwargs)
@@ -128,7 +128,7 @@ class Logger:
         elif isinstance(sink, (str, PathLike)):
             path = sink
             sink = FileSink(path, **kwargs)
-            return self.log_to(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
+            return self.start(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
         elif hasattr(sink, 'write') and callable(sink.write):
             sink_write = sink.write
             if kwargs:
@@ -180,7 +180,7 @@ class Logger:
 
         return self._handlers_count - 1
 
-    def clear(self, handler_id=None):
+    def stop(self, handler_id=None):
         if handler_id is None:
             for sink, _ in self._handlers.values():
                 if hasattr(sink, 'stop') and callable(sink.stop):
@@ -198,7 +198,7 @@ class Logger:
     def configure(self, config):
         for params in config.get('levels', []):
             self.add_level(**params)
-        sinks_ids = [self.log_to(**params) for params in config.get('sinks', [])]
+        sinks_ids = [self.start(**params) for params in config.get('sinks', [])]
         return sinks_ids
 
     def log(_self, _level, _message, *args, **kwargs):

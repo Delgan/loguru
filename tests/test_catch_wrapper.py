@@ -8,7 +8,7 @@ wrap_mode = pytest.mark.parametrize('wrap_mode', ['decorator', 'function', 'cont
 
 @pytest.mark.parametrize('use_parentheses', [True, False])
 def test_decorator(logger, writer, use_parentheses):
-    logger.log_to(writer)
+    logger.start(writer)
 
     if use_parentheses:
         @logger.catch()
@@ -25,7 +25,7 @@ def test_decorator(logger, writer, use_parentheses):
 
 @pytest.mark.parametrize('use_parentheses', [True, False])
 def test_context_manager(logger, writer, use_parentheses):
-    logger.log_to(writer)
+    logger.start(writer)
 
     if use_parentheses:
         with logger.catch():
@@ -37,7 +37,7 @@ def test_context_manager(logger, writer, use_parentheses):
     assert writer.read().endswith(zero_division_error)
 
 def test_function(logger, writer):
-        logger.log_to(writer)
+        logger.start(writer)
 
         def a():
             1 / 0
@@ -48,7 +48,7 @@ def test_function(logger, writer):
         assert writer.read().endswith(zero_division_error)
 
 def test_with_better_exceptions(logger, writer):
-    logger.log_to(writer, better_exceptions=True)
+    logger.start(writer, better_exceptions=True)
 
     def c():
         a = 2
@@ -60,10 +60,10 @@ def test_with_better_exceptions(logger, writer):
 
     result_with = writer.read()
 
-    logger.clear()
+    logger.stop()
     writer.clear()
 
-    logger.log_to(writer, better_exceptions=False)
+    logger.start(writer, better_exceptions=False)
 
     decorated = logger.catch(c)
     decorated()
@@ -83,7 +83,7 @@ def test_with_better_exceptions(logger, writer):
 @pytest.mark.parametrize('keyword', [True, False])
 @wrap_mode
 def test_exception(logger, writer, exception, should_raise, keyword, wrap_mode):
-    logger.log_to(writer)
+    logger.start(writer)
 
     if keyword:
         if wrap_mode == "decorator":
@@ -123,7 +123,7 @@ def test_exception(logger, writer, exception, should_raise, keyword, wrap_mode):
 
 @wrap_mode
 def test_message(logger, writer, wrap_mode):
-    logger.log_to(writer, format='{message}')
+    logger.start(writer, format='{message}')
     message = 'An error occured:'
 
     if wrap_mode == 'decorator':
@@ -148,7 +148,7 @@ def test_message(logger, writer, wrap_mode):
     ("DEBUG", "DEBUG | 10")
 ])
 def test_level(logger, writer, wrap_mode, level, expected):
-    logger.log_to(writer, format="{level.name} | {level.no}")
+    logger.start(writer, format="{level.name} | {level.no}")
 
     if wrap_mode == "decorator":
         @logger.catch(level=level)
@@ -170,7 +170,7 @@ def test_level(logger, writer, wrap_mode, level, expected):
 
 @wrap_mode
 def test_reraise(logger, writer, wrap_mode):
-    logger.log_to(writer)
+    logger.start(writer)
 
     if wrap_mode == "decorator":
         @logger.catch(reraise=True)
@@ -192,7 +192,7 @@ def test_reraise(logger, writer, wrap_mode):
 
 @wrap_mode
 def test_not_raising(logger, writer, wrap_mode):
-    logger.log_to(writer, format='{message}')
+    logger.start(writer, format='{message}')
     message = "It's ok"
 
     if wrap_mode == "decorator":
@@ -241,7 +241,7 @@ def test_formatting(logger, tmpdir, pyexec, wrap_mode, format, expected_dec, exp
 
     code = """
     from loguru import logger
-    logger.log_to("{logfile}", format="{fmt}")
+    logger.start("{logfile}", format="{fmt}")
     def k():
         1 / 0
     {catch}

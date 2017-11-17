@@ -35,7 +35,7 @@ def test_log_formatters(format, validator, logger, writer, use_log_function):
     message = format.replace("{", "{{").replace("}", "}}")
 
     format += " --- {message}"
-    logger.log_to(writer, format=format)
+    logger.start(writer, format=format)
 
     if use_log_function:
         logger.log("DEBUG", message)
@@ -69,7 +69,7 @@ def test_file_formatters(tmpdir, format, validator, part, logger):
     elif part == "both":
         file = tmpdir.join(format, format)
 
-    logger.log_to(file.realpath())
+    logger.start(file.realpath())
     logger.debug("Message")
 
     files = [f for f in tmpdir.visit() if f.check(file=1)]
@@ -99,7 +99,7 @@ def test_file_formatters(tmpdir, format, validator, part, logger):
 ])
 @pytest.mark.parametrize('use_log_function', [False, True])
 def test_log_formatting(logger, writer, message, args, kwargs, expected, use_log_function):
-    logger.log_to(writer, format='{message}', colored=False)
+    logger.start(writer, format='{message}', colored=False)
 
     if use_log_function:
         logger.log(10, message, *args, **kwargs)
@@ -109,7 +109,7 @@ def test_log_formatting(logger, writer, message, args, kwargs, expected, use_log
     assert writer.read() == expected + '\n'
 
 def test_log_exception_formatting(logger, writer):
-    logger.log_to(writer, format="{level} + {line} + {function} => {message}")
+    logger.start(writer, format="{level} + {line} + {function} => {message}")
 
     try:
         1 / 0

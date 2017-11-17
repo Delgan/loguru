@@ -26,7 +26,7 @@ def pyexec(tmpdir):
     loguru_config = ('import sys;'
                      'sys.path.append("' + loguru_path + '");'
                      'from loguru import logger;'
-                     'logger.clear();\n')
+                     'logger.stop();\n')
 
     def pyexec(code, import_loguru=False, *, pyfile=None):
         if import_loguru:

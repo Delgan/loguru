@@ -12,11 +12,11 @@ def test_sinks(logger, capsys, tmpdir):
         ]
     }
 
-    logger.log_to(sys.stderr, format='StderrSink: {message}')
+    logger.start(sys.stderr, format='StderrSink: {message}')
     res = logger.configure(config)
     logger.debug('test')
     for sink_id in res:
-        logger.clear(sink_id)
+        logger.stop(sink_id)
     logger.debug("nope")
 
     out, err = capsys.readouterr()
@@ -35,7 +35,7 @@ def test_levels(logger, writer):
 
     logger.add_level('abc', 11)
     logger.configure(config)
-    logger.log_to(writer, format="{level.no}|{level.name}|{level.icon}|{message}")
+    logger.start(writer, format="{level.no}|{level.name}|{level.icon}|{message}")
 
     logger.log('my_level', 'test')
     logger.log("abc", "wow")
