@@ -1,3 +1,4 @@
+import json
 import random
 import re
 import traceback
@@ -23,12 +24,13 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writer, levelno, format_, filter_, colored, better_exceptions, colors=[]):
+    def __init__(self, *, writer, levelno, format_, filter_, colored, structured, better_exceptions, colors=[]):
         self.writer = writer
         self.levelno = levelno
         self.format = format_
         self.filter = filter_
         self.colored = colored
+        self.structured = structured
         self.better_exceptions = better_exceptions
         self.decolorized_format = self.decolorize(format_)
         self.precolorized_formats = {}
@@ -38,6 +40,28 @@ class Handler:
                 self.update_format(color)
 
         self.exception_formatter = ExceptionFormatter(colored=colored)
+
+    @staticmethod
+    def serialize(formatted_message, record):
+        serializable = {
+            'formatted_message': formatted_message,
+            'record': {
+                'elapsed': record['elapsed'].total_seconds(),
+                'extra': record['extra'],
+                'file': dict(name=record['file'].name, path=record['file'].path),
+                'function': record['function'],
+                'level': dict(icon=record['level'].icon, name=record['level'].name, no=record['level'].no),
+                'line': record['line'],
+                'message': record['message'],
+                'module': record['module'],
+                'name': record['name'],
+                'process': dict(id=record['process'].id, name=record['process'].name),
+                'thread': dict(id=record['thread'].id, name=record['thread'].name),
+                'time': record['time'].for_json(),
+            }
+        }
+
+        return json.dumps(serializable, default=str)
 
     @staticmethod
     def make_ansimarkup(color):
@@ -116,6 +140,9 @@ class Handler:
                     break
 
             formatted += formatted_exc
+
+        if self.structured:
+            formatted = self.serialize(formatted, record)
 
         message = StrRecord(formatted)
         message.record = record

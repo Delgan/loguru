@@ -1,7 +1,7 @@
 # coding: utf-8
 
 import loguru
-
+import json
 import pytest
 
 
@@ -150,3 +150,9 @@ def test_kwargs_option(sink_type, test_invalid, logger, tmpdir):
     else:
         test()
         assert validator()
+
+def test_structured_option(logger, writer):
+    logger.start(writer, format="{message}", structured=True)
+    logger.extra['not_serializable'] = object()
+    logger.debug("Test")
+    json.loads(writer.read())

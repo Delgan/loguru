@@ -66,3 +66,8 @@ def test_reset_level(logger, writer):
     logger.log("DEBUG", "1")
     logger.debug("2")
     assert writer.read() == "1\n2\n"
+
+def test_reset_extra(logger, writer):
+    logger.extra['a'] = 1
+    logger.reset()
+    assert logger.extra == {}

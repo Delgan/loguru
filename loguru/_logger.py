@@ -112,13 +112,16 @@ class Logger:
 
     def reset(self):
         self.stop()
+        self.extra.clear()
         self._levels.clear()
         self._init_levels()
 
-    def start(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, better_exceptions=True, **kwargs):
+    def start(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, structured=False, better_exceptions=True, **kwargs):
+        if colored is None and structured is True:
+            colored = False
         if isclass(sink):
             sink = sink(**kwargs)
-            return self.start(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
+            return self.start(sink, level=level, format=format, filter=filter, colored=colored, structured=structured, better_exceptions=better_exceptions)
         elif callable(sink):
             if kwargs:
                 writer = lambda m: sink(m, **kwargs)
@@ -129,7 +132,7 @@ class Logger:
         elif isinstance(sink, (str, PathLike)):
             path = sink
             sink = FileSink(path, **kwargs)
-            return self.start(sink, level=level, format=format, filter=filter, colored=colored, better_exceptions=better_exceptions)
+            return self.start(sink, level=level, format=format, filter=filter, colored=colored, structured=structured, better_exceptions=better_exceptions)
         elif hasattr(sink, 'write') and callable(sink.write):
             sink_write = sink.write
             if kwargs:
@@ -172,6 +175,7 @@ class Logger:
             format_=format,
             filter_=filter,
             colored=colored,
+            structured=structured,
             better_exceptions=better_exceptions,
             colors=[color for _, color, _ in self._levels.values()] + [''],
         )
@@ -312,18 +316,18 @@ class Logger:
                 exception = (ex_type, ex, root_tb)
 
             record = {
-                'name': name,
-                'message': message,
-                'time': now,
                 'elapsed': elapsed,
-                'line': frame.f_lineno,
-                'level': level_recattr,
+                'extra': _self.extra,
                 'file': file_recattr,
                 'function': code.co_name,
+                'level': level_recattr,
+                'line': frame.f_lineno,
+                'message': message,
                 'module': splitext(file_name)[0],
-                'thread': thread_recattr,
+                'name': name,
                 'process': process_recattr,
-                'extra': _self.extra,
+                'thread': thread_recattr,
+                'time': now,
             }
 
             record['message'] = record['message'].format_map(record)
