@@ -41,3 +41,19 @@ def test_levels(logger, writer):
     logger.log("abc", "wow")
 
     assert writer.read() == '12|my_level|X|test\n11|abc| |wow\n'
+
+def test_extra(logger, writer):
+    config = {
+        'extra': {
+            'a': 1,
+            'b': 'c',
+        }
+    }
+
+    logger.extra = {"c": 9}
+    logger.configure(config)
+
+    logger.start(writer, format='{extra[a]} | {extra[b]} | {extra[c]}')
+    logger.debug("")
+
+    assert writer.read() == "1 | c | 9\n"

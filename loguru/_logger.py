@@ -1,5 +1,6 @@
 import atexit
 import functools
+import itertools
 import string
 from inspect import isclass
 from multiprocessing import current_process
@@ -59,14 +60,26 @@ class ProcessRecattr(str):
 class Logger:
 
     def __init__(self):
-        self._handlers_count = 0
+        self._handlers_count = itertools.count()
         self._handlers = {}
         self._levels = {}
         self.catch = Catcher(self)
         self.extra = {}
-        self._init_levels()
 
+        self._init_levels()
         atexit.register(self.stop)
+
+    def bind(self, **kwargs):
+        # For performance reasons, it does not return an actual wrapper
+        # But user does not have to know implementation details
+        # The key is that each attribute have to be a reference, so loggers share same handlers and levels
+        logger = Logger.__new__(Logger)
+        logger._handlers_count = self._handlers_count
+        logger._handlers = self._handlers
+        logger._levels = self._levels
+        logger.catch = self.catch
+        logger.extra = {**self.extra, **kwargs}
+        return logger
 
     def add_level(self, name, level, color="", icon=" "):
         if not isinstance(name, str):
@@ -180,10 +193,10 @@ class Logger:
             colors=[color for _, color, _ in self._levels.values()] + [''],
         )
 
-        self._handlers[self._handlers_count] = (sink, handler)
-        self._handlers_count += 1
+        handlers_count = next(self._handlers_count)
+        self._handlers[handlers_count] = (sink, handler)
 
-        return self._handlers_count - 1
+        return handlers_count
 
     def stop(self, handler_id=None):
         if handler_id is None:
@@ -201,6 +214,7 @@ class Logger:
         return 0
 
     def configure(self, config):
+        self.extra.update(config.get('extra', {}))
         for params in config.get('levels', []):
             self.add_level(**params)
         sinks_ids = [self.start(**params) for params in config.get('sinks', [])]
