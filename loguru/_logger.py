@@ -93,7 +93,7 @@ class Logger:
 
         self._levels[name] = (level, color, icon)
 
-        for _, handler in self._handlers.values():
+        for handler in self._handlers.values():
             handler.update_format(color)
 
 
@@ -132,6 +132,7 @@ class Logger:
     def start(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, structured=False, better_exceptions=True, **kwargs):
         if colored is None and structured is True:
             colored = False
+
         if isclass(sink):
             sink = sink(**kwargs)
             return self.start(sink, level=level, format=format, filter=filter, colored=colored, structured=structured, better_exceptions=better_exceptions)
@@ -140,6 +141,7 @@ class Logger:
                 writer = lambda m: sink(m, **kwargs)
             else:
                 writer = sink
+            stopper = lambda: None
             if colored is None:
                 colored = False
         elif isinstance(sink, (str, PathLike)):
@@ -158,6 +160,11 @@ class Logger:
                 writer = lambda m: write(m) and sink_flush()
             else:
                 writer = write
+
+            if hasattr(sink, 'stop') and callable(sink.stop):
+                stopper = sink.stop
+            else:
+                stopper = lambda: None
 
             if colored is None:
                 try:
@@ -184,6 +191,7 @@ class Logger:
 
         handler = Handler(
             writer=writer,
+            stopper=stopper,
             levelno=levelno,
             format_=format,
             filter_=filter,
@@ -194,22 +202,20 @@ class Logger:
         )
 
         handlers_count = next(self._handlers_count)
-        self._handlers[handlers_count] = (sink, handler)
+        self._handlers[handlers_count] = handler
 
         return handlers_count
 
     def stop(self, handler_id=None):
         if handler_id is None:
-            for sink, _ in self._handlers.values():
-                if hasattr(sink, 'stop') and callable(sink.stop):
-                    sink.stop()
+            for handler in self._handlers.values():
+                handler.stop()
             count = len(self._handlers)
             self._handlers.clear()
             return count
         elif handler_id in self._handlers:
-            sink, _ = self._handlers.pop(handler_id)
-            if hasattr(sink, 'stop') and callable(sink.stop):
-                sink.stop()
+            handler = self._handlers.pop(handler_id)
+            handler.stop()
             return 1
         return 0
 
@@ -217,8 +223,8 @@ class Logger:
         self.extra.update(config.get('extra', {}))
         for params in config.get('levels', []):
             self.add_level(**params)
-        sinks_ids = [self.start(**params) for params in config.get('sinks', [])]
-        return sinks_ids
+        handlers_ids = [self.start(**params) for params in config.get('sinks', [])]
+        return handlers_ids
 
     def log(_self, _level, _message, *args, **kwargs):
         _self._log(_level, False, 3, False, _message, *args, **kwargs)
@@ -346,7 +352,7 @@ class Logger:
 
             record['message'] = record['message'].format_map(record)
 
-            for _, handler in _self._handlers.values():
+            for handler in _self._handlers.values():
                 handler.emit(record, exception, level_color)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(level_name)

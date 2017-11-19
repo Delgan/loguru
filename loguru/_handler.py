@@ -24,8 +24,9 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writer, levelno, format_, filter_, colored, structured, better_exceptions, colors=[]):
+    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, better_exceptions, colors=[]):
         self.writer = writer
+        self.stopper = stopper
         self.levelno = levelno
         self.format = format_
         self.filter = filter_
@@ -148,3 +149,6 @@ class Handler:
         message.record = record
 
         self.writer(message)
+
+    def stop(self):
+        self.stopper()
