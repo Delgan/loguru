@@ -58,7 +58,7 @@ class Handler:
                 'name': record['name'],
                 'process': dict(id=record['process'].id, name=record['process'].name),
                 'thread': dict(id=record['thread'].id, name=record['thread'].name),
-                'time': record['time'].for_json(),
+                'time': record['time'].float_timestamp,
             }
         }
 

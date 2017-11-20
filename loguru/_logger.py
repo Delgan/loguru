@@ -1,4 +1,3 @@
-import atexit
 import functools
 import itertools
 import string
@@ -59,25 +58,26 @@ class ProcessRecattr(str):
 
 class Logger:
 
+    _default_levels = {
+        "TRACE": (5, "<cyan><bold>", "✏️"),       # Pencil
+        "DEBUG": (10, "<blue><bold>", "🐞"),      # Lady Beetle
+        "INFO": (20, "<bold>", "ℹ️"),             # Information
+        "SUCCESS": (25, "<green><bold>", "✔️"),   # Heavy Check Mark
+        "WARNING": (30, "<yellow><bold>", "⚠️"),  # Warning
+        "ERROR": (40, "<red><bold>", "❌"),        # Cross Mark
+        "CRITICAL": (50, "<RED><bold>", "☠️"),    # Skull and Crossbones
+    }
+
+    _handlers_count = itertools.count()
+    _handlers = {}
+    _levels = _default_levels.copy()
+
     def __init__(self):
-        self._handlers_count = itertools.count()
-        self._handlers = {}
-        self._levels = {}
         self.catch = Catcher(self)
         self.extra = {}
 
-        self._init_levels()
-        atexit.register(self.stop)
-
     def bind(self, **kwargs):
-        # For performance reasons, it does not return an actual wrapper
-        # But user does not have to know implementation details
-        # The key is that each attribute have to be a reference, so loggers share same handlers and levels
-        logger = Logger.__new__(Logger)
-        logger._handlers_count = self._handlers_count
-        logger._handlers = self._handlers
-        logger._levels = self._levels
-        logger.catch = self.catch
+        logger = Logger()
         logger.extra = {**self.extra, **kwargs}
         return logger
 
@@ -96,7 +96,6 @@ class Logger:
         for handler in self._handlers.values():
             handler.update_format(color)
 
-
     def edit_level(self, name, level=None, color=None, icon=None):
         old_level, old_color, old_icon = self.get_level(name)
 
@@ -114,20 +113,11 @@ class Logger:
     def get_level(self, name):
         return self._levels[name]
 
-    def _init_levels(self):
-        self.add_level("TRACE", 5, "<cyan><bold>", "✏️")        # Pencil
-        self.add_level("DEBUG", 10, "<blue><bold>", "🐞")        # Lady Beetle
-        self.add_level("INFO", 20, "<bold>", "ℹ️")                # Information
-        self.add_level("SUCCESS", 25, "<green><bold>", "✔️")   # Heavy Check Mark
-        self.add_level("WARNING", 30, "<yellow><bold>", "⚠️")  # Warning
-        self.add_level("ERROR", 40, "<red><bold>", "❌")          # Cross Mark
-        self.add_level("CRITICAL", 50, "<RED><bold>", "☠️")   # Skull and Crossbones
-
     def reset(self):
         self.stop()
-        self.extra.clear()
         self._levels.clear()
-        self._init_levels()
+        self._levels.update(self._default_levels)
+        self.extra.clear()
 
     def start(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, structured=False, better_exceptions=True, **kwargs):
         if colored is None and structured is True:

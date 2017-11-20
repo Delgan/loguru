@@ -1,11 +1,14 @@
 import loguru
+import itertools
 import pytest
 import py
 import os
 
 @pytest.fixture
 def logger():
-    return loguru._logger.Logger()
+    yield loguru.logger
+    loguru.logger.reset()
+    loguru._logger.Logger._handlers_count = itertools.count()
 
 @pytest.fixture
 def writer():
