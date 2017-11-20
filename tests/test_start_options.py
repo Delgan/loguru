@@ -56,8 +56,8 @@ def test_colored_option(message, format, expected, colored, logger, writer):
     logger.debug(message)
     assert writer.read() == expected + '\n'
 
-def test_better_exceptions_option(logger, writer):
-    logger.start(writer, format='{message}', better_exceptions=True)
+def test_enhanced_option(logger, writer):
+    logger.start(writer, format='{message}', enhanced=True)
     try:
         1 / 0
     except:
@@ -67,7 +67,7 @@ def test_better_exceptions_option(logger, writer):
     logger.stop()
     writer.clear()
 
-    logger.start(writer, format='{message}', better_exceptions=False)
+    logger.start(writer, format='{message}', enhanced=False)
     try:
         1 / 0
     except:

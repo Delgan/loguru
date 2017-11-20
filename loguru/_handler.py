@@ -24,7 +24,7 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, better_exceptions, colors=[]):
+    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, colors=[]):
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
@@ -32,7 +32,7 @@ class Handler:
         self.filter = filter_
         self.colored = colored
         self.structured = structured
-        self.better_exceptions = better_exceptions
+        self.enhanced = enhanced
         self.decolorized_format = self.decolorize(format_)
         self.precolorized_formats = {}
 
@@ -112,7 +112,7 @@ class Handler:
                     break
                 tb = tb.tb_next
 
-            if self.better_exceptions:
+            if self.enhanced:
                 formatted_exc = self.exception_formatter.format_exception(*exception)
             else:
                 formatted_exc = traceback.format_exception(*exception)

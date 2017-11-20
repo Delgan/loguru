@@ -47,8 +47,8 @@ def test_function(logger, writer):
 
         assert writer.read().endswith(zero_division_error)
 
-def test_with_better_exceptions(logger, writer):
-    logger.start(writer, better_exceptions=True)
+def test_with_enhanced(logger, writer):
+    logger.start(writer, enhanced=True)
 
     def c():
         a = 2
@@ -63,7 +63,7 @@ def test_with_better_exceptions(logger, writer):
     logger.stop()
     writer.clear()
 
-    logger.start(writer, better_exceptions=False)
+    logger.start(writer, enhanced=False)
 
     decorated = logger.catch(c)
     decorated()

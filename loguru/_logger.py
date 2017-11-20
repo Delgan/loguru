@@ -119,13 +119,13 @@ class Logger:
         self._levels.update(self._default_levels)
         self.extra.clear()
 
-    def start(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, structured=False, better_exceptions=True, **kwargs):
+    def start(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, structured=False, enhanced=True, **kwargs):
         if colored is None and structured is True:
             colored = False
 
         if isclass(sink):
             sink = sink(**kwargs)
-            return self.start(sink, level=level, format=format, filter=filter, colored=colored, structured=structured, better_exceptions=better_exceptions)
+            return self.start(sink, level=level, format=format, filter=filter, colored=colored, structured=structured, enhanced=enhanced)
         elif callable(sink):
             if kwargs:
                 writer = lambda m: sink(m, **kwargs)
@@ -137,7 +137,7 @@ class Logger:
         elif isinstance(sink, (str, PathLike)):
             path = sink
             sink = FileSink(path, **kwargs)
-            return self.start(sink, level=level, format=format, filter=filter, colored=colored, structured=structured, better_exceptions=better_exceptions)
+            return self.start(sink, level=level, format=format, filter=filter, colored=colored, structured=structured, enhanced=enhanced)
         elif hasattr(sink, 'write') and callable(sink.write):
             sink_write = sink.write
             if kwargs:
@@ -187,7 +187,7 @@ class Logger:
             filter_=filter,
             colored=colored,
             structured=structured,
-            better_exceptions=better_exceptions,
+            enhanced=enhanced,
             colors=[color for _, color, _ in self._levels.values()] + [''],
         )
 

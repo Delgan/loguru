@@ -51,7 +51,7 @@ def compare_outputs(tmpdir, pyexec):
 def compare(compare_outputs, request):
     catch_mode = request.param
 
-    start = 'logger.start(sys.stdout, better_exceptions=False, colored=False, format="{message}")\n'
+    start = 'logger.start(sys.stdout, enhanced=False, colored=False, format="{message}")\n'
 
     def compare(template, caught_scope_index, caught_trace_index=0, *, disabled=[]):
         template = textwrap.dedent(template)
@@ -302,7 +302,7 @@ def test_suppressed_exception_indirect(compare):
 @pytest.mark.parametrize('rec', [1, 2, 3])
 @pytest.mark.parametrize('catch_mode', ['explicit', 'decorator', 'context_manager'])
 def test_raising_recursion(logger, writer, rec, catch_mode):
-    logger.start(writer, format='{message}', better_exceptions=False)
+    logger.start(writer, format='{message}', enhanced=False)
 
     if catch_mode == 'explicit':
         def f(n):
@@ -345,7 +345,7 @@ def test_raising_recursion(logger, writer, rec, catch_mode):
         assert next_line == epected_next
 
 def test_carret_not_masked(logger, writer):
-    logger.start(writer, better_exceptions=False, colored=False)
+    logger.start(writer, enhanced=False, colored=False)
 
     @logger.catch
     def f(n):
@@ -362,7 +362,7 @@ def test_postprocess_colored(logger, writer, pyexec, tmpdir):
     file = tmpdir.join("test.log")
 
     code = """
-    logger.start('%s', colored=True, better_exceptions=True)
+    logger.start('%s', colored=True, enhanced=True)
     def f():
         1 / 0
     with logger.catch:
@@ -378,7 +378,7 @@ def test_postprocess_colored(logger, writer, pyexec, tmpdir):
     assert re.match(r"^\S*>.*line.*\D7\D.*$", lines[3])
 
 def test_frame_values_backward(logger, writer):
-    logger.start(writer, better_exceptions=True, colored=False)
+    logger.start(writer, enhanced=True, colored=False)
 
     k = 2
 
@@ -408,7 +408,7 @@ def test_frame_values_backward(logger, writer):
 
 
 def test_frame_values_forward(logger, writer):
-    logger.start(writer, better_exceptions=True, colored=False)
+    logger.start(writer, enhanced=True, colored=False)
 
     k = 2
 
