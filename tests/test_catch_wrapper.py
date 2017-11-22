@@ -220,11 +220,12 @@ def test_not_raising(logger, writer, wrap_mode):
 ])
 @wrap_mode
 def test_formatting(logger, tmpdir, pyexec, wrap_mode, format, expected_dec, expected_ctx):
-    message = format.replace("{", "{{").replace("}", "}}")
-    format += " --- {message}"
     logfile = tmpdir.join("test.log")
     pyfile = tmpdir.join("folder", "test.py")
     pyfile.write("", ensure=True)
+
+    message = '{record[%s]}' % format[1:-1]
+    format += ' --- {message}'
 
     if wrap_mode == "decorator":
         catch = "@logger.catch(message='%s')" % message
@@ -259,9 +260,9 @@ def test_formatting(logger, tmpdir, pyexec, wrap_mode, format, expected_dec, exp
     pyexec("import folder.test", True, pyfile=tmpdir.join("main.py"))
 
     lines = logfile.read().strip().splitlines()
-    start, end = lines[0].split(" --- ")
-
     expected = expected_dec if wrap_mode in ['decorator', 'function'] else expected_ctx
 
+    start, end = lines[0].split(' --- ')
     assert start == expected
     assert end == expected
+    assert lines[-1] == zero_division_error.strip()

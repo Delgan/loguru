@@ -1,6 +1,5 @@
 import functools
 import itertools
-import string
 from inspect import isclass
 from multiprocessing import current_process
 from os import PathLike
@@ -19,14 +18,6 @@ from ._handler import Handler
 VERBOSE_FORMAT = "<green>{time}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
 
 start_time = pendulum_now()
-
-_format_field = string.Formatter.format_field
-
-
-class EscapingFormatter(string.Formatter):
-
-    def format_field(self, value, spec):
-        return _format_field(self, value, spec).replace("{", "{{").replace("}", "}}")
 
 
 class loguru_traceback:
@@ -72,13 +63,22 @@ class Logger:
     _handlers = {}
     _levels = _default_levels.copy()
 
-    def __init__(self):
+    def __init__(self, *, extra={}, record=False, exception=False):
         self.catch = Catcher(self)
-        self.extra = {}
+        self.extra = extra
+        self._record = record
+        self._exception = exception
+
+    def opt(self, exception=None, record=None):
+        extra = self.extra.copy()
+        exception = self._exception if exception is None else exception
+        record = self._record if record is None else record
+        logger = Logger(extra=extra, exception=exception, record=record)
+        return logger
 
     def bind(self, **kwargs):
-        logger = Logger()
-        logger.extra = {**self.extra, **kwargs}
+        extra = {**self.extra, **kwargs}
+        logger = Logger(extra=extra, record=self._record, exception=self._exception)
         return logger
 
     def add_level(self, name, level, color="", icon=" "):
@@ -219,11 +219,8 @@ class Logger:
     def log(_self, _level, _message, *args, **kwargs):
         _self._log(_level, False, 3, False, _message, *args, **kwargs)
 
-    def log_exception(_self, _level, _message, *args, **kwargs):
-        _self._log(_level, True, 3, False, _message, *args, **kwargs)
-
     def _log(_self, _level, _log_exception, _frame_idx, _decorated, _message, *args, **kwargs):
-        function = _self.make_log_function(level=_level,
+        function = _self._make_log_function(level=_level,
                                            log_exception=_log_exception,
                                            frame_idx=_frame_idx,
                                            decorated=_decorated)
@@ -231,7 +228,7 @@ class Logger:
 
     @staticmethod
     @functools.lru_cache()
-    def make_log_function(level, log_exception=False, frame_idx=1, decorated=False):
+    def _make_log_function(level, log_exception=False, frame_idx=1, decorated=False):
 
         if isinstance(level, str):
             level_id = level_name = level
@@ -243,8 +240,6 @@ class Logger:
         else:
             raise ValueError("Invalid level, it should be an int or a string, not: '%s'" % type(level).__name__)
 
-        escaping_formatter = EscapingFormatter()
-
         def log_function(_self, _message, *args, **kwargs):
             frame = getframe(frame_idx)
             name = frame.f_globals['__name__']
@@ -253,8 +248,6 @@ class Logger:
 
             now = pendulum_now()
             now._FORMATTER = 'alternative'
-
-            message = escaping_formatter.vformat(_message, args, kwargs)
 
             if level_id is None:
                 level_no, level_color, level_icon = level, '', ' '
@@ -282,7 +275,7 @@ class Logger:
             process_recattr.id, process_recattr.name = process.ident, process.name
 
             exception = None
-            if log_exception:
+            if log_exception or _self._exception:
                 ex_type, ex, tb = exc_info()
 
                 if decorated:
@@ -332,7 +325,7 @@ class Logger:
                 'function': code.co_name,
                 'level': level_recattr,
                 'line': frame.f_lineno,
-                'message': message,
+                'message': _message,
                 'module': splitext(file_name)[0],
                 'name': name,
                 'process': process_recattr,
@@ -340,7 +333,10 @@ class Logger:
                 'time': now,
             }
 
-            record['message'] = record['message'].format_map(record)
+            if _self._record:
+                record['message'] = _message.format(*args, **kwargs, record=record)
+            elif args or kwargs:
+                record['message'] = _message.format(*args, **kwargs)
 
             for handler in _self._handlers.values():
                 handler.emit(record, exception, level_color)
@@ -352,11 +348,11 @@ class Logger:
 
         return log_function
 
-    trace = make_log_function.__func__("TRACE")
-    debug = make_log_function.__func__("DEBUG")
-    info = make_log_function.__func__("INFO")
-    success = make_log_function.__func__("SUCCESS")
-    warning = make_log_function.__func__("WARNING")
-    error = make_log_function.__func__("ERROR")
-    exception = make_log_function.__func__("ERROR", True)
-    critical = make_log_function.__func__("CRITICAL")
+    trace = _make_log_function.__func__("TRACE")
+    debug = _make_log_function.__func__("DEBUG")
+    info = _make_log_function.__func__("INFO")
+    success = _make_log_function.__func__("SUCCESS")
+    warning = _make_log_function.__func__("WARNING")
+    error = _make_log_function.__func__("ERROR")
+    exception = _make_log_function.__func__("ERROR", True)
+    critical = _make_log_function.__func__("CRITICAL")

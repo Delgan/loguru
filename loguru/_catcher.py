@@ -5,9 +5,9 @@ from inspect import isclass
 class Catcher:
 
     def __init__(self, logger, exception=BaseException, *, level="ERROR", reraise=False,
-                       message="An error has been caught in function '{{function}}', "
-                               "process '{{process.name}}' ({{process.id}}), "
-                               "thread '{{thread.name}}' ({{thread.id}}):"):
+                       message="An error has been caught in function '{record[function]}', "
+                               "process '{record[process].name}' ({record[process].id}), "
+                               "thread '{record[thread].name}' ({record[thread].id}):"):
         self._logger = logger
         self._exception = exception
         self._level = level
@@ -26,7 +26,7 @@ class Catcher:
         if not issubclass(type_, self._exception):
             return False
 
-        self._logger._log(self._level, True, self._frame_idx, self._decorated, self._message)
+        self._logger.opt(record=True)._log(self._level, True, self._frame_idx, self._decorated, self._message)
 
         return not self._reraise
 
