@@ -1,5 +1,6 @@
 import functools
 import itertools
+from collections import namedtuple
 from inspect import isclass
 from multiprocessing import current_process
 from os import PathLike
@@ -17,6 +18,8 @@ from ._handler import Handler
 
 VERBOSE_FORMAT = "<green>{time}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
 
+Level = namedtuple('Level', ['no', 'color', 'icon'])
+
 start_time = pendulum_now()
 
 
@@ -32,7 +35,7 @@ class loguru_traceback:
 
 
 class LevelRecattr(str):
-    __slots__ = ('no', 'name', 'icon')
+    __slots__ = ('name', 'no', 'icon')
 
 
 class FileRecattr(str):
@@ -40,23 +43,23 @@ class FileRecattr(str):
 
 
 class ThreadRecattr(str):
-    __slots__ = ('id', 'name')
+    __slots__ = ('name', 'id')
 
 
 class ProcessRecattr(str):
-    __slots__ = ('id', 'name')
+    __slots__ = ('name', 'id')
 
 
 class Logger:
 
     _default_levels = {
-        "TRACE": (5, "<cyan><bold>", "✏️"),       # Pencil
-        "DEBUG": (10, "<blue><bold>", "🐞"),      # Lady Beetle
-        "INFO": (20, "<bold>", "ℹ️"),             # Information
-        "SUCCESS": (25, "<green><bold>", "✔️"),   # Heavy Check Mark
-        "WARNING": (30, "<yellow><bold>", "⚠️"),  # Warning
-        "ERROR": (40, "<red><bold>", "❌"),        # Cross Mark
-        "CRITICAL": (50, "<RED><bold>", "☠️"),    # Skull and Crossbones
+        "TRACE": Level(5, "<cyan><bold>", "✏️"),       # Pencil
+        "DEBUG": Level(10, "<blue><bold>", "🐞"),      # Lady Beetle
+        "INFO": Level(20, "<bold>", "ℹ️"),             # Information
+        "SUCCESS": Level(25, "<green><bold>", "✔️"),   # Heavy Check Mark
+        "WARNING": Level(30, "<yellow><bold>", "⚠️"),  # Warning
+        "ERROR": Level(40, "<red><bold>", "❌"),        # Cross Mark
+        "CRITICAL": Level(50, "<RED><bold>", "☠️"),    # Skull and Crossbones
     }
 
     _handlers_count = itertools.count()
@@ -84,26 +87,26 @@ class Logger:
         logger = Logger(extra=extra, record=self._record, exception=self._exception, lazy=self._lazy)
         return logger
 
-    def add_level(self, name, level, color="", icon=" "):
+    def level(self, name, no=None, color=None, icon=None):
         if not isinstance(name, str):
             raise ValueError("Invalid level name, it should be a string, not: '%s'" % type(name).__name__)
 
-        if not isinstance(level, int):
-            raise ValueError("Invalid level value, it should be an int, not: '%s'" % type(level).__name__)
+        if no is color is icon is None:
+            if name in self._levels:
+                return self._levels[name]
+            else:
+                raise ValueError("Level '%s' does not exist" % name)
 
-        if level < 0:
-            raise ValueError("Invalid level value (%d), it should be a positive number" % level)
+        if name not in self._levels:
+            if no is None:
+                raise ValueError("Level '%s' does not exist, you have to create it by specifying a level no" % name)
+            else:
+                old_no, old_color, old_icon = None, '', ' '
+        else:
+            old_no, old_color, old_icon = self.level(name)
 
-        self._levels[name] = (level, color, icon)
-
-        for handler in self._handlers.values():
-            handler.update_format(color)
-
-    def edit_level(self, name, level=None, color=None, icon=None):
-        old_level, old_color, old_icon = self.get_level(name)
-
-        if level is None:
-            level = old_level
+        if no is None:
+            no = old_no
 
         if color is None:
             color = old_color
@@ -111,10 +114,18 @@ class Logger:
         if icon is None:
             icon = old_icon
 
-        self.add_level(name, level, color, icon)
+        if not isinstance(no, int):
+            raise ValueError("Invalid level no, it should be an int, not: '%s'" % type(no).__name__)
 
-    def get_level(self, name):
-        return self._levels[name]
+        if no < 0:
+            raise ValueError("Invalid level no (%d), it should be a positive number" % no)
+
+        self._levels[name] = Level(no, color, icon)
+
+        for handler in self._handlers.values():
+            handler.update_format(color)
+
+        return self.level(name)
 
     def reset(self):
         self.stop()
@@ -173,7 +184,7 @@ class Logger:
             filter = lambda r: (r['name'] + '.')[:length] == parent
 
         if isinstance(level, str):
-            levelno, _, _ = self._levels[level]
+            levelno = self.level(level).no
         elif isinstance(level, int):
             levelno = level
         else:
@@ -191,7 +202,7 @@ class Logger:
             colored=colored,
             structured=structured,
             enhanced=enhanced,
-            colors=[color for _, color, _ in self._levels.values()] + [''],
+            colors=[lvl.color for lvl in self._levels.values()] + [''],
         )
 
         handlers_count = next(self._handlers_count)
@@ -219,7 +230,7 @@ class Logger:
     def configure(self, config):
         self.extra.update(config.get('extra', {}))
         for params in config.get('levels', []):
-            self.add_level(**params)
+            self.level(**params)
         handlers_ids = [self.start(**params) for params in config.get('sinks', [])]
         return handlers_ids
 
@@ -259,7 +270,7 @@ class Logger:
             if level_id is None:
                 level_no, level_color, level_icon = level, '', ' '
             else:
-                level_no, level_color, level_icon = _self._levels[level_name]
+                level_no, level_color, level_icon = _self.level(level_name)
 
             if level_no < _self._min_level:
                 return

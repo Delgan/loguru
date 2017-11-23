@@ -43,7 +43,7 @@ def test_add_level_and_bind(logger, writer, use_binded):
     log = logger2 if use_binded else logger
 
     log.start(writer, format="{level.name} {message}")
-    log.add_level("bar", 15)
+    log.level("bar", 15)
 
     logger.log("bar", "?")
     logger2.log("bar", "!")

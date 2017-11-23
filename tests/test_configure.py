@@ -29,18 +29,20 @@ def test_sinks(logger, capsys, tmpdir):
 def test_levels(logger, writer):
     config = {
         'levels': [
-            {'name': 'my_level', 'icon': 'X', 'level': 12},
+            {'name': 'my_level', 'icon': 'X', 'no': 12},
+            {'name': 'DEBUG', 'icon': '!'}
         ]
     }
 
-    logger.add_level('abc', 11)
+    logger.level('abc', 11)
     logger.configure(config)
     logger.start(writer, format="{level.no}|{level.name}|{level.icon}|{message}")
 
     logger.log('my_level', 'test')
-    logger.log("abc", "wow")
+    logger.log('abc', 'wow')
+    logger.debug('no bug')
 
-    assert writer.read() == '12|my_level|X|test\n11|abc| |wow\n'
+    assert writer.read() == '12|my_level|X|test\n11|abc| |wow\n10|DEBUG|!|no bug\n'
 
 def test_extra(logger, writer):
     config = {

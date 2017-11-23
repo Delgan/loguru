@@ -55,7 +55,7 @@ def test_reset_handler(logger, writer):
     assert writer.read() == ""
 
 def test_reset_level(logger, writer):
-    logger.add_level("foo", 12)
+    logger.level("foo", 12)
 
     logger.reset()
 
