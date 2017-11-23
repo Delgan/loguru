@@ -62,23 +62,26 @@ class Logger:
     _handlers_count = itertools.count()
     _handlers = {}
     _levels = _default_levels.copy()
+    _min_level = float("inf")
 
-    def __init__(self, *, extra={}, record=False, exception=False):
+    def __init__(self, *, extra={}, record=False, exception=False, lazy=False):
         self.catch = Catcher(self)
         self.extra = extra
         self._record = record
         self._exception = exception
+        self._lazy = lazy
 
-    def opt(self, exception=None, record=None):
+    def opt(self, exception=None, record=None, lazy=None):
         extra = self.extra.copy()
         exception = self._exception if exception is None else exception
         record = self._record if record is None else record
-        logger = Logger(extra=extra, exception=exception, record=record)
+        lazy = self._lazy if lazy is None else lazy
+        logger = Logger(extra=extra, exception=exception, record=record, lazy=lazy)
         return logger
 
     def bind(self, **kwargs):
         extra = {**self.extra, **kwargs}
-        logger = Logger(extra=extra, record=self._record, exception=self._exception)
+        logger = Logger(extra=extra, record=self._record, exception=self._exception, lazy=self._lazy)
         return logger
 
     def add_level(self, name, level, color="", icon=" "):
@@ -193,6 +196,7 @@ class Logger:
 
         handlers_count = next(self._handlers_count)
         self._handlers[handlers_count] = handler
+        self.__class__._min_level = min(self.__class__._min_level, levelno)
 
         return handlers_count
 
@@ -202,10 +206,13 @@ class Logger:
                 handler.stop()
             count = len(self._handlers)
             self._handlers.clear()
+            self.__class__._min_level = float("inf")
             return count
         elif handler_id in self._handlers:
             handler = self._handlers.pop(handler_id)
             handler.stop()
+            levelnos = (h.levelno for h in self._handlers.values())
+            self.__class__._min_level = min(levelnos, default=float("inf"))
             return 1
         return 0
 
@@ -253,6 +260,9 @@ class Logger:
                 level_no, level_color, level_icon = level, '', ' '
             else:
                 level_no, level_color, level_icon = _self._levels[level_name]
+
+            if level_no < _self._min_level:
+                return
 
             code = frame.f_code
             file_path = normcase(code.co_filename)
@@ -332,6 +342,10 @@ class Logger:
                 'thread': thread_recattr,
                 'time': now,
             }
+
+            if _self._lazy:
+                args = [arg() for arg in args]
+                kwargs = {key: value() for key, value in kwargs.items()}
 
             if _self._record:
                 record['message'] = _message.format(*args, **kwargs, record=record)
