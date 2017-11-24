@@ -25,7 +25,7 @@ class FileSink:
         self.file = None
         self.file_path = None
         self.created = 0
-        self.rotation_time = None
+        self.rotation_time = self.start_time
 
         self.should_rotate = self.make_should_rotate_function(rotation)
         self.manage_backups = self.make_manage_backups_function(backups)
@@ -44,9 +44,8 @@ class FileSink:
         now._FORMATTER = 'alternative'
         now._to_string_format = '%Y-%m-%d_%H-%M-%S'
 
-        if self.rotation_time:
-            self.rotation_time._FORMATTER = 'alternative'
-            self.rotation_time._to_string_format = '%Y-%m-%d_%H-%M-%S'
+        self.rotation_time._FORMATTER = 'alternative'
+        self.rotation_time._to_string_format = '%Y-%m-%d_%H-%M-%S'
 
         record = {
             "time": now,
