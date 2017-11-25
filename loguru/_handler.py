@@ -1,6 +1,7 @@
 import json
 import random
 import re
+import sys
 import traceback
 
 import ansimarkup
@@ -87,68 +88,90 @@ class Handler:
         self.precolorized_formats[color] = self.colorize(self.format, color)
 
     def emit(self, record, exception=None, level_color=None):
-        level = record['level']
-        if self.levelno > level.no:
-            return
-
-        if self.filter is not None:
-            if not self.filter(record):
+        try:
+            level = record['level']
+            if self.levelno > level.no:
                 return
 
-        if self.colored:
-            precomputed_format = self.precolorized_formats[level_color]
-        else:
-            precomputed_format = self.decolorized_format
+            if self.filter is not None:
+                if not self.filter(record):
+                    return
 
-        formatted = precomputed_format.format_map(record) + '\n'
-
-        if exception:
-            hacky_int = None
-            tb = exception[2]
-            while tb:
-                if tb.__is_caught_point__:
-                    hacky_int = HackyInt(tb.tb_lineno)
-                    tb.tb_lineno = hacky_int
-                    break
-                tb = tb.tb_next
-
-            if self.enhanced:
-                formatted_exc = self.exception_formatter.format_exception(*exception)
+            if self.colored:
+                precomputed_format = self.precolorized_formats[level_color]
             else:
-                formatted_exc = traceback.format_exception(*exception)
+                precomputed_format = self.decolorized_format
 
-            formatted_exc = ''.join(formatted_exc)
+            formatted = precomputed_format.format_map(record) + '\n'
 
-            reg = r'(?:^\S*(Traceback \(most recent call last\):)\S*$|^\S*  \S*File.*\D(%s)\D.*$)' % str(hacky_int)
-            matches = re.finditer(reg, formatted_exc, flags=re.M)
+            if exception:
+                hacky_int = None
+                tb = exception[2]
+                while tb:
+                    if tb.__is_caught_point__:
+                        hacky_int = HackyInt(tb.tb_lineno)
+                        tb.tb_lineno = hacky_int
+                        break
+                    tb = tb.tb_next
 
-            tb_match = None
+                if self.enhanced:
+                    formatted_exc = self.exception_formatter.format_exception(*exception)
+                else:
+                    formatted_exc = traceback.format_exception(*exception)
 
-            for match in matches:
-                tb, line = match.groups()
-                if tb is not None:
-                    tb_match = match
-                if line is not None:
-                    s, e = match.span(2)
-                    formatted_exc = formatted_exc[:s] + str(int(hacky_int)) + formatted_exc[e:]
-                    s = match.start(0)
-                    formatted_exc = formatted_exc[:s] + formatted_exc[s:].replace(" ", ">", 1)
-                    if tb_match is not None:
-                        old = "Traceback (most recent call last):"
-                        new = "Traceback (most recent call last, catch point marked):"
-                        s = tb_match.start(0)
-                        formatted_exc = formatted_exc[:s] + formatted_exc[s:].replace(old, new, 1)
-                    break
+                formatted_exc = ''.join(formatted_exc)
 
-            formatted += formatted_exc
+                reg = r'(?:^\S*(Traceback \(most recent call last\):)\S*$|^\S*  \S*File.*\D(%s)\D.*$)' % str(hacky_int)
+                matches = re.finditer(reg, formatted_exc, flags=re.M)
 
-        if self.structured:
-            formatted = self.serialize(formatted, record)
+                tb_match = None
 
-        message = StrRecord(formatted)
-        message.record = record
+                for match in matches:
+                    tb, line = match.groups()
+                    if tb is not None:
+                        tb_match = match
+                    if line is not None:
+                        s, e = match.span(2)
+                        formatted_exc = formatted_exc[:s] + str(int(hacky_int)) + formatted_exc[e:]
+                        s = match.start(0)
+                        formatted_exc = formatted_exc[:s] + formatted_exc[s:].replace(" ", ">", 1)
+                        if tb_match is not None:
+                            old = "Traceback (most recent call last):"
+                            new = "Traceback (most recent call last, catch point marked):"
+                            s = tb_match.start(0)
+                            formatted_exc = formatted_exc[:s] + formatted_exc[s:].replace(old, new, 1)
+                        break
 
-        self.writer(message)
+                formatted += formatted_exc
+
+            if self.structured:
+                formatted = self.serialize(formatted, record)
+
+            message = StrRecord(formatted)
+            message.record = record
+
+            self.writer(message)
+
+        except Exception:
+            if not sys.stderr:
+                return
+
+            ex_type, ex, tb = sys.exc_info()
+
+            try:
+                sys.stderr.write('--- Logging error in Loguru ---\n')
+                sys.stderr.write('Record was: ')
+                try:
+                    sys.stderr.write(str(record))
+                except Exception:
+                    sys.stderr.write('/!\\ Unprintable record /!\\')
+                sys.stderr.write('\n')
+                traceback.print_exception(ex_type, ex, tb, None, sys.stderr)
+                sys.stderr.write('--- End of logging error ---\n')
+            except OSError:
+                pass
+            finally:
+                del ex_type, ex, tb
 
     def stop(self):
         self.stopper()

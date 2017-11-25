@@ -78,7 +78,7 @@ def test_enhanced_option(logger, writer):
 
 @pytest.mark.parametrize('sink_type', ['function', 'class', 'file_object', 'str_a', 'str_w'])
 @pytest.mark.parametrize('test_invalid', [False, True])
-def test_kwargs_option(sink_type, test_invalid, logger, tmpdir):
+def test_kwargs_option(sink_type, test_invalid, logger, tmpdir, capsys):
     msg = 'msg'
     kwargs = {'kw1': '1', 'kw2': '2'}
 
@@ -145,8 +145,14 @@ def test_kwargs_option(sink_type, test_invalid, logger, tmpdir):
         logger.debug(msg)
 
     if test_invalid:
-        with pytest.raises(TypeError):
+        if sink_type in ('function', 'file_object'):
             test()
+            out, err = capsys.readouterr()
+            assert out == ""
+            assert err.startswith("--- Logging error in Loguru ---")
+        else:
+            with pytest.raises(TypeError):
+                test()
     else:
         test()
         assert validator()
