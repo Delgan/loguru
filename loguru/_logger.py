@@ -11,12 +11,11 @@ from threading import current_thread
 import pendulum
 from pendulum import now as pendulum_now
 
+from . import _constants
 from ._catcher import Catcher
 from ._file_sink import FileSink
 from ._getframe import getframe
 from ._handler import Handler
-
-VERBOSE_FORMAT = "<green>{time}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
 
 Level = namedtuple('Level', ['no', 'color', 'icon'])
 
@@ -53,13 +52,13 @@ class ProcessRecattr(str):
 class Logger:
 
     _default_levels = {
-        "TRACE": Level(5, "<cyan><bold>", "✏️"),       # Pencil
-        "DEBUG": Level(10, "<blue><bold>", "🐞"),      # Lady Beetle
-        "INFO": Level(20, "<bold>", "ℹ️"),             # Information
-        "SUCCESS": Level(25, "<green><bold>", "✔️"),   # Heavy Check Mark
-        "WARNING": Level(30, "<yellow><bold>", "⚠️"),  # Warning
-        "ERROR": Level(40, "<red><bold>", "❌"),        # Cross Mark
-        "CRITICAL": Level(50, "<RED><bold>", "☠️"),    # Skull and Crossbones
+        "TRACE": Level(_constants.LOGURU_TRACE_NO, _constants.LOGURU_TRACE_COLOR, _constants.LOGURU_TRACE_ICON),
+        "DEBUG": Level(_constants.LOGURU_DEBUG_NO, _constants.LOGURU_DEBUG_COLOR, _constants.LOGURU_DEBUG_ICON),
+        "INFO": Level(_constants.LOGURU_INFO_NO, _constants.LOGURU_INFO_COLOR, _constants.LOGURU_INFO_ICON),
+        "SUCCESS": Level(_constants.LOGURU_SUCCESS_NO, _constants.LOGURU_SUCCESS_COLOR, _constants.LOGURU_SUCCESS_ICON),
+        "WARNING": Level(_constants.LOGURU_WARNING_NO, _constants.LOGURU_WARNING_COLOR, _constants.LOGURU_WARNING_ICON),
+        "ERROR": Level(_constants.LOGURU_ERROR_NO, _constants.LOGURU_ERROR_COLOR, _constants.LOGURU_ERROR_ICON),
+        "CRITICAL": Level(_constants.LOGURU_CRITICAL_NO, _constants.LOGURU_CRITICAL_COLOR, _constants.LOGURU_CRITICAL_ICON),
     }
 
     _handlers_count = itertools.count()
@@ -133,13 +132,16 @@ class Logger:
         self._levels.update(self._default_levels)
         self.extra.clear()
 
-    def start(self, sink, *, level="DEBUG", format=VERBOSE_FORMAT, filter=None, colored=None, structured=False, enhanced=True, **kwargs):
+    def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT,
+                    colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
+                    enhanced=_constants.LOGURU_ENHANCED, filter=None, **kwargs):
         if colored is None and structured is True:
             colored = False
 
         if isclass(sink):
             sink = sink(**kwargs)
-            return self.start(sink, level=level, format=format, filter=filter, colored=colored, structured=structured, enhanced=enhanced)
+            return self.start(sink, level=level, format=format, filter=filter, colored=colored,
+                              structured=structured, enhanced=enhanced)
         elif callable(sink):
             if kwargs:
                 writer = lambda m: sink(m, **kwargs)
@@ -151,7 +153,8 @@ class Logger:
         elif isinstance(sink, (str, PathLike)):
             path = sink
             sink = FileSink(path, **kwargs)
-            return self.start(sink, level=level, format=format, filter=filter, colored=colored, structured=structured, enhanced=enhanced)
+            return self.start(sink, level=level, format=format, filter=filter, colored=colored,
+                              structured=structured, enhanced=enhanced)
         elif hasattr(sink, 'write') and callable(sink.write):
             sink_write = sink.write
             if kwargs:

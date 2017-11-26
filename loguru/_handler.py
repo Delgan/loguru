@@ -145,7 +145,7 @@ class Handler:
                 formatted += formatted_exc
 
             if self.structured:
-                formatted = self.serialize(formatted, record)
+                formatted = self.serialize(formatted, record) + '\n'
 
             message = StrRecord(formatted)
             message.record = record
