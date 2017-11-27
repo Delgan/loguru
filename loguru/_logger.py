@@ -184,20 +184,10 @@ class Logger:
         if filter is None or filter == '':
             filter_func = None
         elif isinstance(filter, str):
-            filter_name = filter
-            parts = filter_name.split('.')
-            if not any(p == '' for p in parts):
-                parent = filter_name + '.'
-                length = len(parent)
-                def filter_func(r):
-                    return (r['name'] + '.')[:length] == parent
-            else:
-                length = len(parts)
-                def filter_func(r):
-                    name = r['name']
-                    if name.count('.') < length - 1:
-                        return False
-                    return all(a == b or a == '' for a, b in zip(parts, name.split('.')))
+            parent = filter + '.'
+            length = len(parent)
+            def filter_func(r):
+                return (r['name'] + '.')[:length] == parent
         elif callable(filter):
             filter_func = filter
         else:
