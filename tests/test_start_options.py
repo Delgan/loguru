@@ -32,10 +32,19 @@ def test_format_option(message, format, expected, logger, writer):
 
 @pytest.mark.parametrize('filter, should_output', [
     (None, True),
-    ('tests', True),
-    ('nope', False),
-    ('testss', False),
     ('', True),
+    ('tests', True),
+    ('test', False),
+    ('testss', False),
+    ('tests.', True),
+    ('tests..', False),
+    ('tests.test_start_options', True),
+    ('tests.test_start_options.', False),
+    ('.test_start_options', True),
+    ('test_start_options', False),
+    ('..test_start_options', False),
+    ('.', True),
+    ('..', False),
     (lambda r: True, True),
     (lambda r: False, False),
     (lambda r: r['level'] == "DEBUG", True),
@@ -75,6 +84,21 @@ def test_enhanced_option(logger, writer):
     result_without = writer.read().strip()
 
     assert len(result_with) > len(result_without)
+
+@pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
+def test_start_invalid_level(logger, writer, level):
+    with pytest.raises(ValueError):
+        logger.start(writer, level=level)
+
+@pytest.mark.parametrize("format", [-1, 3.4, object()])
+def test_invalid_format(logger, writer, format):
+    with pytest.raises(ValueError):
+        logger.start(writer, format=format)
+
+@pytest.mark.parametrize("filter", [-1, 3.4, object()])
+def test_invalid_filter(logger, writer, filter):
+    with pytest.raises(ValueError):
+        logger.start(writer, filter=filter)
 
 @pytest.mark.parametrize('sink_type', ['function', 'class', 'file_object', 'str_a', 'str_w'])
 @pytest.mark.parametrize('test_invalid', [False, True])

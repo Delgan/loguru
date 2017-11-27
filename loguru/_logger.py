@@ -114,10 +114,10 @@ class Logger:
             icon = old_icon
 
         if not isinstance(no, int):
-            raise ValueError("Invalid level no, it should be an int, not: '%s'" % type(no).__name__)
+            raise ValueError("Invalid level no, it should be an integer, not: '%s'" % type(no).__name__)
 
         if no < 0:
-            raise ValueError("Invalid level no (%d), it should be a positive number" % no)
+            raise ValueError("Invalid level no, it should be a positive integer, not: %d" % no)
 
         self._levels[name] = Level(no, color, icon)
 
@@ -135,7 +135,7 @@ class Logger:
     def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT,
                     colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
                     enhanced=_constants.LOGURU_ENHANCED, filter=None, **kwargs):
-        if colored is None and structured is True:
+        if colored is None and structured:
             colored = False
 
         if isclass(sink):
@@ -181,27 +181,47 @@ class Logger:
         else:
             raise ValueError("Cannot log to objects of type '%s'." % type(sink).__name__)
 
-        if isinstance(filter, str):
-            parent = filter + '.' * bool(filter)
-            length = len(parent)
-            filter = lambda r: (r['name'] + '.')[:length] == parent
+        if filter is None or filter == '':
+            filter_func = None
+        elif isinstance(filter, str):
+            filter_name = filter
+            parts = filter_name.split('.')
+            if not any(p == '' for p in parts):
+                parent = filter_name + '.'
+                length = len(parent)
+                def filter_func(r):
+                    return (r['name'] + '.')[:length] == parent
+            else:
+                length = len(parts)
+                def filter_func(r):
+                    name = r['name']
+                    if name.count('.') < length - 1:
+                        return False
+                    return all(a == b or a == '' for a, b in zip(parts, name.split('.')))
+        elif callable(filter):
+            filter_func = filter
+        else:
+            raise ValueError("Invalid filter, it should be a function or a string, not: '%s'" % type(filter).__name__)
 
         if isinstance(level, str):
             levelno = self.level(level).no
         elif isinstance(level, int):
             levelno = level
         else:
-            raise ValueError("Invalid level, it should be an int or a string, not: '%s'" % type(level).__name__)
+            raise ValueError("Invalid level, it should be an integer or a string, not: '%s'" % type(level).__name__)
 
         if levelno < 0:
-            raise ValueError("Invalid level value (%d), it should be a positive number" % levelno)
+            raise ValueError("Invalid level value, it should be a positive integer, not: %d" % levelno)
+
+        if not isinstance(format, str):
+            raise ValueError("Invalid format, it should be a string, not: '%s'" % type(format).__name__)
 
         handler = Handler(
             writer=writer,
             stopper=stopper,
             levelno=levelno,
             format_=format,
-            filter_=filter,
+            filter_=filter_func,
             colored=colored,
             structured=structured,
             enhanced=enhanced,
@@ -255,11 +275,11 @@ class Logger:
             level_id = level_name = level
         elif isinstance(level, int):
             if level < 0:
-                raise ValueError("Invalid level value (%d), it should be a positive number" % level)
+                raise ValueError("Invalid level value, it should be a positive integer, not: %d" % level)
             level_id = None
             level_name = 'Level %d' % level
         else:
-            raise ValueError("Invalid level, it should be an int or a string, not: '%s'" % type(level).__name__)
+            raise ValueError("Invalid level, it should be an integer or a string, not: '%s'" % type(level).__name__)
 
         def log_function(_self, _message, *args, **kwargs):
             frame = getframe(frame_idx)

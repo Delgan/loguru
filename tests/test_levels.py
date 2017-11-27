@@ -119,11 +119,6 @@ def test_log_invalid_level(logger, level):
     with pytest.raises(ValueError):
         logger.log(level, "test")
 
-@pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
-def test_start_invalid_level(logger, writer, level):
-    with pytest.raises(ValueError):
-        logger.start(writer, level=level)
-
 @pytest.mark.parametrize("level_name", [10, object()])
 def test_add_invalid_level_name(logger, level_name):
     with pytest.raises(ValueError):
