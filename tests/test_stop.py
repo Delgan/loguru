@@ -45,30 +45,3 @@ def test_stop_count(logger, writer):
 
     n = logger.stop(0)
     assert n == 0
-
-def test_reset_handler(logger, writer):
-    logger.start(writer)
-
-    logger.reset()
-
-    logger.debug("nope")
-    assert writer.read() == ""
-
-def test_reset_level(logger, writer):
-    logger.level("foo", 12)
-
-    logger.reset()
-    logger.start(writer, format="{message}")
-
-    with pytest.raises(Exception):
-        logger.log("foo", "nope")
-
-
-    logger.log("DEBUG", "1")
-    logger.debug("2")
-    assert writer.read() == "1\n2\n"
-
-def test_reset_extra(logger, writer):
-    logger.extra['a'] = 1
-    logger.reset()
-    assert logger.extra == {}

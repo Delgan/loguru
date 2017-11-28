@@ -18,7 +18,7 @@ def env(key, type_, default=None):
         try:
             return int(val)
         except ValueError as e:
-            raise ValueError("Invalid int value for key '%s': '%s'" % (key, val))
+            raise ValueError("Invalid int value for key '%s': '%s'" % (key, val)) from e
 
 
 LOGURU_AUTOINIT = env('LOGURU_AUTOINIT', bool, True)

@@ -6,8 +6,12 @@ import os
 
 @pytest.fixture
 def logger():
-    yield loguru.logger
-    loguru.logger.reset()
+    default_levels = loguru._logger.Logger._levels.copy()
+    yield loguru._logger.Logger()
+    loguru._logger.Logger._levels.clear()
+    loguru._logger.Logger._levels.update(default_levels)
+    loguru._logger.Logger._min_level = float('inf')
+    loguru._logger.Logger._handlers.clear()
     loguru._logger.Logger._handlers_count = itertools.count()
     loguru._logger.Logger._enabled.clear()
     loguru._logger.Logger._activation_list.clear()

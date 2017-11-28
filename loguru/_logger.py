@@ -51,7 +51,7 @@ class ProcessRecattr(str):
 
 class Logger:
 
-    _default_levels = {
+    _levels = {
         "TRACE": Level(_constants.LOGURU_TRACE_NO, _constants.LOGURU_TRACE_COLOR, _constants.LOGURU_TRACE_ICON),
         "DEBUG": Level(_constants.LOGURU_DEBUG_NO, _constants.LOGURU_DEBUG_COLOR, _constants.LOGURU_DEBUG_ICON),
         "INFO": Level(_constants.LOGURU_INFO_NO, _constants.LOGURU_INFO_COLOR, _constants.LOGURU_INFO_ICON),
@@ -63,7 +63,7 @@ class Logger:
 
     _handlers_count = itertools.count()
     _handlers = {}
-    _levels = _default_levels.copy()
+
     _min_level = float("inf")
     _enabled = {}
     _activation_list = []
@@ -128,12 +128,6 @@ class Logger:
 
         return self.level(name)
 
-    def reset(self):
-        self.stop()
-        self._levels.clear()
-        self._levels.update(self._default_levels)
-        self.extra.clear()
-
     def configure(self, config):
         self.extra.update(config.get('extra', {}))
         for params in config.get('levels', []):
@@ -164,9 +158,9 @@ class Logger:
     def disable(self, name):
         self._change_activation(name, False)
 
-    def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT,
+    def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT, filter=None,
                     colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
-                    enhanced=_constants.LOGURU_ENHANCED, filter=None, **kwargs):
+                    enhanced=_constants.LOGURU_ENHANCED, **kwargs):
         if colored is None and structured:
             colored = False
 
