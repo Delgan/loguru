@@ -9,6 +9,8 @@ def logger():
     yield loguru.logger
     loguru.logger.reset()
     loguru._logger.Logger._handlers_count = itertools.count()
+    loguru._logger.Logger._enabled.clear()
+    loguru._logger.Logger._activation_list.clear()
 
 @pytest.fixture
 def writer():

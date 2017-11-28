@@ -115,7 +115,8 @@ def test_start_custom_level(logger, writer):
     assert writer.read() == 'INFO + 20 + yes\n'
 
 @pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
-def test_log_invalid_level(logger, level):
+def test_log_invalid_level(logger, writer, level):
+    logger.start(writer)
     with pytest.raises(ValueError):
         logger.log(level, "test")
 

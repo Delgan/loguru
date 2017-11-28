@@ -58,11 +58,12 @@ def test_reset_level(logger, writer):
     logger.level("foo", 12)
 
     logger.reset()
+    logger.start(writer, format="{message}")
 
     with pytest.raises(Exception):
         logger.log("foo", "nope")
 
-    logger.start(writer, format="{message}")
+
     logger.log("DEBUG", "1")
     logger.debug("2")
     assert writer.read() == "1\n2\n"

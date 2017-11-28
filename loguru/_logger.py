@@ -65,6 +65,8 @@ class Logger:
     _handlers = {}
     _levels = _default_levels.copy()
     _min_level = float("inf")
+    _enabled = {}
+    _activation_list = []
 
     def __init__(self, *, extra={}, record=False, exception=False, lazy=False):
         self.catch = Catcher(self)
@@ -131,6 +133,36 @@ class Logger:
         self._levels.clear()
         self._levels.update(self._default_levels)
         self.extra.clear()
+
+    def configure(self, config):
+        self.extra.update(config.get('extra', {}))
+        for params in config.get('levels', []):
+            self.level(**params)
+        handlers_ids = [self.start(**params) for params in config.get('sinks', [])]
+        return handlers_ids
+
+    def _change_activation(self, name, status):
+        if name != '':
+            name += '.'
+
+        activation_list = [(n, s) for n, s in self._activation_list if n[:len(name)] != name]
+
+        parent_status = next((s for n, s in activation_list if name[:len(n)] == n), None)
+        if parent_status != status and not (name == '' and status == True):
+            activation_list.append((name, status))
+            activation_list.sort(key=lambda x: x[0].count('.'), reverse=True)
+
+        for n in self._enabled:
+            if (n + '.')[:len(name)] == name:
+                self._enabled[n] = status
+
+        self._activation_list[:] = activation_list
+
+    def enable(self, name):
+        self._change_activation(name, True)
+
+    def disable(self, name):
+        self._change_activation(name, False)
 
     def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT,
                     colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
@@ -240,13 +272,6 @@ class Logger:
             return 1
         return 0
 
-    def configure(self, config):
-        self.extra.update(config.get('extra', {}))
-        for params in config.get('levels', []):
-            self.level(**params)
-        handlers_ids = [self.start(**params) for params in config.get('sinks', [])]
-        return handlers_ids
-
     def log(_self, _level, _message, *args, **kwargs):
         _self._log(_level, False, 3, False, _message, *args, **kwargs)
 
@@ -275,7 +300,21 @@ class Logger:
             frame = getframe(frame_idx)
             name = frame.f_globals['__name__']
 
-            # TODO: Early exit if no handler
+            if not _self._handlers:
+                return
+
+            try:
+                if not _self._enabled[name]:
+                    return
+            except KeyError:
+                dotted_name = name + '.'
+                for dotted_module_name, status in _self._activation_list:
+                    if dotted_name[:len(dotted_module_name)] == dotted_module_name:
+                        if status:
+                            break
+                        _self._enabled[name] = False
+                        return
+                _self._enabled[name] = True
 
             now = pendulum_now()
             now._FORMATTER = 'alternative'
