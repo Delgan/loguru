@@ -1,3 +1,6 @@
+import pytest
+import sys
+
 def test_record(logger, writer):
     logger.start(writer, format="{message}")
 
@@ -7,7 +10,7 @@ def test_record(logger, writer):
 
     assert writer.read() == '1\n2 DEBUG\n3 4 5 11\n'
 
-def test_exception(logger, writer):
+def test_exception_boolean(logger, writer):
     logger.start(writer, format="{level.name}: {message}")
 
     try:
@@ -18,6 +21,36 @@ def test_exception(logger, writer):
     lines = writer.read().strip().splitlines()
 
     assert lines[0] == "DEBUG: Error 1 test"
+    assert lines[-1] == "ZeroDivisionError: division by zero"
+
+def test_exception_exc_info(logger, writer):
+    logger.start(writer, format="{message}")
+
+    try:
+        1 / 0
+    except:
+        exc_info = sys.exc_info()
+
+    logger.opt(exception=exc_info).debug("test")
+
+    lines = writer.read().strip().splitlines()
+
+    assert lines[0] == "test"
+    assert lines[-1] == "ZeroDivisionError: division by zero"
+
+def test_exception_class(logger, writer):
+    logger.start(writer, format="{message}")
+
+    try:
+        1 / 0
+    except:
+        _, exc_class, _ = sys.exc_info()
+
+    logger.opt(exception=exc_class).debug("test")
+
+    lines = writer.read().strip().splitlines()
+
+    assert lines[0] == "test"
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
 def test_lazy(logger, writer):

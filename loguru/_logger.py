@@ -346,17 +346,20 @@ class Logger:
             process_recattr = ProcessRecattr(process.ident)
             process_recattr.id, process_recattr.name = process.ident, process.name
 
-            exception = None
-            if log_exception or _self._exception:
-                ex_type, ex, tb = exc_info()
+            exception = log_exception or _self._exception
+            if exception:
+                if isinstance(exception, BaseException):
+                    ex_type, ex, tb = (type(exception), exception, exception.__traceback__)
+                elif isinstance(exception, tuple):
+                    ex_type, ex, tb = exception
+                else:
+                    ex_type, ex, tb = exc_info()
 
                 if decorated:
                     bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
                     tb = tb.tb_next
 
                 root_frame = tb.tb_frame.f_back
-
-                # TODO: Test edge cases (look in CPython source code for traceback objects and exc.__traceback__ usages)
 
                 loguru_tracebacks = []
                 while tb:
@@ -417,9 +420,12 @@ class Logger:
             for handler in _self._handlers.values():
                 handler.emit(record, exception, level_color)
 
-        doc = "Log 'message.format(*args, **kwargs)' with severity '{}'.".format(level_name)
-        if log_exception:
-            doc += ' Log also current traceback.'
+
+        if not log_exception:
+            doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
+        else:
+            doc = "Convenience method for logging an '%s' with exception information." % level_name
+
         log_function.__doc__ = doc
 
         return log_function
