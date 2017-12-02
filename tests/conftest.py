@@ -4,10 +4,9 @@ import pytest
 import py
 import os
 
-@pytest.fixture
-def logger():
-    default_levels = loguru._logger.Logger._levels.copy()
-    yield loguru._logger.Logger()
+default_levels = loguru._logger.Logger._levels.copy()
+
+def reset_logger():
     loguru._logger.Logger._levels.clear()
     loguru._logger.Logger._levels.update(default_levels)
     loguru._logger.Logger._min_level = float('inf')
@@ -15,6 +14,12 @@ def logger():
     loguru._logger.Logger._handlers_count = itertools.count()
     loguru._logger.Logger._enabled.clear()
     loguru._logger.Logger._activation_list.clear()
+
+@pytest.fixture
+def logger():
+    reset_logger()
+    yield loguru._logger.Logger()
+    reset_logger()
 
 @pytest.fixture
 def writer():

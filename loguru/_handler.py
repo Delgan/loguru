@@ -38,7 +38,7 @@ class Handler:
         self.enhanced = enhanced
         self.decolorized_format = self.decolorize(format_)
         self.precolorized_formats = {}
-        self.lock = multiprocessing.Lock() if guarded else None
+        self.lock = multiprocessing.Lock() if guarded else threading.Lock()
 
         if colored:
             for color in colors:
@@ -153,10 +153,7 @@ class Handler:
             message = StrRecord(formatted)
             message.record = record
 
-            if self.lock:
-                with self.lock:
-                    self.writer(message)
-            else:
+            with self.lock:
                 self.writer(message)
 
         except Exception:
