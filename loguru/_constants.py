@@ -27,7 +27,8 @@ LOGURU_FORMAT = env("LOGURU_FORMAT", str, "<green>{time}</green> | <level>{level
 LOGURU_LEVEL = env("LOGURU_LEVEL", str, "DEBUG")
 LOGURU_COLORED = env("LOGURU_COLORED", bool, None)
 LOGURU_STRUCTURED = env("LOGURU_STRUCTURED", bool, False)
-LOGURU_ENHANCED = env("LOGURU_ENHANCED", bool, False)
+LOGURU_ENHANCED = env("LOGURU_ENHANCED", bool, True)
+LOGURU_GUARDED = env("LOGURU_GUARDED", bool, False)
 
 LOGURU_TRACE_NO = env("LOGURU_TRACE_NO", int, 5)
 LOGURU_TRACE_COLOR = env("LOGURU_TRACE_COLOR", str, "<cyan><bold>")

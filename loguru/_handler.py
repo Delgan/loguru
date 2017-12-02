@@ -1,4 +1,6 @@
 import json
+import multiprocessing
+import threading
 import random
 import re
 import sys
@@ -25,7 +27,7 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, colors=[]):
+    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, guarded, colors=[]):
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
@@ -36,6 +38,7 @@ class Handler:
         self.enhanced = enhanced
         self.decolorized_format = self.decolorize(format_)
         self.precolorized_formats = {}
+        self.lock = multiprocessing.Lock() if guarded else None
 
         if colored:
             for color in colors:
@@ -150,7 +153,11 @@ class Handler:
             message = StrRecord(formatted)
             message.record = record
 
-            self.writer(message)
+            if self.lock:
+                with self.lock:
+                    self.writer(message)
+            else:
+                self.writer(message)
 
         except Exception:
             if not sys.stderr:

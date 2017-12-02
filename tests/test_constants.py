@@ -3,6 +3,8 @@ import importlib
 import loguru
 import sys
 import os
+import json
+import multiprocessing
 
 def reload():
     importlib.reload(loguru._constants)
@@ -59,8 +61,7 @@ def test_structured(capsys, logenv):
     logger.debug("message")
     out, err = capsys.readouterr()
     assert out == ""
-    assert err.startswith("{")
-    assert err.endswith("}\n")
+    json.loads(err)
 
 def test_enhanced(capsys, logenv):
     logger = logenv("LOGURU_ENHANCED", "y")
@@ -72,6 +73,20 @@ def test_enhanced(capsys, logenv):
         logger.exception("error...")
     out, err = capsys.readouterr()
     assert len(err) > len(out)
+
+def test_guarded(capsys, logenv, monkeypatch):
+    locked = False
+    class Mocked:
+        def __enter__(self):
+            nonlocal locked
+            locked = True
+        def __exit__(self):
+            pass
+    monkeypatch.setattr(multiprocessing, 'Lock', Mocked)
+    logger = logenv("LOGURU_GUARDED", True)
+    logger.start(sys.stdout)
+    logger.debug("test")
+    assert locked
 
 def test_level_no(capsys, logenv):
     logger = logenv("LOGURU_DEBUG_NO", 14)

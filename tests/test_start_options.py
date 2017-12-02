@@ -3,7 +3,7 @@
 import loguru
 import json
 import pytest
-
+import multiprocessing
 
 @pytest.mark.parametrize('level, function, should_output', [
     (0,              lambda x: x.trace,    True),
@@ -81,20 +81,24 @@ def test_enhanced_option(logger, writer):
 
     assert len(result_with) > len(result_without)
 
-@pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
-def test_start_invalid_level(logger, writer, level):
-    with pytest.raises(ValueError):
-        logger.start(writer, level=level)
+def test_structured_option(logger, writer):
+    logger.start(writer, format="{message}", structured=True)
+    logger.extra['not_serializable'] = object()
+    logger.debug("Test")
+    json.loads(writer.read())
 
-@pytest.mark.parametrize("format", [-1, 3.4, object()])
-def test_invalid_format(logger, writer, format):
-    with pytest.raises(ValueError):
-        logger.start(writer, format=format)
-
-@pytest.mark.parametrize("filter", [-1, 3.4, object()])
-def test_invalid_filter(logger, writer, filter):
-    with pytest.raises(ValueError):
-        logger.start(writer, filter=filter)
+def test_guarded_option(logger, writer, monkeypatch):
+    locked = False
+    class Mocked:
+        def __enter__(self):
+            nonlocal locked
+            locked = True
+        def __exit__(self):
+            pass
+    monkeypatch.setattr(multiprocessing, 'Lock', Mocked)
+    logger.start(writer, guarded=True)
+    logger.debug("test")
+    assert locked
 
 @pytest.mark.parametrize('sink_type', ['function', 'class', 'file_object', 'str_a', 'str_w'])
 @pytest.mark.parametrize('test_invalid', [False, True])
@@ -177,8 +181,17 @@ def test_kwargs_option(sink_type, test_invalid, logger, tmpdir, capsys):
         test()
         assert validator()
 
-def test_structured_option(logger, writer):
-    logger.start(writer, format="{message}", structured=True)
-    logger.extra['not_serializable'] = object()
-    logger.debug("Test")
-    json.loads(writer.read())
+@pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
+def test_start_invalid_level(logger, writer, level):
+    with pytest.raises(ValueError):
+        logger.start(writer, level=level)
+
+@pytest.mark.parametrize("format", [-1, 3.4, object()])
+def test_invalid_format(logger, writer, format):
+    with pytest.raises(ValueError):
+        logger.start(writer, format=format)
+
+@pytest.mark.parametrize("filter", [-1, 3.4, object()])
+def test_invalid_filter(logger, writer, filter):
+    with pytest.raises(ValueError):
+        logger.start(writer, filter=filter)
