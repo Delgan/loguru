@@ -88,6 +88,14 @@ def test_guarded(capsys, logenv, monkeypatch):
     logger.debug("test")
     assert locked
 
+def test_catched(logenv):
+    logger = logenv("LOGURU_CATCHED", "no")
+    def sink(msg):
+        1 / 0
+    logger.start(sink)
+    with pytest.raises(ZeroDivisionError):
+        logger.debug("Oups...")
+
 def test_level_no(capsys, logenv):
     logger = logenv("LOGURU_DEBUG_NO", 14)
     logger.start(sys.stdout, format="{level.no}")

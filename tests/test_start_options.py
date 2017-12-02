@@ -100,6 +100,13 @@ def test_guarded_option(logger, writer, monkeypatch):
     logger.debug("test")
     assert locked
 
+def test_catched_option(logger):
+    def sink(msg):
+        raise 1 / 0
+    logger.start(sink, catched=False)
+    with pytest.raises(ZeroDivisionError):
+        logger.debug("fail")
+
 @pytest.mark.parametrize('sink_type', ['function', 'class', 'file_object', 'str_a', 'str_w'])
 @pytest.mark.parametrize('test_invalid', [False, True])
 def test_kwargs_option(sink_type, test_invalid, logger, tmpdir, capsys):

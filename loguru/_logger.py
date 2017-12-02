@@ -160,14 +160,16 @@ class Logger:
 
     def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT, filter=None,
                     colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
-                    enhanced=_constants.LOGURU_ENHANCED, guarded=_constants.LOGURU_GUARDED, **kwargs):
+                    enhanced=_constants.LOGURU_ENHANCED, guarded=_constants.LOGURU_GUARDED,
+                    catched=_constants.LOGURU_CATCHED, **kwargs):
         if colored is None and structured:
             colored = False
 
         if isclass(sink):
             sink = sink(**kwargs)
             return self.start(sink, level=level, format=format, filter=filter, colored=colored,
-                              structured=structured, enhanced=enhanced, guarded=guarded)
+                              structured=structured, enhanced=enhanced, guarded=guarded,
+                              catched=catched)
         elif callable(sink):
             if kwargs:
                 writer = lambda m: sink(m, **kwargs)
@@ -180,7 +182,8 @@ class Logger:
             path = sink
             sink = FileSink(path, **kwargs)
             return self.start(sink, level=level, format=format, filter=filter, colored=colored,
-                              structured=structured, enhanced=enhanced, guarded=guarded)
+                              structured=structured, enhanced=enhanced, guarded=guarded,
+                              catched=catched)
         elif hasattr(sink, 'write') and callable(sink.write):
             sink_write = sink.write
             if kwargs:
@@ -242,6 +245,7 @@ class Logger:
             structured=structured,
             enhanced=enhanced,
             guarded=guarded,
+            catched=catched,
             colors=[lvl.color for lvl in self._levels.values()] + [''],
         )
 
