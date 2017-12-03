@@ -435,3 +435,10 @@ def test_frame_values_forward(logger, writer):
     assert next(line_2).endswith(' 1')
     assert next(line_3).endswith(' 2')
     assert next(line_4).endswith(' 2')
+
+def test_no_exception(logger, writer):
+    logger.start(writer, enhanced=False, colored=False, format="{message}")
+
+    logger.exception("No Error.")
+
+    assert writer.read() == "No Error.\nNoneType: None\n"

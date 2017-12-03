@@ -355,43 +355,45 @@ class Logger:
                 else:
                     ex_type, ex, tb = exc_info()
 
-                if decorated:
-                    bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
-                    tb = tb.tb_next
+                if tb:
+                    if decorated:
+                        bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
+                        tb = tb.tb_next
 
-                root_frame = tb.tb_frame.f_back
+                    root_frame = tb.tb_frame.f_back
 
-                loguru_tracebacks = []
-                while tb:
-                    loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
-                    loguru_tracebacks.append(loguru_tb)
-                    tb = tb.tb_next
+                    loguru_tracebacks = []
+                    while tb:
+                        loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
+                        loguru_tracebacks.append(loguru_tb)
+                        tb = tb.tb_next
 
-                for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
-                    prev_tb.tb_next = next_tb
+                    for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
+                        prev_tb.tb_next = next_tb
 
-                root_tb = loguru_tracebacks[0] if loguru_tracebacks else None
+                    # root_tb
+                    tb = loguru_tracebacks[0] if loguru_tracebacks else None
 
-                frames = []
-                while root_frame:
-                    frames.insert(0, root_frame)
-                    root_frame = root_frame.f_back
+                    frames = []
+                    while root_frame:
+                        frames.insert(0, root_frame)
+                        root_frame = root_frame.f_back
 
-                if decorated:
-                    frames = [f for f in frames if (f.f_code.co_filename, f.f_lineno) != bad_frame]
-                    caught_tb = None
-                else:
-                    caught_tb = root_tb
+                    if decorated:
+                        frames = [f for f in frames if (f.f_code.co_filename, f.f_lineno) != bad_frame]
+                        caught_tb = None
+                    else:
+                        caught_tb = tb
 
-                for f in reversed(frames):
-                    root_tb = loguru_traceback(f, f.f_lasti, f.f_lineno, root_tb)
-                    if decorated and caught_tb is None:
-                        caught_tb = root_tb
+                    for f in reversed(frames):
+                        tb = loguru_traceback(f, f.f_lasti, f.f_lineno, tb)
+                        if decorated and caught_tb is None:
+                            caught_tb = tb
 
-                if caught_tb:
-                    caught_tb.__is_caught_point__ = True
+                    if caught_tb:
+                        caught_tb.__is_caught_point__ = True
 
-                exception = (ex_type, ex, root_tb)
+                exception = (ex_type, ex, tb)
 
             record = {
                 'elapsed': elapsed,
