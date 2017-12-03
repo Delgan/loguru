@@ -22,7 +22,7 @@ setup(
     classifiers = [],
     install_requires = [
         'ansimarkup>=1.3.0',
-        'better_exceptions_fork>=0.1.8.post1',
+        'better_exceptions_fork>=0.1.8.post2',
         'pendulum>=1.3.0',
     ],
 )
