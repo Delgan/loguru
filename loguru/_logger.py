@@ -247,21 +247,20 @@ class Logger:
         with self._lock:
             colors = [lvl.color for lvl in self._levels.values()] + ['']
 
-        handler = Handler(
-            writer=writer,
-            stopper=stopper,
-            levelno=levelno,
-            format_=format,
-            filter_=filter_func,
-            colored=colored,
-            structured=structured,
-            enhanced=enhanced,
-            guarded=guarded,
-            catched=catched,
-            colors=colors,
-        )
+            handler = Handler(
+                writer=writer,
+                stopper=stopper,
+                levelno=levelno,
+                format_=format,
+                filter_=filter_func,
+                colored=colored,
+                structured=structured,
+                enhanced=enhanced,
+                guarded=guarded,
+                catched=catched,
+                colors=colors,
+            )
 
-        with self._lock:
             handlers_count = next(self._handlers_count)
             self._handlers[handlers_count] = handler
             self.__class__._min_level = min(self.__class__._min_level, levelno)
