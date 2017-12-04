@@ -326,7 +326,10 @@ class Logger:
             if level_id is None:
                 level_no, level_color, level_icon = level, '', ' '
             else:
-                level_no, level_color, level_icon = _self.level(level_name)
+                try:
+                    level_no, level_color, level_icon = _self._levels[level_name]
+                except KeyError:
+                    raise ValueError("Level '%s' does not exist" % level_name)
 
             if level_no < _self._min_level:
                 return
