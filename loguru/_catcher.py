@@ -13,8 +13,7 @@ class Catcher:
         self._level = level
         self._reraise = reraise
         self._message = message
-        self._frame_idx = 3
-        self._decorated = False
+        self._as_decorator = False
 
     def __enter__(self):
         pass
@@ -26,7 +25,14 @@ class Catcher:
         if not issubclass(type_, self._exception):
             return False
 
-        self._logger.opt(record=True)._log(self._level, True, self._frame_idx, self._decorated, self._message)
+        record_logger = self._logger.opt(record=True)
+
+        if self._as_decorator:
+            log = record_logger._make_log_function(self._level, True, 3, True)
+        else:
+            log = record_logger._make_log_function(self._level, True, 2, False)
+
+        log(record_logger, self._message)
 
         return not self._reraise
 
@@ -42,8 +48,8 @@ class Catcher:
                                   level=self._level,
                                   reraise=self._reraise,
                                   message=self._message)
-            catcher._frame_idx = 4
-            catcher._decorated = True
+
+            catcher._as_decorator = True
 
             @functools.wraps(function)
             def catch_wrapper(*args, **kwargs):

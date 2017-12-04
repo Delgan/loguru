@@ -270,14 +270,7 @@ class Logger:
             raise ValueError("Handler id '%s' does not exist" % handler_id)
 
     def log(_self, _level, _message, *args, **kwargs):
-        _self._log(_level, False, 3, False, _message, *args, **kwargs)
-
-    def _log(_self, _level, _log_exception, _frame_idx, _decorated, _message, *args, **kwargs):
-        function = _self._make_log_function(level=_level,
-                                           log_exception=_log_exception,
-                                           frame_idx=_frame_idx,
-                                           decorated=_decorated)
-        function(_self, _message, *args, **kwargs)
+        _self._make_log_function(_level, False, 2, False)(_self, _message, *args, **kwargs)
 
     @staticmethod
     @functools.lru_cache()
