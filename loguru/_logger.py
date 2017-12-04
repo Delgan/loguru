@@ -6,7 +6,7 @@ from multiprocessing import current_process
 from os import PathLike
 from os.path import basename, normcase, splitext
 from sys import exc_info
-from threading import current_thread
+from threading import current_thread, Lock
 
 import pendulum
 from pendulum import now as pendulum_now
@@ -68,6 +68,8 @@ class Logger:
     _enabled = {}
     _activation_list = []
 
+    _lock = Lock()
+
     def __init__(self, *, extra={}, record=False, exception=False, lazy=False):
         self.catch = Catcher(self)
         self.extra = extra
@@ -93,9 +95,9 @@ class Logger:
             raise ValueError("Invalid level name, it should be a string, not: '%s'" % type(name).__name__)
 
         if no is color is icon is None:
-            if name in self._levels:
+            try:
                 return self._levels[name]
-            else:
+            except KeyError:
                 raise ValueError("Level '%s' does not exist" % name)
 
         if name not in self._levels:
@@ -123,13 +125,15 @@ class Logger:
 
         self._levels[name] = Level(no, color, icon)
 
-        for handler in self._handlers.values():
-            handler.update_format(color)
+        with self._lock:
+            for handler in self._handlers.values():
+                handler.update_format(color)
 
         return self.level(name)
 
     def configure(self, config):
-        self.extra.update(config.get('extra', {}))
+        with self._lock:
+            self.extra.update(config.get('extra', {}))
         for params in config.get('levels', []):
             self.level(**params)
         handlers_ids = [self.start(**params) for params in config.get('sinks', [])]
@@ -139,18 +143,20 @@ class Logger:
         if name != '':
             name += '.'
 
-        activation_list = [(n, s) for n, s in self._activation_list if n[:len(name)] != name]
+        with self._lock:
+            activation_list = [(n, s) for n, s in self._activation_list if n[:len(name)] != name]
 
         parent_status = next((s for n, s in activation_list if name[:len(n)] == n), None)
         if parent_status != status and not (name == '' and status == True):
             activation_list.append((name, status))
             activation_list.sort(key=lambda x: x[0].count('.'), reverse=True)
 
-        for n in self._enabled:
-            if (n + '.')[:len(name)] == name:
-                self._enabled[n] = status
+        with self._lock:
+            for n in self._enabled:
+                if (n + '.')[:len(name)] == name:
+                    self._enabled[n] = status
 
-        self._activation_list[:] = activation_list
+            self._activation_list[:] = activation_list
 
     def enable(self, name):
         self._change_activation(name, True)
@@ -235,6 +241,9 @@ class Logger:
         if not isinstance(format, str):
             raise ValueError("Invalid format, it should be a string, not: '%s'" % type(format).__name__)
 
+        with self._lock:
+            colors = [lvl.color for lvl in self._levels.values()] + ['']
+
         handler = Handler(
             writer=writer,
             stopper=stopper,
@@ -246,28 +255,30 @@ class Logger:
             enhanced=enhanced,
             guarded=guarded,
             catched=catched,
-            colors=[lvl.color for lvl in self._levels.values()] + [''],
+            colors=colors,
         )
 
-        handlers_count = next(self._handlers_count)
-        self._handlers[handlers_count] = handler
-        self.__class__._min_level = min(self.__class__._min_level, levelno)
+        with self._lock:
+            handlers_count = next(self._handlers_count)
+            self._handlers[handlers_count] = handler
+            self.__class__._min_level = min(self.__class__._min_level, levelno)
 
         return handlers_count
 
     def stop(self, handler_id=None):
-        if handler_id is None:
-            for handler in self._handlers.values():
+        with self._lock:
+            if handler_id is None:
+                for handler in self._handlers.values():
+                    handler.stop()
+                self._handlers.clear()
+                self.__class__._min_level = float("inf")
+            elif handler_id in self._handlers:
+                handler = self._handlers.pop(handler_id)
                 handler.stop()
-            self._handlers.clear()
-            self.__class__._min_level = float("inf")
-        elif handler_id in self._handlers:
-            handler = self._handlers.pop(handler_id)
-            handler.stop()
-            levelnos = (h.levelno for h in self._handlers.values())
-            self.__class__._min_level = min(levelnos, default=float("inf"))
-        else:
-            raise ValueError("Handler id '%s' does not exist" % handler_id)
+                levelnos = (h.levelno for h in self._handlers.values())
+                self.__class__._min_level = min(levelnos, default=float("inf"))
+            else:
+                raise ValueError("Handler id '%s' does not exist" % handler_id)
 
     def log(_self, _level, _message, *args, **kwargs):
         _self._make_log_function(_level, False, 2, False)(_self, _message, *args, **kwargs)
