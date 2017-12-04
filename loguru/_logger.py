@@ -259,17 +259,15 @@ class Logger:
         if handler_id is None:
             for handler in self._handlers.values():
                 handler.stop()
-            count = len(self._handlers)
             self._handlers.clear()
             self.__class__._min_level = float("inf")
-            return count
         elif handler_id in self._handlers:
             handler = self._handlers.pop(handler_id)
             handler.stop()
             levelnos = (h.levelno for h in self._handlers.values())
             self.__class__._min_level = min(levelnos, default=float("inf"))
-            return 1
-        return 0
+        else:
+            raise ValueError("Handler id '%s' does not exist" % handler_id)
 
     def log(_self, _level, _message, *args, **kwargs):
         _self._log(_level, False, 3, False, _message, *args, **kwargs)

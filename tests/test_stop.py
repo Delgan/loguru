@@ -27,21 +27,15 @@ def test_stop_all(tmpdir, writer, capsys, logger):
     assert err == expected
     assert writer.read() == expected
 
-def test_stop_count(logger, writer):
-    n = logger.stop()
-    assert n == 0
+def test_stop_with_id(logger, writer):
+    i = logger.start(writer, format="{message}")
+    logger.debug("1")
+    logger.stop(i)
+    logger.debug("2")
+    assert writer.read() == "1\n"
 
-    n = logger.stop(42)
-    assert n == 0
-
-    i = logger.start(writer)
-    n = logger.stop(i)
-    assert n == 1
-
+def test_stop_invalid(logger, writer):
     logger.start(writer)
-    logger.start(writer)
-    n = logger.stop()
-    assert n == 2
 
-    n = logger.stop(0)
-    assert n == 0
+    with pytest.raises(ValueError):
+        logger.stop(42)
