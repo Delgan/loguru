@@ -140,6 +140,9 @@ class Logger:
         return handlers_ids
 
     def _change_activation(self, name, status):
+        if not isinstance(name, str):
+            raise ValueError("Invalid name, it should be a string, not: '%s'" % type(name).__name__)
+
         if name != '':
             name += '.'
 
@@ -278,7 +281,7 @@ class Logger:
                 levelnos = (h.levelno for h in self._handlers.values())
                 self.__class__._min_level = min(levelnos, default=float("inf"))
             else:
-                raise ValueError("Handler id '%s' does not exist" % handler_id)
+                raise ValueError("There is no started handler with id '%s'" % handler_id)
 
     def log(_self, _level, _message, *args, **kwargs):
         _self._make_log_function(_level, False, 2, False)(_self, _message, *args, **kwargs)

@@ -6,9 +6,9 @@ import pytest
     ('test', True),
     ('testss', True),
     ('tests.', True),
-    ('tests.test_activation', False),
-    ('tests.test_activation.', True),
-    ('test_activation', True),
+    ('tests.test_enabling', False),
+    ('tests.test_enabling.', True),
+    ('test_enabling', True),
     ('.', True),
 ])
 def test_disable(logger, writer, name, should_log):
@@ -28,9 +28,9 @@ def test_disable(logger, writer, name, should_log):
     ('test', False),
     ('testss', False),
     ('tests.', False),
-    ('tests.test_activation', True),
-    ('tests.test_activation.', False),
-    ('test_activation', False),
+    ('tests.test_enabling', True),
+    ('tests.test_enabling.', False),
+    ('test_enabling', False),
     ('.', False),
 ])
 def test_enable(logger, writer, name, should_log):
@@ -91,3 +91,13 @@ def test_multiple_activations(logger):
     assert n() == 4
     logger.enable("")
     assert n() == 0
+
+@pytest.mark.parametrize('name', [42, [], object(), None])
+def test_invalid_enable_name(logger, name):
+    with pytest.raises(ValueError):
+        logger.enable(name)
+
+@pytest.mark.parametrize('name', [42, [], object(), None])
+def test_invalid_disable_name(logger, name):
+    with pytest.raises(ValueError):
+        logger.disable(name)
