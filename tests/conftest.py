@@ -1,4 +1,5 @@
 import loguru
+import logging
 import itertools
 import pytest
 import py
@@ -14,6 +15,7 @@ def reset_logger():
     loguru._logger.Logger._handlers_count = itertools.count()
     loguru._logger.Logger._enabled.clear()
     loguru._logger.Logger._activation_list.clear()
+    loguru._logger.Logger._propagated = None
 
 @pytest.fixture
 def logger():
@@ -64,3 +66,28 @@ def monkeypatch_now(monkeypatch):
         monkeypatch.setattr(loguru._file_sink, 'pendulum_now', func)
 
     return monkeypatch_now
+
+@pytest.fixture
+def make_logging_logger():
+
+    logging_logger = None
+    handler = None
+
+    def make_logging_logger(name, stream, fmt="%(message)s", level="DEBUG"):
+        nonlocal handler, logging_logger
+        logging_logger = logging.getLogger(name)
+        logging_logger.setLevel(level)
+        handler = logging.StreamHandler(stream)
+        formatter = logging.Formatter(fmt)
+
+        handler.setLevel(level)
+        handler.setFormatter(formatter)
+        logging_logger.addHandler(handler)
+
+        return logging_logger
+
+    yield make_logging_logger
+
+    logging_logger.setLevel("NOTSET")
+    logging_logger.removeHandler(handler)
+

@@ -1,5 +1,6 @@
 import functools
 import itertools
+import logging
 from collections import namedtuple
 from inspect import isclass
 from multiprocessing import current_process
@@ -64,13 +65,16 @@ class Logger:
     _handlers_count = itertools.count()
     _handlers = {}
 
+    _propagated = None
+    _intercepted = []
+
     _min_level = float("inf")
     _enabled = {}
     _activation_list = []
 
     _lock = Lock()
 
-    def __init__(self, *, extra={}, record=False, exception=False, lazy=False):
+    def __init__(self, *, extra={}, record=False, exception=None, lazy=False):
         self.catch = Catcher(self)
         self.extra = extra
         self._record = record
@@ -166,6 +170,12 @@ class Logger:
 
     def disable(self, name):
         self._change_activation(name, False)
+
+    def propagate(self, name):
+        self.__class__._propagated = logging.getLogger(name)
+
+    def stop_propagation(self):
+        self.__class__._propagated = None
 
     def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT, filter=None,
                     colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
@@ -300,11 +310,12 @@ class Logger:
             raise ValueError("Invalid level, it should be an integer or a string, not: '%s'" % type(level).__name__)
 
         def log_function(_self, _message, *args, **kwargs):
+            propagated = _self._propagated
+            if not _self._handlers and not propagated:
+                return
+
             frame = getframe(frame_idx)
             name = frame.f_globals['__name__']
-
-            if not _self._handlers:
-                return
 
             try:
                 if not _self._enabled[name]:
@@ -330,7 +341,7 @@ class Logger:
                 except KeyError:
                     raise ValueError("Level '%s' does not exist" % level_name)
 
-            if level_no < _self._min_level:
+            if level_no < _self._min_level and not propagated:
                 return
 
             code = frame.f_code
@@ -429,6 +440,11 @@ class Logger:
             for handler in _self._handlers.values():
                 handler.emit(record, exception, level_color)
 
+            if propagated:
+                logging_record = propagated.makeRecord(name, level_no, file_path, frame.f_lineno,
+                                                       record['message'], [], exception, code.co_name,
+                                                       _self.extra, None)
+                propagated.handle(logging_record)
 
         if not log_exception:
             doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
