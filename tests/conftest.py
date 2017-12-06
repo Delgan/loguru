@@ -72,10 +72,12 @@ def make_logging_logger():
 
     logging_logger = None
     handler = None
+    logger_level = None
 
     def make_logging_logger(name, stream, fmt="%(message)s", level="DEBUG"):
-        nonlocal handler, logging_logger
+        nonlocal handler, logging_logger, logger_level
         logging_logger = logging.getLogger(name)
+        logger_level = logging_logger.getEffectiveLevel()
         logging_logger.setLevel(level)
         handler = logging.StreamHandler(stream)
         formatter = logging.Formatter(fmt)
@@ -88,6 +90,7 @@ def make_logging_logger():
 
     yield make_logging_logger
 
-    logging_logger.setLevel("NOTSET")
-    logging_logger.removeHandler(handler)
+    if logging_logger:
+        logging_logger.setLevel(logger_level)
+        logging_logger.removeHandler(handler)
 

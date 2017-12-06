@@ -28,9 +28,9 @@ class Catcher:
         record_logger = self._logger.opt(record=True)
 
         if self._as_decorator:
-            log = record_logger._make_log_function(self._level, True, 3, True)
+            log = record_logger._make_log_function_cached(self._level, True, 3, True)
         else:
-            log = record_logger._make_log_function(self._level, True, 2, False)
+            log = record_logger._make_log_function_cached(self._level, True, 2, False)
 
         log(record_logger, self._message)
 

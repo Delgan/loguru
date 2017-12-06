@@ -50,6 +50,24 @@ class ProcessRecattr(str):
     __slots__ = ('name', 'id')
 
 
+class InterceptingHandler(logging.Handler):
+
+    def __init__(self, logger, *args, **kwargs):
+        super(InterceptingHandler, self).__init__(*args, **kwargs)
+        self._logger = logger
+
+    def emit(self, record):
+        logger = self._logger
+        level = record.levelname
+        try:
+            levelno, _, _ = logger.level(level)
+        except ValueError:
+            level = record.levelno
+        else:
+            level = level if levelno == record.levelno else levelno
+        log = logger._make_log_function(level, record.exc_info, logging_record=record, level_name=record.levelname)
+        log(logger, record.getMessage())
+
 class Logger:
 
     _levels = {
@@ -66,7 +84,7 @@ class Logger:
     _handlers = {}
 
     _propagated = None
-    _intercepted = []
+    _intercepted = {}
 
     _min_level = float("inf")
     _enabled = {}
@@ -176,6 +194,29 @@ class Logger:
 
     def stop_propagation(self):
         self.__class__._propagated = None
+
+    def intercept(self, name):
+        if not isinstance(name, str):
+            raise ValueError("Invalid name, it should be a string, not: '%s'" % type(name).__name__)
+
+        if name in self._intercepted:
+            return
+
+        intercepting_handler = InterceptingHandler(self)
+        intercepting_handler.addFilter(logging.Filter(name))
+        logging.getLogger(None).addHandler(intercepting_handler)
+        self._intercepted[name] = intercepting_handler
+
+    def stop_interception(self, name):
+        if not isinstance(name, str):
+            raise ValueError("Invalid name, it should be a string, not: '%s'" % type(name).__name__)
+
+        try:
+            intercepting_handler = self._intercepted.pop(name)
+        except KeyError:
+            raise ValueError("Logger is not intercepting '%s'" % name)
+        else:
+            logging.getLogger(None).removeHandler(intercepting_handler)
 
     def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT, filter=None,
                     colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
@@ -293,11 +334,10 @@ class Logger:
                 raise ValueError("There is no started handler with id '%s'" % handler_id)
 
     def log(_self, _level, _message, *args, **kwargs):
-        _self._make_log_function(_level, False, 2, False)(_self, _message, *args, **kwargs)
+        _self._make_log_function_cached(_level, False, 2, False)(_self, _message, *args, **kwargs)
 
     @staticmethod
-    @functools.lru_cache()
-    def _make_log_function(level, log_exception=False, frame_idx=1, decorated=False):
+    def _make_log_function(level, log_exception=False, frame_idx=1, decorated=False, logging_record=None, level_name=None):
 
         if isinstance(level, str):
             level_id = level_name = level
@@ -305,17 +345,21 @@ class Logger:
             if level < 0:
                 raise ValueError("Invalid level value, it should be a positive integer, not: %d" % level)
             level_id = None
-            level_name = 'Level %d' % level
+            if level_name is None:
+                level_name = 'Level %d' % level
         else:
             raise ValueError("Invalid level, it should be an integer or a string, not: '%s'" % type(level).__name__)
 
         def log_function(_self, _message, *args, **kwargs):
             propagated = _self._propagated
-            if not _self._handlers and not propagated:
+            if not _self._handlers and (not propagated or logging_record):
                 return
 
-            frame = getframe(frame_idx)
-            name = frame.f_globals['__name__']
+            if not logging_record:
+                frame = getframe(frame_idx)
+                name = frame.f_globals['__name__']
+            else:
+                name = logging_record.name
 
             try:
                 if not _self._enabled[name]:
@@ -341,16 +385,28 @@ class Logger:
                 except KeyError:
                     raise ValueError("Level '%s' does not exist" % level_name)
 
-            if level_no < _self._min_level and not propagated:
+            if level_no < _self._min_level and (not propagated or logging_record):
                 return
 
-            code = frame.f_code
-            file_path = normcase(code.co_filename)
-            file_name = basename(file_path)
-            thread = current_thread()
-            process = current_process()
-            diff = now - start_time
-            elapsed = pendulum.Interval(microseconds=diff.microseconds)
+            if not logging_record:
+                code = frame.f_code
+                file_path = normcase(code.co_filename)
+                file_name = basename(file_path)
+                thread = current_thread()
+                process = current_process()
+                diff = now - start_time
+                elapsed = pendulum.Interval(microseconds=diff.microseconds)
+                lineno = frame.f_lineno
+                function = code.co_name
+            else:
+                now = pendulum.from_timestamp(logging_record.created)
+                file_path = logging_record.pathname
+                file_name = logging_record.filename
+                thread = namedtuple('Thread', ['ident', 'name'])(logging_record.thread, logging_record.threadName)
+                process = namedtuple('Process', ['ident', 'name'])(logging_record.process, logging_record.processName)
+                elapsed = pendulum.Interval(milliseconds=logging_record.relativeCreated)
+                lineno = logging_record.lineno
+                function = logging_record.funcName
 
             level_recattr = LevelRecattr(level_name)
             level_recattr.no, level_recattr.name, level_recattr.icon = level_no, level_name, level_icon
@@ -417,9 +473,9 @@ class Logger:
                 'elapsed': elapsed,
                 'extra': _self.extra,
                 'file': file_recattr,
-                'function': code.co_name,
+                'function': function,
                 'level': level_recattr,
-                'line': frame.f_lineno,
+                'line': lineno,
                 'message': _message,
                 'module': splitext(file_name)[0],
                 'name': name,
@@ -440,11 +496,11 @@ class Logger:
             for handler in _self._handlers.values():
                 handler.emit(record, exception, level_color)
 
-            if propagated:
-                logging_record = propagated.makeRecord(name, level_no, file_path, frame.f_lineno,
+            if propagated and not logging_record:
+                converted_record = propagated.makeRecord(name, level_no, file_path, frame.f_lineno,
                                                        record['message'], [], exception, code.co_name,
                                                        _self.extra, None)
-                propagated.handle(logging_record)
+                propagated.handle(converted_record)
 
         if not log_exception:
             doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
@@ -454,6 +510,11 @@ class Logger:
         log_function.__doc__ = doc
 
         return log_function
+
+    @staticmethod
+    @functools.lru_cache()
+    def _make_log_function_cached(*args, **kwargs):
+        return Logger._make_log_function(*args, **kwargs)
 
     trace = _make_log_function.__func__("TRACE")
     debug = _make_log_function.__func__("DEBUG")
