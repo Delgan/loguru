@@ -22,7 +22,7 @@ class HackyInt(int):
 
 
 class StrRecord(str):
-    pass
+    __slots__ = ('record', 'exception')
 
 
 class Handler:
@@ -153,6 +153,7 @@ class Handler:
 
             message = StrRecord(formatted)
             message.record = record
+            message.exception = exception
 
             with self.lock:
                 self.writer(message)

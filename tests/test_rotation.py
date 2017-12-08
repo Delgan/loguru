@@ -2,12 +2,13 @@
 
 import pytest
 import pendulum
-import loguru
 import datetime
 import math
 import os
 import re
 import py
+from loguru import logger
+
 
 @pytest.mark.parametrize('name, should_rename', [
     ('test.log', True),
@@ -16,7 +17,7 @@ import py
     ('test.log.{n+1}', False),
     ('test.log.1', True),
 ])
-def test_renaming(tmpdir, logger, name, should_rename):
+def test_renaming(tmpdir, name, should_rename):
     file = tmpdir.join(name)
     logger.start(file.realpath(), rotation=0)
 
@@ -39,7 +40,7 @@ def test_renaming(tmpdir, logger, name, should_rename):
 @pytest.mark.parametrize('size', [
     8, 8.0, 7.99, "8 B", "8e-6MB", "0.008 kiB", "64b"
 ])
-def test_size_rotation(tmpdir, logger, size):
+def test_size_rotation(tmpdir, size):
     file_1 = tmpdir.join("test.log")
     file_2 = tmpdir.join("test.log.1")
     file_3 = tmpdir.join("test.log.2")
@@ -95,7 +96,7 @@ def test_size_rotation(tmpdir, logger, size):
     (' mOnthLY', [0, 24 * 13, 29 * 24, 60 * 24, 24 * 35]),
     ('yearly ', [100, 24 * 7 * 30, 24 * 300, 24 * 100, 24 * 400]),
 ])
-def test_time_rotation(monkeypatch_now, tmpdir, when, hours, logger):
+def test_time_rotation(monkeypatch_now, tmpdir, when, hours):
     now = pendulum.parse("2017-06-18 12:00:00")  # Sunday
 
     monkeypatch_now(lambda *a, **k: now)
@@ -119,7 +120,7 @@ def test_time_rotation(monkeypatch_now, tmpdir, when, hours, logger):
     assert file_4.read() == m1 + '\n'
 
 @pytest.mark.parametrize('backups', ['1 hour', '1H', ' 1 h ', datetime.timedelta(hours=1), pendulum.Interval(hours=1.0)])
-def test_backups_time(monkeypatch_now, tmpdir, logger, backups):
+def test_backups_time(monkeypatch_now, tmpdir, backups):
     monkeypatch_now(lambda *a, **k: pendulum.now().add(hours=23))
 
     file = tmpdir.join('test.log')
@@ -135,7 +136,7 @@ def test_backups_time(monkeypatch_now, tmpdir, logger, backups):
     assert file.read() == 'test\n'
 
 @pytest.mark.parametrize('backups', [0, 1, 9, 10, 11, 50, None])
-def test_backups_count(tmpdir, logger, backups):
+def test_backups_count(tmpdir, backups):
     log_count = 10
     files_checked = set()
 
@@ -168,7 +169,7 @@ def test_backups_count(tmpdir, logger, backups):
     for f in tmpdir.listdir():
         assert f in files_checked
 
-def test_backups_function(tmpdir, logger):
+def test_backups_function(tmpdir):
     logger.start(tmpdir.join('test.log'), rotation=0, backups=lambda logs: logs, format='{message}')
 
     tmpdir.join('test.log.123').write('')
@@ -178,7 +179,7 @@ def test_backups_function(tmpdir, logger):
         assert len(tmpdir.listdir()) == 1
         assert tmpdir.join('test.log').read() == '%d\n' % i
 
-def test_backups_at_initialization(tmpdir, logger):
+def test_backups_at_initialization(tmpdir):
     for i in reversed(range(1, 10)):
         tmpdir.join('test.log.%d' % i).write(str(i))
 
@@ -189,7 +190,7 @@ def test_backups_at_initialization(tmpdir, logger):
     assert tmpdir.join('test.log.1').read() == '1'
 
 @pytest.mark.parametrize('previous', [1, 5, 9, 20])
-def test_backups_with_previous_files(tmpdir, logger, previous):
+def test_backups_with_previous_files(tmpdir, previous):
     log_count = 5
     backups = 9
     files_checked = set()
@@ -228,7 +229,7 @@ def test_backups_with_previous_files(tmpdir, logger, previous):
     for f in tmpdir.listdir():
         assert f in files_checked
 
-def test_backups_with_other_files(tmpdir, logger):
+def test_backups_with_other_files(tmpdir):
     log_count = 9
     files_checked = set()
 
@@ -256,7 +257,7 @@ def test_backups_with_other_files(tmpdir, logger):
     for f in tmpdir.listdir():
         assert f in files_checked
 
-def test_backups_zfill(tmpdir, logger):
+def test_backups_zfill(tmpdir):
     logger.start(tmpdir.join('test.log'), rotation=0, backups=None, format='{message}')
 
     logger.debug('a')
@@ -285,7 +286,7 @@ def test_backups_zfill(tmpdir, logger):
 
 @pytest.mark.parametrize('mode', ['a', 'w'])
 @pytest.mark.parametrize('backups', [10, None])
-def test_mode(tmpdir, logger, mode, backups):
+def test_mode(tmpdir, mode, backups):
     file = tmpdir.join('test.log')
     file.write('a')
     logger.start(file.realpath(), rotation=10, backups=backups, format='{message}', mode=mode)
@@ -296,14 +297,14 @@ def test_mode(tmpdir, logger, mode, backups):
     assert tmpdir.join('test.log.1').read() == 'a' * (mode == 'a') + 'b\n'
 
 @pytest.mark.parametrize('compression', ['gz', 'gzip', 'BZ2', 'bzip2', 'zip', 'XZ', 'lzma'])
-def test_compression(tmpdir, logger, compression):
+def test_compression(tmpdir, compression):
     logger.start(tmpdir.join('test.log'), rotation=0, compression=compression, format='{message}')
     logger.debug('a')
 
     assert tmpdir.join('test.log.1.%s' % compression).check(exists=1)
     assert tmpdir.join('test.log').read() == 'a\n'
 
-def test_compression_function(tmpdir, logger):
+def test_compression_function(tmpdir):
     def compress(file):
         os.replace(file, file + '.custom_compression')
     logger.start(tmpdir.join('test.log'), rotation='10 B', compression=compress, format='{message}')
@@ -314,7 +315,7 @@ def test_compression_function(tmpdir, logger):
     assert tmpdir.join('test.log').read() == 'd' * 10 + '\n'
     assert tmpdir.join('test.log.1.custom_compression').read() == 'abc\n'
 
-def test_compression_rotation(tmpdir, logger):
+def test_compression_rotation(tmpdir):
     import gzip
     n = logger.start(tmpdir.join('test.log'), rotation=0, compression=True, format='{message}', backups=5)
 
@@ -329,7 +330,7 @@ def test_compression_rotation(tmpdir, logger):
         with gzip.open(archive.realpath()) as gz:
             assert gz.read() == b'%d\n' % (9 - i - 1)
 
-def test_compression_without_rotation(tmpdir, logger):
+def test_compression_without_rotation(tmpdir):
     import gzip
     n = logger.start(tmpdir.join('test.log'), compression=True, format='{message}')
     logger.debug("Test")
@@ -340,7 +341,7 @@ def test_compression_without_rotation(tmpdir, logger):
     with gzip.open(archive.realpath()) as gz:
         assert gz.read() == b'Test\n'
 
-def test_compression_backup_file_exists(tmpdir, logger):
+def test_compression_backup_file_exists(tmpdir):
     import gzip
     tmpdir.join('test_1.log').write('not compressed')
     logger.start(tmpdir.join('test_{n}.log'), compression=True, format='{message}', rotation='10 B')
@@ -353,7 +354,7 @@ def test_compression_backup_file_exists(tmpdir, logger):
     with gzip.open(tmpdir.join('test_0.log.gz').realpath()) as gz:
         assert gz.read() == b'a\n'
 
-def test_compression_0_backups(tmpdir, logger):
+def test_compression_0_backups(tmpdir):
     logger.start(tmpdir.join('test.log'), compression=True, rotation=0, backups=0, format='{message}')
 
     for m in ['a', 'b']:
@@ -362,7 +363,7 @@ def test_compression_0_backups(tmpdir, logger):
         assert tmpdir.join('test.log').read() == m + '\n'
 
 @pytest.mark.parametrize('rotate', [True, False])
-def test_compression_atexit(tmpdir, logger, rotate, pyexec):
+def test_compression_atexit(tmpdir, rotate, pyexec):
     import gzip
 
     file_log = tmpdir.join("test.log")
@@ -392,7 +393,7 @@ def test_compression_atexit(tmpdir, logger, rotate, pyexec):
     "e days", "2 days 8 pouooi", "foobar",
     object(), os, pendulum.Date(2017, 11, 11), pendulum.now(), 1j,
 ])
-def test_invalid_rotation(logger, rotation):
+def test_invalid_rotation(rotation):
     with pytest.raises(ValueError):
         logger.start('test.log', rotation=rotation)
 
@@ -401,11 +402,11 @@ def test_invalid_rotation(logger, rotation):
     "5 MB", "3 hours 2 dayz", "d", "H",
     datetime.time(12, 12, 12), os, object(),
 ])
-def test_invalid_backups(logger, backups):
+def test_invalid_backups(backups):
     with pytest.raises(ValueError):
         logger.start('test.log', backups=backups)
 
 @pytest.mark.parametrize('compression', ['.tar.gz', 0, 1, os, object(), {"zip"}, "rar", ".7z"])
-def test_invalid_compression(logger, compression):
+def test_invalid_compression(compression):
     with pytest.raises(ValueError):
         logger.start('test.log', compression=compression)

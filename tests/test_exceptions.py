@@ -4,6 +4,8 @@ import py
 import os
 from itertools import zip_longest, dropwhile
 import re
+from loguru import logger
+
 
 @pytest.fixture
 def compare_outputs(tmpdir, pyexec):
@@ -301,7 +303,7 @@ def test_suppressed_exception_indirect(compare):
 
 @pytest.mark.parametrize('rec', [1, 2, 3])
 @pytest.mark.parametrize('catch_mode', ['explicit', 'decorator', 'context_manager'])
-def test_raising_recursion(logger, writer, rec, catch_mode):
+def test_raising_recursion(writer, rec, catch_mode):
     logger.start(writer, format='{message}', enhanced=False)
 
     if catch_mode == 'explicit':
@@ -344,7 +346,7 @@ def test_raising_recursion(logger, writer, rec, catch_mode):
         assert line.endswith(expected_end)
         assert next_line == epected_next
 
-def test_carret_not_masked(logger, writer):
+def test_carret_not_masked(writer):
     logger.start(writer, enhanced=False, colored=False)
 
     @logger.catch
@@ -358,7 +360,7 @@ def test_carret_not_masked(logger, writer):
 
     assert sum(line.startswith('> File') for line in lines) == 1
 
-def test_postprocess_colored(logger, writer, pyexec, tmpdir):
+def test_postprocess_colored(writer, pyexec, tmpdir):
     file = tmpdir.join("test.log")
 
     code = """
@@ -377,7 +379,7 @@ def test_postprocess_colored(logger, writer, pyexec, tmpdir):
     assert re.match(r"^\S*Traceback \(most recent call last, catch point marked\):\S*$", lines[1])
     assert re.match(r"^\S*>.*line.*\D7\D.*$", lines[3])
 
-def test_frame_values_backward(logger, writer):
+def test_frame_values_backward(writer):
     logger.start(writer, enhanced=True, colored=False)
 
     k = 2
@@ -407,7 +409,7 @@ def test_frame_values_backward(logger, writer):
     assert next(line_4).endswith(' 2')
 
 
-def test_frame_values_forward(logger, writer):
+def test_frame_values_forward(writer):
     logger.start(writer, enhanced=True, colored=False)
 
     k = 2
@@ -436,7 +438,7 @@ def test_frame_values_forward(logger, writer):
     assert next(line_3).endswith(' 2')
     assert next(line_4).endswith(' 2')
 
-def test_no_exception(logger, writer):
+def test_no_exception(writer):
     logger.start(writer, enhanced=False, colored=False, format="{message}")
 
     logger.exception("No Error.")

@@ -1,8 +1,9 @@
 # coding: utf-8
 
 import re
-import loguru
 import pytest
+from loguru import logger
+
 
 @pytest.mark.parametrize('format, validator', [
     ('{name}', lambda r: r == 'tests.test_formatting'),
@@ -32,7 +33,7 @@ import pytest
     ('%s {{a}} 天 {{1}} %d', lambda r: r == '%s {a} 天 {1} %d'),
 ])
 @pytest.mark.parametrize("use_log_function", [False, True])
-def test_log_formatters(format, validator, logger, writer, use_log_function):
+def test_log_formatters(format, validator, writer, use_log_function):
     message = "Message"
 
     logger.start(writer, format=format)
@@ -60,7 +61,7 @@ def test_log_formatters(format, validator, logger, writer, use_log_function):
     ('%s_{{a}}_天_{{1}}_%d', lambda r: r == '%s_{a}_天_{1}_%d'),
 ])
 @pytest.mark.parametrize('part', ["file", "dir", "both"])
-def test_file_formatters(tmpdir, format, validator, part, logger):
+def test_file_formatters(tmpdir, format, validator, part):
     if part == "file":
         file = tmpdir.join(format)
     elif part == "dir":
@@ -98,7 +99,7 @@ def test_file_formatters(tmpdir, format, validator, part, logger):
 
 ])
 @pytest.mark.parametrize('use_log_function', [False, True])
-def test_log_formatting(logger, writer, message, args, kwargs, expected, use_log_function):
+def test_log_formatting(writer, message, args, kwargs, expected, use_log_function):
     logger.start(writer, format='{message}', colored=False)
 
     if use_log_function:
@@ -108,7 +109,7 @@ def test_log_formatting(logger, writer, message, args, kwargs, expected, use_log
 
     assert writer.read() == expected + '\n'
 
-def test_extra_formatting(logger, writer):
+def test_extra_formatting(writer):
     logger.start(writer, format="{extra[test]} -> {extra[dict]} -> {message}")
     logger.extra["test"] = "my_test"
     logger.extra["dict"] = {"a": 10}

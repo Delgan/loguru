@@ -1,20 +1,19 @@
-import loguru
 import pytest
+from loguru import logger
 
-
-def test_log_int_level(logger, writer):
+def test_log_int_level(writer):
     logger.start(writer, format='{level.name} -> {level.no} -> {message}', colored=False)
     logger.log(10, "test")
 
     assert writer.read() == "Level 10 -> 10 -> test\n"
 
-def test_log_str_level(logger, writer):
+def test_log_str_level(writer):
     logger.start(writer, format='{level.name} -> {level.no} -> {message}', colored=False)
     logger.log("DEBUG", "test")
 
     assert writer.read() == "DEBUG -> 10 -> test\n"
 
-def test_add_level(logger, writer):
+def test_add_level(writer):
     name = "L3V3L"
     icon = "[o]"
     level = 10
@@ -26,7 +25,7 @@ def test_add_level(logger, writer):
     assert writer.read() == "%s \x1b[31m%s\x1b[0m -> %d -> test\n" % (icon, name, level)
 
 @pytest.mark.parametrize('colored', [True, False])
-def test_add_level_after_start(logger, writer, colored):
+def test_add_level_after_start(writer, colored):
     logger.start(writer, level="DEBUG", format='<level>{level.name} | {level.no} | {message}</level>', colored=colored)
     logger.level("foo", 10, color="<red>")
 
@@ -38,7 +37,7 @@ def test_add_level_after_start(logger, writer, colored):
 
     assert writer.read() == expected + "\n"
 
-def test_add_level_then_log_with_int_value(logger, writer):
+def test_add_level_then_log_with_int_value(writer):
     logger.level("foo", 16)
     logger.start(writer, level="foo", format="{level.name} {level.no} {message}", colored=False)
 
@@ -46,7 +45,7 @@ def test_add_level_then_log_with_int_value(logger, writer):
 
     assert writer.read() == "Level 16 16 test\n"
 
-def test_add_malicious_level(logger, writer):
+def test_add_malicious_level(writer):
     name = "Level 15"
 
     logger.level(name, 45, color="<red>")
@@ -58,7 +57,7 @@ def test_add_malicious_level(logger, writer):
     assert writer.read() == ('Level 15 & 15 &  A \x1b[0m\n'
                              'Level 15 & 45 & \x1b[31m B \x1b[0m\n')
 
-def test_add_existing_level(logger, writer):
+def test_add_existing_level(writer):
     logger.level("INFO", 45, color="<red>")
     logger.start(writer, format='{level.icon} + <level>{level.name}</level> + {level.no} = {message}', colored=True)
 
@@ -72,7 +71,7 @@ def test_add_existing_level(logger, writer):
                              '  + Level 10\x1b[0m + 10 = c\n'
                              '  + Level 45\x1b[0m + 45 = d\n')
 
-def test_edit_level(logger, writer):
+def test_edit_level(writer):
     logger.level("info", no=0, color="<bold>", icon="[?]")
     logger.start(writer, format="<level>->{level.no}, {level.name}, {level.icon}, {message}<-</level>", colored=True)
 
@@ -91,21 +90,21 @@ def test_edit_level(logger, writer):
                              "\x1b[1m->11, info, [!], b<-\x1b[0m\n"
                              "\x1b[31m->11, info, [!], c<-\x1b[0m\n")
 
-def test_edit_existing_level(logger, writer):
+def test_edit_existing_level(writer):
     logger.level("DEBUG", no=20, icon="!")
     logger.start(writer, format="{level.no}, <level>{level.name}</level>, {level.icon}, {message}", colored=False)
     logger.debug("a")
     assert writer.read() == "20, DEBUG, !, a\n"
 
-def test_get_level(logger):
+def test_get_level():
     level = (11, "<red>", "[!]")
     logger.level("lvl", *level)
     assert logger.level("lvl") == level
 
-def test_get_existing_level(logger):
+def test_get_existing_level():
     assert logger.level("DEBUG") == (10, "<blue><bold>", "🐞")
 
-def test_start_custom_level(logger, writer):
+def test_start_custom_level(writer):
     logger.level("foo", 17, color="<yellow>")
     logger.start(writer, level="foo", format='<level>{level.name} + {level.no} + {message}</level>', colored=False)
 
@@ -115,27 +114,27 @@ def test_start_custom_level(logger, writer):
     assert writer.read() == 'INFO + 20 + yes\n'
 
 @pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
-def test_log_invalid_level(logger, writer, level):
+def test_log_invalid_level(writer, level):
     logger.start(writer)
     with pytest.raises(ValueError):
         logger.log(level, "test")
 
 @pytest.mark.parametrize("level_name", [10, object()])
-def test_add_invalid_level_name(logger, level_name):
+def test_add_invalid_level_name(level_name):
     with pytest.raises(ValueError):
         logger.level(level_name, 11)
 
 @pytest.mark.parametrize("level_value", ["1", -1, 3.4, object()])
-def test_add_invalid_level_value(logger, level_value):
+def test_add_invalid_level_value(level_value):
     with pytest.raises(ValueError):
         logger.level("test", level_value)
 
 @pytest.mark.parametrize("level", ["foo", 10, object()])
-def test_get_invalid_level(logger, level):
+def test_get_invalid_level(level):
     with pytest.raises(ValueError):
         logger.level(level)
 
 @pytest.mark.parametrize("level", ["foo", 10, object()])
-def test_edit_invalid_level(logger, level):
+def test_edit_invalid_level(level):
     with pytest.raises(ValueError):
         logger.level(level, icon="?")

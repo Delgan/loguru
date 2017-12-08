@@ -7,21 +7,16 @@ import os
 
 default_levels = loguru._logger.Logger._levels.copy()
 
+@pytest.fixture(autouse=True)
 def reset_logger():
-    loguru._logger.Logger._levels.clear()
-    loguru._logger.Logger._levels.update(default_levels)
+    yield
+    loguru._logger.Logger._levels = default_levels.copy()
     loguru._logger.Logger._min_level = float('inf')
-    loguru._logger.Logger._handlers.clear()
+    loguru._logger.Logger._handlers = {}
     loguru._logger.Logger._handlers_count = itertools.count()
-    loguru._logger.Logger._enabled.clear()
-    loguru._logger.Logger._activation_list.clear()
-    loguru._logger.Logger._propagated = None
-
-@pytest.fixture
-def logger():
-    reset_logger()
-    yield loguru._logger.Logger()
-    reset_logger()
+    loguru._logger.Logger._enabled = {}
+    loguru._logger.Logger._activation_list = []
+    loguru.logger.extra = {}
 
 @pytest.fixture
 def writer():
@@ -71,20 +66,20 @@ def monkeypatch_now(monkeypatch):
 def make_logging_logger():
 
     logging_logger = None
-    handler = None
+    logger_handler = None
     logger_level = None
 
-    def make_logging_logger(name, stream, fmt="%(message)s", level="DEBUG"):
-        nonlocal handler, logging_logger, logger_level
+    def make_logging_logger(name, handler, fmt="%(message)s", level="DEBUG"):
+        nonlocal logger_handler, logging_logger, logger_level
         logging_logger = logging.getLogger(name)
         logger_level = logging_logger.getEffectiveLevel()
         logging_logger.setLevel(level)
-        handler = logging.StreamHandler(stream)
+        logger_handler = handler
         formatter = logging.Formatter(fmt)
 
-        handler.setLevel(level)
-        handler.setFormatter(formatter)
-        logging_logger.addHandler(handler)
+        logger_handler.setLevel(level)
+        logger_handler.setFormatter(formatter)
+        logging_logger.addHandler(logger_handler)
 
         return logging_logger
 
@@ -92,5 +87,5 @@ def make_logging_logger():
 
     if logging_logger:
         logging_logger.setLevel(logger_level)
-        logging_logger.removeHandler(handler)
+        logging_logger.removeHandler(logger_handler)
 

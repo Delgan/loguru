@@ -1,6 +1,5 @@
 import functools
 import itertools
-import logging
 from collections import namedtuple
 from inspect import isclass
 from multiprocessing import current_process
@@ -49,25 +48,6 @@ class ThreadRecattr(str):
 class ProcessRecattr(str):
     __slots__ = ('name', 'id')
 
-
-class InterceptingHandler(logging.Handler):
-
-    def __init__(self, logger, *args, **kwargs):
-        super(InterceptingHandler, self).__init__(*args, **kwargs)
-        self._logger = logger
-
-    def emit(self, record):
-        logger = self._logger
-        level = record.levelname
-        try:
-            levelno, _, _ = logger.level(level)
-        except ValueError:
-            level = record.levelno
-        else:
-            level = level if levelno == record.levelno else levelno
-        log = logger._make_log_function(level, record.exc_info, logging_record=record, level_name=record.levelname)
-        log(logger, record.getMessage())
-
 class Logger:
 
     _levels = {
@@ -82,9 +62,6 @@ class Logger:
 
     _handlers_count = itertools.count()
     _handlers = {}
-
-    _propagated = None
-    _intercepted = {}
 
     _min_level = float("inf")
     _enabled = {}
@@ -188,35 +165,6 @@ class Logger:
 
     def disable(self, name):
         self._change_activation(name, False)
-
-    def propagate(self, name):
-        self.__class__._propagated = logging.getLogger(name)
-
-    def stop_propagation(self):
-        self.__class__._propagated = None
-
-    def intercept(self, name):
-        if not isinstance(name, str):
-            raise ValueError("Invalid name, it should be a string, not: '%s'" % type(name).__name__)
-
-        if name in self._intercepted:
-            return
-
-        intercepting_handler = InterceptingHandler(self)
-        intercepting_handler.addFilter(logging.Filter(name))
-        logging.getLogger(None).addHandler(intercepting_handler)
-        self._intercepted[name] = intercepting_handler
-
-    def stop_interception(self, name):
-        if not isinstance(name, str):
-            raise ValueError("Invalid name, it should be a string, not: '%s'" % type(name).__name__)
-
-        try:
-            intercepting_handler = self._intercepted.pop(name)
-        except KeyError:
-            raise ValueError("Logger is not intercepting '%s'" % name)
-        else:
-            logging.getLogger(None).removeHandler(intercepting_handler)
 
     def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT, filter=None,
                     colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
@@ -334,10 +282,11 @@ class Logger:
                 raise ValueError("There is no started handler with id '%s'" % handler_id)
 
     def log(_self, _level, _message, *args, **kwargs):
-        _self._make_log_function_cached(_level, False, 2, False)(_self, _message, *args, **kwargs)
+        _self._make_log_function(_level, False, 2, False)(_self, _message, *args, **kwargs)
 
     @staticmethod
-    def _make_log_function(level, log_exception=False, frame_idx=1, decorated=False, logging_record=None, level_name=None):
+    @functools.lru_cache()
+    def _make_log_function(level, log_exception=False, frame_idx=1, decorated=False):
 
         if isinstance(level, str):
             level_id = level_name = level
@@ -345,21 +294,16 @@ class Logger:
             if level < 0:
                 raise ValueError("Invalid level value, it should be a positive integer, not: %d" % level)
             level_id = None
-            if level_name is None:
-                level_name = 'Level %d' % level
+            level_name = 'Level %d' % level
         else:
             raise ValueError("Invalid level, it should be an integer or a string, not: '%s'" % type(level).__name__)
 
         def log_function(_self, _message, *args, **kwargs):
-            propagated = _self._propagated
-            if not _self._handlers and (not propagated or logging_record):
+            if not _self._handlers:
                 return
 
-            if not logging_record:
-                frame = getframe(frame_idx)
-                name = frame.f_globals['__name__']
-            else:
-                name = logging_record.name
+            frame = getframe(frame_idx)
+            name = frame.f_globals['__name__']
 
             try:
                 if not _self._enabled[name]:
@@ -385,28 +329,16 @@ class Logger:
                 except KeyError:
                     raise ValueError("Level '%s' does not exist" % level_name)
 
-            if level_no < _self._min_level and (not propagated or logging_record):
+            if level_no < _self._min_level:
                 return
 
-            if not logging_record:
-                code = frame.f_code
-                file_path = normcase(code.co_filename)
-                file_name = basename(file_path)
-                thread = current_thread()
-                process = current_process()
-                diff = now - start_time
-                elapsed = pendulum.Interval(microseconds=diff.microseconds)
-                lineno = frame.f_lineno
-                function = code.co_name
-            else:
-                now = pendulum.from_timestamp(logging_record.created)
-                file_path = logging_record.pathname
-                file_name = logging_record.filename
-                thread = namedtuple('Thread', ['ident', 'name'])(logging_record.thread, logging_record.threadName)
-                process = namedtuple('Process', ['ident', 'name'])(logging_record.process, logging_record.processName)
-                elapsed = pendulum.Interval(milliseconds=logging_record.relativeCreated)
-                lineno = logging_record.lineno
-                function = logging_record.funcName
+            code = frame.f_code
+            file_path = normcase(code.co_filename)
+            file_name = basename(file_path)
+            thread = current_thread()
+            process = current_process()
+            diff = now - start_time
+            elapsed = pendulum.Interval(microseconds=diff.microseconds)
 
             level_recattr = LevelRecattr(level_name)
             level_recattr.no, level_recattr.name, level_recattr.icon = level_no, level_name, level_icon
@@ -429,53 +361,15 @@ class Logger:
                 else:
                     ex_type, ex, tb = exc_info()
 
-                if tb:
-                    if decorated:
-                        bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
-                        tb = tb.tb_next
-
-                    root_frame = tb.tb_frame.f_back
-
-                    loguru_tracebacks = []
-                    while tb:
-                        loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
-                        loguru_tracebacks.append(loguru_tb)
-                        tb = tb.tb_next
-
-                    for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
-                        prev_tb.tb_next = next_tb
-
-                    # root_tb
-                    tb = loguru_tracebacks[0] if loguru_tracebacks else None
-
-                    frames = []
-                    while root_frame:
-                        frames.insert(0, root_frame)
-                        root_frame = root_frame.f_back
-
-                    if decorated:
-                        frames = [f for f in frames if (f.f_code.co_filename, f.f_lineno) != bad_frame]
-                        caught_tb = None
-                    else:
-                        caught_tb = tb
-
-                    for f in reversed(frames):
-                        tb = loguru_traceback(f, f.f_lasti, f.f_lineno, tb)
-                        if decorated and caught_tb is None:
-                            caught_tb = tb
-
-                    if caught_tb:
-                        caught_tb.__is_caught_point__ = True
-
-                exception = (ex_type, ex, tb)
+                exception = _self._extend_exception(ex_type, ex, tb, decorated)
 
             record = {
                 'elapsed': elapsed,
                 'extra': _self.extra,
                 'file': file_recattr,
-                'function': function,
+                'function': code.co_name,
                 'level': level_recattr,
-                'line': lineno,
+                'line': frame.f_lineno,
                 'message': _message,
                 'module': splitext(file_name)[0],
                 'name': name,
@@ -496,12 +390,6 @@ class Logger:
             for handler in _self._handlers.values():
                 handler.emit(record, exception, level_color)
 
-            if propagated and not logging_record:
-                converted_record = propagated.makeRecord(name, level_no, file_path, frame.f_lineno,
-                                                       record['message'], [], exception, code.co_name,
-                                                       _self.extra, None)
-                propagated.handle(converted_record)
-
         if not log_exception:
             doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
         else:
@@ -511,10 +399,59 @@ class Logger:
 
         return log_function
 
+    def handle(self, record, exception=None):
+        try:
+            _, level_color, _ = self._levels[record['level'].name]
+        except KeyError:
+            level_color = ''
+
+        if exception:
+            exception = self._extend_exception(*exception, False)
+
+        for handler in self._handlers.values():
+            handler.emit(record, exception, level_color)
+
     @staticmethod
-    @functools.lru_cache()
-    def _make_log_function_cached(*args, **kwargs):
-        return Logger._make_log_function(*args, **kwargs)
+    def _extend_exception(ex_type, ex, tb, decorated):
+        if tb:
+            if decorated:
+                bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
+                tb = tb.tb_next
+
+            root_frame = tb.tb_frame.f_back
+
+            loguru_tracebacks = []
+            while tb:
+                loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
+                loguru_tracebacks.append(loguru_tb)
+                tb = tb.tb_next
+
+            for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
+                prev_tb.tb_next = next_tb
+
+            # root_tb
+            tb = loguru_tracebacks[0] if loguru_tracebacks else None
+
+            frames = []
+            while root_frame:
+                frames.insert(0, root_frame)
+                root_frame = root_frame.f_back
+
+            if decorated:
+                frames = [f for f in frames if (f.f_code.co_filename, f.f_lineno) != bad_frame]
+                caught_tb = None
+            else:
+                caught_tb = tb
+
+            for f in reversed(frames):
+                tb = loguru_traceback(f, f.f_lasti, f.f_lineno, tb)
+                if decorated and caught_tb is None:
+                    caught_tb = tb
+
+            if caught_tb:
+                caught_tb.__is_caught_point__ = True
+
+        return (ex_type, ex, tb)
 
     trace = _make_log_function.__func__("TRACE")
     debug = _make_log_function.__func__("DEBUG")

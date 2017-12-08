@@ -2,12 +2,13 @@ import pytest
 import traceback
 import textwrap
 import re
+from loguru import logger
 
 zero_division_error = 'ZeroDivisionError: division by zero\n'
 wrap_mode = pytest.mark.parametrize('wrap_mode', ['decorator', 'function', 'context_manager'])
 
 @pytest.mark.parametrize('use_parentheses', [True, False])
-def test_decorator(logger, writer, use_parentheses):
+def test_decorator(writer, use_parentheses):
     logger.start(writer)
 
     if use_parentheses:
@@ -24,7 +25,7 @@ def test_decorator(logger, writer, use_parentheses):
     assert writer.read().endswith(zero_division_error)
 
 @pytest.mark.parametrize('use_parentheses', [True, False])
-def test_context_manager(logger, writer, use_parentheses):
+def test_context_manager(writer, use_parentheses):
     logger.start(writer)
 
     if use_parentheses:
@@ -36,7 +37,7 @@ def test_context_manager(logger, writer, use_parentheses):
 
     assert writer.read().endswith(zero_division_error)
 
-def test_function(logger, writer):
+def test_function(writer):
         logger.start(writer)
 
         def a():
@@ -47,7 +48,7 @@ def test_function(logger, writer):
 
         assert writer.read().endswith(zero_division_error)
 
-def test_with_enhanced(logger, writer):
+def test_with_enhanced(writer):
     logger.start(writer, enhanced=True)
 
     def c():
@@ -82,7 +83,7 @@ def test_with_enhanced(logger, writer):
 ])
 @pytest.mark.parametrize('keyword', [True, False])
 @wrap_mode
-def test_exception(logger, writer, exception, should_raise, keyword, wrap_mode):
+def test_exception(writer, exception, should_raise, keyword, wrap_mode):
     logger.start(writer)
 
     if keyword:
@@ -122,7 +123,7 @@ def test_exception(logger, writer, exception, should_raise, keyword, wrap_mode):
 
 
 @wrap_mode
-def test_message(logger, writer, wrap_mode):
+def test_message(writer, wrap_mode):
     logger.start(writer, format='{message}')
     message = 'An error occured:'
 
@@ -147,7 +148,7 @@ def test_message(logger, writer, wrap_mode):
     (13, "Level 13 | 13"),
     ("DEBUG", "DEBUG | 10")
 ])
-def test_level(logger, writer, wrap_mode, level, expected):
+def test_level(writer, wrap_mode, level, expected):
     logger.start(writer, format="{level.name} | {level.no}")
 
     if wrap_mode == "decorator":
@@ -169,7 +170,7 @@ def test_level(logger, writer, wrap_mode, level, expected):
     assert lines[0] == expected
 
 @wrap_mode
-def test_reraise(logger, writer, wrap_mode):
+def test_reraise(writer, wrap_mode):
     logger.start(writer)
 
     if wrap_mode == "decorator":
@@ -191,7 +192,7 @@ def test_reraise(logger, writer, wrap_mode):
     assert writer.read().endswith(zero_division_error)
 
 @wrap_mode
-def test_not_raising(logger, writer, wrap_mode):
+def test_not_raising(writer, wrap_mode):
     logger.start(writer, format='{message}')
     message = "It's ok"
 
@@ -219,7 +220,7 @@ def test_not_raising(logger, writer, wrap_mode):
     ("{line}", "10", "8"),
 ])
 @wrap_mode
-def test_formatting(logger, tmpdir, pyexec, wrap_mode, format, expected_dec, expected_ctx):
+def test_formatting(tmpdir, pyexec, wrap_mode, format, expected_dec, expected_ctx):
     logfile = tmpdir.join("test.log")
     pyfile = tmpdir.join("folder", "test.py")
     pyfile.write("", ensure=True)

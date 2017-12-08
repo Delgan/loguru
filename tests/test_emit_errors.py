@@ -1,9 +1,11 @@
 import sys
+from loguru import logger
+
 
 def broken_sink(m):
     raise Exception
 
-def test_no_sys_stderr(logger, capsys, monkeypatch):
+def test_no_sys_stderr(capsys, monkeypatch):
     monkeypatch.setattr(sys, 'stderr', None)
     logger.start(broken_sink)
     logger.debug('a')
@@ -11,7 +13,7 @@ def test_no_sys_stderr(logger, capsys, monkeypatch):
     out, err = capsys.readouterr()
     assert out == err == ""
 
-def test_broken_sys_stderr(logger, capsys, monkeypatch):
+def test_broken_sys_stderr(capsys, monkeypatch):
     def broken_write(*args, **kwargs):
         raise OSError
 
@@ -22,7 +24,7 @@ def test_broken_sys_stderr(logger, capsys, monkeypatch):
     out, err = capsys.readouterr()
     assert out == err == ""
 
-def test_encoding_error(logger, capsys):
+def test_encoding_error(capsys):
     def sink(m):
         raise UnicodeEncodeError('utf8', "", 10, 11, 'too bad')
 
@@ -39,7 +41,7 @@ def test_encoding_error(logger, capsys):
     assert lines[-2] == "UnicodeEncodeError: 'utf8' codec can't encode characters in position 10-10: too bad"
     assert lines[-1] == "--- End of logging error ---"
 
-def test_unprintable_record(logger, writer, capsys):
+def test_unprintable_record(writer, capsys):
     class Unprintable:
         def __repr__(self):
             raise ValueError("Failed")

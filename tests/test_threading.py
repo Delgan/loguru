@@ -1,7 +1,8 @@
 from threading import Thread
+from loguru import logger
 import time
 
-def test_safe(logger, capsys):
+def test_safe(capsys):
     first_thread_initialized = False
     second_thread_initialized = False
     entered = False

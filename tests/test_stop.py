@@ -1,10 +1,12 @@
 import sys
 import pytest
+from loguru import logger
+
 
 message = 'some message'
 expected = message + '\n'
 
-def test_stop_all(tmpdir, writer, capsys, logger):
+def test_stop_all(tmpdir, writer, capsys):
     file = tmpdir.join("test.log")
 
     logger.debug("This shouldn't be printed.")
@@ -27,14 +29,14 @@ def test_stop_all(tmpdir, writer, capsys, logger):
     assert err == expected
     assert writer.read() == expected
 
-def test_stop_with_id(logger, writer):
+def test_stop_with_id(writer):
     i = logger.start(writer, format="{message}")
     logger.debug("1")
     logger.stop(i)
     logger.debug("2")
     assert writer.read() == "1\n"
 
-def test_stop_invalid(logger, writer):
+def test_stop_invalid(writer):
     logger.start(writer)
 
     with pytest.raises(ValueError):

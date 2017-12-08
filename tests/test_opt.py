@@ -1,7 +1,9 @@
 import pytest
 import sys
+from loguru import logger
 
-def test_record(logger, writer):
+
+def test_record(writer):
     logger.start(writer, format="{message}")
 
     logger.opt(record=True).debug("1")
@@ -10,7 +12,7 @@ def test_record(logger, writer):
 
     assert writer.read() == '1\n2 DEBUG\n3 4 5 11\n'
 
-def test_exception_boolean(logger, writer):
+def test_exception_boolean(writer):
     logger.start(writer, format="{level.name}: {message}")
 
     try:
@@ -23,7 +25,7 @@ def test_exception_boolean(logger, writer):
     assert lines[0] == "DEBUG: Error 1 test"
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
-def test_exception_exc_info(logger, writer):
+def test_exception_exc_info(writer):
     logger.start(writer, format="{message}")
 
     try:
@@ -38,7 +40,7 @@ def test_exception_exc_info(logger, writer):
     assert lines[0] == "test"
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
-def test_exception_class(logger, writer):
+def test_exception_class(writer):
     logger.start(writer, format="{message}")
 
     try:
@@ -53,7 +55,7 @@ def test_exception_class(logger, writer):
     assert lines[0] == "test"
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
-def test_lazy(logger, writer):
+def test_lazy(writer):
     counter = 0
     def laziness():
         nonlocal counter
@@ -84,14 +86,14 @@ def test_lazy(logger, writer):
 
     assert writer.read() == "10 => 1: 1\n17 => 4: 1\n20 => 7: 2\n"
 
-def test_keep_extra(logger, writer):
+def test_keep_extra(writer):
     logger.extra['test'] = 123
     logger.start(writer, format='{extra[test]}')
     logger.opt().debug("")
 
     assert writer.read() == "123\n"
 
-def test_keep_others(logger, writer):
+def test_keep_others(writer):
     logger.start(writer, format='{message}')
     logger.opt(record=True).opt().debug("{record[level].name}")
     logger.debug("{record}", record=123)
@@ -104,7 +106,7 @@ def test_keep_others(logger, writer):
     assert result.startswith("DEBUG\n123\n10\n")
     assert result.endswith("ZeroDivisionError: division by zero")
 
-def test_before_bind(logger, writer):
+def test_before_bind(writer):
     logger.start(writer, format='{message}')
     logger.opt(record=True).bind(key="value").info("{record[level]}")
     assert writer.read() == "INFO\n"

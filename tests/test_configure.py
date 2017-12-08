@@ -1,8 +1,10 @@
 import sys
 import textwrap
 import pytest
+from loguru import logger
 
-def test_sinks(logger, capsys, tmpdir):
+
+def test_sinks(capsys, tmpdir):
     file = tmpdir.join('test.log')
 
     config = {
@@ -26,7 +28,7 @@ def test_sinks(logger, capsys, tmpdir):
     assert out == 'StdoutSink: test\n'
     assert err == 'StderrSink: test\nStderrSink: nope\n'
 
-def test_levels(logger, writer):
+def test_levels(writer):
     config = {
         'levels': [
             {'name': 'my_level', 'icon': 'X', 'no': 12},
@@ -44,7 +46,7 @@ def test_levels(logger, writer):
 
     assert writer.read() == '12|my_level|X|test\n11|abc| |wow\n10|DEBUG|!|no bug\n'
 
-def test_extra(logger, writer):
+def test_extra(writer):
     config = {
         'extra': {
             'a': 1,

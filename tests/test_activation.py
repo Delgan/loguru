@@ -1,4 +1,5 @@
 import pytest
+from loguru import logger
 
 @pytest.mark.parametrize('name, should_log', [
     ('', False),
@@ -11,7 +12,7 @@ import pytest
     ('test_activation', True),
     ('.', True),
 ])
-def test_disable(logger, writer, name, should_log):
+def test_disable(writer, name, should_log):
     logger.start(writer, format="{message}")
     logger.disable(name)
     logger.debug("message")
@@ -33,7 +34,7 @@ def test_disable(logger, writer, name, should_log):
     ('test_activation', False),
     ('.', False),
 ])
-def test_enable(logger, writer, name, should_log):
+def test_enable(writer, name, should_log):
     logger.start(writer, format="{message}")
     logger.disable("")
     logger.enable(name)
@@ -45,7 +46,7 @@ def test_enable(logger, writer, name, should_log):
     else:
         assert result == ""
 
-def test_log_before_enable(logger, writer):
+def test_log_before_enable(writer):
     logger.start(writer, format="{message}")
     logger.disable("")
     logger.debug("nope")
@@ -54,7 +55,7 @@ def test_log_before_enable(logger, writer):
     result = writer.read()
     assert result == "yes\n"
 
-def test_log_before_disable(logger, writer):
+def test_log_before_disable(writer):
     logger.start(writer, format="{message}")
     logger.enable("")
     logger.debug("yes")
@@ -63,7 +64,7 @@ def test_log_before_disable(logger, writer):
     result = writer.read()
     assert result == "yes\n"
 
-def test_multiple_activations(logger):
+def test_multiple_activations():
     n = lambda: len(logger._activation_list)
 
     assert n() == 0
@@ -93,11 +94,11 @@ def test_multiple_activations(logger):
     assert n() == 0
 
 @pytest.mark.parametrize('name', [42, [], object(), None])
-def test_invalid_enable_name(logger, name):
+def test_invalid_enable_name(name):
     with pytest.raises(ValueError):
         logger.enable(name)
 
 @pytest.mark.parametrize('name', [42, [], object(), None])
-def test_invalid_disable_name(logger, name):
+def test_invalid_disable_name(name):
     with pytest.raises(ValueError):
         logger.disable(name)
