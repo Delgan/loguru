@@ -48,8 +48,13 @@ class Handler:
         self.exception_formatter = ExceptionFormatter(colored=colored)
 
     @staticmethod
-    def serialize(formatted_message, record):
+    def serialize(formatted_message, record, exception):
+        if exception:
+            etype, value, _ = exception
+            exception = traceback.format_exception_only(etype, value)
+
         serializable = {
+            'exception': exception,
             'formatted_message': formatted_message,
             'record': {
                 'elapsed': record['elapsed'].total_seconds(),
@@ -149,7 +154,7 @@ class Handler:
                 formatted += formatted_exc
 
             if self.structured:
-                formatted = self.serialize(formatted, record) + '\n'
+                formatted = self.serialize(formatted, record, exception) + '\n'
 
             message = StrRecord(formatted)
             message.record = record

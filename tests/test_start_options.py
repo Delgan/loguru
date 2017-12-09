@@ -82,10 +82,17 @@ def test_enhanced_option(writer):
 
     assert len(result_with) > len(result_without)
 
-def test_structured_option(writer):
+@pytest.mark.parametrize('with_exception', [False, True])
+def test_structured_option(writer, with_exception):
     logger.start(writer, format="{message}", structured=True)
     logger.extra['not_serializable'] = object()
-    logger.debug("Test")
+    if not with_exception:
+        logger.debug("Test")
+    else:
+        try:
+            1 / 0
+        except:
+            logger.exception("Test")
     json.loads(writer.read())
 
 def test_guarded_option(writer, monkeypatch):
