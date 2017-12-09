@@ -1,5 +1,6 @@
 import functools
 import itertools
+import os
 from collections import namedtuple
 from inspect import isclass
 from multiprocessing import current_process
@@ -9,6 +10,7 @@ from sys import exc_info
 from threading import current_thread, Lock
 
 import pendulum
+from colorama import AnsiToWin32
 from pendulum import now as pendulum_now
 
 from . import _constants
@@ -193,28 +195,30 @@ class Logger:
                               structured=structured, enhanced=enhanced, guarded=guarded,
                               wrapped=wrapped)
         elif hasattr(sink, 'write') and callable(sink.write):
-            sink_write = sink.write
-            if kwargs:
-                write = lambda m: sink_write(m, **kwargs)
-            else:
-                write = sink_write
-
-            if hasattr(sink, 'flush') and callable(sink.flush):
-                sink_flush = sink.flush
-                writer = lambda m: write(m) and sink_flush()
-            else:
-                writer = write
-
-            if hasattr(sink, 'stop') and callable(sink.stop):
-                stopper = sink.stop
-            else:
-                stopper = lambda: None
-
             if colored is None:
                 try:
                     colored = sink.isatty()
                 except Exception:
                     colored = False
+
+            stream = AnsiToWin32(sink).stream if (colored and os.name == 'nt') else sink
+
+            stream_write = stream.write
+            if kwargs:
+                write = lambda m: stream_write(m, **kwargs)
+            else:
+                write = stream_write
+
+            if hasattr(stream, 'flush') and callable(stream.flush):
+                stream_flush = stream.flush
+                writer = lambda m: write(m) and stream_flush()
+            else:
+                writer = write
+
+            if hasattr(stream, 'stop') and callable(stream.stop):
+                stopper = stream.stop
+            else:
+                stopper = lambda: None
         else:
             raise ValueError("Cannot log to objects of type '%s'." % type(sink).__name__)
 
