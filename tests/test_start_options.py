@@ -108,10 +108,10 @@ def test_guarded_option(writer, monkeypatch):
     logger.debug("test")
     assert locked
 
-def test_catched_option():
+def test_wrapped_option():
     def sink(msg):
         raise 1 / 0
-    logger.start(sink, catched=False)
+    logger.start(sink, wrapped=False)
     with pytest.raises(ZeroDivisionError):
         logger.debug("fail")
 

@@ -27,7 +27,7 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, guarded, catched, colors=[]):
+    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, guarded, wrapped, colors=[]):
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
@@ -36,7 +36,7 @@ class Handler:
         self.colored = colored
         self.structured = structured
         self.enhanced = enhanced
-        self.catched = catched
+        self.wrapped = wrapped
         self.decolorized_format = self.decolorize(format_)
         self.precolorized_formats = {}
         self.lock = multiprocessing.Lock() if guarded else threading.Lock()
@@ -164,7 +164,7 @@ class Handler:
                 self.writer(message)
 
         except Exception:
-            if not self.catched:
+            if not self.wrapped:
                 raise
 
             if not sys.stderr:

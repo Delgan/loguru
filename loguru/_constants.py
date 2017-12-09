@@ -13,12 +13,12 @@ def env(key, type_, default=None):
             return True
         if val.lower() in ['0', 'false', 'no', 'n']:
             return False
-        raise ValueError("Invalid bool value for key '%s': '%s'" % (key, val))
+        raise ValueError("Invalid environment variable '%s' (expected a boolean): '%s'" % (key, val))
     elif type_ == int:
         try:
             return int(val)
-        except ValueError as e:
-            raise ValueError("Invalid int value for key '%s': '%s'" % (key, val)) from e
+        except ValueError:
+            raise ValueError("Invalid environment variable '%s' (expected an integer): '%s'" % (key, val))
 
 
 LOGURU_AUTOINIT = env('LOGURU_AUTOINIT', bool, True)
@@ -29,7 +29,7 @@ LOGURU_COLORED = env("LOGURU_COLORED", bool, None)
 LOGURU_STRUCTURED = env("LOGURU_STRUCTURED", bool, False)
 LOGURU_ENHANCED = env("LOGURU_ENHANCED", bool, True)
 LOGURU_GUARDED = env("LOGURU_GUARDED", bool, False)
-LOGURU_CATCHED = env("LOGURU_CATCHED", bool, True)
+LOGURU_WRAPPED = env("LOGURU_WRAPPED", bool, True)
 
 LOGURU_TRACE_NO = env("LOGURU_TRACE_NO", int, 5)
 LOGURU_TRACE_COLOR = env("LOGURU_TRACE_COLOR", str, "<cyan><bold>")
