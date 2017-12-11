@@ -408,7 +408,6 @@ def test_frame_values_backward(writer):
     assert next(line_3).endswith(' 2')
     assert next(line_4).endswith(' 2')
 
-
 def test_frame_values_forward(writer):
     logger.start(writer, enhanced=True, colored=False)
 

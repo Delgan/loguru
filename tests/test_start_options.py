@@ -95,18 +95,27 @@ def test_structured_option(writer, with_exception):
             logger.exception("Test")
     json.loads(writer.read())
 
-def test_guarded_option(writer, monkeypatch):
-    locked = False
-    class Mocked:
-        def __enter__(self):
-            nonlocal locked
-            locked = True
-        def __exit__(self):
-            pass
-    monkeypatch.setattr(multiprocessing, 'Lock', Mocked)
-    logger.start(writer, guarded=True)
-    logger.debug("test")
-    assert locked
+@pytest.mark.parametrize('with_exception', [False, True])
+def test_queued_option(with_exception):
+    import time
+    x = []
+    def sink(message):
+        time.sleep(0.1)
+        x.append(message)
+    logger.start(sink, format='{message}', queued=True)
+    if not with_exception:
+        logger.debug("Test")
+    else:
+        try:
+            1 / 0
+        except:
+            logger.exception("Test")
+    assert len(x) == 0
+    time.sleep(0.2)
+    lines = x[0].strip().splitlines()
+    assert lines[0] == "Test"
+    if with_exception:
+        assert lines[-1] == "ZeroDivisionError: division by zero"
 
 def test_wrapped_option():
     def sink(msg):

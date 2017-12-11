@@ -1,9 +1,8 @@
 import json
-import multiprocessing
-import threading
 import random
 import re
 import sys
+import threading
 import traceback
 
 import ansimarkup
@@ -27,7 +26,7 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, guarded, wrapped, colors=[]):
+    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, wrapped, colors=[]):
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
@@ -39,13 +38,12 @@ class Handler:
         self.wrapped = wrapped
         self.decolorized_format = self.decolorize(format_)
         self.precolorized_formats = {}
-        self.lock = multiprocessing.Lock() if guarded else threading.Lock()
+        self.lock = threading.Lock()
+        self.exception_formatter = ExceptionFormatter(colored=colored)
 
         if colored:
             for color in colors:
                 self.update_format(color)
-
-        self.exception_formatter = ExceptionFormatter(colored=colored)
 
     @staticmethod
     def serialize(formatted_message, record, exception):

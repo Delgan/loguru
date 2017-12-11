@@ -113,6 +113,21 @@ def test_start_custom_level(writer):
 
     assert writer.read() == 'INFO + 20 + yes\n'
 
+def test_updating_min_level(writer):
+    logger.debug("Early exit -> no {error}", nope=None)
+
+    a = logger.start(writer, level="DEBUG")
+
+    with pytest.raises(KeyError):
+        logger.debug("An {error} will occur!", nope=None)
+
+    logger.trace("Early exit -> no {error}", nope=None)
+
+    logger.start(writer, level="INFO")
+    logger.stop(a)
+
+    logger.debug("Early exit -> no {error}", nope=None)
+
 @pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
 def test_log_invalid_level(writer, level):
     logger.start(writer)

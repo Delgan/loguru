@@ -1,13 +1,15 @@
 import functools
 import itertools
+import multiprocessing
 import os
+import threading
 from collections import namedtuple
 from inspect import isclass
 from multiprocessing import current_process
 from os import PathLike
 from os.path import basename, normcase, splitext
 from sys import exc_info
-from threading import current_thread, Lock
+from threading import current_thread
 
 import pendulum
 from colorama import AnsiToWin32
@@ -50,6 +52,7 @@ class ThreadRecattr(str):
 class ProcessRecattr(str):
     __slots__ = ('name', 'id')
 
+
 class Logger:
 
     _levels = {
@@ -63,13 +66,16 @@ class Logger:
     }
 
     _handlers_count = itertools.count()
-    _handlers = {}
+    _handlers_simple = {}
+    _handlers_queued = {}
 
     _min_level = float("inf")
     _enabled = {}
     _activation_list = []
 
-    _lock = Lock()
+    _lock = threading.Lock()
+    _queue = None
+    _thread = None
 
     def __init__(self, *, extra={}, record=False, exception=None, lazy=False):
         self.catch = Catcher(self)
@@ -127,7 +133,9 @@ class Logger:
         self._levels[name] = Level(no, color, icon)
 
         with self._lock:
-            for handler in self._handlers.values():
+            handlers_simple = self._handlers_simple.values()
+            handlers_queued = self._handlers_queued.values()
+            for handler in itertools.chain(handlers_simple, handlers_queued):
                 handler.update_format(color)
 
         return self.level(name)
@@ -170,7 +178,7 @@ class Logger:
 
     def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT, filter=None,
                     colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
-                    enhanced=_constants.LOGURU_ENHANCED, guarded=_constants.LOGURU_GUARDED,
+                    enhanced=_constants.LOGURU_ENHANCED, queued=_constants.LOGURU_QUEUED,
                     wrapped=_constants.LOGURU_WRAPPED, **kwargs):
         if colored is None and structured:
             colored = False
@@ -178,7 +186,7 @@ class Logger:
         if isclass(sink):
             sink = sink(**kwargs)
             return self.start(sink, level=level, format=format, filter=filter, colored=colored,
-                              structured=structured, enhanced=enhanced, guarded=guarded,
+                              structured=structured, enhanced=enhanced, queued=queued,
                               wrapped=wrapped)
         elif callable(sink):
             if kwargs:
@@ -192,7 +200,7 @@ class Logger:
             path = sink
             sink = FileSink(path, **kwargs)
             return self.start(sink, level=level, format=format, filter=filter, colored=colored,
-                              structured=structured, enhanced=enhanced, guarded=guarded,
+                              structured=structured, enhanced=enhanced, queued=queued,
                               wrapped=wrapped)
         elif hasattr(sink, 'write') and callable(sink.write):
             if colored is None:
@@ -259,31 +267,52 @@ class Logger:
                 colored=colored,
                 structured=structured,
                 enhanced=enhanced,
-                guarded=guarded,
                 wrapped=wrapped,
                 colors=colors,
             )
 
-            handlers_count = next(self._handlers_count)
-            self._handlers[handlers_count] = handler
+            handler_id = next(self._handlers_count)
+            if not queued:
+                self._handlers_simple[handler_id] = handler
+            else:
+                self._handlers_queued[handler_id] = handler
+                if not self._queue:
+                    queue = multiprocessing.Queue()
+                    thread = threading.Thread(target=self._emit_queued, args=(queue, ), daemon=True)
+                    self.__class__._queue = queue
+                    self.__class__._thread = thread
+                    self.__class__._thread.start()
             self.__class__._min_level = min(self.__class__._min_level, levelno)
 
-        return handlers_count
+        return handler_id
 
     def stop(self, handler_id=None):
         with self._lock:
+            handlers_simple = self._handlers_simple
+            handlers_queued = self._handlers_queued
+            handlers = lambda: itertools.chain(handlers_simple.values(), handlers_queued.values())
+
             if handler_id is None:
-                for handler in self._handlers.values():
+                for handler in handlers():
                     handler.stop()
-                self._handlers.clear()
-                self.__class__._min_level = float("inf")
-            elif handler_id in self._handlers:
-                handler = self._handlers.pop(handler_id)
-                handler.stop()
-                levelnos = (h.levelno for h in self._handlers.values())
-                self.__class__._min_level = min(levelnos, default=float("inf"))
+                handlers_simple.clear()
+                handlers_queued.clear()
             else:
-                raise ValueError("There is no started handler with id '%s'" % handler_id)
+                try:
+                    handler = handlers_simple.pop(handler_id)
+                except KeyError:
+                    try:
+                        handler = handlers_queued.pop(handler_id)
+                    except KeyError:
+                        raise ValueError("There is no started handler with id '%s'" % handler_id)
+                handler.stop()
+
+            levelnos = (h.levelno for h in handlers())
+            self.__class__._min_level = min(levelnos, default=float("inf"))
+            if self._queue and not handlers_queued:
+                self._queue.put(None)
+                self.__class__._queue = None
+                self.__class__._thread = None
 
     def log(_self, _level, _message, *args, **kwargs):
         _self._make_log_function(_level, False, 2, False)(_self, _message, *args, **kwargs)
@@ -303,7 +332,7 @@ class Logger:
             raise ValueError("Invalid level, it should be an integer or a string, not: '%s'" % type(level).__name__)
 
         def log_function(_self, _message, *args, **kwargs):
-            if not _self._handlers:
+            if not _self._handlers_simple and not _self._handlers_queued:
                 return
 
             frame = getframe(frame_idx)
@@ -322,7 +351,7 @@ class Logger:
                         return
                 _self._enabled[name] = True
 
-            now = pendulum_now()
+            now = pendulum_now(tz='UTC')  # TODO: Remove "tz='UTC'" when pendulum/#167 fixed
             now._FORMATTER = 'alternative'
 
             if level_id is None:
@@ -356,17 +385,6 @@ class Logger:
             process_recattr = ProcessRecattr(process.ident)
             process_recattr.id, process_recattr.name = process.ident, process.name
 
-            exception = log_exception or _self._exception
-            if exception:
-                if isinstance(exception, BaseException):
-                    ex_type, ex, tb = (type(exception), exception, exception.__traceback__)
-                elif isinstance(exception, tuple):
-                    ex_type, ex, tb = exception
-                else:
-                    ex_type, ex, tb = exc_info()
-
-                exception = _self._extend_exception(ex_type, ex, tb, decorated)
-
             record = {
                 'elapsed': elapsed,
                 'extra': _self.extra,
@@ -391,8 +409,8 @@ class Logger:
             elif args or kwargs:
                 record['message'] = _message.format(*args, **kwargs)
 
-            for handler in _self._handlers.values():
-                handler.emit(record, exception, level_color)
+            exception = log_exception or _self._exception
+            _self._emit_handlers(record, exception, level_color, decorated)
 
         if not log_exception:
             doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
@@ -409,53 +427,72 @@ class Logger:
         except KeyError:
             level_color = ''
 
+        self._emit_handlers(record, exception, level_color, False)
+
+    def _emit_handlers(self, record, exception, level_color, decorated):
         if exception:
-            exception = self._extend_exception(*exception, False)
-
-        for handler in self._handlers.values():
-            handler.emit(record, exception, level_color)
-
-    @staticmethod
-    def _extend_exception(ex_type, ex, tb, decorated):
-        if tb:
-            if decorated:
-                bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
-                tb = tb.tb_next
-
-            root_frame = tb.tb_frame.f_back
-
-            loguru_tracebacks = []
-            while tb:
-                loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
-                loguru_tracebacks.append(loguru_tb)
-                tb = tb.tb_next
-
-            for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
-                prev_tb.tb_next = next_tb
-
-            # root_tb
-            tb = loguru_tracebacks[0] if loguru_tracebacks else None
-
-            frames = []
-            while root_frame:
-                frames.insert(0, root_frame)
-                root_frame = root_frame.f_back
-
-            if decorated:
-                frames = [f for f in frames if (f.f_code.co_filename, f.f_lineno) != bad_frame]
-                caught_tb = None
+            if isinstance(exception, BaseException):
+                ex_type, ex, tb = (type(exception), exception, exception.__traceback__)
+            elif isinstance(exception, tuple):
+                ex_type, ex, tb = exception
             else:
-                caught_tb = tb
+                ex_type, ex, tb = exc_info()
 
-            for f in reversed(frames):
-                tb = loguru_traceback(f, f.f_lasti, f.f_lineno, tb)
-                if decorated and caught_tb is None:
+            if tb:
+                if decorated:
+                    bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
+                    tb = tb.tb_next
+
+                root_frame = tb.tb_frame.f_back
+
+                loguru_tracebacks = []
+                while tb:
+                    loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
+                    loguru_tracebacks.append(loguru_tb)
+                    tb = tb.tb_next
+
+                for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
+                    prev_tb.tb_next = next_tb
+
+                # root_tb
+                tb = loguru_tracebacks[0] if loguru_tracebacks else None
+
+                frames = []
+                while root_frame:
+                    frames.insert(0, root_frame)
+                    root_frame = root_frame.f_back
+
+                if decorated:
+                    frames = [f for f in frames if (f.f_code.co_filename, f.f_lineno) != bad_frame]
+                    caught_tb = None
+                else:
                     caught_tb = tb
 
-            if caught_tb:
-                caught_tb.__is_caught_point__ = True
+                for f in reversed(frames):
+                    tb = loguru_traceback(f, f.f_lasti, f.f_lineno, tb)
+                    if decorated and caught_tb is None:
+                        caught_tb = tb
 
-        return (ex_type, ex, tb)
+                if caught_tb:
+                    caught_tb.__is_caught_point__ = True
+
+            exception = (ex_type, ex, tb)
+
+        for handler in self._handlers_simple.values():
+            handler.emit(record, exception, level_color)
+
+        if self._queue:
+            if exception:
+                exception = exception[0], exception[1], None
+            self._queue.put((record, exception, level_color))
+
+    def _emit_queued(self, queue):
+        while 1:
+            item = queue.get()
+            if item is None:
+                break
+            for handler in self._handlers_queued.values():
+                handler.emit(*item)
 
     trace = _make_log_function.__func__("TRACE")
     debug = _make_log_function.__func__("DEBUG")
