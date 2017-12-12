@@ -1,6 +1,7 @@
 import sys
 from loguru import logger
-
+import loguru
+import time
 
 def broken_sink(m):
     raise Exception
@@ -60,3 +61,11 @@ def test_unprintable_record(writer, capsys):
     assert lines[-2] == "ValueError: Failed"
     assert lines[-1] == "--- End of logging error ---"
     assert writer.read() == "a 1\nc 2\n"
+
+def test_queued_broken_sink(monkeypatch):
+    out = []
+    monkeypatch.setattr(loguru._handler.Handler, 'handle_error', lambda *args: out.append('Handled'))
+    logger.start(broken_sink, queued=True)
+    logger.debug('a')
+    time.sleep(0.1)
+    assert out[0] == 'Handled'

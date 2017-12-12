@@ -9,17 +9,19 @@ default_levels = loguru._logger.Logger._levels.copy()
 
 @pytest.fixture(autouse=True)
 def reset_logger():
+    def reset():
+        loguru.logger.stop()
+        loguru.logger.extra = {}
+        loguru._logger.Logger._levels = default_levels.copy()
+        loguru._logger.Logger._min_level = float('inf')
+        loguru._logger.Logger._handlers = {}
+        loguru._logger.Logger._handlers_count = itertools.count()
+        loguru._logger.Logger._enabled = {}
+        loguru._logger.Logger._activation_list = []
+
+    reset()
     yield
-    loguru._logger.Logger._levels = default_levels.copy()
-    loguru._logger.Logger._min_level = float('inf')
-    loguru._logger.Logger._handlers_simple = {}
-    loguru._logger.Logger._handlers_queued = {}
-    loguru._logger.Logger._handlers_count = itertools.count()
-    loguru._logger.Logger._enabled = {}
-    loguru._logger.Logger._activation_list = []
-    loguru._logger.Logger._queue = None
-    loguru._logger.Logger._thread = None
-    loguru.logger.extra = {}
+    reset()
 
 @pytest.fixture
 def writer():

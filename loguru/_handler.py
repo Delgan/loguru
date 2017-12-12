@@ -1,4 +1,5 @@
 import json
+import multiprocessing
 import random
 import re
 import sys
@@ -26,7 +27,7 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, wrapped, colors=[]):
+    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, wrapped, queued, colors=[]):
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
@@ -36,14 +37,22 @@ class Handler:
         self.structured = structured
         self.enhanced = enhanced
         self.wrapped = wrapped
+        self.queued = queued
         self.decolorized_format = self.decolorize(format_)
         self.precolorized_formats = {}
         self.lock = threading.Lock()
+        self.queue = None
+        self.thread = None
         self.exception_formatter = ExceptionFormatter(colored=colored)
 
         if colored:
             for color in colors:
                 self.update_format(color)
+
+        if queued:
+            self.queue = multiprocessing.Queue()
+            self.thread = threading.Thread(target=self.queued_writer, daemon=True)
+            self.thread.start()
 
     @staticmethod
     def serialize(formatted_message, record, exception):
@@ -93,6 +102,30 @@ class Handler:
         if not self.colored or color in self.precolorized_formats:
             return
         self.precolorized_formats[color] = self.colorize(self.format, color)
+
+    def handle_error(self, record=None):
+        if not self.wrapped:
+            raise
+
+        if not sys.stderr:
+            return
+
+        ex_type, ex, tb = sys.exc_info()
+
+        try:
+            sys.stderr.write('--- Logging error in Loguru ---\n')
+            sys.stderr.write('Record was: ')
+            try:
+                sys.stderr.write(str(record))
+            except Exception:
+                sys.stderr.write('/!\\ Unprintable record /!\\')
+            sys.stderr.write('\n')
+            traceback.print_exception(ex_type, ex, tb, None, sys.stderr)
+            sys.stderr.write('--- End of logging error ---\n')
+        except OSError:
+            pass
+        finally:
+            del ex_type, ex, tb
 
     def emit(self, record, exception=None, level_color=None):
         try:
@@ -159,31 +192,31 @@ class Handler:
             message.exception = exception
 
             with self.lock:
-                self.writer(message)
+                if not self.queued:
+                    self.writer(message)
+                else:
+                    if exception:
+                        message.exception = exception[0], exception[1], None  # tb are not pickable
+                    self.queue.put(message)
 
         except Exception:
-            if not self.wrapped:
-                raise
+            self.handle_error(record)
 
-            if not sys.stderr:
-                return
-
-            ex_type, ex, tb = sys.exc_info()
-
-            try:
-                sys.stderr.write('--- Logging error in Loguru ---\n')
-                sys.stderr.write('Record was: ')
-                try:
-                    sys.stderr.write(str(record))
-                except Exception:
-                    sys.stderr.write('/!\\ Unprintable record /!\\')
-                sys.stderr.write('\n')
-                traceback.print_exception(ex_type, ex, tb, None, sys.stderr)
-                sys.stderr.write('--- End of logging error ---\n')
-            except OSError:
-                pass
-            finally:
-                del ex_type, ex, tb
+    def queued_writer(self):
+        message = None
+        try:
+            queue = self.queue
+            while 1:
+                message = queue.get()
+                if message is None:
+                    break
+                self.writer(message)
+        except Exception:
+            if message and hasattr(message, 'record'):
+                message = message.record
+            self.handle_error(message)
 
     def stop(self):
+        if self.queued:
+            self.queue.put(None)
         self.stopper()

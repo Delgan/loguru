@@ -116,6 +116,7 @@ def test_queued_option(with_exception):
     assert lines[0] == "Test"
     if with_exception:
         assert lines[-1] == "ZeroDivisionError: division by zero"
+        assert sum(line.startswith('> ') for line in lines) == 1
 
 def test_wrapped_option():
     def sink(msg):

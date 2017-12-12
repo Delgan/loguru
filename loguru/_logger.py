@@ -1,6 +1,5 @@
 import functools
 import itertools
-import multiprocessing
 import os
 import threading
 from collections import namedtuple
@@ -66,16 +65,13 @@ class Logger:
     }
 
     _handlers_count = itertools.count()
-    _handlers_simple = {}
-    _handlers_queued = {}
+    _handlers = {}
 
     _min_level = float("inf")
     _enabled = {}
     _activation_list = []
 
     _lock = threading.Lock()
-    _queue = None
-    _thread = None
 
     def __init__(self, *, extra={}, record=False, exception=None, lazy=False):
         self.catch = Catcher(self)
@@ -133,9 +129,7 @@ class Logger:
         self._levels[name] = Level(no, color, icon)
 
         with self._lock:
-            handlers_simple = self._handlers_simple.values()
-            handlers_queued = self._handlers_queued.values()
-            for handler in itertools.chain(handlers_simple, handlers_queued):
+            for handler in self._handlers.values():
                 handler.update_format(color)
 
         return self.level(name)
@@ -268,51 +262,31 @@ class Logger:
                 structured=structured,
                 enhanced=enhanced,
                 wrapped=wrapped,
+                queued=queued,
                 colors=colors,
             )
 
             handler_id = next(self._handlers_count)
-            if not queued:
-                self._handlers_simple[handler_id] = handler
-            else:
-                self._handlers_queued[handler_id] = handler
-                if not self._queue:
-                    queue = multiprocessing.Queue()
-                    thread = threading.Thread(target=self._emit_queued, args=(queue, ), daemon=True)
-                    self.__class__._queue = queue
-                    self.__class__._thread = thread
-                    self.__class__._thread.start()
+            self._handlers[handler_id] = handler
             self.__class__._min_level = min(self.__class__._min_level, levelno)
 
         return handler_id
 
     def stop(self, handler_id=None):
         with self._lock:
-            handlers_simple = self._handlers_simple
-            handlers_queued = self._handlers_queued
-            handlers = lambda: itertools.chain(handlers_simple.values(), handlers_queued.values())
-
             if handler_id is None:
-                for handler in handlers():
+                for handler in self._handlers.values():
                     handler.stop()
-                handlers_simple.clear()
-                handlers_queued.clear()
+                self._handlers.clear()
             else:
                 try:
-                    handler = handlers_simple.pop(handler_id)
+                    handler = self._handlers.pop(handler_id)
                 except KeyError:
-                    try:
-                        handler = handlers_queued.pop(handler_id)
-                    except KeyError:
-                        raise ValueError("There is no started handler with id '%s'" % handler_id)
+                    raise ValueError("There is no started handler with id '%s'" % handler_id)
                 handler.stop()
 
-            levelnos = (h.levelno for h in handlers())
+            levelnos = (h.levelno for h in self._handlers.values())
             self.__class__._min_level = min(levelnos, default=float("inf"))
-            if self._queue and not handlers_queued:
-                self._queue.put(None)
-                self.__class__._queue = None
-                self.__class__._thread = None
 
     def log(_self, _level, _message, *args, **kwargs):
         _self._make_log_function(_level, False, 2, False)(_self, _message, *args, **kwargs)
@@ -332,7 +306,7 @@ class Logger:
             raise ValueError("Invalid level, it should be an integer or a string, not: '%s'" % type(level).__name__)
 
         def log_function(_self, _message, *args, **kwargs):
-            if not _self._handlers_simple and not _self._handlers_queued:
+            if not _self._handlers:
                 return
 
             frame = getframe(frame_idx)
@@ -478,21 +452,8 @@ class Logger:
 
             exception = (ex_type, ex, tb)
 
-        for handler in self._handlers_simple.values():
+        for handler in self._handlers.values():
             handler.emit(record, exception, level_color)
-
-        if self._queue:
-            if exception:
-                exception = exception[0], exception[1], None
-            self._queue.put((record, exception, level_color))
-
-    def _emit_queued(self, queue):
-        while 1:
-            item = queue.get()
-            if item is None:
-                break
-            for handler in self._handlers_queued.values():
-                handler.emit(*item)
 
     trace = _make_log_function.__func__("TRACE")
     debug = _make_log_function.__func__("DEBUG")

@@ -2,6 +2,7 @@ import pytest
 import textwrap
 import py
 import os
+import sys
 from itertools import zip_longest, dropwhile
 import re
 from loguru import logger
@@ -443,3 +444,18 @@ def test_no_exception(writer):
     logger.exception("No Error.")
 
     assert writer.read() == "No Error.\nNoneType: None\n"
+
+@pytest.mark.parametrize('enhanced', [False, True])
+def test_no_tb(writer, enhanced):
+    logger.start(writer, enhanced=enhanced, colored=False, format='{message}')
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        ex_type, ex, tb = sys.exc_info()
+        tb = None
+
+    logger.opt(exception=(ex_type, ex, tb)).debug("Test")
+
+    result = writer.read()
+    assert result == "Test\nZeroDivisionError: division by zero\n"
