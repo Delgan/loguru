@@ -4,7 +4,7 @@ from inspect import isclass
 
 class Catcher:
 
-    def __init__(self, logger, exception=BaseException, *, level="ERROR", reraise=False,
+    def __init__(self, logger, exception=Exception, *, level="ERROR", reraise=False,
                        message="An error has been caught in function '{record[function]}', "
                                "process '{record[process].name}' ({record[process].id}), "
                                "thread '{record[thread].name}' ({record[thread].id}):"):
