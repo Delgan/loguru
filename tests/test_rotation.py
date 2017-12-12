@@ -328,7 +328,7 @@ def test_compression_rotation(tmpdir):
     for i in range(5):
         archive = tmpdir.join('test.log.%d.gz' % (i + 1))
         with gzip.open(archive.realpath()) as gz:
-            assert gz.read() == b'%d\n' % (9 - i - 1)
+            assert gz.read().decode('utf8').replace('\r', '') == '%d\n' % (9 - i - 1)
 
 def test_compression_without_rotation(tmpdir):
     import gzip
@@ -339,7 +339,7 @@ def test_compression_without_rotation(tmpdir):
     assert len(tmpdir.listdir()) == 1
     archive = tmpdir.join('test.log.gz')
     with gzip.open(archive.realpath()) as gz:
-        assert gz.read() == b'Test\n'
+        assert gz.read().decode('utf8').replace('\r', '') == 'Test\n'
 
 def test_compression_backup_file_exists(tmpdir):
     import gzip
@@ -352,7 +352,7 @@ def test_compression_backup_file_exists(tmpdir):
     assert tmpdir.join('test_1.log').read() == 'b' * 10 + '\n'
     assert tmpdir.join('test_1.log.1').read() == 'not compressed'
     with gzip.open(tmpdir.join('test_0.log.gz').realpath()) as gz:
-        assert gz.read() == b'a\n'
+        assert gz.read().decode('utf8').replace('\r', '') == 'a\n'
 
 def test_compression_0_backups(tmpdir):
     logger.start(tmpdir.join('test.log'), compression=True, rotation=0, backups=0, format='{message}')
@@ -372,7 +372,7 @@ def test_compression_atexit(tmpdir, rotate, pyexec):
     start = str(file_log.realpath())
     rotation = '50' if rotate else 'None'
 
-    code = ('logger.start("' + start + '", format="{message}", compression="gz", rotation=' + rotation + ')\n'
+    code = ('logger.start(r"' + start + '", format="{message}", compression="gz", rotation=' + rotation + ')\n'
             'logger.info("It works.")')
 
     pyexec(code, True)
@@ -383,7 +383,7 @@ def test_compression_atexit(tmpdir, rotate, pyexec):
     else:
         assert file_log.check(exists=0)
         with gzip.open(file_gz.realpath()) as gz:
-            assert gz.read() == b'It works.\n'
+            assert gz.read().decode('utf8').replace('\r', '') == 'It works.\n'
 
 @pytest.mark.parametrize('rotation', [
     "w7", "w10", "w-1", "h", "M",

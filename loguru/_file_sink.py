@@ -391,8 +391,8 @@ class FileSink:
 
     def stop(self):
         if self.file is not None:
+            self.file.close()
             if self.compress_file is not None and self.should_rotate is None:
                 self.compress_file(self.file_path)
-            self.file.close()
             self.file = None
             self.file_path = None

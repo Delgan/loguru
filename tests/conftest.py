@@ -40,7 +40,7 @@ def pyexec(tmpdir):
     file = tmpdir.join("test.py")
     loguru_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     loguru_config = ('import sys;'
-                     'sys.path.append("' + loguru_path + '");'
+                     'sys.path.append(r"' + loguru_path + '");'
                      'from loguru import logger;'
                      'logger.stop();\n')
 

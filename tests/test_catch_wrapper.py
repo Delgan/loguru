@@ -243,7 +243,7 @@ def test_formatting(tmpdir, pyexec, wrap_mode, format, expected_dec, expected_ct
 
     code = """
     from loguru import logger
-    logger.start("{logfile}", format="{fmt}")
+    logger.start(r"{logfile}", format="{fmt}")
     def k():
         1 / 0
     {catch}

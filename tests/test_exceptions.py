@@ -365,7 +365,7 @@ def test_postprocess_colored(writer, pyexec, tmpdir):
     file = tmpdir.join("test.log")
 
     code = """
-    logger.start('%s', colored=True, enhanced=True)
+    logger.start(r'%s', colored=True, enhanced=True)
     def f():
         1 / 0
     with logger.catch:
