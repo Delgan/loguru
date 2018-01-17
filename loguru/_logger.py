@@ -17,7 +17,7 @@ from pendulum import now as pendulum_now
 from . import _constants
 from ._catcher import Catcher
 from ._file_sink import FileSink
-from ._getframe import getframe
+from ._get_frame import get_frame
 from ._handler import Handler
 
 Level = namedtuple('Level', ['no', 'color', 'icon'])
@@ -309,7 +309,7 @@ class Logger:
             if not _self._handlers:
                 return
 
-            frame = getframe(frame_idx)
+            frame = get_frame(frame_idx)
             name = frame.f_globals['__name__']
 
             try:
