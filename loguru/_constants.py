@@ -9,9 +9,9 @@ def env(key, type_, default=None):
     if type_ == str:
         return val
     elif type_ == bool:
-        if val.lower() in ['1', 'true', 'yes', 'y']:
+        if val.lower() in ['1', 'true', 'yes', 'y', 'ok', 'on']:
             return True
-        if val.lower() in ['0', 'false', 'no', 'n']:
+        if val.lower() in ['0', 'false', 'no', 'n', 'nok', 'off']:
             return False
         raise ValueError("Invalid environment variable '%s' (expected a boolean): '%s'" % (key, val))
     elif type_ == int:
