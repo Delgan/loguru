@@ -1,5 +1,8 @@
 import re
-from distutils.core import setup
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
 
 with open('loguru/__init__.py', 'r') as file:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
@@ -11,7 +14,7 @@ with open('README.rst', 'rb') as file:
 setup(
     name = 'loguru',
     version = version,
-    description = 'Logging as an automatism',
+    description = 'Python logging made (stupidly) simple',
     long_description = readme,
     author = 'Delgan',
     author_email = 'delgan.py@gmail.com',
@@ -26,4 +29,7 @@ setup(
         'colorama>=0.3.9',
         'pendulum>=1.3.0',
     ],
+    ext_modules = [
+        Extension('loguru._extensions.fast_now', sources=['loguru/_extensions/fast_now.c'], optional=True)
+    ]
 )

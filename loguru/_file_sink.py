@@ -7,7 +7,8 @@ import shutil
 import string
 
 import pendulum
-from pendulum import now as pendulum_now
+
+from ._fast_now import fast_now
 
 DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 
@@ -15,7 +16,7 @@ DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'
 class FileSink:
 
     def __init__(self, path, *, rotation=None, backups=None, compression=None, **kwargs):
-        self.start_time = pendulum_now()
+        self.start_time = fast_now()
         self.start_time._FORMATTER = 'alternative'
         self.start_time._to_string_format = '%Y-%m-%d_%H-%M-%S'
         self.kwargs = kwargs.copy()
@@ -40,7 +41,7 @@ class FileSink:
             self.write = self.rotating_write
 
     def format_path(self):
-        now = pendulum_now()
+        now = fast_now()
         now._FORMATTER = 'alternative'
         now._to_string_format = '%Y-%m-%d_%H-%M-%S'
 
@@ -164,7 +165,7 @@ class FileSink:
         elif isinstance(backups, datetime.timedelta):
             seconds = backups.total_seconds()
             def function(logs):
-                t = pendulum_now().timestamp()
+                t = fast_now().timestamp()
                 limit = t - seconds
                 return [log for log in logs if log.stat().st_mtime <= limit]
         elif callable(backups):

@@ -12,17 +12,17 @@ from threading import current_thread
 
 import pendulum
 from colorama import AnsiToWin32
-from pendulum import now as pendulum_now
 
 from . import _constants
 from ._catcher import Catcher
+from ._fast_now import fast_now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
 
 Level = namedtuple('Level', ['no', 'color', 'icon'])
 
-start_time = pendulum_now()
+start_time = fast_now()
 
 
 class loguru_traceback:
@@ -325,7 +325,7 @@ class Logger:
                         return
                 _self._enabled[name] = True
 
-            now = pendulum_now(tz='UTC')  # TODO: Remove "tz='UTC'" when pendulum/#167 fixed
+            now = fast_now()
             now._FORMATTER = 'alternative'
 
             if level_id is None:
