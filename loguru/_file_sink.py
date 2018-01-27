@@ -12,7 +12,7 @@ import pendulum
 from ._fast_now import fast_now
 
 DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-COMPRESSION_EXTENSIONS = 'gz|zip|bz2|xz|lzma'
+COMPRESSION_EXTENSIONS = 'gz|zip|bz2|xz|lzma|tar'
 
 
 class FileSink:
@@ -187,6 +187,7 @@ class FileSink:
 
             open_in = lambda p: open(p, 'rb')
             open_out = None
+            open_noop = contextlib.contextmanager(lambda p: (yield p))
             copy_file = shutil.copyfileobj
 
             if ext == 'gz':
@@ -201,9 +202,14 @@ class FileSink:
             elif ext == 'lzma':
                 import lzma
                 open_out = lambda p: lzma.open(p, 'wb', format=lzma.FORMAT_ALONE)
+            elif ext == 'tar':
+                import tarfile
+                open_in = open_noop
+                open_out = lambda p: tarfile.TarFile(p, 'w')
+                copy_file = lambda f_in, f_out: f_out.add(f_in, os.path.basename(f_in))
             elif ext == 'zip':
                 import zlib, zipfile
-                open_in = contextlib.contextmanager(lambda p: (yield p))
+                open_in = open_noop
                 open_out = lambda p: zipfile.ZipFile(p, 'w', compression=zipfile.ZIP_DEFLATED)
                 copy_file = lambda f_in, f_out: f_out.write(f_in, os.path.basename(f_in))
             else:

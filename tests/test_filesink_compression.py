@@ -5,7 +5,7 @@ import os
 from loguru import logger
 
 
-@pytest.mark.parametrize('compression', ['gz', 'bz2', 'zip', 'xz', 'lzma'])
+@pytest.mark.parametrize('compression', ['gz', 'bz2', 'zip', 'xz', 'lzma', 'tar'])
 def test_compression(tmpdir, compression):
     logger.start(tmpdir.join('test.log'), rotation=0, compression=compression, format='{message}')
     logger.debug('a')
