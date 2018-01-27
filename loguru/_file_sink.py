@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import decimal
 import numbers
@@ -11,7 +12,7 @@ import pendulum
 from ._fast_now import fast_now
 
 DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-COMPRESSION_EXTENSIONS = 'gz(?:ip)?|zip|bz(?:ip)?2|xz|lzma'
+COMPRESSION_EXTENSIONS = 'gz|zip|bz2|xz|lzma'
 
 
 class FileSink:
@@ -182,47 +183,39 @@ class FileSink:
         elif compression is True:
             return self.make_compress_file_function('gz')
         elif isinstance(compression, str):
-            compress_format = compression.strip().lstrip('.')
-            compress_format_lower = compress_format.lower()
+            ext = compression.strip().lstrip('.')
 
-            compress_module = None
-            compress_args = {}
-            compress_func = shutil.copyfileobj
+            open_in = lambda p: open(p, 'rb')
+            open_out = None
+            copy_file = shutil.copyfileobj
 
-            if compress_format_lower in ['gz', 'gzip']:
+            if ext == 'gz':
                 import gzip
-                compress_module = gzip
-            elif compress_format_lower in ['bz2', 'bzip2']:
+                open_out = lambda p: gzip.open(p, 'wb')
+            elif ext == 'bz2':
                 import bz2
-                compress_module = bz2
-            elif compress_format_lower == 'xz':
+                open_out = lambda p: bz2.open(p, 'wb')
+            elif ext == 'xz':
                 import lzma
-                compress_module = lzma
-                compress_args = dict(format=lzma.FORMAT_ALONE)
-            elif compress_format_lower == 'lzma':
+                open_out = lambda p: lzma.open(p, 'wb', format=lzma.FORMAT_XZ)
+            elif ext == 'lzma':
                 import lzma
-                compress_module = lzma
-                compress_args = dict(format=lzma.FORMAT_XZ)
-            elif compress_format_lower == 'zip':
-                import zlib  # Used by zipfile, so check it's available
-                import zipfile
-                def func(path):
-                    compress_path = '%s.%s' % (path, compress_format)
-                    with zipfile.ZipFile(compress_path, 'w', compression=zipfile.ZIP_DEFLATED) as z:
-                        z.write(path)
-                    os.remove(path)
-                return func
+                open_out = lambda p: lzma.open(p, 'wb', format=lzma.FORMAT_ALONE)
+            elif ext == 'zip':
+                import zlib, zipfile
+                open_in = contextlib.contextmanager(lambda p: (yield p))
+                open_out = lambda p: zipfile.ZipFile(p, 'w', compression=zipfile.ZIP_DEFLATED)
+                copy_file = lambda f_in, f_out: f_out.write(f_in, os.path.basename(f_in))
             else:
-                raise ValueError("Invalid compression format: '%s'" % compress_format)
+                raise ValueError("Invalid compression format: '%s'" % ext)
 
-            def func(path):
-                with open(path, 'rb') as f_in:
-                    compress_path = '%s.%s' % (path, compress_format)
-                    with compress_module.open(compress_path, 'wb', **compress_args) as f_out:
-                        compress_func(f_in, f_out)
+            def compress(path):
+                with open_out(path + '.' + ext) as f_out:
+                    with open_in(path) as f_in:
+                        copy_file(f_in, f_out)
                 os.remove(path)
 
-            return func
+            return compress
 
         elif callable(compression):
             return compression
