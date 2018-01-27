@@ -11,6 +11,7 @@ import pendulum
 from ._fast_now import fast_now
 
 DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+COMPRESSION_EXTENSIONS = 'gz(?:ip)?|zip|bz(?:ip)?2|xz|lzma'
 
 
 class FileSink:
@@ -63,7 +64,7 @@ class FileSink:
         tokens = string.Formatter().parse(file_name)
         regex_name = ''.join(re.escape(t[0]) + '.*' * (t[1] is not None) for t in tokens)
         regex_name += '(?:\.\d+)?'
-        regex_name += '(?:\.(?:gz(?:ip)?|bz(?:ip)?2|xz|lzma|zip))?'
+        regex_name += '(?:\.(?:' + COMPRESSION_EXTENSIONS + '))?'
         return re.compile(regex_name)
 
     def make_should_rotate_function(self, rotation):
@@ -365,7 +366,7 @@ class FileSink:
 
         if self.created > 0 and os.path.exists(file_path):
             basename = os.path.basename(file_path)
-            reg = re.escape(basename) + '(?:\.(\d+))?(\.(?:gz(?:ip)?|bz(?:ip)?2|xz|lzma|zip))?'
+            reg = re.escape(basename) + '(?:\.(\d+))?(\.(?:' + COMPRESSION_EXTENSIONS + '))?'
             reg = re.compile(reg, flags=re.I)
             with os.scandir(file_dir) as it:
                 logs = [f for f in it if f.is_file() and reg.fullmatch(f.name) and f.name != basename]
