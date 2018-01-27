@@ -148,7 +148,7 @@ fast_now_now(PyObject *self, PyObject *args)
 
     // 2. datetime_from_timet_and_us()
     struct tm tm;
-    int year, month, day, hour, minute, second, fold = 0;
+    int year, month, day, hour, minute, second;
 
     if (_PyTime_localtime(secs, &tm) != 0)
         return NULL;
@@ -179,7 +179,7 @@ fast_now_now(PyObject *self, PyObject *args)
             Py_INCREF(fast_now_tzinfo);
             dt->tzinfo = fast_now_tzinfo;
         }
-        DATE_SET_FOLD(dt, fold);
+        DATE_SET_FOLD(dt, 0);
     }
 
     return (PyObject *)dt;
