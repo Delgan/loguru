@@ -184,44 +184,77 @@ class FileSink:
             return self.make_compress_file_function('gz')
         elif isinstance(compression, str):
             ext = compression.strip().lstrip('.')
+            archive = False
+            compress = True
+
+            tarball = {
+                'tar.gz': 'gz', 'tgz': 'gz',
+                'tar.bz2': 'bz2', 'tbz2': 'bz2', 'tbz': 'bz2', 'tb2': 'bz2',
+                'tar.xz': 'xz', 'txz': 'xz',
+                'tar.lzma': 'lzma', 'tlz': 'lzma',
+            }
+
+            if ext in tarball:
+                archive = True
+                comp = tarball[ext]
+            else:
+                comp = ext
 
             open_in = lambda p: open(p, 'rb')
             open_out = None
-            open_noop = contextlib.contextmanager(lambda p: (yield p))
+            open_arc = None
             copy_file = shutil.copyfileobj
 
-            if ext == 'gz':
-                import gzip
+            if comp == 'tar':
+                archive = True
+                compress = False
+            elif comp == 'gz':
+                import zlib, gzip
                 open_out = lambda p: gzip.open(p, 'wb')
-            elif ext == 'bz2':
+            elif comp == 'bz2':
                 import bz2
                 open_out = lambda p: bz2.open(p, 'wb')
-            elif ext == 'xz':
+            elif comp == 'xz':
                 import lzma
                 open_out = lambda p: lzma.open(p, 'wb', format=lzma.FORMAT_XZ)
-            elif ext == 'lzma':
+            elif comp == 'lzma':
                 import lzma
                 open_out = lambda p: lzma.open(p, 'wb', format=lzma.FORMAT_ALONE)
-            elif ext == 'tar':
-                import tarfile
-                open_in = open_noop
-                open_out = lambda p: tarfile.TarFile(p, 'w')
-                copy_file = lambda f_in, f_out: f_out.add(f_in, os.path.basename(f_in))
-            elif ext == 'zip':
+            elif comp == 'zip':
                 import zlib, zipfile
-                open_in = open_noop
+                open_in = contextlib.contextmanager(lambda p: (yield p))
                 open_out = lambda p: zipfile.ZipFile(p, 'w', compression=zipfile.ZIP_DEFLATED)
                 copy_file = lambda f_in, f_out: f_out.write(f_in, os.path.basename(f_in))
             else:
-                raise ValueError("Invalid compression format: '%s'" % ext)
+                raise ValueError("Invalid compression format: '%s'" % comp)
 
-            def compress(path):
-                with open_out(path + '.' + ext) as f_out:
-                    with open_in(path) as f_in:
-                        copy_file(f_in, f_out)
-                os.remove(path)
+            if archive:
+                import tarfile
+                open_arc = tarfile.TarFile
 
-            return compress
+            def compress_function(path):
+                output_path = path + '.' + ext
+                archived_path = path + '.tar'
+
+                if archive:
+                    with open_arc(archived_path, 'w') as arc:
+                        arc.add(path, os.path.basename(path))
+                    os.remove(path)
+                    path = archived_path
+
+                compressed_path = path + '.' + comp
+
+                if compress:
+                    with open_out(compressed_path) as f_out:
+                        with open_in(path) as f_in:
+                            copy_file(f_in, f_out)
+                    os.remove(path)
+                    path = compressed_path
+
+                if path != output_path:
+                    os.rename(path, output_path)
+
+            return compress_function
 
         elif callable(compression):
             return compression

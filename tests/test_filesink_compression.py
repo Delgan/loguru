@@ -5,12 +5,16 @@ import os
 from loguru import logger
 
 
-@pytest.mark.parametrize('compression', ['gz', 'bz2', 'zip', 'xz', 'lzma', 'tar'])
+@pytest.mark.parametrize('compression', [
+    'gz', 'bz2', 'zip', 'xz', 'lzma', 'tar',
+    'tar.gz', 'tar.bz2', 'tar.xz', 'tar.lzma',
+    '.tgz', '.tbz2', '.txz', '.tlz', '.tb2', '.tbz'
+])
 def test_compression(tmpdir, compression):
     logger.start(tmpdir.join('test.log'), rotation=0, compression=compression, format='{message}')
     logger.debug('a')
 
-    assert tmpdir.join('test.log.1.%s' % compression).check(exists=1)
+    assert tmpdir.join('test.log.1.%s' % compression.lstrip('.')).check(exists=1)
     assert tmpdir.join('test.log').read() == 'a\n'
 
 def test_compression_function(tmpdir):
@@ -94,7 +98,7 @@ def test_compression_atexit(tmpdir, rotate, pyexec):
         with gzip.open(file_gz.realpath()) as gz:
             assert gz.read().decode('utf8').replace('\r', '') == 'It works.\n'
 
-@pytest.mark.parametrize('compression', ['.tar.gz', 0, 1, os, object(), {"zip"}, "rar", ".7z"])
+@pytest.mark.parametrize('compression', [0, 1, os, object(), {"zip"}, "rar", ".7z", "tar.zip"])
 def test_invalid_compression(compression):
     with pytest.raises(ValueError):
         logger.start('test.log', compression=compression)
