@@ -1,18 +1,21 @@
 import contextlib
 import datetime
 import decimal
+import glob
 import numbers
 import os
+import random
 import re
 import shutil
 import string
+import time
 
+import base36
 import pendulum
 
 from ._fast_now import fast_now
 
 DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-COMPRESSION_EXTENSIONS = 'gz|zip|bz2|xz|lzma|tar'
 
 
 class FileSink:
@@ -33,9 +36,9 @@ class FileSink:
         self.should_rotate = self.make_should_rotate_function(rotation)
         self.manage_backups = self.make_manage_backups_function(backups)
         self.compress_file = self.make_compress_file_function(compression)
-        self.regex_file_name = self.make_regex_file_name(os.path.basename(self.path))
+        self.glob_pattern = self.make_glob_pattern(self.path)
 
-        self.rotate()
+        self.terminate(create_new=True)
 
         if self.should_rotate is None:
             self.write = self.file.write
@@ -58,15 +61,13 @@ class FileSink:
             "n+1": self.created + 1,
         }
 
-        return self.path.format_map(record)
+        return os.path.abspath(self.path.format_map(record))
 
     @staticmethod
-    def make_regex_file_name(file_name):
-        tokens = string.Formatter().parse(file_name)
-        regex_name = ''.join(re.escape(t[0]) + '.*' * (t[1] is not None) for t in tokens)
-        regex_name += '(?:\.\d+)?'
-        regex_name += '(?:\.(?:' + COMPRESSION_EXTENSIONS + '))?'
-        return re.compile(regex_name)
+    def make_glob_pattern(path):
+        tokens = string.Formatter().parse(path)
+        parts = (glob.escape(text) + '*' * (name is not None) for text, name, *_ in tokens)
+        return ''.join(parts) + '*'
 
     def make_should_rotate_function(self, rotation):
         if rotation is None:
@@ -114,7 +115,7 @@ class FileSink:
             time = pendulum.Time.instance(rotation)
             time_limit = self.start_time.at(time.hour, time.minute, time.second, time.microsecond)
             if time_limit <= self.start_time:
-                time_limit.add(days=1)
+                time_limit = time_limit.add(days=1)
             self.rotation_time = time_limit
             def function(message):
                 nonlocal time_limit
@@ -163,13 +164,13 @@ class FileSink:
             return self.make_manage_backups_function(interval)
         elif isinstance(backups, int):
             def function(logs):
-                return sorted(logs, key=lambda log: (-log.stat().st_mtime, log.name))[backups:]
+                return sorted(logs, key=lambda log: (-os.stat(log).st_mtime, log))[backups:]
         elif isinstance(backups, datetime.timedelta):
             seconds = backups.total_seconds()
             def function(logs):
                 t = fast_now().timestamp()
                 limit = t - seconds
-                return [log for log in logs if log.stat().st_mtime <= limit]
+                return [log for log in logs if os.stat(log).st_mtime <= limit]
         elif callable(backups):
             function = backups
         else:
@@ -180,8 +181,6 @@ class FileSink:
     def make_compress_file_function(self, compression):
         if compression is None or compression is False:
             return None
-        elif compression is True:
-            return self.make_compress_file_function('gz')
         elif isinstance(compression, str):
             ext = compression.strip().lstrip('.')
             archive = False
@@ -377,56 +376,48 @@ class FileSink:
 
     def rotating_write(self, message):
         if self.should_rotate(message):
-            self.rotate()
+            compress = self.compress_file is not None
+            manage = self.manage_backups is not None
+            self.terminate(check_conflict=True, compress_file=compress, manage_backups=manage, create_new=True)
         self.file.write(message)
 
-    def rotate(self):
+    def terminate(self, *, check_conflict=False, compress_file=False, manage_backups=False, create_new=False):
+        old_file = self.file
         old_path = self.file_path
-        self.stop()
-        file_path = os.path.abspath(self.format_path())
-        file_dir = os.path.dirname(file_path)
 
-        os.makedirs(file_dir, exist_ok=True)
+        self.file = None
+        self.file_path = None
 
-        if self.manage_backups is not None:
-            regex_file_name = self.regex_file_name
-            with os.scandir(file_dir) as it:
-                logs = [f for f in it if regex_file_name.fullmatch(f.name) and f.is_file()]
+        if old_file is not None:
+            old_file.close()
 
-            for log in self.manage_backups(logs):
-                os.remove(log.path)
+        new_path = self.format_path()
 
-        if self.created > 0 and os.path.exists(file_path):
-            basename = os.path.basename(file_path)
-            reg = re.escape(basename) + '(?:\.(\d+))?(\.(?:' + COMPRESSION_EXTENSIONS + '))?'
-            reg = re.compile(reg, flags=re.I)
-            with os.scandir(file_dir) as it:
-                logs = [f for f in it if f.is_file() and reg.fullmatch(f.name) and f.name != basename]
-            logs.sort(key=lambda f: -int(reg.fullmatch(f.name).group(1) or 0))
+        if check_conflict and new_path == old_path:
+            time_part = base36.dumps(int(time.time() * 1000))
+            rand_part = base36.dumps(int(random.random() * 36**4))
+            log_id = "{:0>8}{:0>4}".format(time_part, rand_part).upper()
+            renamed_path = old_path + '.' + log_id
+            os.rename(old_path, renamed_path)
+            old_path = renamed_path
 
-            n = len(logs) + 1
-            z = len(str(n))
-            for i, log in enumerate(logs):
-                num = '.%s' % str(n - i).zfill(z)
-                ext = reg.fullmatch(log.name).group(2) or ''
-                os.replace(log.path, file_path + num + ext)
-            new_path = file_path + ".%s" % "1".zfill(z)
-            os.replace(file_path, new_path)
-
-            if file_path == old_path:
-                old_path = new_path
-
-        if self.compress_file is not None and old_path is not None and os.path.exists(old_path):
+        if compress_file:
             self.compress_file(old_path)
 
-        self.file = open(file_path, **self.kwargs)
-        self.file_path = file_path
-        self.created += 1
+        if manage_backups:
+            logs = glob.glob(self.glob_pattern)
+            for log in self.manage_backups(logs):
+                os.remove(log)
+
+        if create_new:
+            new_dir = os.path.dirname(new_path)
+            os.makedirs(new_dir, exist_ok=True)
+            self.file = open(new_path, **self.kwargs)
+            self.file_path = new_path
+            self.created += 1
 
     def stop(self):
-        if self.file is not None:
-            self.file.close()
-            if self.compress_file is not None and self.should_rotate is None:
-                self.compress_file(self.file_path)
-            self.file = None
-            self.file_path = None
+        compress = (self.compress_file is not None) and (self.should_rotate is None)
+        manage = (self.manage_backups is not None) and (self.should_rotate is None)
+        check = compress
+        self.terminate(check_conflict=check, compress_file=compress, manage_backups=manage, create_new=False)

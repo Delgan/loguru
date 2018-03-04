@@ -1,7 +1,6 @@
-# coding: utf-8
-
 import pytest
 import os
+import re
 from loguru import logger
 
 
@@ -10,93 +9,45 @@ from loguru import logger
     'tar.gz', 'tar.bz2', 'tar.xz', 'tar.lzma',
     '.tgz', '.tbz2', '.txz', '.tlz', '.tb2', '.tbz'
 ])
-def test_compression(tmpdir, compression):
-    logger.start(tmpdir.join('test.log'), rotation=0, compression=compression, format='{message}')
-    logger.debug('a')
+def test_compression_ext(tmpdir, compression):
+    i = logger.start(tmpdir.join('{n}.log'), compression=compression)
+    logger.stop(i)
 
-    assert tmpdir.join('test.log.1.%s' % compression.lstrip('.')).check(exists=1)
-    assert tmpdir.join('test.log').read() == 'a\n'
+    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join('0.log.%s' % compression.lstrip('.')).check(exists=1)
 
 def test_compression_function(tmpdir):
     def compress(file):
-        os.replace(file, file + '.custom_compression')
-    logger.start(tmpdir.join('test.log'), rotation='10 B', compression=compress, format='{message}')
-    logger.debug('abc')
-    logger.debug('d' * 10)
+        os.replace(file, file + '.rar')
 
-    assert len(tmpdir.listdir()) == 2
-    assert tmpdir.join('test.log').read() == 'd' * 10 + '\n'
-    assert tmpdir.join('test.log.1.custom_compression').read() == 'abc\n'
-
-def test_compression_rotation(tmpdir):
-    import gzip
-    n = logger.start(tmpdir.join('test.log'), rotation=0, compression=True, format='{message}', backups=5)
-
-    for i in range(10):
-        logger.debug(str(i))
-    logger.stop(n)
-
-    assert tmpdir.join('test.log').read() == '9\n'
-
-    for i in range(5):
-        archive = tmpdir.join('test.log.%d.gz' % (i + 1))
-        with gzip.open(archive.realpath()) as gz:
-            assert gz.read().decode('utf8').replace('\r', '') == '%d\n' % (9 - i - 1)
-
-def test_compression_without_rotation(tmpdir):
-    import gzip
-    n = logger.start(tmpdir.join('test.log'), compression=True, format='{message}')
-    logger.debug("Test")
-    logger.stop(n)
+    i = logger.start(tmpdir.join('{n}.log'), compression=compress)
+    logger.stop(i)
 
     assert len(tmpdir.listdir()) == 1
-    archive = tmpdir.join('test.log.gz')
-    with gzip.open(archive.realpath()) as gz:
-        assert gz.read().decode('utf8').replace('\r', '') == 'Test\n'
+    assert tmpdir.join('0.log.rar').check(exists=1)
 
-def test_compression_backup_file_exists(tmpdir):
-    import gzip
-    tmpdir.join('test_1.log').write('not compressed')
-    logger.start(tmpdir.join('test_{n}.log'), compression=True, format='{message}', rotation='10 B')
-    logger.debug('a')
-    logger.debug('b' * 10)
+def test_compression_at_rotation(tmpdir):
+    i = logger.start(tmpdir.join('{n}.log'), rotation=0, compression='gz')
+    logger.debug("test")
 
-    assert len(tmpdir.listdir()) == 3
-    assert tmpdir.join('test_1.log').read() == 'b' * 10 + '\n'
-    assert tmpdir.join('test_1.log.1').read() == 'not compressed'
-    with gzip.open(tmpdir.join('test_0.log.gz').realpath()) as gz:
-        assert gz.read().decode('utf8').replace('\r', '') == 'a\n'
+    assert len(tmpdir.listdir()) == 2
+    assert tmpdir.join('0.log.gz').check(exists=1)
 
-def test_compression_0_backups(tmpdir):
-    logger.start(tmpdir.join('test.log'), compression=True, rotation=0, backups=0, format='{message}')
+def test_no_compression_at_stop_if_rotation(tmpdir):
+    i = logger.start(tmpdir.join('test.log'), rotation="10 MB", compression="gz")
+    logger.debug("test")
+    logger.stop(i)
 
-    for m in ['a', 'b']:
-        logger.debug(m)
-        assert len(tmpdir.listdir()) == 1
-        assert tmpdir.join('test.log').read() == m + '\n'
+    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join("test.log").check(exists=1)
 
-@pytest.mark.parametrize('rotate', [True, False])
-def test_compression_atexit(tmpdir, rotate, pyexec):
-    import gzip
+def test_compression_renamed_file(tmpdir):
+    i = logger.start(tmpdir.join('test.log'), compression="gz")
+    logger.debug("test")
+    logger.stop(i)
 
-    file_log = tmpdir.join("test.log")
-    file_gz = tmpdir.join("test.log.gz")
-
-    start = str(file_log.realpath())
-    rotation = '50' if rotate else 'None'
-
-    code = ('logger.start(r"' + start + '", format="{message}", compression="gz", rotation=' + rotation + ')\n'
-            'logger.info("It works.")')
-
-    pyexec(code, True)
-
-    if rotate:
-        assert file_gz.check(exists=0)
-        assert file_log.read() == "It works.\n"
-    else:
-        assert file_log.check(exists=0)
-        with gzip.open(file_gz.realpath()) as gz:
-            assert gz.read().decode('utf8').replace('\r', '') == 'It works.\n'
+    assert len(tmpdir.listdir()) == 1
+    assert re.match(r'test\.log\.[A-Z0-9]+\.gz', tmpdir.listdir()[0].basename)
 
 @pytest.mark.parametrize('compression', [0, 1, os, object(), {"zip"}, "rar", ".7z", "tar.zip"])
 def test_invalid_compression(compression):

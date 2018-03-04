@@ -12,7 +12,7 @@ from better_exceptions_fork import ExceptionFormatter
 
 class HackyInt(int):
 
-    rand = '0' + str(random.randrange(10**32, 10**33))
+    rand = "{:0>32}".format(random.randrange(10**31))
 
     def __str__(self):
         return self.rand

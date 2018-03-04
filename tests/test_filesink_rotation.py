@@ -1,9 +1,8 @@
-# coding: utf-8
-
 import pytest
 import pendulum
 import datetime
 import os
+import re
 from loguru import logger
 
 
@@ -16,46 +15,41 @@ from loguru import logger
 ])
 def test_renaming(tmpdir, name, should_rename):
     file = tmpdir.join(name)
-    logger.start(file.realpath(), rotation=0)
+    i = logger.start(file.realpath(), format="{message}", rotation="10 B")
 
     assert len(tmpdir.listdir()) == 1
     basename = tmpdir.listdir()[0].basename
 
-    logger.debug("a")
-    logger.debug("b")
-    logger.debug("c")
+    logger.debug("aaaaaaa")
+    logger.debug("bbbbbbb")
+    logger.debug("ccccccc")
 
     files = [f.basename for f in tmpdir.listdir()]
-
-    renamed = [basename + '.' + str(i) in files for i in [1, 2, 3]]
+    renamed = sum(re.match(re.escape(basename) + r'\.[A-Z0-9]+', f) is not None for f in files)
 
     if should_rename:
-        assert all(renamed)
+        assert renamed == len(files) - 1
     else:
-        assert not any(renamed)
+        assert renamed == 0
+
+    assert len(tmpdir.listdir()) == 3
+    assert {f.read() for f in tmpdir.listdir()} == {'aaaaaaa\n', 'bbbbbbb\n', 'ccccccc\n'}
 
 @pytest.mark.parametrize('size', [
     8, 8.0, 7.99, "8 B", "8e-6MB", "0.008 kiB", "64b"
 ])
 def test_size_rotation(tmpdir, size):
-    file_1 = tmpdir.join("test.log")
-    file_2 = tmpdir.join("test.log.1")
-    file_3 = tmpdir.join("test.log.2")
-    file_4 = tmpdir.join("test.log.3")
-    logger.start(file_1.realpath(), format='{message}', rotation=size)
+    file = tmpdir.join("test.log")
+    i = logger.start(file.realpath(), format='{message}', rotation=size)
 
-    m1, m2, m3, m4, m5 = 'a' * 5, 'b' * 2, 'c' * 2, 'd' * 4, 'e' * 8
+    logger.debug("abcde")
+    logger.debug("fghij")
+    logger.debug("klmno")
 
-    logger.debug(m1)
-    logger.debug(m2)
-    logger.debug(m3)
-    logger.debug(m4)
-    logger.debug(m5)
+    logger.stop(i)
 
-    assert file_1.read() == m5 + '\n'
-    assert file_2.read() == m4 + '\n'
-    assert file_3.read() == m2 + '\n' + m3 + '\n'
-    assert file_4.read() == m1 + '\n'
+    assert len(tmpdir.listdir()) == 3
+    assert {f.read() for f in tmpdir.listdir()} == {'abcde\n', 'fghij\n', 'klmno\n'}
 
 @pytest.mark.parametrize('when, hours', [
     # hours = [Should not trigger, should trigger, should not trigger, should trigger, should trigger]
@@ -98,23 +92,24 @@ def test_time_rotation(monkeypatch_now, tmpdir, when, hours):
 
     monkeypatch_now(lambda *a, **k: now)
 
-    file_1 = tmpdir.join("test.log")
-    file_2 = tmpdir.join("test.log.1")
-    file_3 = tmpdir.join("test.log.2")
-    file_4 = tmpdir.join("test.log.3")
+    i = logger.start(tmpdir.join('test.log').realpath(), format='{message}', rotation=when)
 
-    logger.start(file_1.realpath(), format='{message}', rotation=when)
-
-    m1, m2, m3, m4, m5 = 'a', 'b', 'c', 'd', 'e'
-
-    for h, m in zip(hours, [m1, m2, m3, m4, m5]):
+    for h, m in zip(hours, ['a', 'b', 'c', 'd', 'e']):
         now = now.add(hours=h)
         logger.debug(m)
 
-    assert file_1.read() == m5 + '\n'
-    assert file_2.read() == m4 + '\n'
-    assert file_3.read() == m2 + '\n' + m3 + '\n'
-    assert file_4.read() == m1 + '\n'
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 4
+    assert {f.read() for f in tmpdir.listdir()} == {'a\n', 'b\nc\n', 'd\n', 'e\n'}
+
+def test_no_rotation_at_stop(tmpdir):
+    i = logger.start(tmpdir.join("test.log"), rotation="10 MB")
+    logger.debug("test")
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join("test.log").check(exists=1)
 
 @pytest.mark.parametrize('rotation', [
     "w7", "w10", "w-1", "h", "M",

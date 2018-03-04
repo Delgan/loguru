@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import pytest
 import pendulum
 import datetime
@@ -9,180 +7,85 @@ from loguru import logger
 
 @pytest.mark.parametrize('backups', ['1 hour', '1H', ' 1 h ', datetime.timedelta(hours=1), pendulum.Interval(hours=1.0)])
 def test_backups_time(monkeypatch_now, tmpdir, backups):
-    monkeypatch_now(lambda *a, **k: pendulum.now().add(hours=23))
-
-    file = tmpdir.join('test.log')
-
-    file.write('0')
-    for i in range(1, 4):
-        tmpdir.join('test.log.%d' % i).write('%d' % i)
-
-    logger.start(file.realpath(), rotation=0, backups=backups, format='{message}')
+    i = logger.start(tmpdir.join('test.log.x'), backups=backups)
     logger.debug("test")
+    logger.stop(i)
 
     assert len(tmpdir.listdir()) == 1
-    assert file.read() == 'test\n'
 
-@pytest.mark.parametrize('backups', [0, 1, 9, 10, 11, 50, None])
-def test_backups_count(tmpdir, backups):
-    log_count = 10
-    files_checked = set()
+    monkeypatch_now(lambda *a, **k: pendulum.now().add(hours=24))
 
-    logger.start(tmpdir.join('test.log'), rotation=0, backups=backups, format='{message}')
-
-    for i in range(log_count):
-        logger.debug(str(i))
-
-    if backups is None or backups >= log_count:
-        max_num = log_count
-    else:
-        max_num = backups
-
-    for i in range(max_num + 1):
-        if i == 0:
-            file_name = 'test.log'
-        else:
-            z = len(str(max_num))
-            file_name = 'test.log.%s' % str(i).zfill(z)
-
-        if i == log_count:
-            expected = ''
-        else:
-            expected = str(log_count - 1 - i) + '\n'
-
-        file = tmpdir.join(file_name)
-        assert file.read() == expected
-        files_checked.add(file)
-
-    for f in tmpdir.listdir():
-        assert f in files_checked
-
-def test_backups_function(tmpdir):
-    logger.start(tmpdir.join('test.log'), rotation=0, backups=lambda logs: logs, format='{message}')
-
-    tmpdir.join('test.log.123').write('')
-
-    for i in range(15):
-        logger.debug(str(i))
-        assert len(tmpdir.listdir()) == 1
-        assert tmpdir.join('test.log').read() == '%d\n' % i
-
-def test_backups_at_initialization(tmpdir):
-    for i in reversed(range(1, 10)):
-        tmpdir.join('test.log.%d' % i).write(str(i))
-
-    logger.start(tmpdir.join('test.log'), backups=1)
+    i = logger.start(tmpdir.join('test.log'), backups=backups)
+    logger.debug("test")
 
     assert len(tmpdir.listdir()) == 2
-    assert tmpdir.join('test.log').read() == ''
-    assert tmpdir.join('test.log.1').read() == '1'
+    logger.stop(i)
+    assert len(tmpdir.listdir()) == 0
 
-@pytest.mark.parametrize('previous', [1, 5, 9, 20])
-def test_backups_with_previous_files(tmpdir, previous):
-    log_count = 5
-    backups = 9
-    files_checked = set()
+@pytest.mark.parametrize('backups', [0, 1, 10])
+def test_backups_count(tmpdir, backups):
+    file = tmpdir.join('test.log')
 
-    for i in reversed(range(previous)):
-        if i == 0:
-            file_name = 'test.log'
-        else:
-            z = len(str(previous))
-            file_name = 'test.log.%s' % str(i).zfill(z)
-        file = tmpdir.join(file_name)
-        file.write('previous %d' % i)
+    for i in range(backups):
+        tmpdir.join('test.log.%d' % i).write('test')
 
-    logger.start(tmpdir.join('test.log'), rotation=0, backups=backups, format='{message}')
+    i = logger.start(file.realpath(), backups=backups)
+    logger.debug("test")
+    logger.stop(i)
 
-    for i in range(log_count):
-        logger.debug(str(i))
+    assert len(tmpdir.listdir()) == backups
 
-    for i in range(log_count):
-        file_name = 'test.log' + ('.%d' % i if i else '')
-        file = tmpdir.join(file_name)
-        expected = str(log_count - 1 - i) + '\n'
-        assert file.read() == expected
-        files_checked.add(file)
+@pytest.mark.parametrize('mode', ['all', 'none'])
+def test_backups_function(tmpdir, mode):
+    func = lambda logs: logs if mode == 'all' else []
 
-    max_num = min(backups, log_count + previous - 1)
+    for i in range(10):
+        tmpdir.join('test.log.%d' % i).write('')
 
-    for i in range(log_count, max_num + 1):
-        j = i - log_count
-        expected = 'previous %d' % j
-        file_name = 'test.log.%d' % i
-        file = tmpdir.join('test.log.%d' % i)
-        assert file.read() == expected
-        files_checked.add(file)
+    i = logger.start(tmpdir.join('test.log'), backups=func)
+    logger.stop(i)
 
-    for f in tmpdir.listdir():
-        assert f in files_checked
+    assert len(tmpdir.listdir()) == 0 if mode == 'all' else 10
 
-def test_backups_with_other_files(tmpdir):
-    log_count = 9
-    files_checked = set()
+def test_managed_files(tmpdir):
+    others = ['test.log', 'test.log.1', 'test.log.1.gz', 'test.log.rar']
 
-    others = ['test_.log', 'tes.log', 'test.out', 'test.logg', 'atest.log', 'test.log.nope', 'test']
     for other in others:
         tmpdir.join(other).write(other)
 
-    logger.start(tmpdir.join('test.log'), rotation=0, backups=None, format='{message}')
+    i = logger.start(tmpdir.join('test.log'), backups=0)
+    logger.stop(i)
 
-    for i in range(log_count):
-        logger.debug(str(i))
+    assert len(tmpdir.listdir()) == 0
 
-    for i in range(log_count + 1):
-        file_name = 'test.log' + ('.%d' % i if i else '')
-        expected = (str(log_count - 1 - i) + '\n') if i != log_count else ''
-        file = tmpdir.join(file_name)
-        assert file.read() == expected
-        files_checked.add(file)
+def test_not_managed_files(tmpdir):
+    others = ['test_.log', '_test.log', 'test', 'tes.log', 'te.st.log', 'test.1.log']
 
     for other in others:
-        file = tmpdir.join(other)
-        assert file.read() == other
-        files_checked.add(file)
+        tmpdir.join(other).write(other)
 
-    for f in tmpdir.listdir():
-        assert f in files_checked
+    i = logger.start(tmpdir.join('test.log'), backups=0)
+    logger.stop(i)
 
-def test_backups_zfill(tmpdir):
-    logger.start(tmpdir.join('test.log'), rotation=0, backups=None, format='{message}')
+    assert len(tmpdir.listdir()) == len(others)
 
-    logger.debug('a')
-    logger.debug('0')
-    assert tmpdir.join('test.log.1').read() == 'a\n'
+def test_manage_files_at_rotation(tmpdir):
+    tmpdir.join('test.log.1').write('')
+    tmpdir.join('test.log.2').write('')
+    tmpdir.join('test.log.3').write('')
 
-    for _ in range(10):
-        logger.debug('0')
+    logger.start(tmpdir.join('test.log'), backups=1, rotation=0)
+    logger.debug("test")
 
-    logger.debug('b')
-    logger.debug('0')
-    assert tmpdir.join('test.log.01').read() == 'b\n'
+    assert len(tmpdir.listdir()) == 2
 
-    for _ in range(100):
-        logger.debug('0')
+def test_no_renaming(tmpdir):
+    i = logger.start(tmpdir.join('test.log'), format="{message}", backups=10)
+    logger.debug("test")
+    logger.stop(i)
 
-    logger.debug('c')
-    logger.debug('0')
-    assert tmpdir.join('test.log.001').read() == 'c\n'
-
-    assert tmpdir.join('test.log.103').read() == 'b\n'
-    assert tmpdir.join('test.log.115').read() == 'a\n'
-    assert tmpdir.join('test.log.116').read() == ''
-    assert tmpdir.join('test.log.117').check(exists=0)
-
-
-@pytest.mark.parametrize('mode', ['a', 'w'])
-@pytest.mark.parametrize('backups', [10, None])
-def test_mode(tmpdir, mode, backups):
-    file = tmpdir.join('test.log')
-    file.write('a')
-    logger.start(file.realpath(), rotation=10, backups=backups, format='{message}', mode=mode)
-    logger.debug('b')
-    logger.debug('c' * 10)
-
-    assert tmpdir.join('test.log').read() == 'c' * 10 + '\n'
-    assert tmpdir.join('test.log.1').read() == 'a' * (mode == 'a') + 'b\n'
+    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join('test.log').read() == 'test\n'
 
 @pytest.mark.parametrize('backups', [
     "W5", "monday at 14:00", "sunday", "nope",
