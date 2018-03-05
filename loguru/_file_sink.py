@@ -164,13 +164,16 @@ class FileSink:
             return self.make_manage_backups_function(interval)
         elif isinstance(backups, int):
             def function(logs):
-                return sorted(logs, key=lambda log: (-os.stat(log).st_mtime, log))[backups:]
+                for log in sorted(logs, key=lambda log: (-os.stat(log).st_mtime, log))[backups:]:
+                    os.remove(log)
         elif isinstance(backups, datetime.timedelta):
             seconds = backups.total_seconds()
             def function(logs):
                 t = fast_now().timestamp()
                 limit = t - seconds
-                return [log for log in logs if os.stat(log).st_mtime <= limit]
+                for log in logs:
+                    if os.stat(log).st_mtime <= limit:
+                        os.remove(log)
         elif callable(backups):
             function = backups
         else:
@@ -406,8 +409,7 @@ class FileSink:
 
         if manage_backups:
             logs = glob.glob(self.glob_pattern)
-            for log in self.manage_backups(logs):
-                os.remove(log)
+            self.manage_backups(logs)
 
         if create_new:
             new_dir = os.path.dirname(new_path)

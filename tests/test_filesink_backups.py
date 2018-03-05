@@ -35,17 +35,21 @@ def test_backups_count(tmpdir, backups):
 
     assert len(tmpdir.listdir()) == backups
 
-@pytest.mark.parametrize('mode', ['all', 'none'])
-def test_backups_function(tmpdir, mode):
-    func = lambda logs: logs if mode == 'all' else []
+def test_backups_function(tmpdir):
+    def func(logs):
+        for log in logs:
+            os.rename(log, log + '.xyz')
 
-    for i in range(10):
-        tmpdir.join('test.log.%d' % i).write('')
+    tmpdir.join('test.log.1').write('')
+    tmpdir.join('test').write('')
 
     i = logger.start(tmpdir.join('test.log'), backups=func)
     logger.stop(i)
 
-    assert len(tmpdir.listdir()) == 0 if mode == 'all' else 10
+    assert len(tmpdir.listdir()) == 3
+    assert tmpdir.join('test.log.1.xyz').check(exists=1)
+    assert tmpdir.join('test.log.xyz').check(exists=1)
+    assert tmpdir.join('test').check(exists=1)
 
 def test_managed_files(tmpdir):
     others = ['test.log', 'test.log.1', 'test.log.1.gz', 'test.log.rar']
