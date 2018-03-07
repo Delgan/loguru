@@ -182,85 +182,66 @@ class FileSink:
         return function
 
     def make_compress_file_function(self, compression):
-        if compression is None or compression is False:
+        if compression is None:
             return None
         elif isinstance(compression, str):
             ext = compression.strip().lstrip('.')
-            archive = False
-            compress = True
 
-            tarball = {
-                'tar.gz': 'gz', 'tgz': 'gz',
-                'tar.bz2': 'bz2', 'tbz2': 'bz2', 'tbz': 'bz2', 'tb2': 'bz2',
-                'tar.xz': 'xz', 'txz': 'xz',
-                'tar.lzma': 'lzma', 'tlz': 'lzma',
-            }
+            def compress_generic(opener, **kwargs):
+                def compress(path_in, path_out):
+                    with open(path_in, 'rb') as f_in:
+                        with opener(path_out, 'wb', **kwargs) as f_out:
+                            shutil.copyfileobj(f_in, f_out)
+                return compress
 
-            if ext in tarball:
-                archive = True
-                comp = tarball[ext]
-            else:
-                comp = ext
-
-            open_in = lambda p: open(p, 'rb')
-            open_out = None
-            open_arc = None
-            copy_file = shutil.copyfileobj
-
-            if comp == 'tar':
-                archive = True
-                compress = False
-            elif comp == 'gz':
-                import zlib, gzip
-                open_out = lambda p: open(p, 'wb')
-                def copy_file(f_in, f_out):
-                    with gzip.GzipFile(filename=f_in.name, mode='wb', fileobj=f_out) as f_comp:
-                        shutil.copyfileobj(f_in, f_comp)
-            elif comp == 'bz2':
-                import bz2
-                open_out = lambda p: bz2.open(p, 'wb')
-            elif comp == 'xz':
-                import lzma
-                open_out = lambda p: lzma.open(p, 'wb', format=lzma.FORMAT_XZ)
-            elif comp == 'lzma':
-                import lzma
-                open_out = lambda p: lzma.open(p, 'wb', format=lzma.FORMAT_ALONE)
-            elif comp == 'zip':
-                import zlib, zipfile
-                open_in = contextlib.contextmanager(lambda p: (yield p))
-                open_out = lambda p: zipfile.ZipFile(p, 'w', compression=zipfile.ZIP_DEFLATED)
-                copy_file = lambda f_in, f_out: f_out.write(f_in, os.path.basename(f_in))
-            else:
-                raise ValueError("Invalid compression format: '%s'" % comp)
-
-            if archive:
+            def compress_archive(mode):
                 import tarfile
-                open_arc = tarfile.TarFile
+                def compress(path_in, path_out):
+                    with tarfile.open(path_out, 'w:' + mode) as f_comp:
+                        f_comp.add(path_in, os.path.basename(path_in))
+                return compress
 
-            def compress_function(path):
-                output_path = path + '.' + ext
-                archived_path = path + '.tar'
+            def compress_zipped():
+                import zlib, zipfile
+                def compress(path_in, path_out):
+                    with zipfile.ZipFile(path_out, 'w', compression=zipfile.ZIP_DEFLATED) as f_comp:
+                        f_comp.write(path_in, os.path.basename(path_in))
+                return compress
 
-                if archive:
-                    with open_arc(archived_path, 'w') as arc:
-                        arc.add(path, os.path.basename(path))
-                    os.remove(path)
-                    path = archived_path
+            if ext == 'gz':
+                import zlib, gzip
+                compress = compress_generic(gzip.open)
+            elif ext == 'bz2':
+                import bz2
+                compress = compress_generic(bz2.open)
+            elif ext == 'xz':
+                import lzma
+                compress = compress_generic(lzma.open, format=lzma.FORMAT_XZ)
+            elif ext == 'lzma':
+                import lzma
+                compress = compress_generic(lzma.open, format=lzma.FORMAT_ALONE)
+            elif ext == 'tar':
+                compress = compress_archive('')
+            elif ext == 'tar.gz':
+                import zlib, gzip
+                compress = compress_archive('gz')
+            elif ext == 'tar.bz2':
+                import bz2
+                compress = compress_archive('bz2')
+            elif ext == 'tar.xz':
+                import lzma
+                compress = compress_archive('xz')
+            elif ext == 'zip':
+                compress = compress_zipped()
+            else:
+                raise ValueError("Invalid compression format: '%s'" % ext)
 
-                compressed_path = path + '.' + comp
-
-                if compress:
-                    with open_out(compressed_path) as f_out:
-                        with open_in(path) as f_in:
-                            copy_file(f_in, f_out)
-                    os.remove(path)
-                    path = compressed_path
-
-                if path != output_path:
-                    os.rename(path, output_path)
+            def compress_function(path_in):
+                path_out = path_in + '.' + ext
+                compress(path_in, path_out)
+                os.remove(path_in)
 
             return compress_function
-
         elif callable(compression):
             return compression
         else:

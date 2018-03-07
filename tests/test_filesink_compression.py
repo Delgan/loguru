@@ -5,9 +5,8 @@ from loguru import logger
 
 
 @pytest.mark.parametrize('compression', [
-    'gz', 'bz2', 'zip', 'xz', 'lzma', 'tar',
-    'tar.gz', 'tar.bz2', 'tar.xz', 'tar.lzma',
-    '.tgz', '.tbz2', '.txz', '.tlz', '.tb2', '.tbz'
+    'gz', 'bz2', 'zip', 'xz', 'lzma',
+    'tar', 'tar.gz', 'tar.bz2', 'tar.xz'
 ])
 def test_compression_ext(tmpdir, compression):
     i = logger.start(tmpdir.join('{n}.log'), compression=compression)
@@ -49,7 +48,17 @@ def test_compression_renamed_file(tmpdir):
     assert len(tmpdir.listdir()) == 1
     assert re.match(r'test\.log\.[A-Z0-9]+\.gz', tmpdir.listdir()[0].basename)
 
-@pytest.mark.parametrize('compression', [0, 1, os, object(), {"zip"}, "rar", ".7z", "tar.zip"])
+@pytest.mark.parametrize('ext', ['tar.gz', 'tar.xz', 'tar.bz2'])
+def test_not_overriding_previous_file(tmpdir, ext):
+    tmpdir.join('test.log.0.tar').write('')
+    i = logger.start(tmpdir.join('test.log.{n}'), compression=ext)
+    logger.debug('test')
+    logger.stop(i)
+
+    assert tmpdir.join('test.log.0.tar').check(exists=1)
+    assert tmpdir.join('test.log.0.' + ext).check(exists=1)
+
+@pytest.mark.parametrize('compression', [0, True, os, object(), {"zip"}, "rar", ".7z", "tar.zip"])
 def test_invalid_compression(compression):
     with pytest.raises(ValueError):
         logger.start('test.log', compression=compression)
