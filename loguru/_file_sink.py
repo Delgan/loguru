@@ -212,7 +212,10 @@ class FileSink:
                 compress = False
             elif comp == 'gz':
                 import zlib, gzip
-                open_out = lambda p: gzip.open(p, 'wb')
+                open_out = lambda p: open(p, 'wb')
+                def copy_file(f_in, f_out):
+                    with gzip.GzipFile(filename=f_in.name, mode='wb', fileobj=f_out) as f_comp:
+                        shutil.copyfileobj(f_in, f_comp)
             elif comp == 'bz2':
                 import bz2
                 open_out = lambda p: bz2.open(p, 'wb')
