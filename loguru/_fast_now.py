@@ -4,8 +4,7 @@ def get_fast_now_function():
     try:
         from ._extensions.fast_now import init, now
     except ImportError:
-        # TODO: Remove "tz='UTC'" when pendulum/#167 will be fixed
-        fast_now = lambda: pendulum.now(tz='UTC')
+        fast_now = lambda: pendulum.now()
     else:
         local_timezone = pendulum.tz.local_timezone()
 
@@ -19,12 +18,14 @@ def get_fast_now_function():
         from pendulum import Pendulum
         from datetime import datetime
         init(datetime, tzinfos, timestamps, indexes, default_index)
+
         def fast_now():
             dt = now()
+
             # TODO: Remove "pendulum.tz.UTC" when pendulum/#167 will be fixed
             return Pendulum(dt.year, dt.month, dt.day,
                             dt.hour, dt.minute, dt.second, dt.microsecond,
-                            pendulum.tz.UTC, dt.fold)
+                            dt.tzinfo, dt.fold)
 
     return fast_now
 

@@ -28,7 +28,7 @@ setup(
         'base36>=0.1.1',
         'better_exceptions_fork>=0.1.8.post4',
         'colorama>=0.3.9',
-        'pendulum>=1.3.0',
+        'pendulum>=1.4.2',
     ],
     ext_modules = [
         Extension('loguru._extensions.fast_now', sources=['loguru/_extensions/fast_now.c'], optional=True)

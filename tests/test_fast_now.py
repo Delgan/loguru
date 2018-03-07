@@ -1,5 +1,6 @@
 import pendulum
 import loguru
+import datetime
 import pytest
 import sys
 from unittest.mock import MagicMock
@@ -7,7 +8,9 @@ from unittest.mock import MagicMock
 @pytest.mark.parametrize('with_extensions', [True, False])
 def test_get_fast_now_function(monkeypatch, with_extensions):
     if with_extensions:
-        monkeypatch.setitem(sys.modules, 'loguru._extensions.fast_now', MagicMock())
+        mock = MagicMock()
+        mock.now = lambda: datetime.datetime.now()
+        monkeypatch.setitem(sys.modules, 'loguru._extensions.fast_now', mock)
     else:
         monkeypatch.setitem(sys.modules, 'loguru._extensions.fast_now', MagicMock(spec_set=[]))
 
