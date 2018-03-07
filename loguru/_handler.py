@@ -51,7 +51,7 @@ class Handler:
 
         if queued:
             self.queue = multiprocessing.Queue()
-            self.thread = threading.Thread(target=self.queued_writer, daemon=True)
+            self.thread = threading.Thread(target=self.queued_writer, daemon=False)
             self.thread.start()
 
     @staticmethod
