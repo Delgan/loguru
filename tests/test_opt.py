@@ -93,19 +93,6 @@ def test_keep_extra(writer):
 
     assert writer.read() == "123\n"
 
-def test_keep_others(writer):
-    logger.start(writer, format='{message}')
-    logger.opt(record=True).opt().debug("{record[level].name}")
-    logger.debug("{record}", record=123)
-    try:
-        1 / 0
-    except:
-        logger.opt(record=True).opt(exception=True).debug("{record[level].no}")
-
-    result = writer.read().strip()
-    assert result.startswith("DEBUG\n123\n10\n")
-    assert result.endswith("ZeroDivisionError: division by zero")
-
 def test_before_bind(writer):
     logger.start(writer, format='{message}')
     logger.opt(record=True).bind(key="value").info("{record[level]}")

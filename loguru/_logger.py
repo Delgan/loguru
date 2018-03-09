@@ -73,20 +73,15 @@ class Logger:
 
     _lock = threading.Lock()
 
-    def __init__(self, *, extra={}, record=False, exception=None, lazy=False):
+    def __init__(self, extra, exception, record, lazy):
         self.catch = Catcher(self)
         self.extra = extra
         self._record = record
         self._exception = exception
         self._lazy = lazy
 
-    def opt(self, exception=None, record=None, lazy=None):
-        extra = self.extra.copy()
-        exception = self._exception if exception is None else exception
-        record = self._record if record is None else record
-        lazy = self._lazy if lazy is None else lazy
-        logger = Logger(extra=extra, exception=exception, record=record, lazy=lazy)
-        return logger
+    def opt(self, *, exception=False, record=False, lazy=False):
+        return Logger(self.extra, exception, record, lazy)
 
     def bind(self, **kwargs):
         extra = {**self.extra, **kwargs}

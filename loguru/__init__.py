@@ -6,7 +6,7 @@ from ._logger import Logger as _Logger
 
 __version__ = "0.0.1"
 
-logger = _Logger()
+logger = _Logger({}, False, False, False)
 
 if _constants.LOGURU_AUTOINIT and _sys.stderr:
     logger.start(_sys.stderr)
