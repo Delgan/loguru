@@ -209,7 +209,9 @@ class Logger:
 
             if hasattr(stream, 'flush') and callable(stream.flush):
                 stream_flush = stream.flush
-                writer = lambda m: write(m) and stream_flush()
+                def writer(m):
+                    write(m)
+                    stream_flush()
             else:
                 writer = write
 

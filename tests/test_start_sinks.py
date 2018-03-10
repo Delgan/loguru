@@ -80,6 +80,16 @@ def test_file_object_sink(rep):
     log(a, rep)
     assert a.out == expected * rep
 
+@repetitions
+def test_flush(rep):
+    flushed = []
+    out = []
+    class A:
+        def write(self, m): out.append(m)
+        def flush(self): flushed.append(out[-1])
+    log(A, rep)
+    assert flushed == [expected] * rep
+
 @pytest.mark.parametrize('sink', [123, sys, object(), int])
 def test_invalid_sink(sink):
     with pytest.raises(ValueError):
