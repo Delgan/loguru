@@ -25,14 +25,16 @@ class Catcher:
         if not issubclass(type_, self._exception):
             return False
 
-        record_logger = self._logger.opt(record=True)
+        logger = self._logger
 
         if self._as_decorator:
-            log = record_logger._make_log_function(self._level, True, 3, True)
+            logger = logger.opt(record=True, lazy=logger._lazy, backframe=logger._backframe + 2)
+            log = logger._make_log_function(self._level, True, True)
         else:
-            log = record_logger._make_log_function(self._level, True, 2, False)
+            logger = logger.opt(record=True, lazy=logger._lazy, backframe=logger._backframe + 1)
+            log = logger._make_log_function(self._level, True, False)
 
-        log(record_logger, self._message)
+        log(logger, self._message)
 
         return not self._reraise
 

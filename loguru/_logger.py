@@ -73,19 +73,20 @@ class Logger:
 
     _lock = threading.Lock()
 
-    def __init__(self, extra, exception, record, lazy):
+    def __init__(self, extra, exception, record, lazy, backframe):
         self.catch = Catcher(self)
         self.extra = extra
         self._record = record
         self._exception = exception
         self._lazy = lazy
+        self._backframe = backframe
 
-    def opt(self, *, exception=False, record=False, lazy=False):
-        return Logger(self.extra, exception, record, lazy)
+    def opt(self, *, exception=False, record=False, lazy=False, backframe=0):
+        return Logger(self.extra, exception, record, lazy, backframe)
 
     def bind(self, **kwargs):
         extra = {**self.extra, **kwargs}
-        logger = Logger(extra=extra, record=self._record, exception=self._exception, lazy=self._lazy)
+        logger = Logger(extra, self._exception, self._record, self._lazy, self._backframe)
         return logger
 
     def level(self, name, no=None, color=None, icon=None):
@@ -284,11 +285,13 @@ class Logger:
             self.__class__._min_level = min(levelnos, default=float("inf"))
 
     def log(_self, _level, _message, *args, **kwargs):
-        _self._make_log_function(_level, False, 2, False)(_self, _message, *args, **kwargs)
+        logger = _self.opt(exception=_self._exception, record=_self._record,
+                           lazy=_self._lazy, backframe=_self._backframe + 1)
+        logger._make_log_function(_level, False, False)(logger, _message, *args, **kwargs)
 
     @staticmethod
     @functools.lru_cache()
-    def _make_log_function(level, log_exception=False, frame_idx=1, decorated=False):
+    def _make_log_function(level, log_exception=False, decorated=False):
 
         if isinstance(level, str):
             level_id = level_name = level
@@ -304,7 +307,7 @@ class Logger:
             if not _self._handlers:
                 return
 
-            frame = get_frame(frame_idx)
+            frame = get_frame(_self._backframe + 1)
             name = frame.f_globals['__name__']
 
             try:
