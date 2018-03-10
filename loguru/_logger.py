@@ -284,14 +284,9 @@ class Logger:
             levelnos = (h.levelno for h in self._handlers.values())
             self.__class__._min_level = min(levelnos, default=float("inf"))
 
-    def log(_self, _level, _message, *args, **kwargs):
-        logger = _self.opt(exception=_self._exception, record=_self._record,
-                           lazy=_self._lazy, backframe=_self._backframe + 1)
-        logger._make_log_function(_level, False, False)(logger, _message, *args, **kwargs)
-
     @staticmethod
     @functools.lru_cache()
-    def _make_log_function(level, log_exception=False, decorated=False):
+    def _make_log_function(level, decorated=False):
 
         if isinstance(level, str):
             level_id = level_name = level
@@ -381,14 +376,9 @@ class Logger:
             elif args or kwargs:
                 record['message'] = _message.format(*args, **kwargs)
 
-            exception = log_exception or _self._exception
-            _self._emit_handlers(record, exception, level_color, decorated)
+            _self._emit_handlers(record, _self._exception, level_color, decorated)
 
-        if not log_exception:
-            doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
-        else:
-            doc = "Convenience method for logging an '%s' with exception information." % level_name
-
+        doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
         log_function.__doc__ = doc
 
         return log_function
@@ -459,5 +449,16 @@ class Logger:
     success = _make_log_function.__func__("SUCCESS")
     warning = _make_log_function.__func__("WARNING")
     error = _make_log_function.__func__("ERROR")
-    exception = _make_log_function.__func__("ERROR", True)
     critical = _make_log_function.__func__("CRITICAL")
+
+    def exception(_self, _message, *args, **kwargs):
+        """Convenience method for logging an 'ERROR' with exception information."""
+        logger = _self.opt(exception=True, record=_self._record,
+                           lazy=_self._lazy, backframe=_self._backframe + 1)
+        logger._make_log_function("ERROR")(logger, _message, *args, **kwargs)
+
+    def log(_self, _level, _message, *args, **kwargs):
+        """Log 'message.format(*args, **kwargs)' with severity _level."""
+        logger = _self.opt(exception=_self._exception, record=_self._record,
+                           lazy=_self._lazy, backframe=_self._backframe + 1)
+        logger._make_log_function(_level, False)(logger, _message, *args, **kwargs)
