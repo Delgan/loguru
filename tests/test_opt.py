@@ -86,18 +86,18 @@ def test_lazy(writer):
 
     assert writer.read() == "10 => 1: 1\n17 => 4: 1\n20 => 7: 2\n"
 
-def test_backframe(writer):
+def test_depth(writer):
     logger.start(writer, format="{function} : {message}")
 
     def a():
-        logger.opt(backframe=0).debug("Test 1")
-        logger.opt(backframe=1).debug("Test 2")
+        logger.opt(depth=0).debug("Test 1")
+        logger.opt(depth=1).debug("Test 2")
 
     a()
 
     logger.stop()
 
-    assert writer.read() == "a : Test 1\ntest_backframe : Test 2\n"
+    assert writer.read() == "a : Test 1\ntest_depth : Test 2\n"
 
 def test_keep_extra(writer):
     logger.extra['test'] = 123

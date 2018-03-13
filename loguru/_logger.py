@@ -73,20 +73,20 @@ class Logger:
 
     _lock = threading.Lock()
 
-    def __init__(self, extra, exception, record, lazy, backframe):
+    def __init__(self, extra, exception, record, lazy, depth):
         self.catch = Catcher(self)
         self.extra = extra
         self._record = record
         self._exception = exception
         self._lazy = lazy
-        self._backframe = backframe
+        self._depth = depth
 
-    def opt(self, *, exception=False, record=False, lazy=False, backframe=0):
-        return Logger(self.extra, exception, record, lazy, backframe)
+    def opt(self, *, exception=False, record=False, lazy=False, depth=0):
+        return Logger(self.extra, exception, record, lazy, depth)
 
     def bind(self, **kwargs):
         extra = {**self.extra, **kwargs}
-        logger = Logger(extra, self._exception, self._record, self._lazy, self._backframe)
+        logger = Logger(extra, self._exception, self._record, self._lazy, self._depth)
         return logger
 
     def level(self, name, no=None, color=None, icon=None):
@@ -304,7 +304,7 @@ class Logger:
             if not _self._handlers:
                 return
 
-            frame = get_frame(_self._backframe + 1)
+            frame = get_frame(_self._depth + 1)
             name = frame.f_globals['__name__']
 
             try:
@@ -456,11 +456,11 @@ class Logger:
     def exception(_self, _message, *args, **kwargs):
         """Convenience method for logging an 'ERROR' with exception information."""
         logger = _self.opt(exception=True, record=_self._record,
-                           lazy=_self._lazy, backframe=_self._backframe + 1)
+                           lazy=_self._lazy, depth=_self._depth + 1)
         logger._make_log_function("ERROR")(logger, _message, *args, **kwargs)
 
     def log(_self, _level, _message, *args, **kwargs):
         """Log 'message.format(*args, **kwargs)' with severity _level."""
         logger = _self.opt(exception=_self._exception, record=_self._record,
-                           lazy=_self._lazy, backframe=_self._backframe + 1)
+                           lazy=_self._lazy, depth=_self._depth + 1)
         logger._make_log_function(_level, False)(logger, _message, *args, **kwargs)

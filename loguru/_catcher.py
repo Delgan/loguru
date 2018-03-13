@@ -32,7 +32,7 @@ class Catcher:
 
         logger = self._logger
         logger = logger.opt(exception=True, record=True,
-                            lazy=logger._lazy, backframe=logger._backframe + back)
+                            lazy=logger._lazy, depth=logger._depth + back)
         log = logger._make_log_function(self._level, decorator)
 
         log(logger, self._message)
