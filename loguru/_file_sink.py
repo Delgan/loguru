@@ -67,7 +67,12 @@ class FileSink:
     def make_glob_pattern(path):
         tokens = string.Formatter().parse(path)
         parts = (glob.escape(text) + '*' * (name is not None) for text, name, *_ in tokens)
-        return ''.join(parts) + '*'
+        root, ext = os.path.splitext(''.join(parts))
+        if ext:
+            pattern = root + '.*'
+        else:
+            pattern = root + '*'
+        return pattern
 
     def make_should_rotate_function(self, rotation):
         if rotation is None:
@@ -384,7 +389,8 @@ class FileSink:
             time_part = base36.dumps(int(time.time() * 1000))
             rand_part = base36.dumps(int(random.random() * 36**4))
             log_id = "{:0>8}{:0>4}".format(time_part, rand_part).upper()
-            renamed_path = old_path + '.' + log_id
+            root, ext = os.path.splitext(old_path)
+            renamed_path = root + '.' + log_id + ext
             os.rename(old_path, renamed_path)
             old_path = renamed_path
 

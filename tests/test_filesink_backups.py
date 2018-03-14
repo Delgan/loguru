@@ -52,7 +52,7 @@ def test_backups_function(tmpdir):
     assert tmpdir.join('test').check(exists=1)
 
 def test_managed_files(tmpdir):
-    others = ['test.log', 'test.log.1', 'test.log.1.gz', 'test.log.rar']
+    others = ['test.log', 'test.log.1', 'test.log.1.gz', 'test.log.rar', 'test.1.log']
 
     for other in others:
         tmpdir.join(other).write(other)
@@ -63,7 +63,7 @@ def test_managed_files(tmpdir):
     assert len(tmpdir.listdir()) == 0
 
 def test_not_managed_files(tmpdir):
-    others = ['test_.log', '_test.log', 'test', 'tes.log', 'te.st.log', 'test.1.log']
+    others = ['test_.log', '_test.log', 'tes.log', 'te.st.log', 'testlog', 'test']
 
     for other in others:
         tmpdir.join(other).write(other)
@@ -72,6 +72,52 @@ def test_not_managed_files(tmpdir):
     logger.stop(i)
 
     assert len(tmpdir.listdir()) == len(others)
+
+def test_manage_formatted_files(tmpdir):
+    f1 = tmpdir.join('temp/0/file.log')
+    f2 = tmpdir.join('temp/file0.log')
+    f3 = tmpdir.join('temp/d0/f0.1.log')
+
+    a = logger.start(tmpdir.join('temp/{n}/file.log'), backups=0)
+    b = logger.start(tmpdir.join('temp/file{n}.log'), backups=0)
+    c = logger.start(tmpdir.join('temp/d{n}/f{n}.{n+1}.log'), backups=0)
+
+    logger.debug("test")
+
+    assert f1.check(exists=1)
+    assert f2.check(exists=1)
+    assert f3.check(exists=1)
+
+    logger.stop(a)
+    logger.stop(b)
+    logger.stop(c)
+
+    assert f1.check(exists=0)
+    assert f2.check(exists=0)
+    assert f3.check(exists=0)
+
+def test_manage_file_without_extension(tmpdir):
+    file = tmpdir.join('file')
+
+    i = logger.start(file, backups=0)
+    logger.debug("?")
+
+    assert len(tmpdir.listdir()) == 1
+    assert file.check(exists=1)
+    logger.stop(i)
+    assert len(tmpdir.listdir()) == 0
+    assert file.check(exists=0)
+
+def test_manage_formatted_files_without_extension(tmpdir):
+    tmpdir.join('file_8').write("")
+    tmpdir.join('file_7').write("")
+    tmpdir.join('file_6').write("")
+
+    i = logger.start(tmpdir.join('file_{n}'), backups=0)
+    logger.debug("1")
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 0
 
 def test_manage_files_at_rotation(tmpdir):
     tmpdir.join('test.log.1').write('')

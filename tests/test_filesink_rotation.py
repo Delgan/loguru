@@ -15,20 +15,20 @@ from loguru import logger
 ])
 def test_renaming(tmpdir, name, should_rename):
     file = tmpdir.join(name)
-    i = logger.start(file.realpath(), format="{message}", rotation="10 B")
+    i = logger.start(file, format="{message}", rotation="10 B")
 
     assert len(tmpdir.listdir()) == 1
-    basename = tmpdir.listdir()[0].basename
+    root, ext = os.path.splitext(str(tmpdir.listdir()[0]))
+    reg = re.escape(root) + r'\.[A-Z0-9]+' + re.escape(ext)
 
     logger.debug("aaaaaaa")
     logger.debug("bbbbbbb")
     logger.debug("ccccccc")
 
-    files = [f.basename for f in tmpdir.listdir()]
-    renamed = sum(re.match(re.escape(basename) + r'\.[A-Z0-9]+', f) is not None for f in files)
+    renamed = sum(re.match(reg, str(f.realpath())) is not None for f in tmpdir.listdir())
 
     if should_rename:
-        assert renamed == len(files) - 1
+        assert renamed == len(tmpdir.listdir()) - 1
     else:
         assert renamed == 0
 
