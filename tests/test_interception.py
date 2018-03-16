@@ -4,29 +4,14 @@ import pytest
 import pendulum
 from loguru import logger
 
-
-class StrAttr(str):
-    def __call__(self, **kwargs):
-        for attr, val in kwargs.items():
-            setattr(self, attr, val)
-        return self
-
 class InterceptHandler(logging.Handler):
 
     def emit(self, record):
-        r = record
-        loguru_record = dict(
-            elapsed=pendulum.Interval(milliseconds=r.relativeCreated), name=r.name, module=r.module,
-            file=StrAttr(r.filename)(name=r.filename, path=r.pathname), function=r.funcName,
-            level=StrAttr(r.levelname)(name=r.levelname, no=r.levelno, icon=' '), extra={},
-            line=r.lineno, message=r.getMessage(), time=pendulum.from_timestamp(r.created),
-            process=StrAttr(r.process)(id=r.process, name=r.processName),
-            thread=StrAttr(r.thread)(id=r.thread, name=r.threadName))
-        logger.handle(loguru_record, exception=r.exc_info)
+        logger.opt(depth=6, exception=record.exc_info).log(record.levelno, record.getMessage())
 
 def test_formatting(writer, make_logging_logger):
     fmt = "{name} - {file.name} - {function} - {level.name} - {level.no} - {line} - {module} - {message}"
-    expected = "tests - test_interception.py - test_formatting - DEBUG - 10 - 35 - test_interception - This is the message\n"
+    expected = "tests.test_interception - test_interception.py - test_formatting - Level 10 - 10 - 20 - test_interception - This is the message\n"
 
     logging_logger = make_logging_logger('tests', InterceptHandler())
 
