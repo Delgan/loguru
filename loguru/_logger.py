@@ -13,7 +13,7 @@ from threading import current_thread
 import pendulum
 from colorama import AnsiToWin32
 
-from . import _constants
+from . import _defaults
 from ._catcher import Catcher
 from ._fast_now import fast_now
 from ._file_sink import FileSink
@@ -55,13 +55,13 @@ class ProcessRecattr(str):
 class Logger:
 
     _levels = {
-        "TRACE": Level(_constants.LOGURU_TRACE_NO, _constants.LOGURU_TRACE_COLOR, _constants.LOGURU_TRACE_ICON),
-        "DEBUG": Level(_constants.LOGURU_DEBUG_NO, _constants.LOGURU_DEBUG_COLOR, _constants.LOGURU_DEBUG_ICON),
-        "INFO": Level(_constants.LOGURU_INFO_NO, _constants.LOGURU_INFO_COLOR, _constants.LOGURU_INFO_ICON),
-        "SUCCESS": Level(_constants.LOGURU_SUCCESS_NO, _constants.LOGURU_SUCCESS_COLOR, _constants.LOGURU_SUCCESS_ICON),
-        "WARNING": Level(_constants.LOGURU_WARNING_NO, _constants.LOGURU_WARNING_COLOR, _constants.LOGURU_WARNING_ICON),
-        "ERROR": Level(_constants.LOGURU_ERROR_NO, _constants.LOGURU_ERROR_COLOR, _constants.LOGURU_ERROR_ICON),
-        "CRITICAL": Level(_constants.LOGURU_CRITICAL_NO, _constants.LOGURU_CRITICAL_COLOR, _constants.LOGURU_CRITICAL_ICON),
+        "TRACE": Level(_defaults.LOGURU_TRACE_NO, _defaults.LOGURU_TRACE_COLOR, _defaults.LOGURU_TRACE_ICON),
+        "DEBUG": Level(_defaults.LOGURU_DEBUG_NO, _defaults.LOGURU_DEBUG_COLOR, _defaults.LOGURU_DEBUG_ICON),
+        "INFO": Level(_defaults.LOGURU_INFO_NO, _defaults.LOGURU_INFO_COLOR, _defaults.LOGURU_INFO_ICON),
+        "SUCCESS": Level(_defaults.LOGURU_SUCCESS_NO, _defaults.LOGURU_SUCCESS_COLOR, _defaults.LOGURU_SUCCESS_ICON),
+        "WARNING": Level(_defaults.LOGURU_WARNING_NO, _defaults.LOGURU_WARNING_COLOR, _defaults.LOGURU_WARNING_ICON),
+        "ERROR": Level(_defaults.LOGURU_ERROR_NO, _defaults.LOGURU_ERROR_COLOR, _defaults.LOGURU_ERROR_ICON),
+        "CRITICAL": Level(_defaults.LOGURU_CRITICAL_NO, _defaults.LOGURU_CRITICAL_COLOR, _defaults.LOGURU_CRITICAL_ICON),
     }
 
     _handlers_count = itertools.count()
@@ -166,10 +166,10 @@ class Logger:
     def disable(self, name):
         self._change_activation(name, False)
 
-    def start(self, sink, *, level=_constants.LOGURU_LEVEL, format=_constants.LOGURU_FORMAT, filter=None,
-                    colored=_constants.LOGURU_COLORED, structured=_constants.LOGURU_STRUCTURED,
-                    enhanced=_constants.LOGURU_ENHANCED, queued=_constants.LOGURU_QUEUED,
-                    wrapped=_constants.LOGURU_WRAPPED, **kwargs):
+    def start(self, sink, *, level=_defaults.LOGURU_LEVEL, format=_defaults.LOGURU_FORMAT, filter=None,
+                    colored=_defaults.LOGURU_COLORED, structured=_defaults.LOGURU_STRUCTURED,
+                    enhanced=_defaults.LOGURU_ENHANCED, queued=_defaults.LOGURU_QUEUED,
+                    wrapped=_defaults.LOGURU_WRAPPED, **kwargs):
         if colored is None and structured:
             colored = False
 
