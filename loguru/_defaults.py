@@ -23,7 +23,7 @@ def env(key, type_, default=None):
 
 LOGURU_AUTOINIT = env('LOGURU_AUTOINIT', bool, True)
 
-LOGURU_FORMAT = env("LOGURU_FORMAT", str, "<green>{time}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>")
+LOGURU_FORMAT = env("LOGURU_FORMAT", str, "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>")
 LOGURU_LEVEL = env("LOGURU_LEVEL", str, "DEBUG")
 LOGURU_COLORED = env("LOGURU_COLORED", bool, None)
 LOGURU_STRUCTURED = env("LOGURU_STRUCTURED", bool, False)
