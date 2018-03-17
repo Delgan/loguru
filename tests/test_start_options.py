@@ -12,7 +12,7 @@ from loguru import logger
     ("WARNING",      lambda x: x.success,  False),
     (50,             lambda x: x.error,    False),
 ])
-def test_level_option(level, function, should_output, writer):
+def test_level(level, function, should_output, writer):
     message = "Test Level"
     logger.start(writer, level=level, format='{message}')
     function(logger)(message)
@@ -24,7 +24,7 @@ def test_level_option(level, function, should_output, writer):
     ('c', '{level} {message} {level}', 'DEBUG c DEBUG'),
     ('d', '{message} {level} {level.no} {level.name}', 'd DEBUG %d DEBUG' % 10)
 ])
-def test_format_option(message, format, expected, writer):
+def test_format(message, format, expected, writer):
     logger.start(writer, format=format)
     logger.debug(message)
     assert writer.read() == expected + '\n'
@@ -45,7 +45,7 @@ def test_format_option(message, format, expected, writer):
     (lambda r: r['level'] == "DEBUG", True),
     (lambda r: r['level'].no != 10, False),
 ])
-def test_filter_option(filter, should_output, writer):
+def test_filter(filter, should_output, writer):
     message = "Test Filter"
     logger.start(writer, filter=filter, format='{message}')
     logger.debug(message)
@@ -55,12 +55,12 @@ def test_filter_option(filter, should_output, writer):
     ('a', '<red>{message}</red>', 'a', False),
     ('b', '<red>{message}</red>', '\x1b[31mb\x1b[0m', True),
 ])
-def test_colored_option(message, format, expected, colored, writer):
+def test_colored(message, format, expected, colored, writer):
     logger.start(writer, format=format, colored=colored)
     logger.debug(message)
     assert writer.read() == expected + '\n'
 
-def test_enhanced_option(writer):
+def test_enhanced(writer):
     logger.start(writer, format='{message}', enhanced=True)
     try:
         1 / 0
@@ -81,7 +81,7 @@ def test_enhanced_option(writer):
     assert len(result_with) > len(result_without)
 
 @pytest.mark.parametrize('with_exception', [False, True])
-def test_structured_option(writer, with_exception):
+def test_structured(writer, with_exception):
     logger.start(writer, format="{message}", structured=True)
     logger.extra['not_serializable'] = object()
     if not with_exception:
@@ -94,7 +94,7 @@ def test_structured_option(writer, with_exception):
     json.loads(writer.read())
 
 @pytest.mark.parametrize('with_exception', [False, True])
-def test_queued_option(with_exception):
+def test_queued(with_exception):
     import time
     x = []
     def sink(message):
@@ -116,7 +116,7 @@ def test_queued_option(with_exception):
         assert lines[-1] == "ZeroDivisionError: division by zero"
         assert sum(line.startswith('> ') for line in lines) == 1
 
-def test_wrapped_option():
+def test_wrapped():
     def sink(msg):
         raise 1 / 0
     logger.start(sink, wrapped=False)
@@ -125,7 +125,7 @@ def test_wrapped_option():
 
 @pytest.mark.parametrize('sink_type', ['function', 'class', 'file_object', 'str_a', 'str_w'])
 @pytest.mark.parametrize('test_invalid', [False, True])
-def test_kwargs_option(sink_type, test_invalid, tmpdir, capsys):
+def test_kwargs(sink_type, test_invalid, tmpdir, capsys):
     msg = 'msg'
     kwargs = {'kw1': '1', 'kw2': '2'}
 
@@ -205,7 +205,7 @@ def test_kwargs_option(sink_type, test_invalid, tmpdir, capsys):
         assert validator()
 
 @pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
-def test_start_invalid_level(writer, level):
+def test_invalid_level(writer, level):
     with pytest.raises(ValueError):
         logger.start(writer, level=level)
 

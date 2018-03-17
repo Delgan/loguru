@@ -4,6 +4,7 @@ import itertools
 import pytest
 import py
 import os
+import subprocess
 
 default_levels = loguru._logger.Logger._levels.copy()
 
@@ -53,8 +54,11 @@ def pyexec(tmpdir):
         if pyfile is None:
             pyfile = file
         pyfile.write(code)
-        out = py.process.cmdexec('python %s' % pyfile.realpath())
-        return out
+        process = subprocess.Popen('python %s' % pyfile.realpath(),
+                                    shell=True, universal_newlines=True,
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = process.communicate()
+        return out, err
 
     return pyexec
 

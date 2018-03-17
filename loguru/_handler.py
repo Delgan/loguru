@@ -50,8 +50,8 @@ class Handler:
                 self.update_format(color)
 
         if queued:
-            self.queue = multiprocessing.Queue()
-            self.thread = threading.Thread(target=self.queued_writer, daemon=False)
+            self.queue = multiprocessing.SimpleQueue()
+            self.thread = threading.Thread(target=self.queued_writer, daemon=True)
             self.thread.start()
 
     @staticmethod
@@ -204,8 +204,8 @@ class Handler:
 
     def queued_writer(self):
         message = None
+        queue = self.queue
         try:
-            queue = self.queue
             while 1:
                 message = queue.get()
                 if message is None:
@@ -219,4 +219,5 @@ class Handler:
     def stop(self):
         if self.queued:
             self.queue.put(None)
+            self.thread.join()
         self.stopper()

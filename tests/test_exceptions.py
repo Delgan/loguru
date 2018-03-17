@@ -18,12 +18,11 @@ def compare_outputs(tmpdir, pyexec):
         print(without_loguru)
         print("=================================================")
 
-        result_with_loguru = pyexec(with_loguru, True).strip()
+        out, _ = pyexec(with_loguru, True)
+        result_with_loguru = out.strip()
 
-        try:
-            pyexec(without_loguru, False)
-        except py.error.Error as e:
-            result_without_loguru = e.err.strip()
+        _, err = pyexec(without_loguru, False)
+        result_without_loguru = err.strip()
 
         print("--- Compared outputs with and without loguru ---")
         print(result_with_loguru)

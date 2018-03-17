@@ -1,6 +1,7 @@
 import sys
 import pytest
 from loguru import logger
+import textwrap
 import time
 
 def test_stop_all(tmpdir, writer, capsys):
@@ -43,6 +44,24 @@ def test_stop_queued(writer):
     logger.stop(i)
     logger.debug("2")
     assert writer.read() == "1\n"
+
+def test_stop_queued_filesink(tmpdir):
+    i = logger.start(tmpdir.join("test.log"), format="{message}", queued=True)
+    logger.debug("1")
+    logger.stop(i)
+    assert tmpdir.join("test.log").read() == "1\n"
+
+@pytest.mark.parametrize("queued", [True, False])
+def test_stop_atexit(pyexec, queued):
+    code = """
+    import sys
+    logger.stop()
+    logger.start(sys.stdout, format='{message}', queued=%r)
+    logger.debug("!")
+    """ % queued
+    out, err = pyexec(textwrap.dedent(code), True)
+    assert out == "!\n"
+    assert err == ""
 
 def test_stop_invalid(writer):
     logger.start(writer)

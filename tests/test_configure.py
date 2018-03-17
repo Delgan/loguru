@@ -1,5 +1,4 @@
 import sys
-import textwrap
 import pytest
 from loguru import logger
 
