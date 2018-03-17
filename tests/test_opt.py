@@ -1,7 +1,7 @@
 import pytest
 import sys
 from loguru import logger
-
+import ansimarkup
 
 def test_record(writer):
     logger.start(writer, format="{message}")
@@ -98,6 +98,26 @@ def test_depth(writer):
     logger.stop()
 
     assert writer.read() == "a : Test 1\ntest_depth : Test 2\n"
+
+@pytest.mark.parametrize("colored, expected", [
+    (False, "a - test - b"),
+    (True, ansimarkup.parse("<red>a - <blue>test</blue> - b</red>")),
+])
+def test_ansi(writer, colored, expected):
+    logger.start(writer, format="<red>a {message} b</red>", colored=colored)
+    logger.opt(ansi=True).debug("- <blue>test</blue> -")
+    assert writer.read() == expected + '\n'
+
+def test_ansi_with_args(writer):
+    logger.start(writer, format="=> {message} <=", colored=True)
+    logger.opt(ansi=True).debug("the {0}test{end}", "<red>", end="</red>")
+    assert writer.read() == ansimarkup.parse("=> the <red>test</red> <=") + '\n'
+
+def test_ansi_with_level(writer):
+    logger.start(writer, format="{message}", colored=True)
+    logger.level("DEBUG", color="<green>")
+    logger.opt(ansi=True).debug("a <level>level</level> b")
+    assert writer.read() == ansimarkup.parse("a <green>level</green> b")+ '\n'
 
 def test_keep_extra(writer):
     logger.extra['test'] = 123

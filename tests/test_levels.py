@@ -1,5 +1,8 @@
 import pytest
+import ansimarkup
 from loguru import logger
+
+am = ansimarkup.AnsiMarkup(tags={"empty": ansimarkup.parse("")})
 
 def test_log_int_level(writer):
     logger.start(writer, format='{level.name} -> {level.no} -> {message}', colored=False)
@@ -22,19 +25,17 @@ def test_add_level(writer):
     logger.start(writer, format='{level.icon} <level>{level.name}</level> -> {level.no} -> {message}', colored=True)
 
     logger.log(name, "test")
-    assert writer.read() == "%s \x1b[31m%s\x1b[0m -> %d -> test\n" % (icon, name, level)
+    expected = am.parse("%s <red>%s</red> -> %d -> test" % (icon, name, level))
+    assert writer.read() == expected + '\n'
 
-@pytest.mark.parametrize('colored', [True, False])
-def test_add_level_after_start(writer, colored):
+@pytest.mark.parametrize('colored, expected', [
+    (False, "foo | 10 | a"),
+    (True, am.parse("<red>foo | 10 | a</red>"))
+])
+def test_add_level_after_start(writer, colored, expected):
     logger.start(writer, level="DEBUG", format='<level>{level.name} | {level.no} | {message}</level>', colored=colored)
     logger.level("foo", 10, color="<red>")
-
     logger.log("foo", "a")
-
-    expected = "foo | 10 | a"
-    if colored:
-        expected = "\x1b[31m%s\x1b[0m" % expected
-
     assert writer.read() == expected + "\n"
 
 def test_add_level_then_log_with_int_value(writer):
@@ -54,8 +55,8 @@ def test_add_malicious_level(writer):
     logger.log(15, ' A ')
     logger.log(name, ' B ')
 
-    assert writer.read() == ('Level 15 & 15 &  A \x1b[0m\n'
-                             'Level 15 & 45 & \x1b[31m B \x1b[0m\n')
+    assert writer.read() == (am.parse('Level 15 & 15 & <empty> A </empty>') + '\n' +
+                             am.parse('Level 15 & 45 & <red> B </red>') + '\n')
 
 def test_add_existing_level(writer):
     logger.level("INFO", 45, color="<red>")
@@ -66,10 +67,10 @@ def test_add_existing_level(writer):
     logger.log(10, "c")
     logger.log(45, "d")
 
-    assert writer.read() == ('ℹ️ + \x1b[31mINFO\x1b[0m + 45 = a\n'
-                             'ℹ️ + \x1b[31mINFO\x1b[0m + 45 = b\n'
-                             '  + Level 10\x1b[0m + 10 = c\n'
-                             '  + Level 45\x1b[0m + 45 = d\n')
+    assert writer.read() == (am.parse('ℹ️ + <red>INFO</red> + 45 = a') + '\n' +
+                             am.parse('ℹ️ + <red>INFO</red> + 45 = b') + '\n' +
+                             am.parse('  + <empty>Level 10</empty> + 10 = c') + '\n' +
+                             am.parse('  + <empty>Level 45</empty> + 45 = d') + '\n')
 
 def test_edit_level(writer):
     logger.level("info", no=0, color="<bold>", icon="[?]")
@@ -86,9 +87,9 @@ def test_edit_level(writer):
     logger.level("info", color="<red>")
     logger.log("info", "c")
 
-    assert writer.read() == ("\x1b[1m->11, info, [?], a<-\x1b[0m\n"
-                             "\x1b[1m->11, info, [!], b<-\x1b[0m\n"
-                             "\x1b[31m->11, info, [!], c<-\x1b[0m\n")
+    assert writer.read() == (ansimarkup.parse("<bold>->11, info, [?], a<-</bold>") + "\n" +
+                             ansimarkup.parse("<bold>->11, info, [!], b<-</bold>") + "\n" +
+                             ansimarkup.parse("<red>->11, info, [!], c<-</red>") + "\n")
 
 def test_edit_existing_level(writer):
     logger.level("DEBUG", no=20, icon="!")

@@ -2,7 +2,7 @@ import json
 import pytest
 import multiprocessing
 from loguru import logger
-
+import ansimarkup
 
 @pytest.mark.parametrize('level, function, should_output', [
     (0,              lambda x: x.trace,    True),
@@ -53,7 +53,7 @@ def test_filter(filter, should_output, writer):
 
 @pytest.mark.parametrize('message, format, expected, colored', [
     ('a', '<red>{message}</red>', 'a', False),
-    ('b', '<red>{message}</red>', '\x1b[31mb\x1b[0m', True),
+    ('b', '<red>{message}</red>', ansimarkup.parse("<red>b</red>"), True),
 ])
 def test_colored(message, format, expected, colored, writer):
     logger.start(writer, format=format, colored=colored)

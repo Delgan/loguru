@@ -127,22 +127,31 @@ class Handler:
         finally:
             del ex_type, ex, tb
 
-    def emit(self, record, exception=None, level_color=None):
+    def emit(self, record, exception=None, level_color=None, ansi_message=False):
         try:
-            level = record['level']
-            if self.levelno > level.no:
+            if self.levelno > record['level'].no:
                 return
 
             if self.filter is not None:
                 if not self.filter(record):
                     return
 
-            if self.colored:
-                precomputed_format = self.precolorized_formats[level_color]
-            else:
-                precomputed_format = self.decolorized_format
+            if ansi_message:
+                preformatted_message = self.format.format_map(record)
 
-            formatted = precomputed_format.format_map(record) + '\n'
+                if self.colored:
+                    formatted = self.colorize(preformatted_message, level_color)
+                else:
+                    formatted = self.decolorize(preformatted_message)
+            else:
+                if self.colored:
+                    precomputed_format = self.precolorized_formats[level_color]
+                else:
+                    precomputed_format = self.decolorized_format
+
+                formatted = precomputed_format.format_map(record)
+
+            formatted += '\n'
 
             if exception:
                 hacky_int = None

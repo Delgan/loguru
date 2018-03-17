@@ -73,20 +73,21 @@ class Logger:
 
     _lock = threading.Lock()
 
-    def __init__(self, extra, exception, record, lazy, depth):
+    def __init__(self, extra, exception, record, lazy, ansi, depth):
         self.catch = Catcher(self)
         self.extra = extra
         self._record = record
         self._exception = exception
         self._lazy = lazy
+        self._ansi = ansi
         self._depth = depth
 
-    def opt(self, *, exception=False, record=False, lazy=False, depth=0):
-        return Logger(self.extra, exception, record, lazy, depth)
+    def opt(self, *, exception=False, record=False, lazy=False, ansi=False, depth=0):
+        return Logger(self.extra, exception, record, lazy, ansi, depth)
 
     def bind(self, **kwargs):
         extra = {**self.extra, **kwargs}
-        logger = Logger(extra, self._exception, self._record, self._lazy, self._depth)
+        logger = Logger(extra, self._exception, self._record, self._lazy, self._ansi, self._depth)
         return logger
 
     def level(self, name, no=None, color=None, icon=None):
@@ -378,14 +379,14 @@ class Logger:
             elif args or kwargs:
                 record['message'] = _message.format(*args, **kwargs)
 
-            _self._emit_handlers(record, _self._exception, level_color, decorated)
+            _self._emit_handlers(record, _self._exception, level_color, _self._ansi, decorated)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
         log_function.__doc__ = doc
 
         return log_function
 
-    def _emit_handlers(self, record, exception, level_color, decorated):
+    def _emit_handlers(self, record, exception, level_color, ansi_message, decorated):
         if exception:
             if isinstance(exception, BaseException):
                 ex_type, ex, tb = (type(exception), exception, exception.__traceback__)
@@ -435,7 +436,7 @@ class Logger:
             exception = (ex_type, ex, tb)
 
         for handler in self._handlers.values():
-            handler.emit(record, exception, level_color)
+            handler.emit(record, exception, level_color, ansi_message)
 
     trace = _make_log_function.__func__("TRACE")
     debug = _make_log_function.__func__("DEBUG")
