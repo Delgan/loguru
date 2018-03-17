@@ -385,14 +385,6 @@ class Logger:
 
         return log_function
 
-    def handle(self, record, exception=None):
-        try:
-            _, level_color, _ = self._levels[record['level'].name]
-        except KeyError:
-            level_color = ''
-
-        self._emit_handlers(record, exception, level_color, False)
-
     def _emit_handlers(self, record, exception, level_color, decorated):
         if exception:
             if isinstance(exception, BaseException):
