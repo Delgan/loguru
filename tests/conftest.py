@@ -19,6 +19,8 @@ def reset_logger():
         loguru._logger.Logger._handlers_count = itertools.count()
         loguru._logger.Logger._enabled = {}
         loguru._logger.Logger._activation_list = []
+        logging.Logger.manager.loggerDict.clear()
+        logging.root = logging.RootLogger(logging.WARNING)
 
     reset()
     yield
@@ -74,27 +76,15 @@ def monkeypatch_now(monkeypatch):
 @pytest.fixture
 def make_logging_logger():
 
-    logging_logger = None
-    logger_handler = None
-    logger_level = None
-
     def make_logging_logger(name, handler, fmt="%(message)s", level="DEBUG"):
-        nonlocal logger_handler, logging_logger, logger_level
         logging_logger = logging.getLogger(name)
-        logger_level = logging_logger.getEffectiveLevel()
         logging_logger.setLevel(level)
-        logger_handler = handler
         formatter = logging.Formatter(fmt)
 
-        logger_handler.setLevel(level)
-        logger_handler.setFormatter(formatter)
-        logging_logger.addHandler(logger_handler)
+        handler.setLevel(level)
+        handler.setFormatter(formatter)
+        logging_logger.addHandler(handler)
 
         return logging_logger
 
     yield make_logging_logger
-
-    if logging_logger:
-        logging_logger.setLevel(logger_level)
-        logging_logger.removeHandler(logger_handler)
-

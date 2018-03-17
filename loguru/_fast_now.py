@@ -22,7 +22,6 @@ def get_fast_now_function():
         def fast_now():
             dt = now()
 
-            # TODO: Remove "pendulum.tz.UTC" when pendulum/#167 will be fixed
             return Pendulum(dt.year, dt.month, dt.day,
                             dt.hour, dt.minute, dt.second, dt.microsecond,
                             dt.tzinfo, dt.fold)
