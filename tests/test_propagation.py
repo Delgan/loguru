@@ -7,8 +7,8 @@ from logging import StreamHandler
 def propagate_sink(message):
     r = message.record
     log = logging.getLogger(r['name'])
-    record = log.makeRecord(r['name'], r['level'].no, r['file'].path, r['line'], r['message'], [],
-                            message.exception, r['function'], r['extra'])
+    record = log.makeRecord(r['name'], r['level'].no, r['file'].path, r['line'], r['message'],
+                            [], r['exception'], r['function'], r['extra'])
     log.handle(record)
 
 def test_formatting(make_logging_logger, capsys):

@@ -355,30 +355,6 @@ class Logger:
             process_recattr = ProcessRecattr(process.ident)
             process_recattr.id, process_recattr.name = process.ident, process.name
 
-            record = {
-                'elapsed': elapsed,
-                'extra': _self.extra,
-                'file': file_recattr,
-                'function': code.co_name,
-                'level': level_recattr,
-                'line': frame.f_lineno,
-                'message': _message,
-                'module': splitext(file_name)[0],
-                'name': name,
-                'process': process_recattr,
-                'thread': thread_recattr,
-                'time': now,
-            }
-
-            if _self._lazy:
-                args = [arg() for arg in args]
-                kwargs = {key: value() for key, value in kwargs.items()}
-
-            if _self._record:
-                record['message'] = _message.format(*args, **kwargs, record=record)
-            elif args or kwargs:
-                record['message'] = _message.format(*args, **kwargs)
-
             exception = _self._exception
 
             if exception:
@@ -429,8 +405,33 @@ class Logger:
 
                 exception = (ex_type, ex, tb)
 
+            record = {
+                'elapsed': elapsed,
+                'exception': exception,
+                'extra': _self.extra,
+                'file': file_recattr,
+                'function': code.co_name,
+                'level': level_recattr,
+                'line': frame.f_lineno,
+                'message': _message,
+                'module': splitext(file_name)[0],
+                'name': name,
+                'process': process_recattr,
+                'thread': thread_recattr,
+                'time': now,
+            }
+
+            if _self._lazy:
+                args = [arg() for arg in args]
+                kwargs = {key: value() for key, value in kwargs.items()}
+
+            if _self._record:
+                record['message'] = _message.format(*args, **kwargs, record=record)
+            elif args or kwargs:
+                record['message'] = _message.format(*args, **kwargs)
+
             for handler in _self._handlers.values():
-                handler.emit(record, exception, level_color, _self._ansi)
+                handler.emit(record, level_color, _self._ansi)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
         log_function.__doc__ = doc

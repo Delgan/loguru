@@ -22,7 +22,7 @@ class HackyInt(int):
 
 
 class StrRecord(str):
-    __slots__ = ('record', 'exception')
+    __slots__ = ('record', )
 
 
 class Handler:
@@ -55,16 +55,17 @@ class Handler:
             self.thread.start()
 
     @staticmethod
-    def serialize(text, record, exception):
+    def serialize(text, record):
+        exception = record['exception']
         if exception:
-            etype, value, _ = exception
-            exception = traceback.format_exception_only(etype, value)
+            etype, value, _ = record['exception']
+            exception = ''.join(traceback.format_exception_only(etype, value))
 
         serializable = {
-            'exception': exception,
             'text': text,
             'record': {
                 'elapsed': record['elapsed'].total_seconds(),
+                'exception': exception,
                 'extra': record['extra'],
                 'file': dict(name=record['file'].name, path=record['file'].path),
                 'function': record['function'],
@@ -127,7 +128,7 @@ class Handler:
         finally:
             del ex_type, ex, tb
 
-    def emit(self, record, exception=None, level_color=None, ansi_message=False):
+    def emit(self, record, level_color=None, ansi_message=False):
         try:
             if self.levelno > record['level'].no:
                 return
@@ -153,20 +154,24 @@ class Handler:
 
             formatted += '\n'
 
+            exception = record['exception']
+
             if exception:
                 hacky_int = None
-                tb = exception[2]
-                while tb:
-                    if tb.__is_caught_point__:
-                        hacky_int = HackyInt(tb.tb_lineno)
-                        tb.tb_lineno = hacky_int
+                ex_type, ex, tb = exception
+                tb_ = tb
+
+                while tb_:
+                    if tb_.__is_caught_point__:
+                        hacky_int = HackyInt(tb_.tb_lineno)
+                        tb_.tb_lineno = hacky_int
                         break
-                    tb = tb.tb_next
+                    tb_ = tb_.tb_next
 
                 if self.enhanced:
-                    formatted_exc = self.exception_formatter.format_exception(*exception)
+                    formatted_exc = self.exception_formatter.format_exception(ex_type, ex, tb)
                 else:
-                    formatted_exc = traceback.format_exception(*exception)
+                    formatted_exc = traceback.format_exception(ex_type, ex, tb)
 
                 formatted_exc = ''.join(formatted_exc)
 
@@ -193,20 +198,20 @@ class Handler:
 
                 formatted += formatted_exc
 
+                if self.queued:
+                    record['exception'] = (ex_type, ex, None)  # tb are not pickable
+
             if self.structured:
-                formatted = self.serialize(formatted, record, exception) + '\n'
+                formatted = self.serialize(formatted, record) + '\n'
 
             message = StrRecord(formatted)
             message.record = record
-            message.exception = exception
 
             with self.lock:
-                if not self.queued:
-                    self.writer(message)
-                else:
-                    if exception:
-                        message.exception = exception[0], exception[1], None  # tb are not pickable
+                if self.queued:
                     self.queue.put(message)
+                else:
+                    self.writer(message)
 
         except Exception:
             self.handle_error(record)
