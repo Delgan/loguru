@@ -55,14 +55,14 @@ class Handler:
             self.thread.start()
 
     @staticmethod
-    def serialize(formatted_message, record, exception):
+    def serialize(text, record, exception):
         if exception:
             etype, value, _ = exception
             exception = traceback.format_exception_only(etype, value)
 
         serializable = {
             'exception': exception,
-            'formatted_message': formatted_message,
+            'text': text,
             'record': {
                 'elapsed': record['elapsed'].total_seconds(),
                 'extra': record['extra'],
