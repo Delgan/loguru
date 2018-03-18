@@ -379,64 +379,63 @@ class Logger:
             elif args or kwargs:
                 record['message'] = _message.format(*args, **kwargs)
 
-            _self._emit_handlers(record, _self._exception, level_color, _self._ansi, decorated)
+            exception = _self._exception
+
+            if exception:
+                if isinstance(exception, BaseException):
+                    ex_type, ex, tb = (type(exception), exception, exception.__traceback__)
+                elif isinstance(exception, tuple):
+                    ex_type, ex, tb = exception
+                else:
+                    ex_type, ex, tb = exc_info()
+
+                if tb:
+                    if decorated:
+                        bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
+                        tb = tb.tb_next
+
+                    root_frame = tb.tb_frame.f_back
+
+                    loguru_tracebacks = []
+                    while tb:
+                        loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
+                        loguru_tracebacks.append(loguru_tb)
+                        tb = tb.tb_next
+
+                    for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
+                        prev_tb.tb_next = next_tb
+
+                    # root_tb
+                    tb = loguru_tracebacks[0] if loguru_tracebacks else None
+
+                    frames = []
+                    while root_frame:
+                        frames.insert(0, root_frame)
+                        root_frame = root_frame.f_back
+
+                    if decorated:
+                        frames = [f for f in frames if (f.f_code.co_filename, f.f_lineno) != bad_frame]
+                        caught_tb = None
+                    else:
+                        caught_tb = tb
+
+                    for f in reversed(frames):
+                        tb = loguru_traceback(f, f.f_lasti, f.f_lineno, tb)
+                        if decorated and caught_tb is None:
+                            caught_tb = tb
+
+                    if caught_tb:
+                        caught_tb.__is_caught_point__ = True
+
+                exception = (ex_type, ex, tb)
+
+            for handler in _self._handlers.values():
+                handler.emit(record, exception, level_color, _self._ansi)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
         log_function.__doc__ = doc
 
         return log_function
-
-    def _emit_handlers(self, record, exception, level_color, ansi_message, decorated):
-        if exception:
-            if isinstance(exception, BaseException):
-                ex_type, ex, tb = (type(exception), exception, exception.__traceback__)
-            elif isinstance(exception, tuple):
-                ex_type, ex, tb = exception
-            else:
-                ex_type, ex, tb = exc_info()
-
-            if tb:
-                if decorated:
-                    bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
-                    tb = tb.tb_next
-
-                root_frame = tb.tb_frame.f_back
-
-                loguru_tracebacks = []
-                while tb:
-                    loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
-                    loguru_tracebacks.append(loguru_tb)
-                    tb = tb.tb_next
-
-                for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
-                    prev_tb.tb_next = next_tb
-
-                # root_tb
-                tb = loguru_tracebacks[0] if loguru_tracebacks else None
-
-                frames = []
-                while root_frame:
-                    frames.insert(0, root_frame)
-                    root_frame = root_frame.f_back
-
-                if decorated:
-                    frames = [f for f in frames if (f.f_code.co_filename, f.f_lineno) != bad_frame]
-                    caught_tb = None
-                else:
-                    caught_tb = tb
-
-                for f in reversed(frames):
-                    tb = loguru_traceback(f, f.f_lasti, f.f_lineno, tb)
-                    if decorated and caught_tb is None:
-                        caught_tb = tb
-
-                if caught_tb:
-                    caught_tb.__is_caught_point__ = True
-
-            exception = (ex_type, ex, tb)
-
-        for handler in self._handlers.values():
-            handler.emit(record, exception, level_color, ansi_message)
 
     trace = _make_log_function.__func__("TRACE")
     debug = _make_log_function.__func__("DEBUG")
