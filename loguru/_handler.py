@@ -55,12 +55,7 @@ class Handler:
             self.thread.start()
 
     @staticmethod
-    def serialize(text, record):
-        exception = record['exception']
-        if exception:
-            etype, value, _ = record['exception']
-            exception = ''.join(traceback.format_exception_only(etype, value))
-
+    def serialize(text, record, exception):
         serializable = {
             'text': text,
             'record': {
@@ -169,14 +164,14 @@ class Handler:
                     tb_ = tb_.tb_next
 
                 if self.enhanced:
-                    formatted_exc = self.exception_formatter.format_exception(ex_type, ex, tb)
+                    exception = self.exception_formatter.format_exception(ex_type, ex, tb)
                 else:
-                    formatted_exc = traceback.format_exception(ex_type, ex, tb)
+                    exception = traceback.format_exception(ex_type, ex, tb)
 
-                formatted_exc = ''.join(formatted_exc)
+                exception = ''.join(exception)
 
                 reg = r'(?:^\S*(Traceback \(most recent call last\):)\S*$|^\S*  \S*File.*\D(%s)\D.*$)' % str(hacky_int)
-                matches = re.finditer(reg, formatted_exc, flags=re.M)
+                matches = re.finditer(reg, exception, flags=re.M)
 
                 tb_match = None
 
@@ -186,23 +181,24 @@ class Handler:
                         tb_match = match
                     if line is not None:
                         s, e = match.span(2)
-                        formatted_exc = formatted_exc[:s] + str(int(hacky_int)) + formatted_exc[e:]
+                        exception = exception[:s] + str(int(hacky_int)) + exception[e:]
                         s = match.start(0)
-                        formatted_exc = formatted_exc[:s] + formatted_exc[s:].replace(" ", ">", 1)
+                        exception = exception[:s] + exception[s:].replace(" ", ">", 1)
                         if tb_match is not None:
                             old = "Traceback (most recent call last):"
                             new = "Traceback (most recent call last, catch point marked):"
                             s = tb_match.start(0)
-                            formatted_exc = formatted_exc[:s] + formatted_exc[s:].replace(old, new, 1)
+                            exception = exception[:s] + exception[s:].replace(old, new, 1)
                         break
 
-                formatted += formatted_exc
+                if not self.structured:
+                    formatted += exception
 
                 if self.queued:
                     record['exception'] = (ex_type, ex, None)  # tb are not pickable
 
             if self.structured:
-                formatted = self.serialize(formatted, record) + '\n'
+                formatted = self.serialize(formatted, record, exception) + '\n'
 
             message = StrRecord(formatted)
             message.record = record

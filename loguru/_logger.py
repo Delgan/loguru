@@ -82,7 +82,7 @@ class Logger:
         self._ansi = ansi
         self._depth = depth
 
-    def opt(self, *, exception=False, record=False, lazy=False, ansi=False, depth=0):
+    def opt(self, *, exception=None, record=False, lazy=False, ansi=False, depth=0):
         return Logger(self.extra, exception, record, lazy, ansi, depth)
 
     def bind(self, **kwargs):
