@@ -1,4 +1,5 @@
 import functools
+import weakref
 from inspect import isclass
 
 
@@ -8,7 +9,7 @@ class Catcher:
                        message="An error has been caught in function '{record[function]}', "
                                "process '{record[process].name}' ({record[process].id}), "
                                "thread '{record[thread].name}' ({record[thread].id}):"):
-        self._logger = logger
+        self._logger = weakref.ref(logger)
         self._exception = exception
         self._level = level
         self._reraise = reraise
@@ -30,7 +31,7 @@ class Catcher:
         else:
             back, decorator = 1, False
 
-        logger = self._logger
+        logger = self._logger()
         logger = logger.opt(exception=True, record=True,
                             lazy=logger._lazy, depth=logger._depth + back)
         log = logger._make_log_function(self._level, decorator)
@@ -44,9 +45,9 @@ class Catcher:
             function, args = args[0], args[1:]
 
             if args or kwargs:
-                catcher = Catcher(self._logger, *args, **kwargs)
+                catcher = Catcher(self._logger(), *args, **kwargs)
             else:
-                catcher = Catcher(self._logger,
+                catcher = Catcher(self._logger(),
                                   exception=self._exception,
                                   level=self._level,
                                   reraise=self._reraise,
@@ -61,4 +62,4 @@ class Catcher:
 
             return catch_wrapper
 
-        return Catcher(self._logger, *args, **kwargs)
+        return Catcher(self._logger(), *args, **kwargs)
