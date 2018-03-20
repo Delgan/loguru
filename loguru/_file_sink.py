@@ -19,7 +19,7 @@ DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'
 
 class FileSink:
 
-    def __init__(self, path, *, rotation=None, backups=None, compression=None, **kwargs):
+    def __init__(self, path, *, rotation=None, retention=None, compression=None, **kwargs):
         self.start_time = fast_now()
         self.start_time._FORMATTER = 'alternative'
         self.start_time._to_string_format = '%Y-%m-%d_%H-%M-%S'
@@ -33,7 +33,7 @@ class FileSink:
         self.rotation_time = self.start_time
 
         self.should_rotate = self.make_should_rotate_function(rotation)
-        self.manage_backups = self.make_manage_backups_function(backups)
+        self.manage_retention = self.make_manage_retention_function(retention)
         self.compress_file = self.make_compress_file_function(compression)
         self.glob_pattern = self.make_glob_pattern(self.path)
 
@@ -158,30 +158,30 @@ class FileSink:
 
         return function
 
-    def make_manage_backups_function(self, backups):
-        if backups is None:
+    def make_manage_retention_function(self, retention):
+        if retention is None:
             return None
-        elif isinstance(backups, str):
-            interval = self.parse_duration(backups)
+        elif isinstance(retention, str):
+            interval = self.parse_duration(retention)
             if interval is None:
-                raise ValueError("Cannot parse backups from: '%s'" % backups)
-            return self.make_manage_backups_function(interval)
-        elif isinstance(backups, int):
+                raise ValueError("Cannot parse retention from: '%s'" % retention)
+            return self.make_manage_retention_function(interval)
+        elif isinstance(retention, int):
             def function(logs):
-                for log in sorted(logs, key=lambda log: (-os.stat(log).st_mtime, log))[backups:]:
+                for log in sorted(logs, key=lambda log: (-os.stat(log).st_mtime, log))[retention:]:
                     os.remove(log)
-        elif isinstance(backups, datetime.timedelta):
-            seconds = backups.total_seconds()
+        elif isinstance(retention, datetime.timedelta):
+            seconds = retention.total_seconds()
             def function(logs):
                 t = fast_now().timestamp()
                 limit = t - seconds
                 for log in logs:
                     if os.stat(log).st_mtime <= limit:
                         os.remove(log)
-        elif callable(backups):
-            function = backups
+        elif callable(retention):
+            function = retention
         else:
-            raise ValueError("Cannot infer backups for objects of type: '%s'" % type(backups).__name__)
+            raise ValueError("Cannot infer retention for objects of type: '%s'" % type(retention).__name__)
 
         return function
 
@@ -368,11 +368,11 @@ class FileSink:
     def rotating_write(self, message):
         if self.should_rotate(message):
             compress = self.compress_file is not None
-            manage = self.manage_backups is not None
-            self.terminate(check_conflict=True, compress_file=compress, manage_backups=manage, create_new=True)
+            manage = self.manage_retention is not None
+            self.terminate(check_conflict=True, compress_file=compress, manage_retention=manage, create_new=True)
         self.file.write(message)
 
-    def terminate(self, *, check_conflict=False, compress_file=False, manage_backups=False, create_new=False):
+    def terminate(self, *, check_conflict=False, compress_file=False, manage_retention=False, create_new=False):
         old_file = self.file
         old_path = self.file_path
 
@@ -396,9 +396,9 @@ class FileSink:
         if compress_file:
             self.compress_file(old_path)
 
-        if manage_backups:
+        if manage_retention:
             logs = glob.glob(self.glob_pattern)
-            self.manage_backups(logs)
+            self.manage_retention(logs)
 
         if create_new:
             new_dir = os.path.dirname(new_path)
@@ -409,6 +409,6 @@ class FileSink:
 
     def stop(self):
         compress = (self.compress_file is not None) and (self.should_rotate is None)
-        manage = (self.manage_backups is not None) and (self.should_rotate is None)
+        manage = (self.manage_retention is not None) and (self.should_rotate is None)
         check = compress
-        self.terminate(check_conflict=check, compress_file=compress, manage_backups=manage, create_new=False)
+        self.terminate(check_conflict=check, compress_file=compress, manage_retention=manage, create_new=False)
