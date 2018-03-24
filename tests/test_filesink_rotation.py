@@ -10,7 +10,7 @@ from loguru import logger
     ('test.log', True),
     ('{n}.log', False),
     ('{start_time}.log', True),
-    ('test.log.{n+1}', False),
+    ('test.log.{n}', False),
     ('test.log.1', True),
 ])
 def test_renaming(tmpdir, name, should_rename):
@@ -80,7 +80,6 @@ def test_size_rotation(tmpdir, size):
     ("1.222 hours, 3.44s", [1.222, 0.1, 1, 1.2, 2]),
     (datetime.timedelta(hours=1), [0.9, 0.2, 0.7, 0.5, 3]),
     (pendulum.Interval(minutes=30), [0.48, 0.04, 0.07, 0.44, 0.5]),
-    (lambda t: t.add(months=1).start_of('month').at(13, 00, 00), [12 * 24, 26, 31 * 24 - 2, 2, 24 * 60]),
     ('hourly', [0.9, 0.2, 0.8, 3, 1]),
     ('daily', [11, 1, 23, 1, 24]),
     ('WEEKLY', [11, 2, 24 * 6, 24, 24 * 7]),
@@ -103,6 +102,16 @@ def test_time_rotation(monkeypatch_now, tmpdir, when, hours):
     assert len(tmpdir.listdir()) == 4
     assert {f.read() for f in tmpdir.listdir()} == {'a\n', 'b\nc\n', 'd\n', 'e\n'}
 
+def test_function_rotation(tmpdir):
+    x = iter([False, True, False])
+    i = logger.start(tmpdir.join("test.log"), rotation=lambda *_: next(x))
+    logger.debug("a")
+    assert len(tmpdir.listdir()) == 1
+    logger.debug("b")
+    assert len(tmpdir.listdir()) == 2
+    logger.debug("c")
+    assert len(tmpdir.listdir()) == 2
+
 def test_no_rotation_at_stop(tmpdir):
     i = logger.start(tmpdir.join("test.log"), rotation="10 MB")
     logger.debug("test")
@@ -113,7 +122,7 @@ def test_no_rotation_at_stop(tmpdir):
 
 @pytest.mark.parametrize('rotation', [
     "w7", "w10", "w-1", "h", "M",
-    "w1at13", "www", "13 at w2",
+    "w1at13", "www", "13 at w2", "w",
     "K", "tufy MB", "111.111.111 kb", "3 Ki",
     "2017.11.12", "11:99", "monday at 2017",
     "e days", "2 days 8 pouooi", "foobar",

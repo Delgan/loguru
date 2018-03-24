@@ -74,13 +74,13 @@ def test_not_managed_files(tmpdir):
     assert len(tmpdir.listdir()) == len(others)
 
 def test_manage_formatted_files(tmpdir):
-    f1 = tmpdir.join('temp/0/file.log')
-    f2 = tmpdir.join('temp/file0.log')
-    f3 = tmpdir.join('temp/d0/f0.1.log')
+    f1 = tmpdir.join('temp/1/file.log')
+    f2 = tmpdir.join('temp/file1.log')
+    f3 = tmpdir.join('temp/d1/f1.1.log')
 
     a = logger.start(tmpdir.join('temp/{n}/file.log'), retention=0)
     b = logger.start(tmpdir.join('temp/file{n}.log'), retention=0)
-    c = logger.start(tmpdir.join('temp/d{n}/f{n}.{n+1}.log'), retention=0)
+    c = logger.start(tmpdir.join('temp/d{n}/f{n}.{n}.log'), retention=0)
 
     logger.debug("test")
 

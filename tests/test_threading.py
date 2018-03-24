@@ -13,27 +13,26 @@ def test_safe(capsys):
         nonlocal output
         assert not entered
         entered = True
-        time.sleep(0.5)
+        time.sleep(1)
         entered = False
         output += msg
 
     def first_thread():
         nonlocal first_thread_initialized
         first_thread_initialized = True
-        time.sleep(0.01)
+        time.sleep(1)
         assert second_thread_initialized
         logger.debug("message 1")
 
     def second_thread():
         nonlocal second_thread_initialized
         second_thread_initialized = True
-        time.sleep(0.01)
+        time.sleep(1)
         assert first_thread_initialized
-
-        time.sleep(0.1)
+        time.sleep(0.5)
         logger.debug("message 2")
 
-    logger.start(non_safe_sink, format="{message}")
+    logger.start(non_safe_sink, format="{message}", wrapped=False)
 
     threads = [Thread(target=first_thread), Thread(target=second_thread)]
 

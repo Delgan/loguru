@@ -14,8 +14,6 @@ import pendulum
 
 from ._fast_now import fast_now
 
-DAYS_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-
 
 class FileSink:
 
@@ -29,17 +27,16 @@ class FileSink:
         self.path = str(path)
         self.file = None
         self.file_path = None
-        self.created = 0
-        self.rotation_time = self.start_time
+        self.created = 1
 
-        self.should_rotate = self.make_should_rotate_function(rotation)
-        self.manage_retention = self.make_manage_retention_function(retention)
-        self.compress_file = self.make_compress_file_function(compression)
+        self.rotation_function = self.make_rotation_function(rotation)
+        self.retention_function = self.make_retention_function(retention)
+        self.compression_function = self.make_compression_function(compression)
         self.glob_pattern = self.make_glob_pattern(self.path)
 
         self.terminate(create_new=True)
 
-        if self.should_rotate is None:
+        if self.rotation_function is None:
             self.write = self.file.write
         else:
             self.write = self.rotating_write
@@ -49,15 +46,10 @@ class FileSink:
         now._FORMATTER = 'alternative'
         now._to_string_format = '%Y-%m-%d_%H-%M-%S'
 
-        self.rotation_time._FORMATTER = 'alternative'
-        self.rotation_time._to_string_format = '%Y-%m-%d_%H-%M-%S'
-
         record = {
             "time": now,
             "start_time": self.start_time,
-            "rotation_time": self.rotation_time,
             "n": self.created,
-            "n+1": self.created + 1,
         }
 
         return os.path.abspath(self.path.format_map(record))
@@ -73,179 +65,158 @@ class FileSink:
             pattern = root + '*'
         return pattern
 
-    def make_should_rotate_function(self, rotation):
+    def make_rotation_function(self, rotation):
+
+        def make_from_size(size_limit):
+            def rotation_function(message, file):
+                file.seek(0, 2)
+                return file.tell() + len(message) >= size_limit
+            return rotation_function
+
+        def make_from_time(step_forward, time_init=None):
+            time_limit = self.start_time
+            if time_init is not None:
+                t = time_init
+                time_limit = time_limit.at(t.hour, t.minute, t.second, t.microsecond)
+            if time_limit <= self.start_time:
+                time_limit = step_forward(time_limit)
+            def rotation_function(message, file):
+                nonlocal time_limit
+                record_time = message.record['time']
+                if record_time >= time_limit:
+                    while time_limit <= record_time:
+                        time_limit = step_forward(time_limit)
+                    return True
+                return False
+            return rotation_function
+
         if rotation is None:
             return None
         elif isinstance(rotation, str):
             size = self.parse_size(rotation)
             if size is not None:
-                return self.make_should_rotate_function(size)
+                return self.make_rotation_function(size)
             interval = self.parse_duration(rotation)
             if interval is not None:
-                return self.make_should_rotate_function(interval)
+                return self.make_rotation_function(interval)
             frequency = self.parse_frequency(rotation)
             if frequency is not None:
-                return self.make_should_rotate_function(frequency)
+                return make_from_time(frequency)
             daytime = self.parse_daytime(rotation)
             if daytime is not None:
                 day, time = daytime
                 if day is None:
-                    return self.make_should_rotate_function(time)
-                elif time is None:
+                    return self.make_rotation_function(time)
+                if time is None:
                     time = pendulum.parse('00:00', strict=True)
-                day = getattr(pendulum, DAYS_NAMES[day])
-                time_limit = self.start_time.at(time.hour, time.minute, time.second, time.microsecond)
-                if time_limit <= self.start_time:
-                    time_limit = time_limit.next(day, keep_time=True)
-                self.rotation_time = time_limit
-                def function(message):
-                    nonlocal time_limit
-                    record_time = message.record['time']
-                    if record_time >= time_limit:
-                        while time_limit <= record_time:
-                            time_limit = time_limit.next(day, keep_time=True)
-                        self.rotation_time = time_limit
-                        return True
-                    return False
-            else:
-                raise ValueError("Cannot parse rotation from: '%s'" % rotation)
+                return make_from_time(lambda t: t.next(day, keep_time=True), time_init=time)
+            raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         elif isinstance(rotation, (numbers.Real, decimal.Decimal)):
-            size_limit = rotation
-            def function(message):
-                file = self.file
-                file.seek(0, 2)
-                return file.tell() + len(message) >= size_limit
+            return make_from_size(rotation)
         elif isinstance(rotation, datetime.time):
             time = pendulum.Time.instance(rotation)
-            time_limit = self.start_time.at(time.hour, time.minute, time.second, time.microsecond)
-            if time_limit <= self.start_time:
-                time_limit = time_limit.add(days=1)
-            self.rotation_time = time_limit
-            def function(message):
-                nonlocal time_limit
-                record_time = message.record['time']
-                if record_time >= time_limit:
-                    while time_limit <= record_time:
-                        time_limit = time_limit.add(days=1)
-                    self.rotation_time = time_limit
-                    return True
-                return False
+            return make_from_time(lambda t: t.add(days=1), time_init=time)
         elif isinstance(rotation, datetime.timedelta):
-            time_delta = pendulum.Interval.instance(rotation)
-            time_limit = self.start_time + time_delta
-            self.rotation_time = time_limit
-            def function(message):
-                nonlocal time_limit
-                record_time = message.record['time']
-                if record_time >= time_limit:
-                    while time_limit <= record_time:
-                        time_limit += time_delta
-                    self.rotation_time = time_limit
-                    return True
-                return False
+            interval = pendulum.Interval.instance(rotation)
+            return make_from_time(lambda t: t + interval)
         elif callable(rotation):
-            time_limit = rotation(self.start_time)
-            def function(message):
-                nonlocal time_limit
-                record_time = message.record['time']
-                if record_time >= time_limit:
-                    time_limit = rotation(record_time)
-                    self.rotation_time = time_limit
-                    return True
-                return False
+            return rotation
         else:
             raise ValueError("Cannot infer rotation for objects of type: '%s'" % type(rotation).__name__)
 
-        return function
+    def make_retention_function(self, retention):
 
-    def make_manage_retention_function(self, retention):
+        def make_from_filter(filter_logs):
+            def retention_function(logs):
+                for log in filter_logs(logs):
+                    os.remove(log)
+            return retention_function
+
         if retention is None:
             return None
         elif isinstance(retention, str):
             interval = self.parse_duration(retention)
             if interval is None:
                 raise ValueError("Cannot parse retention from: '%s'" % retention)
-            return self.make_manage_retention_function(interval)
+            return self.make_retention_function(interval)
         elif isinstance(retention, int):
-            def function(logs):
-                for log in sorted(logs, key=lambda log: (-os.stat(log).st_mtime, log))[retention:]:
-                    os.remove(log)
+            key_log = lambda log: (-os.stat(log).st_mtime, log)
+            def filter_logs(logs):
+                return sorted(logs, key=key_log)[retention:]
+            return make_from_filter(filter_logs)
         elif isinstance(retention, datetime.timedelta):
             seconds = retention.total_seconds()
-            def function(logs):
+            def filter_logs(logs):
                 t = fast_now().timestamp()
-                limit = t - seconds
-                for log in logs:
-                    if os.stat(log).st_mtime <= limit:
-                        os.remove(log)
+                return [log for log in logs if os.stat(log).st_mtime <= t - seconds]
+            return make_from_filter(filter_logs)
         elif callable(retention):
-            function = retention
+            return retention
         else:
             raise ValueError("Cannot infer retention for objects of type: '%s'" % type(retention).__name__)
 
-        return function
+    def make_compression_function(self, compression):
 
-    def make_compress_file_function(self, compression):
+        def make_compress_generic(opener, **kwargs):
+            def compress(path_in, path_out):
+                with open(path_in, 'rb') as f_in:
+                    with opener(path_out, 'wb', **kwargs) as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+            return compress
+
+        def make_compress_archive(mode):
+            import tarfile
+            def compress(path_in, path_out):
+                with tarfile.open(path_out, 'w:' + mode) as f_comp:
+                    f_comp.add(path_in, os.path.basename(path_in))
+            return compress
+
+        def make_compress_zipped():
+            import zlib, zipfile
+            def compress(path_in, path_out):
+                with zipfile.ZipFile(path_out, 'w', compression=zipfile.ZIP_DEFLATED) as f_comp:
+                    f_comp.write(path_in, os.path.basename(path_in))
+            return compress
+
         if compression is None:
             return None
         elif isinstance(compression, str):
             ext = compression.strip().lstrip('.')
 
-            def compress_generic(opener, **kwargs):
-                def compress(path_in, path_out):
-                    with open(path_in, 'rb') as f_in:
-                        with opener(path_out, 'wb', **kwargs) as f_out:
-                            shutil.copyfileobj(f_in, f_out)
-                return compress
-
-            def compress_archive(mode):
-                import tarfile
-                def compress(path_in, path_out):
-                    with tarfile.open(path_out, 'w:' + mode) as f_comp:
-                        f_comp.add(path_in, os.path.basename(path_in))
-                return compress
-
-            def compress_zipped():
-                import zlib, zipfile
-                def compress(path_in, path_out):
-                    with zipfile.ZipFile(path_out, 'w', compression=zipfile.ZIP_DEFLATED) as f_comp:
-                        f_comp.write(path_in, os.path.basename(path_in))
-                return compress
-
             if ext == 'gz':
                 import zlib, gzip
-                compress = compress_generic(gzip.open)
+                compress = make_compress_generic(gzip.open)
             elif ext == 'bz2':
                 import bz2
-                compress = compress_generic(bz2.open)
+                compress = make_compress_generic(bz2.open)
             elif ext == 'xz':
                 import lzma
-                compress = compress_generic(lzma.open, format=lzma.FORMAT_XZ)
+                compress = make_compress_generic(lzma.open, format=lzma.FORMAT_XZ)
             elif ext == 'lzma':
                 import lzma
-                compress = compress_generic(lzma.open, format=lzma.FORMAT_ALONE)
+                compress = make_compress_generic(lzma.open, format=lzma.FORMAT_ALONE)
             elif ext == 'tar':
-                compress = compress_archive('')
+                compress = make_compress_archive('')
             elif ext == 'tar.gz':
                 import zlib, gzip
-                compress = compress_archive('gz')
+                compress = make_compress_archive('gz')
             elif ext == 'tar.bz2':
                 import bz2
-                compress = compress_archive('bz2')
+                compress = make_compress_archive('bz2')
             elif ext == 'tar.xz':
                 import lzma
-                compress = compress_archive('xz')
+                compress = make_compress_archive('xz')
             elif ext == 'zip':
-                compress = compress_zipped()
+                compress = make_compress_zipped()
             else:
                 raise ValueError("Invalid compression format: '%s'" % ext)
 
-            def compress_function(path_in):
+            def compression_function(path_in):
                 path_out = path_in + '.' + ext
                 compress(path_in, path_out)
                 os.remove(path_in)
 
-            return compress_function
+            return compression_function
         elif callable(compression):
             return compression
         else:
@@ -315,9 +286,9 @@ class FileSink:
         if frequency == 'hourly':
             function = lambda t: t.add(hours=1).start_of('hour')
         elif frequency == 'daily':
-            function = '00:00'
+            function = lambda t: t.add(days=1).start_of('day')
         elif frequency == 'weekly':
-            function = 'w0'
+            function = lambda t: t.add(weeks=1).start_of('week')
         elif frequency == 'monthly':
             function = lambda t: t.add(months=1).start_of('month')
         elif frequency == 'yearly':
@@ -329,27 +300,32 @@ class FileSink:
     def parse_daytime(daytime):
         daytime = daytime.strip()
 
-        daytime_reg = re.compile(r'(.*?)\s+at\s+(.*)', flags=re.I)
-        day_reg = re.compile(r'w\d+', flags=re.I)
-        time_reg = re.compile(r'[\d\.\:\,]+(?:\s*[ap]m)?', flags=re.I)
+        daytime_reg = re.compile(r'^(.*?)\s+at\s+(.*)$', flags=re.I)
+        day_reg = re.compile(r'^w\d+$', flags=re.I)
+        time_reg = re.compile(r'^[\d\.\:\,]+(?:\s*[ap]m)?$', flags=re.I)
 
-        daytime_match = daytime_reg.fullmatch(daytime)
+        days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        pdays = [getattr(pendulum, day.upper()) for day in days]
+
+        daytime_match = daytime_reg.match(daytime)
         if daytime_match:
             day, time = daytime_match.groups()
-        elif time_reg.fullmatch(daytime):
+        elif time_reg.match(daytime):
             day, time = None, daytime
-        elif day_reg.fullmatch(daytime) or daytime.upper() in DAYS_NAMES:
+        elif day_reg.match(daytime) or daytime.lower() in days:
             day, time = daytime, None
         else:
             return None
 
         if day is not None:
-            if day_reg.fullmatch(day):
-                day = int(day[1:])
-                if not 0 <= day <= 6:
-                    raise ValueError("Invalid weekday index while parsing daytime: '%d'" % day)
-            elif day.upper() in DAYS_NAMES:
-                day = DAYS_NAMES.index(day.upper())
+            day_ = day.lower()
+            if day_reg.match(day):
+                d = int(day[1:])
+                if not 0 <= d < len(days):
+                    raise ValueError("Invalid weekday index while parsing daytime: '%d'" % d)
+                day = pdays[d]
+            elif day_ in days:
+                day = pdays[days.index(day_)]
             else:
                 raise ValueError("Invalid weekday value while parsing daytime: '%s'" % day)
 
@@ -366,13 +342,13 @@ class FileSink:
         return day, time
 
     def rotating_write(self, message):
-        if self.should_rotate(message):
-            compress = self.compress_file is not None
-            manage = self.manage_retention is not None
-            self.terminate(check_conflict=True, compress_file=compress, manage_retention=manage, create_new=True)
+        if self.rotation_function(message, self.file):
+            compress = self.compression_function is not None
+            manage = self.retention_function is not None
+            self.terminate(check_conflict=True, exec_compression=compress, exec_retention=manage, create_new=True)
         self.file.write(message)
 
-    def terminate(self, *, check_conflict=False, compress_file=False, manage_retention=False, create_new=False):
+    def terminate(self, *, check_conflict=False, exec_compression=False, exec_retention=False, create_new=False):
         old_file = self.file
         old_path = self.file_path
 
@@ -393,12 +369,12 @@ class FileSink:
             os.rename(old_path, renamed_path)
             old_path = renamed_path
 
-        if compress_file:
-            self.compress_file(old_path)
+        if exec_compression:
+            self.compression_function(old_path)
 
-        if manage_retention:
+        if exec_retention:
             logs = glob.glob(self.glob_pattern)
-            self.manage_retention(logs)
+            self.retention_function(logs)
 
         if create_new:
             new_dir = os.path.dirname(new_path)
@@ -408,7 +384,7 @@ class FileSink:
             self.created += 1
 
     def stop(self):
-        compress = (self.compress_file is not None) and (self.should_rotate is None)
-        manage = (self.manage_retention is not None) and (self.should_rotate is None)
-        check = compress
-        self.terminate(check_conflict=check, compress_file=compress, manage_retention=manage, create_new=False)
+        compression = (self.compression_function is not None) and (self.rotation_function is None)
+        retention = (self.retention_function is not None) and (self.rotation_function is None)
+        check = compression
+        self.terminate(check_conflict=check, exec_compression=compression, exec_retention=retention, create_new=False)
