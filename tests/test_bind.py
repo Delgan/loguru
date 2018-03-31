@@ -5,7 +5,7 @@ use_binded = pytest.mark.parametrize("use_binded", [True, False])
 
 def test_binding(writer):
     logger.start(writer, format="{extra[a]} + {extra[b]}")
-    logger.extra = {"a": 0, "b": 0}
+    logger.configure({'extra': {"a": 0, "b": 0}})
     logger.debug("")
     logger.bind(a=1)
     logger.debug("")

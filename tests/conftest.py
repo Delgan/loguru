@@ -12,7 +12,7 @@ default_levels = loguru._logger.Logger._levels.copy()
 def reset_logger():
     def reset():
         loguru.logger.stop()
-        loguru.logger.extra = {}
+        loguru.logger.__init__({}, None, False, False, False, 0)
         loguru._logger.Logger._levels = default_levels.copy()
         loguru._logger.Logger._min_level = float('inf')
         loguru._logger.Logger._handlers = {}

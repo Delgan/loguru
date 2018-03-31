@@ -4,7 +4,7 @@ def get_fast_now_function():
     try:
         from ._extensions.fast_now import init, now
     except ImportError:
-        fast_now = lambda: pendulum.now()
+        fast_now = pendulum.now
     else:
         local_timezone = pendulum.tz.local_timezone()
 

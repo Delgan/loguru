@@ -75,7 +75,7 @@ class Logger:
 
     def __init__(self, extra, exception, record, lazy, ansi, depth):
         self.catch = Catcher(self)
-        self.extra = extra
+        self._extra = extra
         self._record = record
         self._exception = exception
         self._lazy = lazy
@@ -83,12 +83,11 @@ class Logger:
         self._depth = depth
 
     def opt(self, *, exception=None, record=False, lazy=False, ansi=False, depth=0):
-        return Logger(self.extra, exception, record, lazy, ansi, depth)
+        return Logger(self._extra, exception, record, lazy, ansi, depth)
 
-    def bind(self, **kwargs):
-        extra = {**self.extra, **kwargs}
-        logger = Logger(extra, self._exception, self._record, self._lazy, self._ansi, self._depth)
-        return logger
+    def bind(_self, **kwargs):
+        return Logger({**_self._extra, **kwargs},
+                      _self._exception, _self._record, _self._lazy, _self._ansi, _self._depth)
 
     def level(self, name, no=None, color=None, icon=None):
         if not isinstance(name, str):
@@ -133,7 +132,7 @@ class Logger:
 
     def configure(self, config):
         with self._lock:
-            self.extra.update(config.get('extra', {}))
+            self._extra.update(config.get('extra', {}))
         for params in config.get('levels', []):
             self.level(**params)
         handlers_ids = [self.start(**params) for params in config.get('sinks', [])]
@@ -408,7 +407,7 @@ class Logger:
             record = {
                 'elapsed': elapsed,
                 'exception': exception,
-                'extra': _self.extra,
+                'extra': _self._extra,
                 'file': file_recattr,
                 'function': code.co_name,
                 'level': level_recattr,
@@ -456,4 +455,4 @@ class Logger:
         """Log 'message.format(*args, **kwargs)' with severity _level."""
         logger = _self.opt(exception=_self._exception, record=_self._record,
                            lazy=_self._lazy, depth=_self._depth + 1)
-        logger._make_log_function(_level, False)(logger, _message, *args, **kwargs)
+        logger._make_log_function(_level)(logger, _message, *args, **kwargs)

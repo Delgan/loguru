@@ -53,7 +53,7 @@ def test_extra(writer):
         }
     }
 
-    logger.extra = {"c": 9}
+    logger.configure({'extra': {"c": 9}})
     logger.configure(config)
 
     logger.start(writer, format='{extra[a]} | {extra[b]} | {extra[c]}')

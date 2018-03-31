@@ -120,7 +120,7 @@ def test_ansi_with_level(writer):
     assert writer.read() == ansimarkup.parse("a <green>level</green> b")+ '\n'
 
 def test_keep_extra(writer):
-    logger.extra['test'] = 123
+    logger.configure({'extra': {'test': 123}})
     logger.start(writer, format='{extra[test]}')
     logger.opt().debug("")
 
