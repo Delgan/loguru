@@ -130,12 +130,12 @@ class Logger:
 
         return self.level(name)
 
-    def configure(self, config):
+    def configure(self, *, extra={}, levels=[], sinks=[]):
         with self._lock:
-            self._extra.update(config.get('extra', {}))
-        for params in config.get('levels', []):
+            self._extra.update(extra)
+        for params in levels:
             self.level(**params)
-        handlers_ids = [self.start(**params) for params in config.get('sinks', [])]
+        handlers_ids = [self.start(**params) for params in sinks]
         return handlers_ids
 
     def _change_activation(self, name, status):

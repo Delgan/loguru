@@ -105,6 +105,6 @@ def test_log_formatting(writer, message, args, kwargs, expected, use_log_functio
 
 def test_extra_formatting(writer):
     logger.start(writer, format="{extra[test]} -> {extra[dict]} -> {message}")
-    logger.configure({'extra': {'test': 'my_test', 'dict': {'a': 10}}})
+    logger.configure(extra={'test': 'my_test', 'dict': {'a': 10}})
     logger.debug("level: {name}", name="DEBUG")
     assert writer.read() == "my_test -> {'a': 10} -> level: DEBUG\n"
