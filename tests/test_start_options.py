@@ -83,7 +83,7 @@ def test_enhanced(writer):
 @pytest.mark.parametrize('with_exception', [False, True])
 def test_structured(writer, with_exception):
     logger.start(writer, format="{message}", structured=True)
-    logger.configure(extra={'not_serializable': object()})
+    logger.configure(extra=dict(not_serializable=object()))
     if not with_exception:
         logger.debug("Test")
     else:
