@@ -54,7 +54,7 @@ class ProcessRecattr(str):
 
 class Logger:
 
-    _base_levels = {
+    _levels = {
         "TRACE": Level(_defaults.LOGURU_TRACE_NO, _defaults.LOGURU_TRACE_COLOR, _defaults.LOGURU_TRACE_ICON),
         "DEBUG": Level(_defaults.LOGURU_DEBUG_NO, _defaults.LOGURU_DEBUG_COLOR, _defaults.LOGURU_DEBUG_ICON),
         "INFO": Level(_defaults.LOGURU_INFO_NO, _defaults.LOGURU_INFO_COLOR, _defaults.LOGURU_INFO_ICON),
@@ -63,8 +63,6 @@ class Logger:
         "ERROR": Level(_defaults.LOGURU_ERROR_NO, _defaults.LOGURU_ERROR_COLOR, _defaults.LOGURU_ERROR_ICON),
         "CRITICAL": Level(_defaults.LOGURU_CRITICAL_NO, _defaults.LOGURU_CRITICAL_COLOR, _defaults.LOGURU_CRITICAL_ICON),
     }
-
-    _levels = _base_levels.copy()
 
     _handlers_count = itertools.count()
     _handlers = {}
@@ -132,17 +130,13 @@ class Logger:
 
         return self.level(name)
 
-    def configure(self, *, sinks=None, levels=None, extra=None,):
-        handlers_ids = []
-
+    def configure(self, *, sinks=None, levels=None, extra=None):
         if sinks is not None:
             self.stop()
-            handlers_ids = [self.start(**params) for params in sinks]
+        else:
+            sinks = []
 
         if levels is not None:
-            with self._lock:
-                self._levels.clear()
-                self._levels.update(self._base_levels)
             for params in levels:
                 self.level(**params)
 
@@ -150,7 +144,7 @@ class Logger:
             with self._lock:
                 self._extra = extra
 
-        return handlers_ids
+        return [self.start(**params) for params in sinks]
 
     def _change_activation(self, name, status):
         if not isinstance(name, str):

@@ -88,7 +88,18 @@ def test_returned_ids(capsys):
     assert out == ""
     assert err == ""
 
-def test_remove_previous_sinks(writer):
+def test_dont_reset_by_default(writer):
+    logger_ = logger.bind(a=1)
+    logger_.level("b", no=30)
+    logger_.start(writer, format="{level} {extra[a]} {message}")
+
+    logger_.configure()
+
+    logger_.log("b", "Test")
+
+    assert writer.read() == "b 1 Test\n"
+
+def test_reset_previous_sinks(writer):
     logger.start(writer, format="{message}")
 
     logger.configure(sinks=[])
@@ -97,16 +108,7 @@ def test_remove_previous_sinks(writer):
 
     assert writer.read() == ""
 
-def test_remove_previous_levels(writer):
-    logger.start(writer, format="{message}")
-    logger.level("abc", no=30)
-
-    logger.configure(levels=[])
-
-    with pytest.raises(ValueError):
-        logger.log("abc", "Test")
-
-def test_remove_previous_extra(writer):
+def test_reset_previous_extra(writer):
     logger2 = logger.bind(a=123)
     logger2.start(writer, format="{extra[a]}", wrapped=False)
 
@@ -115,27 +117,13 @@ def test_remove_previous_extra(writer):
     with pytest.raises(KeyError):
         logger2.debug("Nope")
 
-def test_dont_remove_unspecified(capsys):
-    fmt = "{message} - {level} - {extra[a]}"
-    logger.start(sys.stdout, format=fmt)
+def test_dont_reset_previous_levels(writer):
+    logger.level("abc", no=30)
 
-    logger.configure(extra={"a": 1})
-    logger.debug("Test")
+    logger.configure(levels=[])
 
-    out, err = capsys.readouterr()
-    assert out == "Test - DEBUG - 1\n"
-    assert err == ""
+    logger.start(writer, format="{level} {message}")
 
-    logger.configure(levels=[{"name": "A", "no": 30}])
-    logger.log("A", "Test 2")
+    logger.log("abc", "Test")
 
-    out, err = capsys.readouterr()
-    assert out == "Test 2 - A - 1\n"
-    assert err == ""
-
-    logger.configure(sinks=[{"sink": sys.stderr, "format": fmt}])
-    logger.log("A", "Test 3")
-
-    out, err = capsys.readouterr()
-    assert out == ""
-    assert err == "Test 3 - A - 1\n"
+    assert writer.read() == "abc Test\n"
