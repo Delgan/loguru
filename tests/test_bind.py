@@ -49,3 +49,13 @@ def test_add_level_and_bind(writer, use_binded):
     logger.log("bar", "?")
     logger2.log("bar", "!")
     assert writer.read() == "bar ?\nbar !\n"
+
+def test_override_configured(writer):
+    logger.configure(extra={"a": 1})
+    logger2 = logger.bind(a=2)
+
+    logger2.start(writer, format="{extra[a]} {message}")
+
+    logger2.debug("?")
+
+    assert writer.read() == "2 ?\n"

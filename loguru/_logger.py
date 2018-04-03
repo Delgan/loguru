@@ -67,6 +67,8 @@ class Logger:
     _handlers_count = itertools.count()
     _handlers = {}
 
+    _extra_class = {}
+
     _min_level = float("inf")
     _enabled = {}
     _activation_list = []
@@ -142,7 +144,8 @@ class Logger:
 
         if extra is not None:
             with self._lock:
-                self._extra = extra
+                self._extra_class.clear()
+                self._extra_class.update(extra)
 
         return [self.start(**params) for params in sinks]
 
@@ -415,7 +418,7 @@ class Logger:
             record = {
                 'elapsed': elapsed,
                 'exception': exception,
-                'extra': _self._extra,
+                'extra': {**_self._extra_class, **_self._extra},
                 'file': file_recattr,
                 'function': code.co_name,
                 'level': level_recattr,

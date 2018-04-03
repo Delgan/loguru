@@ -89,13 +89,13 @@ def test_returned_ids(capsys):
     assert err == ""
 
 def test_dont_reset_by_default(writer):
-    logger_ = logger.bind(a=1)
-    logger_.level("b", no=30)
-    logger_.start(writer, format="{level} {extra[a]} {message}")
+    logger.configure(extra={"a": 1})
+    logger.level("b", no=30)
+    logger.start(writer, format="{level} {extra[a]} {message}")
 
-    logger_.configure()
+    logger.configure()
 
-    logger_.log("b", "Test")
+    logger.log("b", "Test")
 
     assert writer.read() == "b 1 Test\n"
 
@@ -109,13 +109,13 @@ def test_reset_previous_sinks(writer):
     assert writer.read() == ""
 
 def test_reset_previous_extra(writer):
-    logger2 = logger.bind(a=123)
-    logger2.start(writer, format="{extra[a]}", wrapped=False)
+    logger.configure(extra={"a": 123})
+    logger.start(writer, format="{extra[a]}", wrapped=False)
 
-    logger2.configure(extra={})
+    logger.configure(extra={})
 
     with pytest.raises(KeyError):
-        logger2.debug("Nope")
+        logger.debug("Nope")
 
 def test_dont_reset_previous_levels(writer):
     logger.level("abc", no=30)
@@ -127,3 +127,35 @@ def test_dont_reset_previous_levels(writer):
     logger.log("abc", "Test")
 
     assert writer.read() == "abc Test\n"
+
+def test_configure_before_bind(writer):
+    logger.configure(extra={"a": "default_a", "b": "default_b"})
+    logger.start(writer, format="{extra[a]} {extra[b]} {message}")
+
+    logger.debug("init")
+
+    logger_a = logger.bind(a="A")
+    logger_b = logger.bind(b="B")
+
+    logger_a.debug("aaa")
+    logger_b.debug("bbb")
+
+    assert writer.read() == ("default_a default_b init\n"
+                             "A default_b aaa\n"
+                             "default_a B bbb\n")
+
+def test_configure_after_bind(writer):
+    logger_a = logger.bind(a="A")
+    logger_b = logger.bind(b="B")
+
+    logger.configure(extra={"a": "default_a", "b": "default_b"})
+    logger.start(writer, format="{extra[a]} {extra[b]} {message}")
+
+    logger.debug("init")
+
+    logger_a.debug("aaa")
+    logger_b.debug("bbb")
+
+    assert writer.read() == ("default_a default_b init\n"
+                             "A default_b aaa\n"
+                             "default_a B bbb\n")
