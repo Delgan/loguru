@@ -12,9 +12,11 @@ default_levels = loguru._logger.Logger._levels.copy()
 def reset_logger():
     def reset():
         loguru.logger.stop()
-        loguru.logger.__init__({}, None, False, False, False, 0)
+        loguru.logger.__init__({}, [], None, False, False, False, 0)
         loguru._logger.Logger._levels = default_levels.copy()
         loguru._logger.Logger._min_level = float('inf')
+        loguru._logger.Logger._extra_class = {}
+        loguru._logger.Logger._modifier_class = staticmethod(lambda extra: None)
         loguru._logger.Logger._handlers = {}
         loguru._logger.Logger._handlers_count = itertools.count()
         loguru._logger.Logger._enabled = {}

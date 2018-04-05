@@ -48,11 +48,23 @@ def test_extra(writer):
 
     assert writer.read() == "1 9\n"
 
+def test_modifier(writer):
+    def modifier(extra):
+        extra["x"] = "y"
+
+    logger.start(writer, format='{extra[x]}')
+    logger.configure(modifier=modifier)
+
+    logger.debug("")
+
+    assert writer.read() == "y\n"
+
 def test_dict_unpacking(writer):
     config = {
-        "sinks": [{'sink': writer, 'format': '{level.no} - {extra[x]} - {message}'}],
+        "sinks": [{'sink': writer, 'format': '{level.no} - {extra[x]} {extra[xyz]} - {message}'}],
         "levels": [{'name': 'test', 'no': 30}],
         "extra": {'x': 1, 'y': 2, 'z': 3},
+        "modifier": lambda extra: extra.update({"xyz": 123}),
     }
 
     logger.debug("NOPE")
@@ -61,7 +73,7 @@ def test_dict_unpacking(writer):
 
     logger.log('test', 'Yes!')
 
-    assert writer.read() == "30 - 1 - Yes!\n"
+    assert writer.read() == "30 - 1 123 - Yes!\n"
 
 def test_returned_ids(capsys):
     ids = logger.configure(sinks=[
@@ -159,3 +171,58 @@ def test_configure_after_bind(writer):
     assert writer.read() == ("default_a default_b init\n"
                              "A default_b aaa\n"
                              "default_a B bbb\n")
+
+def test_configure_before_bind_modifier(writer):
+    def modifier_root(extra):
+        extra["a"] = 0
+
+    def modifier_plus(extra):
+        extra["a"] += 10
+
+    def modifier_minus(extra):
+        extra["a"] -= 10
+
+    logger.configure(modifier=modifier_root)
+    logger.start(writer, format="{extra[a]} {message}")
+
+    logger.debug("X")
+
+    logger_plus = logger.bind_modifier(modifier_plus)
+    logger_minus = logger.bind_modifier(modifier_minus)
+
+    logger_plus.debug("+")
+    logger_minus.debug("-")
+
+    assert writer.read() == ("0 X\n"
+                             "10 +\n"
+                             "-10 -\n")
+
+def test_configure_after_bind_modifier(writer):
+    def modifier_root(extra):
+        extra["a"] = 0
+
+    def modifier_plus(extra):
+        extra["a"] += 10
+
+    def modifier_minus(extra):
+        extra["a"] -= 10
+
+    logger_plus = logger.bind_modifier(modifier_plus)
+    logger_minus = logger.bind_modifier(modifier_minus)
+
+    logger.configure(modifier=modifier_root)
+    logger.start(writer, format="{extra[a]} {message}")
+
+    logger.debug("X")
+
+    logger_plus.debug("+")
+    logger_minus.debug("-")
+
+    assert writer.read() == ("0 X\n"
+                             "10 +\n"
+                             "-10 -\n")
+
+@pytest.mark.parametrize("modifier", [object(), 1, {"a": 1}])
+def test_configure_invalid_modifier(modifier):
+    with pytest.raises(ValueError):
+        logger.configure(modifier=modifier)

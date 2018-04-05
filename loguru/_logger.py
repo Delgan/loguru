@@ -68,6 +68,7 @@ class Logger:
     _handlers = {}
 
     _extra_class = {}
+    _modifier_class = staticmethod(lambda extra: None)
 
     _min_level = float("inf")
     _enabled = {}
@@ -75,9 +76,10 @@ class Logger:
 
     _lock = threading.Lock()
 
-    def __init__(self, extra, exception, record, lazy, ansi, depth):
+    def __init__(self, extra, modifiers, exception, record, lazy, ansi, depth):
         self.catch = Catcher(self)
         self._extra = extra
+        self._modifiers = modifiers
         self._record = record
         self._exception = exception
         self._lazy = lazy
@@ -85,11 +87,17 @@ class Logger:
         self._depth = depth
 
     def opt(self, *, exception=None, record=False, lazy=False, ansi=False, depth=0):
-        return Logger(self._extra, exception, record, lazy, ansi, depth)
+        return Logger(self._extra, self._modifiers, exception, record, lazy, ansi, depth)
 
     def bind(_self, **kwargs):
-        return Logger({**_self._extra, **kwargs},
+        return Logger({**_self._extra, **kwargs}, _self._modifiers,
                       _self._exception, _self._record, _self._lazy, _self._ansi, _self._depth)
+
+    def bind_modifier(self, modifier):
+        if not callable(modifier):
+            raise ValueError("Invalid modifier, it should be a function, not: '%s'" % type(filter).__name__)
+        return Logger(self._extra, self._modifiers + [modifier],
+                      self._exception, self._record, self._lazy, self._ansi, self._depth)
 
     def level(self, name, no=None, color=None, icon=None):
         if not isinstance(name, str):
@@ -132,7 +140,7 @@ class Logger:
 
         return self.level(name)
 
-    def configure(self, *, sinks=None, levels=None, extra=None):
+    def configure(self, *, sinks=None, levels=None, extra=None, modifier=None):
         if sinks is not None:
             self.stop()
         else:
@@ -146,6 +154,11 @@ class Logger:
             with self._lock:
                 self._extra_class.clear()
                 self._extra_class.update(extra)
+
+        if modifier is not None:
+            if not callable(modifier):
+                raise ValueError("Invalid modifier, it should be a function, not: '%s'" % type(filter).__name__)
+            self.__class__._modifier_class = staticmethod(modifier)
 
         return [self.start(**params) for params in sinks]
 
@@ -415,10 +428,14 @@ class Logger:
 
                 exception = (ex_type, ex, tb)
 
+            extra = {**_self._extra_class, **_self._extra}
+            for modifier in [_self._modifier_class] + _self._modifiers:
+                modifier(extra)
+
             record = {
                 'elapsed': elapsed,
                 'exception': exception,
-                'extra': {**_self._extra_class, **_self._extra},
+                'extra': extra,
                 'file': file_recattr,
                 'function': code.co_name,
                 'level': level_recattr,
