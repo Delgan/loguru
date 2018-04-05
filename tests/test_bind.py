@@ -1,54 +1,70 @@
 import pytest
 from loguru import logger
 
-use_binded = pytest.mark.parametrize("use_binded", [True, False])
+def test_bind_after_start(writer):
+    logger.start(writer, format="{extra[a]} {message}")
+    logger_bound = logger.bind(a=0)
+    logger_bound.debug("A")
 
-def test_binding(writer):
-    logger.configure(extra={"a": 0, "b": 0})
-    logger.start(writer, format="{extra[a]} + {extra[b]}")
-    logger.debug("")
-    logger.bind(a=1)
-    logger.debug("")
-    logger2 = logger.bind(a=2)
-    logger2.debug("")
-    logger3 = logger2.bind(b=3)
-    logger3.debug("")
-    logger2.debug("")
-    logger3.bind(a=10, b=10).debug("")
+    assert writer.read() == "0 A\n"
 
-    assert writer.read() == (
-        "0 + 0\n"
-        "0 + 0\n"
-        "2 + 0\n"
-        "2 + 3\n"
-        "2 + 0\n"
-        "10 + 10\n"
-    )
+def test_bind_before_start(writer):
+    logger_bound = logger.bind(a=0)
+    logger.start(writer, format="{extra[a]} {message}")
+    logger_bound.debug("A")
 
-@use_binded
-def test_start_and_bind(writer, use_binded):
-    logger2 = logger.bind()
+    assert writer.read() == "0 A\n"
 
-    log = logger2 if use_binded else logger
+def test_start_using_bound(writer):
+    logger.configure(extra={"a": -1})
+    logger_bound = logger.bind(a=0)
+    logger_bound.start(writer, format="{extra[a]} {message}")
+    logger.debug("A")
+    logger_bound.debug("B")
 
-    log.start(writer, format="{message}")
+    assert writer.read() == "-1 A\n0 B\n"
 
-    logger.debug("?")
-    logger2.debug("!")
-    assert writer.read() == "?\n!\n"
+def test_not_override_parent_logger(writer):
+    logger_1 = logger.bind(a="a")
+    logger_2 = logger_1.bind(a="A")
+    logger.start(writer, format="{extra[a]} {message}")
 
-@use_binded
-def test_add_level_and_bind(writer, use_binded):
-    logger2 = logger.bind()
+    logger_1.debug("1")
+    logger_2.debug("2")
 
-    log = logger2 if use_binded else logger
+    assert writer.read() == "a 1\nA 2\n"
 
-    log.start(writer, format="{level.name} {message}")
-    log.level("bar", 15)
+def test_override_previous_bound(writer):
+    logger.start(writer, format="{extra[x]} {message}")
+    logger.bind(x=1).bind(x=2).debug("3")
+    assert writer.read() == "2 3\n"
 
-    logger.log("bar", "?")
-    logger2.log("bar", "!")
-    assert writer.read() == "bar ?\nbar !\n"
+def test_no_conflict(writer):
+    logger_ = logger.bind()
+    logger_2 = logger_.bind(a=2)
+    logger_3 = logger_.bind(a=3)
+
+    logger.start(writer, format="{extra[a]} {message}")
+
+    logger_2.debug("222")
+    logger_3.debug("333")
+
+    assert writer.read() == "2 222\n3 333\n"
+
+@pytest.mark.parametrize("using_bound", [True, False])
+def test_bind_and_add_level(writer, using_bound):
+    logger_bound = logger.bind()
+    logger.start(writer, format="{level.name} {message}")
+
+    if using_bound:
+        logger_bound.level("bar", 15)
+    else:
+        logger.level("bar", 15)
+
+    logger.log("bar", "root")
+    logger_bound.log("bar", "bound")
+
+    assert writer.read() == "bar root\nbar bound\n"
 
 def test_override_configured(writer):
     logger.configure(extra={"a": 1})
