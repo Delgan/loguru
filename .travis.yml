@@ -3,8 +3,7 @@ language: python
 python:
   - '3.6'
 install:
-  - pip install pytest pytest-cov coveralls
-  - pip install -e .
+  - pip install -e .[dev]
 script:
   - pytest --cov loguru/
 after_success:
