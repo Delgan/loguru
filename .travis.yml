@@ -2,9 +2,17 @@ language: python
 
 python:
   - '3.6'
+
+env:
+  - LOGURU_EXTENSIONS=1
+  - LOGURU_EXTENSIONS=0
+  - LOGURU_EXTENSIONS=auto
+
 install:
-  - pip install -e .[dev]
+  - pip install -v -e .[dev]
+
 script:
   - pytest --cov loguru/
+
 after_success:
   - coveralls
