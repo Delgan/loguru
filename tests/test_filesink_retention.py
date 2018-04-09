@@ -129,6 +129,14 @@ def test_manage_files_at_rotation(tmpdir):
 
     assert len(tmpdir.listdir()) == 2
 
+def test_no_retention_at_stop(tmpdir):
+    i = logger.start(tmpdir.join('file.log'), retention=0, process_at_stop=False)
+    logger.debug("1")
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join('file.log').check(exists=1)
+
 def test_no_renaming(tmpdir):
     i = logger.start(tmpdir.join('test.log'), format="{message}", retention=10)
     logger.debug("test")

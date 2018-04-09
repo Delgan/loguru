@@ -17,7 +17,8 @@ from ._fast_now import fast_now
 
 class FileSink:
 
-    def __init__(self, path, *, rotation=None, retention=None, compression=None, **kwargs):
+    def __init__(self, path, *, rotation=None, retention=None, compression=None,
+                 process_at_stop=True, **kwargs):
         self.start_time = fast_now()
         self.start_time._FORMATTER = 'alternative'
         self.start_time._to_string_format = '%Y-%m-%d_%H-%M-%S'
@@ -28,6 +29,7 @@ class FileSink:
         self.file = None
         self.file_path = None
         self.created = 1
+        self.process_at_stop = process_at_stop
 
         self.rotation_function = self.make_rotation_function(rotation)
         self.retention_function = self.make_retention_function(retention)
@@ -384,7 +386,7 @@ class FileSink:
             self.created += 1
 
     def stop(self):
-        compression = (self.compression_function is not None) and (self.rotation_function is None)
-        retention = (self.retention_function is not None) and (self.rotation_function is None)
+        compression = self.process_at_stop and (self.compression_function is not None)
+        retention = self.process_at_stop and (self.retention_function is not None)
         check = compression
         self.terminate(check_conflict=check, exec_compression=compression, exec_retention=retention, create_new=False)

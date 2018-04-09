@@ -32,13 +32,21 @@ def test_compression_at_rotation(tmpdir):
     assert len(tmpdir.listdir()) == 2
     assert tmpdir.join('1.log.gz').check(exists=1)
 
-def test_no_compression_at_stop_if_rotation(tmpdir):
-    i = logger.start(tmpdir.join('test.log'), rotation="10 MB", compression="gz")
+def test_no_compression_at_stop(tmpdir):
+    i = logger.start(tmpdir.join('test.log'), compression="gz", process_at_stop=False)
     logger.debug("test")
     logger.stop(i)
 
     assert len(tmpdir.listdir()) == 1
     assert tmpdir.join("test.log").check(exists=1)
+
+def test_compression_at_stop_with_rotation(tmpdir):
+    i = logger.start(tmpdir.join('test.{n}.log'), compression="gz", rotation="100 MB")
+    logger.debug("test")
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join('test.1.log.gz').check(exists=1)
 
 def test_compression_renamed_file(tmpdir):
     i = logger.start(tmpdir.join('test.log'), compression="gz")
