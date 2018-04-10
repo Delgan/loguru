@@ -44,6 +44,7 @@ setup(
         'dev': [
             'coveralls>=1.3.0',
             'pytest>=3.5.0',
+            'pytest-benchmark>=3.1.1',
             'pytest-cov>=2.5.1',
         ],
     },
