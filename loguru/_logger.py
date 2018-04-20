@@ -190,10 +190,10 @@ class Logger:
     def disable(self, name):
         self._change_activation(name, False)
 
-    def start(self, sink, *, level=_defaults.LOGURU_LEVEL, format=_defaults.LOGURU_FORMAT, filter=None,
-                    colored=_defaults.LOGURU_COLORED, structured=_defaults.LOGURU_STRUCTURED,
-                    enhanced=_defaults.LOGURU_ENHANCED, queued=_defaults.LOGURU_QUEUED,
-                    wrapped=_defaults.LOGURU_WRAPPED, **kwargs):
+    def start(self, sink, *, level=_defaults.LOGURU_LEVEL, format=_defaults.LOGURU_FORMAT,
+                    filter=_defaults.LOGURU_FILTER, colored=_defaults.LOGURU_COLORED,
+                    structured=_defaults.LOGURU_STRUCTURED, enhanced=_defaults.LOGURU_ENHANCED,
+                    queued=_defaults.LOGURU_QUEUED, wrapped=_defaults.LOGURU_WRAPPED, **kwargs):
         if colored is None and structured:
             colored = False
 
