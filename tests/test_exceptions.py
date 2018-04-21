@@ -461,8 +461,7 @@ def test_queued_with_other_handlers(writer):
         exception = message.record["exception"]
         if exception is None:
             return
-        type_, value, tb = exception
-        assert tb is not None
+        assert exception.traceback is not None
 
     logger.start(check_tb_sink, queued=False, wrapped=False)
     logger.start(writer, queued=True, wrapped=False, format="{message}")

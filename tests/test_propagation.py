@@ -6,14 +6,16 @@ from logging import StreamHandler
 
 def propagate_sink(message):
     r = message.record
+    exc = r['exception']
     log = logging.getLogger(r['name'])
     record = log.makeRecord(r['name'], r['level'].no, r['file'].path, r['line'], r['message'],
-                            [], r['exception'], r['function'], r['extra'])
+                            [], (exc.type, exc.value, exc.traceback) if exc else None,
+                            r['function'], r['extra'])
     log.handle(record)
 
 def test_formatting(make_logging_logger, capsys):
     fmt = "%(name)s - %(filename)s - %(funcName)s - %(levelname)s - %(levelno)s - %(lineno)d - %(module)s - %(message)s"
-    expected = "tests.test_propagation - test_propagation.py - test_formatting - DEBUG - 10 - 19 - test_propagation - This is my message\n"
+    expected = "tests.test_propagation - test_propagation.py - test_formatting - DEBUG - 10 - 21 - test_propagation - This is my message\n"
     logging_logger = make_logging_logger("tests.test_propagation", StreamHandler(sys.stderr), fmt)
     logger.start(propagate_sink)
     logger.debug("This {verb} my {}", "message", verb="is")

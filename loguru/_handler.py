@@ -1,24 +1,10 @@
 import json
 import multiprocessing
-import random
-import re
 import sys
 import threading
 import traceback
 
 import ansimarkup
-from better_exceptions_fork import ExceptionFormatter
-
-
-class HackyInt(int):
-
-    rand = "{:0>32}".format(random.randrange(10**31))
-
-    def __str__(self):
-        return self.rand
-
-    def __eq__(self, other):
-        return False
 
 
 class StrRecord(str):
@@ -43,7 +29,6 @@ class Handler:
         self.lock = threading.Lock()
         self.queue = None
         self.thread = None
-        self.exception_formatter = ExceptionFormatter(colored=colored)
 
         if colored:
             for color in colors:
@@ -152,50 +137,16 @@ class Handler:
             exception = record['exception']
 
             if exception:
-                hacky_int = None
-                ex_type, ex, tb = exception
-                tb_ = tb
-
-                while tb_:
-                    if tb_.__is_caught_point__:
-                        hacky_int = HackyInt(tb_.tb_lineno)
-                        tb_.tb_lineno = hacky_int
-                        break
-                    tb_ = tb_.tb_next
-
-                if self.enhanced:
-                    exception = self.exception_formatter.format_exception(ex_type, ex, tb)
-                else:
-                    exception = traceback.format_exception(ex_type, ex, tb)
-
-                exception = ''.join(exception)
-
-                reg = r'(?:^\S*(Traceback \(most recent call last\):)\S*$|^\S*  \S*File.*\D(%s)\D.*$)' % str(hacky_int)
-                matches = re.finditer(reg, exception, flags=re.M)
-
-                tb_match = None
-
-                for match in matches:
-                    tb, line = match.groups()
-                    if tb is not None:
-                        tb_match = match
-                    if line is not None:
-                        s, e = match.span(2)
-                        exception = exception[:s] + str(int(hacky_int)) + exception[e:]
-                        s = match.start(0)
-                        exception = exception[:s] + exception[s:].replace(" ", ">", 1)
-                        if tb_match is not None:
-                            old = "Traceback (most recent call last):"
-                            new = "Traceback (most recent call last, catch point marked):"
-                            s = tb_match.start(0)
-                            exception = exception[:s] + exception[s:].replace(old, new, 1)
-                        break
+                with exception._formatting(colored=self.colored, enhanced=self.enhanced):
+                    error = "{}".format(exception)
 
                 if not self.serialized:
-                    formatted += exception
+                    formatted += error
+            else:
+                error = None
 
             if self.serialized:
-                formatted = self.serialize(formatted, record, exception) + '\n'
+                formatted = self.serialize(formatted, record, error) + '\n'
 
             message = StrRecord(formatted)
             message.record = record
