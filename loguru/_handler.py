@@ -194,9 +194,6 @@ class Handler:
                 if not self.structured:
                     formatted += exception
 
-                if self.queued:
-                    record['exception'] = (ex_type, ex, None)  # tb are not pickable
-
             if self.structured:
                 formatted = self.serialize(formatted, record, exception) + '\n'
 

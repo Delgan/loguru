@@ -52,6 +52,11 @@ class ProcessRecattr(str):
     __slots__ = ('name', 'id')
 
 
+class ExceptionRecattr(tuple):
+
+    def __getnewargs__(self):
+        return (self[0], self[1], None),  # tb are not pickable
+
 class Logger:
 
     _levels = {
@@ -426,7 +431,7 @@ class Logger:
                     if caught_tb:
                         caught_tb.__is_caught_point__ = True
 
-                exception = (ex_type, ex, tb)
+                exception = ExceptionRecattr((ex_type, ex, tb))
 
             extra = {**_self._extra_class, **_self._extra}
             for modifier in [_self._modifier_class] + _self._modifiers:

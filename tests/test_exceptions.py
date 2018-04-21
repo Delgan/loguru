@@ -444,6 +444,40 @@ def test_no_exception(writer):
 
     assert writer.read() == "No Error.\nNoneType: None\n"
 
+def test_queued_exception(writer):
+    logger.start(writer, enhanced=False, colored=False, queued=True, wrapped=False, format="{message}")
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("Error")
+    logger.stop()
+    lines = writer.read().strip().splitlines()
+    assert lines[0] == "Error"
+    assert lines[1].startswith("Traceback")
+    assert lines[-1] == "ZeroDivisionError: division by zero"
+
+def test_queued_with_other_handlers(writer):
+    def check_tb_sink(message):
+        exception = message.record["exception"]
+        if exception is None:
+            return
+        type_, value, tb = exception
+        assert tb is not None
+
+    logger.start(check_tb_sink, queued=False, wrapped=False)
+    logger.start(writer, queued=True, wrapped=False, format="{message}")
+    logger.start(check_tb_sink, queued=False, wrapped=False)
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("Error")
+
+    logger.stop()
+    lines = writer.read().strip().splitlines()
+    assert lines[0] == "Error"
+    assert lines[-1] == "ZeroDivisionError: division by zero"
+
 @pytest.mark.parametrize('enhanced', [False, True])
 def test_no_tb(writer, enhanced):
     logger.start(writer, enhanced=enhanced, colored=False, format='{message}')
