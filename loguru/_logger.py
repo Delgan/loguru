@@ -197,15 +197,15 @@ class Logger:
 
     def start(self, sink, *, level=_defaults.LOGURU_LEVEL, format=_defaults.LOGURU_FORMAT,
                     filter=_defaults.LOGURU_FILTER, colored=_defaults.LOGURU_COLORED,
-                    structured=_defaults.LOGURU_STRUCTURED, enhanced=_defaults.LOGURU_ENHANCED,
+                    serialized=_defaults.LOGURU_SERIALIZED, enhanced=_defaults.LOGURU_ENHANCED,
                     queued=_defaults.LOGURU_QUEUED, wrapped=_defaults.LOGURU_WRAPPED, **kwargs):
-        if colored is None and structured:
+        if colored is None and serialized:
             colored = False
 
         if isclass(sink):
             sink = sink(**kwargs)
             return self.start(sink, level=level, format=format, filter=filter, colored=colored,
-                              structured=structured, enhanced=enhanced, queued=queued,
+                              serialized=serialized, enhanced=enhanced, queued=queued,
                               wrapped=wrapped)
         elif callable(sink):
             if kwargs:
@@ -219,7 +219,7 @@ class Logger:
             path = sink
             sink = FileSink(path, **kwargs)
             return self.start(sink, level=level, format=format, filter=filter, colored=colored,
-                              structured=structured, enhanced=enhanced, queued=queued,
+                              serialized=serialized, enhanced=enhanced, queued=queued,
                               wrapped=wrapped)
         elif hasattr(sink, 'write') and callable(sink.write):
             if colored is None:
@@ -286,7 +286,7 @@ class Logger:
                 format_=format,
                 filter_=filter_func,
                 colored=colored,
-                structured=structured,
+                serialized=serialized,
                 enhanced=enhanced,
                 wrapped=wrapped,
                 queued=queued,

@@ -27,14 +27,14 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, structured, enhanced, wrapped, queued, colors=[]):
+    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, serialized, enhanced, wrapped, queued, colors=[]):
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
         self.format = format_
         self.filter = filter_
         self.colored = colored
-        self.structured = structured
+        self.serialized = serialized
         self.enhanced = enhanced
         self.wrapped = wrapped
         self.queued = queued
@@ -191,10 +191,10 @@ class Handler:
                             exception = exception[:s] + exception[s:].replace(old, new, 1)
                         break
 
-                if not self.structured:
+                if not self.serialized:
                     formatted += exception
 
-            if self.structured:
+            if self.serialized:
                 formatted = self.serialize(formatted, record, exception) + '\n'
 
             message = StrRecord(formatted)

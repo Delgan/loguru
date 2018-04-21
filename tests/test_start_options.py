@@ -81,9 +81,16 @@ def test_enhanced(writer):
     assert len(result_with) > len(result_without)
 
 @pytest.mark.parametrize('with_exception', [False, True])
-def test_structured(writer, with_exception):
+def test_serialized(with_exception):
+    record_dict = record_json = None
+
+    def sink(message):
+        nonlocal record_dict, record_json
+        record_dict = message.record
+        record_json = json.loads(message)['record']
+
     logger.configure(extra=dict(not_serializable=object()))
-    logger.start(writer, format="{message}", structured=True)
+    logger.start(sink, format="{message}", wrapped=False, serialized=True)
     if not with_exception:
         logger.debug("Test")
     else:
@@ -91,7 +98,8 @@ def test_structured(writer, with_exception):
             1 / 0
         except:
             logger.exception("Test")
-    json.loads(writer.read())
+
+    assert set(record_dict.keys()) == set(record_json.keys())
 
 @pytest.mark.parametrize('with_exception', [False, True])
 def test_queued(with_exception):
