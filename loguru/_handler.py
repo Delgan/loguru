@@ -59,7 +59,7 @@ class Handler:
         serializable = {
             'text': text,
             'record': {
-                'elapsed': record['elapsed'].total_seconds(),
+                'elapsed': dict(repr=record['elapsed'], seconds=record['elapsed'].total_seconds()),
                 'exception': exception,
                 'extra': record['extra'],
                 'file': dict(name=record['file'].name, path=record['file'].path),
@@ -71,7 +71,7 @@ class Handler:
                 'name': record['name'],
                 'process': dict(id=record['process'].id, name=record['process'].name),
                 'thread': dict(id=record['thread'].id, name=record['thread'].name),
-                'time': record['time'].float_timestamp,
+                'time': dict(repr=record['time'], timestamp=record['time'].float_timestamp),
             }
         }
 
