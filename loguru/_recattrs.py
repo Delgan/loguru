@@ -62,8 +62,11 @@ class ExceptionRecattr:
         self.traceback = traceback
 
         if traceback:
-            self._extended_traceback = self._extend_traceback(traceback, decorated)
+            tb, h = self._extend_traceback(traceback, decorated)
+            self._hacky_int = h
+            self._extended_traceback = tb
         else:
+            self._hacky_int = None
             self._extended_traceback = None
 
     def __reduce__(self):
@@ -105,52 +108,44 @@ class ExceptionRecattr:
             if decorated and caught_tb is None:
                 caught_tb = tb
 
-        if caught_tb:
-            caught_tb.__is_caught_point__ = True
+        hacky_int = HackyInt(caught_tb.tb_lineno)
+        caught_tb.tb_lineno = hacky_int
 
-        return tb
+        return tb, hacky_int
 
     def format_exception(self, enhanced, colored):
-        type_, value, tb = self.type, self.value, self._extended_traceback
-
-        hacky_int = None
-        tb_ = tb
-
-        while tb_:
-            if tb_.__is_caught_point__:
-                hacky_int = HackyInt(tb_.tb_lineno)
-                tb_.tb_lineno = hacky_int
-                break
-            tb_ = tb_.tb_next
+        type_, value, ex_traceback = self.type, self.value, self._extended_traceback
+        hacky_int = self._hacky_int
 
         if not enhanced:
-            error = traceback.format_exception(type_, value, tb)
+            error = traceback.format_exception(type_, value, ex_traceback)
         elif colored:
-            error = self.exception_formatter_colored.format_exception(type_, value, tb)
+            error = self.exception_formatter_colored.format_exception(type_, value, ex_traceback)
         else:
-            error = self.exception_formatter_not_colored.format_exception(type_, value, tb)
+            error = self.exception_formatter_not_colored.format_exception(type_, value, ex_traceback)
 
         error = ''.join(error)
 
-        reg = r'(?:^\S*(Traceback \(most recent call last\):)\S*$|^\S*  \S*File.*\D(%s)\D.*$)' % str(hacky_int)
-        matches = re.finditer(reg, error, flags=re.M)
+        if hacky_int is not None:
+            reg = r'(?:^\S*(Traceback \(most recent call last\):)\S*$|^\S*  \S*File.*\D(%s)\D.*$)' % str(hacky_int)
+            matches = re.finditer(reg, error, flags=re.M)
 
-        tb_match = None
+            tb_match = None
 
-        for match in matches:
-            tb, line = match.groups()
-            if tb is not None:
-                tb_match = match
-            if line is not None:
-                s, e = match.span(2)
-                error = error[:s] + str(int(hacky_int)) + error[e:]
-                s = match.start(0)
-                error = error[:s] + error[s:].replace(" ", ">", 1)
-                if tb_match is not None:
-                    old = "Traceback (most recent call last):"
-                    new = "Traceback (most recent call last, catch point marked):"
-                    s = tb_match.start(0)
-                    error = error[:s] + error[s:].replace(old, new, 1)
-                break
+            for match in matches:
+                tb, line = match.groups()
+                if tb is not None:
+                    tb_match = match
+                if line is not None:
+                    s, e = match.span(2)
+                    error = error[:s] + str(int(hacky_int)) + error[e:]
+                    s = match.start(0)
+                    error = error[:s] + error[s:].replace(' ', '>', 1)
+                    if tb_match is not None:
+                        old = "Traceback (most recent call last):"
+                        new = "Traceback (most recent call last, catch point marked):"
+                        s = tb_match.start(0)
+                        error = error[:s] + error[s:].replace(old, new, 1)
+                    break
 
         return error
