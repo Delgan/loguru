@@ -17,14 +17,14 @@ class Handler:
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
-        self.format = format_
+        self.format = format_ + "\n{exception}"
         self.filter = filter_
         self.colored = colored
         self.serialized = serialized
         self.enhanced = enhanced
         self.wrapped = wrapped
         self.queued = queued
-        self.decolorized_format = self.decolorize(format_)
+        self.decolorized_format = self.decolorize(self.format)
         self.precolorized_formats = {}
         self.lock = threading.Lock()
         self.queue = None
@@ -40,12 +40,13 @@ class Handler:
             self.thread.start()
 
     @staticmethod
-    def serialize(text, record, exception):
+    def serialize(text, record):
+        exc = record["exception"]
         serializable = {
             'text': text,
             'record': {
                 'elapsed': dict(repr=record['elapsed'], seconds=record['elapsed'].total_seconds()),
-                'exception': exception,
+                'exception': exc and dict(type=exc.type.__name__, value=exc.value, traceback=bool(exc.traceback)),
                 'extra': record['extra'],
                 'file': dict(name=record['file'].name, path=record['file'].path),
                 'function': record['function'],
@@ -60,7 +61,7 @@ class Handler:
             }
         }
 
-        return json.dumps(serializable, default=str)
+        return json.dumps(serializable, default=str) + "\n"
 
     @staticmethod
     def make_ansimarkup(color):
@@ -117,8 +118,13 @@ class Handler:
                 if not self.filter(record):
                     return
 
+            error = ""
+            if record['exception']:
+                error = record['exception'].format_exception(self.enhanced, self.colored)
+            formatter_record = {**record, **{"exception": error}}
+
             if ansi_message:
-                preformatted_message = self.format.format_map(record)
+                preformatted_message = self.format.format_map(formatter_record)
 
                 if self.colored:
                     formatted = self.colorize(preformatted_message, level_color)
@@ -130,23 +136,10 @@ class Handler:
                 else:
                     precomputed_format = self.decolorized_format
 
-                formatted = precomputed_format.format_map(record)
-
-            formatted += '\n'
-
-            exception = record['exception']
-
-            if exception:
-                with exception._formatting(colored=self.colored, enhanced=self.enhanced):
-                    error = "{}".format(exception)
-
-                if not self.serialized:
-                    formatted += error
-            else:
-                error = None
+                formatted = precomputed_format.format_map(formatter_record)
 
             if self.serialized:
-                formatted = self.serialize(formatted, record, error) + '\n'
+                formatted = self.serialize(formatted, record)
 
             message = StrRecord(formatted)
             message.record = record

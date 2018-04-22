@@ -1,4 +1,3 @@
-import contextlib
 import random
 import re
 import sys
@@ -58,33 +57,19 @@ class ExceptionRecattr:
         else:
             type_, value, traceback = sys.exc_info()
 
-        if traceback:
-            traceback = self._extend_traceback(traceback, decorated)
-
         self.type = type_
         self.value = value
         self.traceback = traceback
 
-        self._colored = False
-        self._enhanced = False
-
-    def __format__(self, format_spec):
-        super().__format__(format_spec)
-        return self._format_exception(self.type, self.value, self.traceback,
-                                      self._enhanced, self._colored)
+        if traceback:
+            self._extended_traceback = self._extend_traceback(traceback, decorated)
+        else:
+            self._extended_traceback = None
 
     def __reduce__(self):
         exception = (self.type, self.value, None)  # tracebacks are not pickable
-        args = (exception, False)
+        args = (exception, None)
         return (ExceptionRecattr, args)
-
-    @contextlib.contextmanager
-    def _formatting(self, *, colored, enhanced):
-        self._colored = colored
-        self._enhanced = enhanced
-        yield
-        self._colored = False
-        self._enhanced = False
 
     def _extend_traceback(self, tb, decorated):
         if decorated:
@@ -125,7 +110,9 @@ class ExceptionRecattr:
 
         return tb
 
-    def _format_exception(self, type_, value, tb, enhanced, colored):
+    def format_exception(self, enhanced, colored):
+        type_, value, tb = self.type, self.value, self._extended_traceback
+
         hacky_int = None
         tb_ = tb
 
