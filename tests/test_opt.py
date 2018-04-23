@@ -99,14 +99,37 @@ def test_depth(writer):
 
     assert writer.read() == "a : Test 1\ntest_depth : Test 2\n"
 
-@pytest.mark.parametrize("colored, expected", [
-    (False, "a - test - b"),
-    (True, ansimarkup.parse("<red>a - <blue>test</blue> - b</red>")),
-])
-def test_ansi(writer, colored, expected):
-    logger.start(writer, format="<red>a {message} b</red>", colored=colored)
-    logger.opt(ansi=True).debug("- <blue>test</blue> -")
-    assert writer.read() == expected + '\n'
+def test_ansi(writer):
+    logger.start(writer, format="<red>a</red> {message}", colored=True)
+    logger.opt(ansi=True).debug("<blue>b</blue>")
+    assert writer.read() == ansimarkup.parse("<red>a</red> <blue>b</blue>\n")
+
+def test_ansi_not_colored(writer):
+    logger.start(writer, format="<red>a</red> {message}", colored=False)
+    logger.opt(ansi=True).debug("<blue>b</blue>")
+    assert writer.read() == ansimarkup.strip("<red>a</red> <blue>b</blue>\n")
+
+def test_ansi_dont_color_unrelated(writer):
+    logger.start(writer, format="{message} {extra[trap]}", colored=True)
+    logger.bind(trap="<red>B</red>").opt(ansi=True).debug("<red>A</red>")
+    assert writer.read() == ansimarkup.parse("<red>A</red>") + " <red>B</red>\n"
+
+def test_ansi_with_record(writer):
+    logger.start(writer, format="{message}", colored=True)
+    logger_ = logger.bind(start="<red>", end="</red>")
+    logger_.opt(ansi=True, record=True).debug("{record[extra][start]}B{record[extra][end]}")
+    assert writer.read() == ansimarkup.parse("<red>B</red>\n")
+
+@pytest.mark.xfail
+def test_ansi_nested(writer):
+    logger.start(writer, format="(<red>[{message}]</red>)", colored=True)
+    logger.opt(ansi=True).debug("A <green>B</green> C <blue>D</blue> E")
+    assert writer.read() == ansimarkup.parse("(<red>[A<green>B</green>C<blue>D</blue>E]</red>)\n")
+
+def test_ansi_raising(writer):
+    logger.start(writer, format="<red>{message}</red>", colored=True, wrapped=False)
+    with pytest.raises(ansimarkup.markup.MismatchedTag):
+        logger.opt(ansi=True).debug("X </red> <red> Y")
 
 def test_ansi_with_args(writer):
     logger.start(writer, format="=> {message} <=", colored=True)

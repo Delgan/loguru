@@ -124,31 +124,33 @@ class Handler:
             formatter_record = {**record, **{"exception": error}}
 
             if ansi_message:
-                preformatted_message = self.format.format_map(formatter_record)
+                message = record['message']
 
                 if self.colored:
-                    formatted = self.colorize(preformatted_message, level_color)
+                    message = self.colorize(message, level_color)
                 else:
-                    formatted = self.decolorize(preformatted_message)
+                    message = self.decolorize(message)
+
+                formatter_record['message'] = message
+
+            if self.colored:
+                precomputed_format = self.precolorized_formats[level_color]
             else:
-                if self.colored:
-                    precomputed_format = self.precolorized_formats[level_color]
-                else:
-                    precomputed_format = self.decolorized_format
+                precomputed_format = self.decolorized_format
 
-                formatted = precomputed_format.format_map(formatter_record)
+            formatted = precomputed_format.format_map(formatter_record)
 
             if self.serialized:
                 formatted = self.serialize(formatted, record)
 
-            message = StrRecord(formatted)
-            message.record = record
+            str_record = StrRecord(formatted)
+            str_record.record = record
 
             with self.lock:
                 if self.queued:
-                    self.queue.put(message)
+                    self.queue.put(str_record)
                 else:
-                    self.writer(message)
+                    self.writer(str_record)
 
         except Exception:
             self.handle_error(record)

@@ -54,6 +54,7 @@ def test_filter(filter, should_output, writer):
 @pytest.mark.parametrize('message, format, expected, colored', [
     ('a', '<red>{message}</red>', 'a', False),
     ('b', '<red>{message}</red>', ansimarkup.parse("<red>b</red>"), True),
+    ('<red>nope</red>', '{message}', '<red>nope</red>', True),
 ])
 def test_colored(message, format, expected, colored, writer):
     logger.start(writer, format=format, colored=colored)
