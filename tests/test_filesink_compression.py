@@ -25,28 +25,40 @@ def test_compression_function(tmpdir):
     assert len(tmpdir.listdir()) == 1
     assert tmpdir.join('1.log.rar').check(exists=1)
 
-def test_compression_at_rotation(tmpdir):
-    i = logger.start(tmpdir.join('{n}.log'), rotation=0, compression='gz')
+@pytest.mark.parametrize('mode', ['a', 'w'])
+def test_compression_at_rotation(tmpdir, mode):
+    i = logger.start(tmpdir.join('{n}.log'), rotation=0, compression='gz', mode=mode)
     logger.debug("test")
 
     assert len(tmpdir.listdir()) == 2
     assert tmpdir.join('1.log.gz').check(exists=1)
 
-def test_no_compression_at_stop(tmpdir):
-    i = logger.start(tmpdir.join('test.log'), compression="gz", process_at_stop=False)
-    logger.debug("test")
-    logger.stop(i)
-
-    assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("test.log").check(exists=1)
-
-def test_compression_at_stop_with_rotation(tmpdir):
-    i = logger.start(tmpdir.join('test.{n}.log'), compression="gz", rotation="100 MB")
+@pytest.mark.parametrize('mode', ['a', 'w'])
+def test_compression_at_stop_without_rotation(tmpdir, mode):
+    i = logger.start(tmpdir.join('test.{n}.log'), compression="gz", mode=mode)
     logger.debug("test")
     logger.stop(i)
 
     assert len(tmpdir.listdir()) == 1
     assert tmpdir.join('test.1.log.gz').check(exists=1)
+
+@pytest.mark.parametrize('mode', ['w', 'x'])
+def test_compression_at_stop_with_rotation(tmpdir, mode):
+    i = logger.start(tmpdir.join('test.{n}.log'), compression="gz", rotation="100 MB", mode=mode)
+    logger.debug("test")
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join('test.1.log.gz').check(exists=1)
+
+@pytest.mark.parametrize('mode', ['a', 'a+'])
+def test_no_compression_at_stop_with_rotation(tmpdir, mode):
+    i = logger.start(tmpdir.join('test.log'), compression="gz", rotation="100 MB", mode=mode)
+    logger.debug("test")
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join("test.log").check(exists=1)
 
 def test_compression_renamed_file(tmpdir):
     i = logger.start(tmpdir.join('test.log'), compression="gz")

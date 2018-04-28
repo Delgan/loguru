@@ -119,23 +119,40 @@ def test_manage_formatted_files_without_extension(tmpdir):
 
     assert len(tmpdir.listdir()) == 0
 
-def test_manage_files_at_rotation(tmpdir):
+@pytest.mark.parametrize('mode', ['a', 'w'])
+def test_retention_at_rotation(tmpdir, mode):
     tmpdir.join('test.log.1').write('')
     tmpdir.join('test.log.2').write('')
     tmpdir.join('test.log.3').write('')
 
-    logger.start(tmpdir.join('test.log'), retention=1, rotation=0)
+    logger.start(tmpdir.join('test.log'), retention=1, rotation=0, mode=mode)
     logger.debug("test")
 
     assert len(tmpdir.listdir()) == 2
 
-def test_no_retention_at_stop(tmpdir):
-    i = logger.start(tmpdir.join('file.log'), retention=0, process_at_stop=False)
+@pytest.mark.parametrize('mode', ['a', 'w', 'x'])
+def test_retention_at_stop_without_rotation(tmpdir, mode):
+    i = logger.start(tmpdir.join('file.log'), retention=0, mode=mode)
     logger.debug("1")
-    logger.stop(i)
-
     assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join('file.log').check(exists=1)
+    logger.stop(i)
+    assert len(tmpdir.listdir()) == 0
+
+@pytest.mark.parametrize('mode', ['w', 'x'])
+def test_retention_at_stop_with_rotation(tmpdir, mode):
+    i = logger.start(tmpdir.join('file.log'), retention=0, rotation="100 MB", mode=mode)
+    logger.debug("1")
+    assert len(tmpdir.listdir()) == 1
+    logger.stop(i)
+    assert len(tmpdir.listdir()) == 0
+
+@pytest.mark.parametrize('mode', ['a', 'a+'])
+def test_no_retention_at_stop_with_rotation(tmpdir, mode):
+    i = logger.start(tmpdir.join('file.log'), retention=0, rotation="100 MB", mode=mode)
+    logger.debug("1")
+    assert len(tmpdir.listdir()) == 1
+    logger.stop(i)
+    assert len(tmpdir.listdir()) == 1
 
 def test_no_renaming(tmpdir):
     i = logger.start(tmpdir.join('test.log'), format="{message}", retention=10)

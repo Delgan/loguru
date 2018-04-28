@@ -40,7 +40,7 @@ def test_renaming(tmpdir, name, should_rename):
 ])
 def test_size_rotation(tmpdir, size):
     file = tmpdir.join("test.log")
-    i = logger.start(file.realpath(), format='{message}', rotation=size)
+    i = logger.start(file.realpath(), format='{message}', rotation=size, mode='w')
 
     logger.debug("abcde")
     logger.debug("fghij")
@@ -91,7 +91,7 @@ def test_time_rotation(monkeypatch_now, tmpdir, when, hours):
 
     monkeypatch_now(lambda *a, **k: now)
 
-    i = logger.start(tmpdir.join('test.log').realpath(), format='{message}', rotation=when)
+    i = logger.start(tmpdir.join('test.log').realpath(), format='{message}', rotation=when, mode='w')
 
     for h, m in zip(hours, ['a', 'b', 'c', 'd', 'e']):
         now = now.add(hours=h)
@@ -112,8 +112,18 @@ def test_function_rotation(tmpdir):
     logger.debug("c")
     assert len(tmpdir.listdir()) == 2
 
-def test_no_rotation_at_stop(tmpdir):
-    i = logger.start(tmpdir.join("test.log"), rotation="10 MB")
+@pytest.mark.parametrize('mode', ['w', 'x'])
+def test_rotation_at_stop(tmpdir, mode):
+    i = logger.start(tmpdir.join("test_{n}.log"), rotation="10 MB", mode=mode)
+    logger.debug("test")
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join("test_1.log").check(exists=1)
+
+@pytest.mark.parametrize('mode', ['a', 'a+'])
+def test_no_rotation_at_stop(tmpdir, mode):
+    i = logger.start(tmpdir.join("test.log"), rotation="10 MB", mode=mode)
     logger.debug("test")
     logger.stop(i)
 

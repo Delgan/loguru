@@ -3,6 +3,7 @@ import pytest
 import multiprocessing
 from loguru import logger
 import ansimarkup
+import io
 
 @pytest.mark.parametrize('level, function, should_output', [
     (0,              lambda x: x.trace,    True),
@@ -132,86 +133,85 @@ def test_wrapped():
     with pytest.raises(ZeroDivisionError):
         logger.debug("fail")
 
-@pytest.mark.parametrize('sink_type', ['function', 'class', 'file_object', 'str_a', 'str_w'])
-@pytest.mark.parametrize('test_invalid', [False, True])
-def test_kwargs(sink_type, test_invalid, tmpdir, capsys):
-    msg = 'msg'
-    kwargs = {'kw1': '1', 'kw2': '2'}
+def test_function_with_kwargs():
+    out = []
+    def function(message, kw2, kw1):
+        out.append(message + kw1 + 'a' + kw2)
+    logger.start(function, format='{message}', kw1="1", kw2="2")
+    logger.debug("msg")
+    assert out == ["msg\n1a2"]
 
-    if sink_type == 'function':
-        out = []
-        def function(message, kw2, kw1):
-            out.append(message + kw1 + 'a' + kw2)
+def test_class_with_kwargs():
+    out = []
+    class Writer:
+        def __init__(self, kw2, kw1):
+            self.end = kw1 + 'b' + kw2
+        def write(self, m):
+            out.append(m + self.end)
+    logger.start(Writer, format='{message}', kw1="1", kw2="2")
+    logger.debug("msg")
+    assert out == ["msg\n1b2"]
 
-        writer = function
-        validator = lambda: out == [msg + '\n1a2']
+def test_file_object_with_kwargs():
+    class Writer:
+        def __init__(self):
+            self.out = ''
+        def write(self, m, kw2, kw1):
+            self.out += m + kw1 + 'c' + kw2
+    writer = Writer()
+    logger.start(writer, format='{message}', kw1="1", kw2="2")
+    logger.debug("msg")
+    assert writer.out == "msg\n1c2"
 
-        if test_invalid:
-            writer = lambda m: None
-    elif sink_type == 'class':
-        out = []
-        class Writer:
-            def __init__(self, kw2, kw1):
-                self.end = kw1 + 'b' + kw2
-            def write(self, m):
-                out.append(m + self.end)
+def test_file_mode_a(tmpdir):
+    file = tmpdir.join("test.log")
+    file.write("base\n")
+    logger.start(file.realpath(), format="{message}", mode='a')
+    logger.debug("msg")
+    assert file.read() == "base\nmsg\n"
 
-        writer = Writer
-        validator = lambda: out == [msg + '\n1b2']
+def test_file_mode_w(tmpdir):
+    file = tmpdir.join("test.log")
+    file.write("base\n")
+    logger.start(file.realpath(), format="{message}", mode='w')
+    logger.debug("msg")
+    assert file.read() == "msg\n"
 
-        if test_invalid:
-            writer.__init__ = lambda s: None
-    elif sink_type == 'file_object':
-        class Writer:
-            def __init__(self):
-                self.out = ''
-            def write(self, m, kw2, kw1):
-                self.out += m + kw1 + 'c' + kw2
+def test_file_buffering(tmpdir):
+    file = tmpdir.join("test.log")
+    logger.start(file.realpath(), format="{message}", buffering=-1)
+    logger.debug("x" * (io.DEFAULT_BUFFER_SIZE // 2))
+    assert file.read() == ""
+    logger.debug("x" * (io.DEFAULT_BUFFER_SIZE * 2))
+    assert file.read() != ""
 
-        writer = Writer()
-        validator = lambda: writer.out == msg + '\n1c2'
+def test_invalid_function_kwargs():
+    def function(message, a="Y"):
+        pass
+    logger.start(function, b="X", wrapped=False)
+    with pytest.raises(TypeError):
+        logger.debug("Nope")
 
-        if test_invalid:
-            writer.write = lambda m: None
-    elif sink_type == 'str_a':
-        kwargs = {'mode': 'a', 'encoding': 'ascii'}
-        file = tmpdir.join('test.log')
-        with file.open(mode='w', encoding='ascii') as f:
-            f.write("This shouldn't be overwritten.")
+def test_invalid_class_kwargs():
+    class Writer:
+        pass
+    with pytest.raises(TypeError):
+        logger.start(Writer, keyword=123)
 
-        writer = file.realpath()
-        validator = lambda: file.read() == "This shouldn't be overwritten." + msg + "\n"
+def test_invalid_file_object_kwargs():
+    class Writer:
+        def __init__(self):
+            self.out = ''
+        def write(self, m):
+            pass
+    writer = Writer()
+    logger.start(writer, format='{message}', kw1="1", kw2="2", wrapped=False)
+    with pytest.raises(TypeError):
+        logger.debug("msg")
 
-        if test_invalid:
-            kwargs = {"foo": 1, "bar": 2}
-    elif sink_type == 'str_w':
-        kwargs = {'mode': 'w', 'encoding': 'ascii'}
-        file = tmpdir.join('test.log')
-        with file.open(mode='w', encoding='ascii') as f:
-            f.write("This should be overwritten.")
-
-        writer = file.realpath()
-        validator = lambda: file.read() == msg + "\n"
-
-        if test_invalid:
-            kwargs = {"foo": 1, "bar": 2}
-
-    def test():
-        logger.start(writer, format='{message}', **kwargs)
-        logger.debug(msg)
-
-    if test_invalid:
-        if sink_type in ('function', 'file_object'):
-            test()
-            out, err = capsys.readouterr()
-            assert out == ""
-            assert err.startswith("--- Logging error in Loguru ---")
-        else:
-            with pytest.raises(TypeError):
-                test()
-    else:
-        test()
-        assert validator()
+def test_invalid_file_kwargs():
+    with pytest.raises(TypeError):
+        logger.start("file.log", nope=123)
 
 @pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
 def test_invalid_level(writer, level):

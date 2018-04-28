@@ -18,18 +18,17 @@ from ._fast_now import fast_now
 class FileSink:
 
     def __init__(self, path, *, rotation=None, retention=None, compression=None,
-                 process_at_stop=True, **kwargs):
+                 mode='a', buffering=1, **kwargs):
         self.start_time = fast_now()
         self.start_time._FORMATTER = 'alternative'
         self.start_time._to_string_format = '%Y-%m-%d_%H-%M-%S'
+        self.mode = mode
+        self.buffering = buffering
         self.kwargs = kwargs.copy()
-        self.kwargs.setdefault('mode', 'a')
-        self.kwargs.setdefault('buffering', 1)
         self.path = str(path)
         self.file = None
         self.file_path = None
         self.created = 1
-        self.process_at_stop = process_at_stop
 
         self.rotation_function = self.make_rotation_function(rotation)
         self.retention_function = self.make_retention_function(retention)
@@ -381,12 +380,14 @@ class FileSink:
         if create_new:
             new_dir = os.path.dirname(new_path)
             os.makedirs(new_dir, exist_ok=True)
-            self.file = open(new_path, **self.kwargs)
+            self.file = open(new_path, mode=self.mode, buffering=self.buffering, **self.kwargs)
             self.file_path = new_path
             self.created += 1
 
     def stop(self):
-        compression = self.process_at_stop and (self.compression_function is not None)
-        retention = self.process_at_stop and (self.retention_function is not None)
+        rotating = self.rotation_function is not None
+        appending = 'a' in self.mode
+        compression = (self.compression_function is not None) and (not rotating or not appending)
+        retention = (self.retention_function is not None) and (not rotating or not appending)
         check = compression
         self.terminate(check_conflict=check, exec_compression=compression, exec_retention=retention, create_new=False)
