@@ -241,8 +241,14 @@ class Logger:
         if levelno < 0:
             raise ValueError("Invalid level value, it should be a positive integer, not: %d" % levelno)
 
-        if not isinstance(format, str):
-            raise ValueError("Invalid format, it should be a string, not: '%s'" % type(format).__name__)
+        if isinstance(format, str):
+            formatter = format + '\n{exception}'
+            is_formatter_dynamic = False
+        elif callable(format):
+            formatter = format
+            is_formatter_dynamic = True
+        else:
+            raise ValueError("Invalid format, it should be a string or a function, not: '%s'" % type(format).__name__)
 
         with self._lock:
             colors = [lvl.color for lvl in self._levels.values()] + ['']
@@ -251,7 +257,8 @@ class Logger:
                 writer=writer,
                 stopper=stopper,
                 levelno=levelno,
-                format_=format,
+                formatter=formatter,
+                is_formatter_dynamic=is_formatter_dynamic,
                 filter_=filter_func,
                 colored=colored,
                 serialized=serialized,

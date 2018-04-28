@@ -1,3 +1,4 @@
+import functools
 import json
 import multiprocessing
 import sys
@@ -13,28 +14,36 @@ class StrRecord(str):
 
 class Handler:
 
-    def __init__(self, *, writer, stopper, levelno, format_, filter_, colored, serialized, enhanced, wrapped, queued, colors=[]):
+    def __init__(self, *, writer, stopper, levelno, formatter, is_formatter_dynamic, filter_,
+                 colored, serialized, enhanced, wrapped, queued, colors=[]):
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
-        self.format = format_ + "\n{exception}"
+        self.formatter = formatter
+        self.is_formatter_dynamic = is_formatter_dynamic
         self.filter = filter_
         self.colored = colored
         self.serialized = serialized
         self.enhanced = enhanced
         self.wrapped = wrapped
         self.queued = queued
-        self.decolorized_format = self.decolorize(self.format)
+
+        self.static_format = None
+        self.decolorized_format = None
         self.precolorized_formats = {}
+
         self.lock = threading.Lock()
         self.queue = None
         self.thread = None
 
-        if colored:
+        if not self.is_formatter_dynamic:
+            self.static_format = self.formatter
+            self.decolorized_format = self.decolorize(self.static_format)
+
             for color in colors:
                 self.update_format(color)
 
-        if queued:
+        if self.queued:
             self.queue = multiprocessing.SimpleQueue()
             self.thread = threading.Thread(target=self.queued_writer, daemon=True)
             self.thread.start()
@@ -71,19 +80,21 @@ class Handler:
         return am
 
     @staticmethod
+    @functools.lru_cache(maxsize=32)
     def decolorize(format_):
         am = Handler.make_ansimarkup('')
         return am.strip(format_)
 
     @staticmethod
+    @functools.lru_cache(maxsize=32)
     def colorize(format_, color):
         am = Handler.make_ansimarkup(color)
         return am.parse(format_)
 
     def update_format(self, color):
-        if not self.colored or color in self.precolorized_formats:
+        if self.is_formatter_dynamic or not self.colored or color in self.precolorized_formats:
             return
-        self.precolorized_formats[color] = self.colorize(self.format, color)
+        self.precolorized_formats[color] = self.colorize(self.static_format, color)
 
     def handle_error(self, record=None):
         if not self.wrapped:
@@ -118,6 +129,17 @@ class Handler:
                 if not self.filter(record):
                     return
 
+            if self.is_formatter_dynamic:
+                if self.colored:
+                    precomputed_format = self.colorize(self.formatter(record), level_color)
+                else:
+                    precomputed_format = self.decolorize(self.formatter(record))
+            else:
+                if self.colored:
+                    precomputed_format = self.precolorized_formats[level_color]
+                else:
+                    precomputed_format = self.decolorized_format
+
             error = ""
             if record['exception']:
                 error = record['exception'].format_exception(self.enhanced, self.colored)
@@ -132,11 +154,6 @@ class Handler:
                     message = self.decolorize(message)
 
                 formatter_record['message'] = message
-
-            if self.colored:
-                precomputed_format = self.precolorized_formats[level_color]
-            else:
-                precomputed_format = self.decolorized_format
 
             formatted = precomputed_format.format_map(formatter_record)
 

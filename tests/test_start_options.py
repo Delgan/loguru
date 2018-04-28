@@ -20,15 +20,51 @@ def test_level(level, function, should_output, writer):
     assert writer.read() == (message + '\n') * should_output
 
 @pytest.mark.parametrize('message, format, expected', [
-    ('a', 'Message: {message}', 'Message: a'),
-    ('b', 'Nope', 'Nope'),
-    ('c', '{level} {message} {level}', 'DEBUG c DEBUG'),
-    ('d', '{message} {level} {level.no} {level.name}', 'd DEBUG %d DEBUG' % 10)
+    ('a', 'Message: {message}', 'Message: a\n'),
+    ('b', 'Nope', 'Nope\n'),
+    ('c', '{level} {message} {level}', 'DEBUG c DEBUG\n'),
+    ('d', '{message} {level} {level.no} {level.name}', 'd DEBUG 10 DEBUG\n'),
+    ('e', lambda _: '{message}', 'e'),
+    ('f', lambda r: '{message} ' + r['level'].name, 'f DEBUG'),
 ])
 def test_format(message, format, expected, writer):
     logger.start(writer, format=format)
     logger.debug(message)
-    assert writer.read() == expected + '\n'
+    assert writer.read() == expected
+
+def test_progressive_format(writer):
+    def formatter(record):
+        if record['extra'].get("progessive", False):
+            fmt = "{message}"
+        else:
+            fmt = "[{level.name}] {message}"
+        return fmt + record['extra'].get("end", "\n")
+    logger.start(writer, format=formatter)
+    logger.bind(end=" ").debug("Start:")
+    for _ in range(5):
+        logger.bind(progessive=True, end="").debug(".")
+    logger.bind(progessive=True).debug("")
+    logger.debug("End")
+    assert writer.read() == ("[DEBUG] Start: .....\n"
+                             "[DEBUG] End\n")
+
+def test_function_format_without_exception(writer):
+    logger.start(writer, format=lambda _: '{message}\n')
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("Error!")
+    assert writer.read() == "Error!\n"
+
+def test_function_format_with_exception(writer):
+    logger.start(writer, format=lambda _: '{message}\n{exception}')
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("Error!")
+    lines = writer.read().splitlines()
+    assert lines[0] == "Error!"
+    assert lines[-1] == "ZeroDivisionError: division by zero"
 
 @pytest.mark.parametrize('filter, should_output', [
     (None, True),
@@ -53,14 +89,16 @@ def test_filter(filter, should_output, writer):
     assert writer.read() == (message + '\n') * should_output
 
 @pytest.mark.parametrize('message, format, expected, colored', [
-    ('a', '<red>{message}</red>', 'a', False),
-    ('b', '<red>{message}</red>', ansimarkup.parse("<red>b</red>"), True),
-    ('<red>nope</red>', '{message}', '<red>nope</red>', True),
+    ('a', '<red>{message}</red>', 'a\n', False),
+    ('b', '<red>{message}</red>', ansimarkup.parse("<red>b</red>\n"), True),
+    ('c', lambda _: '<red>{message}</red>', 'c', False),
+    ('d', lambda _: '<red>{message}</red>', ansimarkup.parse('<red>d</red>'), True),
+    ('<red>nope</red>', '{message}', '<red>nope</red>\n', True),
 ])
 def test_colored(message, format, expected, colored, writer):
     logger.start(writer, format=format, colored=colored)
     logger.debug(message)
-    assert writer.read() == expected + '\n'
+    assert writer.read() == expected
 
 def test_enhanced(writer):
     logger.start(writer, format='{message}', enhanced=True)
