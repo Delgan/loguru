@@ -6,10 +6,24 @@ python:
 env:
   - LOGURU_EXTENSIONS=1
   - LOGURU_EXTENSIONS=0
-  - LOGURU_EXTENSIONS=auto
 
 install:
   - pip install -v -e .[dev]
+
+before_script:
+  - |
+      python -c "if True:  # Fix .yaml indentation
+        import os, sys;
+        ext = os.environ.get('LOGURU_EXTENSIONS')
+        try:
+            import loguru._extensions.fast_now
+        except ImportError:
+            if ext == '0':
+                sys.exit(0)
+        else:
+            if ext == '1':
+                sys.exit(0)
+        sys.exit(1)"
 
 script:
   - pytest --cov loguru/
