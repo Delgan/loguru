@@ -17,22 +17,28 @@ def log_function(logger):
     for _ in range(1000):
         logger.info("A message")
 
+@pytest.fixture(params=[0, 1, 10])
+def nb_handlers(benchmark, request):
+    benchmark.group = "logging - handlers x%d" % request.param
+    return request.param
 
-@pytest.mark.benchmark(group="logging")
-def test_standard_logging(benchmark):
+def test_standard_logging(benchmark, nb_handlers):
     logger = logging.getLogger(__name__)
     handler = PassHandler()
     handler.setFormatter(logging.Formatter("%(message)s"))
     handler.setLevel("INFO")
     logger.setLevel("INFO")
-    logger.addHandler(handler)
+
+    for _ in range(nb_handlers):
+        logger.addHandler(handler)
 
     benchmark(log_function, logger)
 
-@pytest.mark.benchmark(group="logging")
-def test_loguru_logging(benchmark):
+def test_loguru_logging(benchmark, nb_handlers):
     logger = loguru.logger
     logger.stop()
-    logger.start(PassHandler(), format="{message}", colored=False, level="INFO")
+
+    for _ in range(nb_handlers):
+        logger.start(PassHandler(), format="{message}", colored=False, level="INFO")
 
     benchmark(log_function, logger)
