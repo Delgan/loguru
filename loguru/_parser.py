@@ -1,6 +1,8 @@
 import re
 from os import PathLike
 
+from ._matcher import Matcher
+
 
 class Parser:
 
@@ -53,3 +55,7 @@ class Parser:
                 end = matches[-2].end()
                 buffer = buffer[end:]
                 yield from matches[:-1]
+
+    @staticmethod
+    def matcher(string):
+        return Matcher(string)
