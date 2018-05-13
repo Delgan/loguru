@@ -38,6 +38,7 @@ setup(
         'base36>=0.1.1',
         'better_exceptions_fork>=0.2.1.post5',
         'colorama>=0.3.9',
+        'notifiers>=0.7.4',
         'pendulum>=1.4.2,<2.0.0',
     ],
     extras_require={
