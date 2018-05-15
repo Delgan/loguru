@@ -325,7 +325,6 @@ class Logger:
                 _self._enabled[name] = True
 
             now = fast_now()
-            now._FORMATTER = 'alternative'
 
             if level_id is None:
                 level_no, level_color, level_icon = level, '', ' '
@@ -344,7 +343,7 @@ class Logger:
             thread = current_thread()
             process = current_process()
             diff = now - start_time
-            elapsed = pendulum.Interval(microseconds=diff.microseconds)
+            elapsed = pendulum.Duration(microseconds=diff.microseconds)
 
             level_recattr = LevelRecattr(level_name)
             level_recattr.no, level_recattr.name, level_recattr.icon = level_no, level_name, level_icon

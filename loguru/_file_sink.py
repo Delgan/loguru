@@ -15,13 +15,25 @@ import pendulum
 from ._fast_now import fast_now
 
 
+class FileDateTime(pendulum.DateTime):
+
+    def __format__(self, spec):
+        if not spec:
+            spec = "YYY-MM-DD_HH-mm-ss"
+        return super().__format__(spec)
+
+    @classmethod
+    def now(cls):
+        # TODO: Use FileDateTime.now() instead, when pendulum/#203 fixed
+        t = fast_now()
+        return cls(t.year, t.month, t.day, t.hour, t.minute, t.second, t.microsecond, t.tzinfo, fold=t.fold)
+
+
 class FileSink:
 
     def __init__(self, path, *, rotation=None, retention=None, compression=None,
                  mode='a', buffering=1, **kwargs):
-        self.start_time = fast_now()
-        self.start_time._FORMATTER = 'alternative'
-        self.start_time._to_string_format = '%Y-%m-%d_%H-%M-%S'
+        self.start_time = FileDateTime.now()
         self.mode = mode
         self.buffering = buffering
         self.kwargs = kwargs.copy()
@@ -43,9 +55,7 @@ class FileSink:
             self.write = self.rotating_write
 
     def format_path(self):
-        now = fast_now()
-        now._FORMATTER = 'alternative'
-        now._to_string_format = '%Y-%m-%d_%H-%M-%S'
+        now = FileDateTime.now()
 
         record = {
             "time": now,
@@ -109,16 +119,19 @@ class FileSink:
                 if day is None:
                     return self.make_rotation_function(time)
                 if time is None:
-                    time = pendulum.parse('00:00', strict=True)
+                    time = pendulum.parse('00:00', exact=True, strict=False)
                 return make_from_time(lambda t: t.next(day, keep_time=True), time_init=time)
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         elif isinstance(rotation, (numbers.Real, decimal.Decimal)):
             return make_from_size(rotation)
         elif isinstance(rotation, datetime.time):
-            time = pendulum.Time.instance(rotation)
+            time = pendulum.Time(hour=rotation.hour, minute=rotation.minute,
+                                 second=rotation.second, microsecond=rotation.microsecond,
+                                 tzinfo=rotation.tzinfo, fold=rotation.fold)
             return make_from_time(lambda t: t.add(days=1), time_init=time)
         elif isinstance(rotation, datetime.timedelta):
-            interval = pendulum.Interval.instance(rotation)
+            interval = pendulum.Duration(days=rotation.days, seconds=rotation.seconds,
+                                         microseconds=rotation.microseconds)
             return make_from_time(lambda t: t + interval)
         elif callable(rotation):
             return rotation
@@ -277,7 +290,7 @@ class FileSink:
 
             seconds += value * unit
 
-        return pendulum.Interval(seconds=seconds)
+        return pendulum.Duration(seconds=seconds)
 
     @staticmethod
     def parse_frequency(frequency):
@@ -333,7 +346,7 @@ class FileSink:
         if time is not None:
             time_ = time
             try:
-                time = pendulum.parse(time, strict=True)
+                time = pendulum.parse(time, exact=True, strict=False)
             except Exception as e:
                 raise ValueError("Invalid time while parsing daytime: '%s'" % time) from e
             else:

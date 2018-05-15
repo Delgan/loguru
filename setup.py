@@ -31,7 +31,7 @@ setup(
     author_email='delgan.py@gmail.com',
     url='https://github.com/Delgan/loguru',
     download_url='https://github.com/Delgan/loguru/archive/{}.tar.gz'.format(version),
-    keywords=['loguru', 'logging', 'logger', 'log'],
+    keywords=['loguru', 'logging', 'logger', 'log', 'parser', 'notifier'],
     license="MIT license",
     install_requires=[
         'ansimarkup>=1.3.0',
@@ -39,7 +39,7 @@ setup(
         'better_exceptions_fork>=0.2.1.post5',
         'colorama>=0.3.9',
         'notifiers>=0.7.4',
-        'pendulum>=1.4.2,<2.0.0',
+        'pendulum>=2.0.1',
     ],
     extras_require={
         'dev': [

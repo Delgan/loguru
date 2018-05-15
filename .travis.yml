@@ -4,7 +4,7 @@ python:
   - '3.6'
 
 env:
-  - LOGURU_EXTENSIONS=1
+#  - LOGURU_EXTENSIONS=1
   - LOGURU_EXTENSIONS=0
 
 install:

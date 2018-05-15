@@ -1,25 +1,10 @@
 import pendulum
 import loguru
-import datetime
-import pytest
-import sys
-from unittest.mock import MagicMock
 
-@pytest.mark.parametrize('with_extensions', [True, False])
-def test_get_fast_now_function(monkeypatch, with_extensions):
-    if with_extensions:
-        mock = MagicMock()
-        mock.now = lambda: datetime.datetime.now()
-        monkeypatch.setitem(sys.modules, 'loguru._extensions.fast_now', mock)
-    else:
-        monkeypatch.setitem(sys.modules, 'loguru._extensions.fast_now', MagicMock(spec_set=[]))
-
-    fast_now = loguru._fast_now.get_fast_now_function()
-    assert isinstance(fast_now(), pendulum.Pendulum)
 
 def test_fast_now():
     now_1 = loguru._fast_now.fast_now()
-    assert isinstance(now_1, pendulum.Pendulum)
+    assert isinstance(now_1, pendulum.DateTime)
 
     now_2 = loguru._fast_now.fast_now()
     assert now_2 >= now_1

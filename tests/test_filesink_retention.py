@@ -5,7 +5,7 @@ import os
 from loguru import logger
 
 
-@pytest.mark.parametrize('retention', ['1 hour', '1H', ' 1 h ', datetime.timedelta(hours=1), pendulum.Interval(hours=1.0)])
+@pytest.mark.parametrize('retention', ['1 hour', '1H', ' 1 h ', datetime.timedelta(hours=1), pendulum.Duration(hours=1.0)])
 def test_retention_time(monkeypatch_now, tmpdir, retention):
     i = logger.start(tmpdir.join('test.log.x'), retention=retention)
     logger.debug("test")
