@@ -1,6 +1,7 @@
 import pathlib
 import sys
 import os
+import logging
 from loguru import logger
 import pytest
 
@@ -79,6 +80,16 @@ def test_file_object_sink(rep):
     a = A()
     log(a, rep)
     assert a.out == expected * rep
+
+@repetitions
+def test_standard_handler_sink(rep):
+    out = []
+    class H(logging.Handler):
+        def emit(self, record):
+            out.append(record.getMessage() + '\n')
+    h = H()
+    log(h, rep)
+    assert out == [expected] * rep
 
 @repetitions
 def test_flush(rep):

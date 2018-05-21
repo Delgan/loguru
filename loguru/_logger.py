@@ -1,5 +1,6 @@
 import functools
 import itertools
+import logging
 import os
 import threading
 from collections import namedtuple
@@ -208,6 +209,18 @@ class Logger:
                 stopper = stream.stop
             else:
                 stopper = lambda: None
+        elif isinstance(sink, logging.Handler):
+            def writer(m):
+                r = m.record
+                exc = r['exception']
+                record = logging.root.makeRecord(
+                    r['name'], r['level'].no, r['file'].path, r['line'], r['message'], (),
+                    (exc.type, exc.value, exc.traceback) if exc else None, r['function'], r['extra']
+                )
+                sink.handle(record)
+            stopper = sink.close
+            if colored is None:
+                colored = False
         elif callable(sink):
             if kwargs:
                 writer = lambda m: sink(m, **kwargs)
