@@ -175,14 +175,6 @@ class Logger:
             return self.start(sink, level=level, format=format, filter=filter, colored=colored,
                               serialized=serialized, enhanced=enhanced, queued=queued,
                               wrapped=wrapped)
-        elif callable(sink):
-            if kwargs:
-                writer = lambda m: sink(m, **kwargs)
-            else:
-                writer = sink
-            stopper = lambda: None
-            if colored is None:
-                colored = False
         elif isinstance(sink, (str, PathLike)):
             path = sink
             sink = FileSink(path, **kwargs)
@@ -216,6 +208,14 @@ class Logger:
                 stopper = stream.stop
             else:
                 stopper = lambda: None
+        elif callable(sink):
+            if kwargs:
+                writer = lambda m: sink(m, **kwargs)
+            else:
+                writer = sink
+            stopper = lambda: None
+            if colored is None:
+                colored = False
         else:
             raise ValueError("Cannot log to objects of type '%s'." % type(sink).__name__)
 
