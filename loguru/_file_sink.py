@@ -4,7 +4,6 @@ import glob
 import numbers
 import os
 import random
-import re
 import shutil
 import string
 import time
@@ -32,7 +31,7 @@ class FileDateTime(pendulum.DateTime):
 
 class FileSink:
 
-    def __init__(self, path, *, rotation=None, retention=None, compression=None,
+    def __init__(self, path, *, rotation=None, retention=None, compression=None, delayed=False,
                  mode='a', buffering=1, **kwargs):
         self.start_time = FileDateTime.now()
         self.mode = mode
@@ -48,6 +47,12 @@ class FileSink:
         self.compression_function = self.make_compression_function(compression)
         self.glob_pattern = self.make_glob_pattern(self.path)
 
+        if delayed:
+            self.write = self.delayed_write
+        else:
+            self.initialize_write_function()
+
+    def initialize_write_function(self):
         self.terminate(create_new=True)
 
         if self.rotation_function is None:
@@ -243,6 +248,10 @@ class FileSink:
             manage = self.retention_function is not None
             self.terminate(check_conflict=True, exec_compression=compress, exec_retention=manage, create_new=True)
         self.file.write(message)
+
+    def delayed_write(self, message):
+        self.initialize_write_function()
+        self.write(message)
 
     def terminate(self, *, check_conflict=False, exec_compression=False, exec_retention=False, create_new=False):
         old_file = self.file
