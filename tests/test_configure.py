@@ -122,7 +122,7 @@ def test_reset_previous_sinks(writer):
 
 def test_reset_previous_extra(writer):
     logger.configure(extra={"a": 123})
-    logger.start(writer, format="{extra[a]}", wrapped=False)
+    logger.start(writer, format="{extra[a]}", catch=False)
 
     logger.configure(extra={})
 

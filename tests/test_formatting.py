@@ -94,7 +94,7 @@ def test_file_formatters(tmpdir, format, validator, part):
 ])
 @pytest.mark.parametrize('use_log_function', [False, True])
 def test_log_formatting(writer, message, args, kwargs, expected, use_log_function):
-    logger.start(writer, format='{message}', colored=False)
+    logger.start(writer, format='{message}', colorize=False)
 
     if use_log_function:
         logger.log(10, message, *args, **kwargs)

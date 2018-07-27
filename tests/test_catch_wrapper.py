@@ -48,8 +48,8 @@ def test_function(writer):
 
         assert writer.read().endswith(zero_division_error)
 
-def test_with_enhanced(writer):
-    logger.start(writer, enhanced=True)
+def test_with_enhance(writer):
+    logger.start(writer, enhance=True)
 
     def c():
         a = 2
@@ -64,7 +64,7 @@ def test_with_enhanced(writer):
     logger.stop()
     writer.clear()
 
-    logger.start(writer, enhanced=False)
+    logger.start(writer, enhance=False)
 
     decorated = logger.catch(c)
     decorated()

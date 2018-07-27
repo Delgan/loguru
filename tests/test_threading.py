@@ -32,7 +32,7 @@ def test_safe(capsys):
         time.sleep(0.5)
         logger.debug("message 2")
 
-    logger.start(non_safe_sink, format="{message}", wrapped=False)
+    logger.start(non_safe_sink, format="{message}", catch=False)
 
     threads = [Thread(target=first_thread), Thread(target=second_thread)]
 

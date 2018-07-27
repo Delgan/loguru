@@ -165,31 +165,31 @@ class Logger:
         self._change_activation(name, False)
 
     def start(self, sink, *, level=_defaults.LOGURU_LEVEL, format=_defaults.LOGURU_FORMAT,
-                    filter=_defaults.LOGURU_FILTER, colored=_defaults.LOGURU_COLORED,
-                    serialized=_defaults.LOGURU_SERIALIZED, enhanced=_defaults.LOGURU_ENHANCED,
-                    queued=_defaults.LOGURU_QUEUED, wrapped=_defaults.LOGURU_WRAPPED, **kwargs):
-        if colored is None and serialized:
-            colored = False
+                    filter=_defaults.LOGURU_FILTER, colorize=_defaults.LOGURU_COLORIZE,
+                    serialize=_defaults.LOGURU_SERIALIZE, enhance=_defaults.LOGURU_ENHANCE,
+                    enqueue=_defaults.LOGURU_ENQUEUE, catch=_defaults.LOGURU_CATCH, **kwargs):
+        if colorize is None and serialize:
+            colorize = False
 
         if isclass(sink):
             sink = sink(**kwargs)
-            return self.start(sink, level=level, format=format, filter=filter, colored=colored,
-                              serialized=serialized, enhanced=enhanced, queued=queued,
-                              wrapped=wrapped)
+            return self.start(sink, level=level, format=format, filter=filter, colorize=colorize,
+                              serialize=serialize, enhance=enhance, enqueue=enqueue,
+                              catch=catch)
         elif isinstance(sink, (str, PathLike)):
             path = sink
             sink = FileSink(path, **kwargs)
-            return self.start(sink, level=level, format=format, filter=filter, colored=colored,
-                              serialized=serialized, enhanced=enhanced, queued=queued,
-                              wrapped=wrapped)
+            return self.start(sink, level=level, format=format, filter=filter, colorize=colorize,
+                              serialize=serialize, enhance=enhance, enqueue=enqueue,
+                              catch=catch)
         elif hasattr(sink, 'write') and callable(sink.write):
-            if colored is None:
+            if colorize is None:
                 try:
-                    colored = sink.isatty()
+                    colorize = sink.isatty()
                 except Exception:
-                    colored = False
+                    colorize = False
 
-            stream = AnsiToWin32(sink).stream if (colored and os.name == 'nt') else sink
+            stream = AnsiToWin32(sink).stream if (colorize and os.name == 'nt') else sink
 
             stream_write = stream.write
             if kwargs:
@@ -219,16 +219,16 @@ class Logger:
                 )
                 sink.handle(record)
             stopper = sink.close
-            if colored is None:
-                colored = False
+            if colorize is None:
+                colorize = False
         elif callable(sink):
             if kwargs:
                 writer = lambda m: sink(m, **kwargs)
             else:
                 writer = sink
             stopper = lambda: None
-            if colored is None:
-                colored = False
+            if colorize is None:
+                colorize = False
         else:
             raise ValueError("Cannot log to objects of type '%s'." % type(sink).__name__)
 
@@ -273,11 +273,11 @@ class Logger:
                 formatter=formatter,
                 is_formatter_dynamic=is_formatter_dynamic,
                 filter_=filter_func,
-                colored=colored,
-                serialized=serialized,
-                enhanced=enhanced,
-                wrapped=wrapped,
-                queued=queued,
+                colorize=colorize,
+                serialize=serialize,
+                enhance=enhance,
+                catch=catch,
+                enqueue=enqueue,
                 colors=colors,
             )
 

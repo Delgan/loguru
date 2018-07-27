@@ -53,7 +53,7 @@ def compare_outputs(tmpdir, pyexec):
 def compare(compare_outputs, request):
     catch_mode = request.param
 
-    start = 'logger.start(sys.stdout, enhanced=False, colored=False, format="{message}")\n'
+    start = 'logger.start(sys.stdout, enhance=False, colorize=False, format="{message}")\n'
 
     def compare(template, caught_scope_index, caught_trace_index=0, *, disabled=[]):
         template = textwrap.dedent(template)
@@ -304,7 +304,7 @@ def test_suppressed_exception_indirect(compare):
 @pytest.mark.parametrize('rec', [1, 2, 3])
 @pytest.mark.parametrize('catch_mode', ['explicit', 'decorator', 'context_manager'])
 def test_raising_recursion(writer, rec, catch_mode):
-    logger.start(writer, format='{message}', enhanced=False)
+    logger.start(writer, format='{message}', enhance=False)
 
     if catch_mode == 'explicit':
         def f(n):
@@ -347,7 +347,7 @@ def test_raising_recursion(writer, rec, catch_mode):
         assert next_line == epected_next
 
 def test_carret_not_masked(writer):
-    logger.start(writer, enhanced=False, colored=False)
+    logger.start(writer, enhance=False, colorize=False)
 
     @logger.catch
     def f(n):
@@ -360,11 +360,11 @@ def test_carret_not_masked(writer):
 
     assert sum(line.startswith('> File') for line in lines) == 1
 
-def test_postprocess_colored(writer, pyexec, tmpdir):
+def test_postprocess_colorize(writer, pyexec, tmpdir):
     file = tmpdir.join("test.log")
 
     code = """
-    logger.start(r'%s', colored=True, enhanced=True)
+    logger.start(r'%s', colorize=True, enhance=True)
     def f():
         1 / 0
     with logger.catch:
@@ -380,7 +380,7 @@ def test_postprocess_colored(writer, pyexec, tmpdir):
     assert re.match(r"^\S*>.*line.*\D7\D.*$", lines[3])
 
 def test_frame_values_backward(writer):
-    logger.start(writer, enhanced=True, colored=False)
+    logger.start(writer, enhance=True, colorize=False)
 
     k = 2
 
@@ -409,7 +409,7 @@ def test_frame_values_backward(writer):
     assert next(line_4).endswith(' 2')
 
 def test_frame_values_forward(writer):
-    logger.start(writer, enhanced=True, colored=False)
+    logger.start(writer, enhance=True, colorize=False)
 
     k = 2
 
@@ -438,14 +438,14 @@ def test_frame_values_forward(writer):
     assert next(line_4).endswith(' 2')
 
 def test_no_exception(writer):
-    logger.start(writer, enhanced=False, colored=False, format="{message}")
+    logger.start(writer, enhance=False, colorize=False, format="{message}")
 
     logger.exception("No Error.")
 
     assert writer.read() == "No Error.\nNoneType: None\n"
 
-def test_queued_exception(writer):
-    logger.start(writer, enhanced=False, colored=False, queued=True, wrapped=False, format="{message}")
+def test_enqueue_exception(writer):
+    logger.start(writer, enhance=False, colorize=False, enqueue=True, catch=False, format="{message}")
     try:
         1 / 0
     except ZeroDivisionError:
@@ -456,16 +456,16 @@ def test_queued_exception(writer):
     assert lines[1].startswith("Traceback")
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
-def test_queued_with_other_handlers(writer):
+def test_enqueue_with_other_handlers(writer):
     def check_tb_sink(message):
         exception = message.record["exception"]
         if exception is None:
             return
         assert exception.traceback is not None
 
-    logger.start(check_tb_sink, queued=False, wrapped=False)
-    logger.start(writer, queued=True, wrapped=False, format="{message}")
-    logger.start(check_tb_sink, queued=False, wrapped=False)
+    logger.start(check_tb_sink, enqueue=False, catch=False)
+    logger.start(writer, enqueue=True, catch=False, format="{message}")
+    logger.start(check_tb_sink, enqueue=False, catch=False)
 
     try:
         1 / 0
@@ -477,9 +477,9 @@ def test_queued_with_other_handlers(writer):
     assert lines[0] == "Error"
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
-@pytest.mark.parametrize('enhanced', [False, True])
-def test_no_tb(writer, enhanced):
-    logger.start(writer, enhanced=enhanced, colored=False, format='{message}')
+@pytest.mark.parametrize('enhance', [False, True])
+def test_no_tb(writer, enhance):
+    logger.start(writer, enhance=enhance, colorize=False, format='{message}')
 
     try:
         1 / 0

@@ -62,10 +62,10 @@ def test_unprintable_record(writer, capsys):
     assert lines[-1] == "--- End of logging error ---"
     assert writer.read() == "a 1\nc 2\n"
 
-def test_queued_broken_sink(monkeypatch):
+def test_enqueue_broken_sink(monkeypatch):
     out = []
     monkeypatch.setattr(loguru._handler.Handler, 'handle_error', lambda *args: out.append('Handled'))
-    logger.start(broken_sink, queued=True)
+    logger.start(broken_sink, enqueue=True)
     logger.debug('a')
     time.sleep(0.1)
     assert out[0] == 'Handled'

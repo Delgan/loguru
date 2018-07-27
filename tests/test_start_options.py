@@ -88,20 +88,20 @@ def test_filter(filter, should_output, writer):
     logger.debug(message)
     assert writer.read() == (message + '\n') * should_output
 
-@pytest.mark.parametrize('message, format, expected, colored', [
+@pytest.mark.parametrize('message, format, expected, colorize', [
     ('a', '<red>{message}</red>', 'a\n', False),
     ('b', '<red>{message}</red>', ansimarkup.parse("<red>b</red>\n"), True),
     ('c', lambda _: '<red>{message}</red>', 'c', False),
     ('d', lambda _: '<red>{message}</red>', ansimarkup.parse('<red>d</red>'), True),
     ('<red>nope</red>', '{message}', '<red>nope</red>\n', True),
 ])
-def test_colored(message, format, expected, colored, writer):
-    logger.start(writer, format=format, colored=colored)
+def test_colorize(message, format, expected, colorize, writer):
+    logger.start(writer, format=format, colorize=colorize)
     logger.debug(message)
     assert writer.read() == expected
 
-def test_enhanced(writer):
-    logger.start(writer, format='{message}', enhanced=True)
+def test_enhance(writer):
+    logger.start(writer, format='{message}', enhance=True)
     try:
         1 / 0
     except:
@@ -111,7 +111,7 @@ def test_enhanced(writer):
     logger.stop()
     writer.clear()
 
-    logger.start(writer, format='{message}', enhanced=False)
+    logger.start(writer, format='{message}', enhance=False)
     try:
         1 / 0
     except:
@@ -121,7 +121,7 @@ def test_enhanced(writer):
     assert len(result_with) > len(result_without)
 
 @pytest.mark.parametrize('with_exception', [False, True])
-def test_serialized(with_exception):
+def test_serialize(with_exception):
     record_dict = record_json = None
 
     def sink(message):
@@ -130,7 +130,7 @@ def test_serialized(with_exception):
         record_json = json.loads(message)['record']
 
     logger.configure(extra=dict(not_serializable=object()))
-    logger.start(sink, format="{message}", wrapped=False, serialized=True)
+    logger.start(sink, format="{message}", catch=False, serialize=True)
     if not with_exception:
         logger.debug("Test")
     else:
@@ -142,13 +142,13 @@ def test_serialized(with_exception):
     assert set(record_dict.keys()) == set(record_json.keys())
 
 @pytest.mark.parametrize('with_exception', [False, True])
-def test_queued(with_exception):
+def test_enqueue(with_exception):
     import time
     x = []
     def sink(message):
         time.sleep(0.1)
         x.append(message)
-    logger.start(sink, format='{message}', queued=True)
+    logger.start(sink, format='{message}', enqueue=True)
     if not with_exception:
         logger.debug("Test")
     else:
@@ -164,10 +164,10 @@ def test_queued(with_exception):
         assert lines[-1] == "ZeroDivisionError: division by zero"
         assert sum(line.startswith('> ') for line in lines) == 1
 
-def test_wrapped():
+def test_catch():
     def sink(msg):
         raise 1 / 0
-    logger.start(sink, wrapped=False)
+    logger.start(sink, catch=False)
     with pytest.raises(ZeroDivisionError):
         logger.debug("fail")
 
@@ -225,7 +225,7 @@ def test_file_buffering(tmpdir):
 
 def test_file_not_delayed(tmpdir):
     file = tmpdir.join("test.log")
-    logger.start(file.realpath(), format="{message}", delayed=False)
+    logger.start(file.realpath(), format="{message}", delay=False)
     assert file.check(exists=1)
     assert file.read() == ""
     logger.debug("Not delayed")
@@ -233,7 +233,7 @@ def test_file_not_delayed(tmpdir):
 
 def test_file_delayed(tmpdir):
     file = tmpdir.join("test.log")
-    logger.start(file.realpath(), format="{message}", delayed=True)
+    logger.start(file.realpath(), format="{message}", delay=True)
     assert file.check(exists=0)
     logger.debug("Delayed")
     assert file.read() == "Delayed\n"
@@ -241,7 +241,7 @@ def test_file_delayed(tmpdir):
 def test_invalid_function_kwargs():
     def function(message, a="Y"):
         pass
-    logger.start(function, b="X", wrapped=False)
+    logger.start(function, b="X", catch=False)
     with pytest.raises(TypeError):
         logger.debug("Nope")
 
@@ -258,7 +258,7 @@ def test_invalid_file_object_kwargs():
         def write(self, m):
             pass
     writer = Writer()
-    logger.start(writer, format='{message}', kw1="1", kw2="2", wrapped=False)
+    logger.start(writer, format='{message}', kw1="1", kw2="2", catch=False)
     with pytest.raises(TypeError):
         logger.debug("msg")
 

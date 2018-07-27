@@ -5,13 +5,13 @@ from loguru import logger
 am = ansimarkup.AnsiMarkup(tags={"empty": ansimarkup.parse("")})
 
 def test_log_int_level(writer):
-    logger.start(writer, format='{level.name} -> {level.no} -> {message}', colored=False)
+    logger.start(writer, format='{level.name} -> {level.no} -> {message}', colorize=False)
     logger.log(10, "test")
 
     assert writer.read() == "Level 10 -> 10 -> test\n"
 
 def test_log_str_level(writer):
-    logger.start(writer, format='{level.name} -> {level.no} -> {message}', colored=False)
+    logger.start(writer, format='{level.name} -> {level.no} -> {message}', colorize=False)
     logger.log("DEBUG", "test")
 
     assert writer.read() == "DEBUG -> 10 -> test\n"
@@ -22,25 +22,25 @@ def test_add_level(writer):
     level = 10
 
     logger.level(name, level, color="<red>", icon=icon)
-    logger.start(writer, format='{level.icon} <level>{level.name}</level> -> {level.no} -> {message}', colored=True)
+    logger.start(writer, format='{level.icon} <level>{level.name}</level> -> {level.no} -> {message}', colorize=True)
 
     logger.log(name, "test")
     expected = am.parse("%s <red>%s</red> -> %d -> test" % (icon, name, level))
     assert writer.read() == expected + '\n'
 
-@pytest.mark.parametrize('colored, expected', [
+@pytest.mark.parametrize('colorize, expected', [
     (False, "foo | 10 | a"),
     (True, am.parse("<red>foo | 10 | a</red>"))
 ])
-def test_add_level_after_start(writer, colored, expected):
-    logger.start(writer, level="DEBUG", format='<level>{level.name} | {level.no} | {message}</level>', colored=colored)
+def test_add_level_after_start(writer, colorize, expected):
+    logger.start(writer, level="DEBUG", format='<level>{level.name} | {level.no} | {message}</level>', colorize=colorize)
     logger.level("foo", 10, color="<red>")
     logger.log("foo", "a")
     assert writer.read() == expected + "\n"
 
 def test_add_level_then_log_with_int_value(writer):
     logger.level("foo", 16)
-    logger.start(writer, level="foo", format="{level.name} {level.no} {message}", colored=False)
+    logger.start(writer, level="foo", format="{level.name} {level.no} {message}", colorize=False)
 
     logger.log(16, "test")
 
@@ -50,7 +50,7 @@ def test_add_malicious_level(writer):
     name = "Level 15"
 
     logger.level(name, 45, color="<red>")
-    logger.start(writer, format='{level.name} & {level.no} & <level>{message}</level>', colored=True)
+    logger.start(writer, format='{level.name} & {level.no} & <level>{message}</level>', colorize=True)
 
     logger.log(15, ' A ')
     logger.log(name, ' B ')
@@ -60,7 +60,7 @@ def test_add_malicious_level(writer):
 
 def test_add_existing_level(writer):
     logger.level("INFO", 45, color="<red>")
-    logger.start(writer, format='{level.icon} + <level>{level.name}</level> + {level.no} = {message}', colored=True)
+    logger.start(writer, format='{level.icon} + <level>{level.name}</level> + {level.no} = {message}', colorize=True)
 
     logger.info("a")
     logger.log("INFO", "b")
@@ -74,7 +74,7 @@ def test_add_existing_level(writer):
 
 def test_edit_level(writer):
     logger.level("info", no=0, color="<bold>", icon="[?]")
-    logger.start(writer, format="<level>->{level.no}, {level.name}, {level.icon}, {message}<-</level>", colored=True)
+    logger.start(writer, format="<level>->{level.no}, {level.name}, {level.icon}, {message}<-</level>", colorize=True)
 
     logger.log("info", "nope")
 
@@ -93,7 +93,7 @@ def test_edit_level(writer):
 
 def test_edit_existing_level(writer):
     logger.level("DEBUG", no=20, icon="!")
-    logger.start(writer, format="{level.no}, <level>{level.name}</level>, {level.icon}, {message}", colored=False)
+    logger.start(writer, format="{level.no}, <level>{level.name}</level>, {level.icon}, {message}", colorize=False)
     logger.debug("a")
     assert writer.read() == "20, DEBUG, !, a\n"
 
@@ -107,7 +107,7 @@ def test_get_existing_level():
 
 def test_start_custom_level(writer):
     logger.level("foo", 17, color="<yellow>")
-    logger.start(writer, level="foo", format='<level>{level.name} + {level.no} + {message}</level>', colored=False)
+    logger.start(writer, level="foo", format='<level>{level.name} + {level.no} + {message}</level>', colorize=False)
 
     logger.debug("nope")
     logger.info("yes")
