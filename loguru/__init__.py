@@ -8,7 +8,7 @@ from ._parser import Parser as _Parser
 
 __version__ = "0.0.1"
 
-logger = _Logger({}, [], None, False, False, False, 0)
+logger = _Logger({}, None, False, False, False, 0)
 notifier = _NotifierFactory()
 parser = _Parser()
 
