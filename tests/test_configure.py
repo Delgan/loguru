@@ -48,6 +48,19 @@ def test_extra(writer):
 
     assert writer.read() == "1 9\n"
 
+def test_activation(writer):
+    activation = [
+        ("tests", False),
+        ("tests.test_configure", True),
+    ]
+
+    logger.start(writer, format="{message}")
+    logger.configure(activation=activation)
+
+    logger.debug("Logging")
+
+    assert writer.read() == "Logging\n"
+
 def test_dict_unpacking(writer):
     config = {
         "sinks": [{'sink': writer, 'format': '{level.no} - {extra[x]} {extra[z]} - {message}'}],

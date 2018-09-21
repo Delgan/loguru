@@ -107,7 +107,7 @@ class Logger:
 
         return self.level(name)
 
-    def configure(self, *, sinks=None, levels=None, extra=None):
+    def configure(self, *, sinks=None, levels=None, extra=None, activation=None):
         if sinks is not None:
             self.stop()
         else:
@@ -121,6 +121,13 @@ class Logger:
             with self._lock:
                 self._extra_class.clear()
                 self._extra_class.update(extra)
+
+        if activation is not None:
+            for name, state in activation:
+                if state:
+                    self.enable(name)
+                else:
+                    self.disable(name)
 
         return [self.start(**params) for params in sinks]
 
