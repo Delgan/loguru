@@ -126,7 +126,9 @@ class FileSink:
                     return self.make_rotation_function(time)
                 if time is None:
                     time = pendulum.parse('00:00', exact=True, strict=False)
-                return make_from_time(lambda t: t.next(day, keep_time=True), time_init=time)
+                def next_day(t):
+                    return t.next(day, keep_time=True)
+                return make_from_time(next_day, time_init=time)
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         elif isinstance(rotation, (numbers.Real, decimal.Decimal)):
             return make_from_size(rotation)
@@ -134,11 +136,15 @@ class FileSink:
             time = pendulum.Time(hour=rotation.hour, minute=rotation.minute,
                                  second=rotation.second, microsecond=rotation.microsecond,
                                  tzinfo=rotation.tzinfo, fold=rotation.fold)
-            return make_from_time(lambda t: t.add(days=1), time_init=time)
+            def next_day(t):
+                return t.add(days=1)
+            return make_from_time(next_day, time_init=time)
         elif isinstance(rotation, datetime.timedelta):
             interval = pendulum.Duration(days=rotation.days, seconds=rotation.seconds,
                                          microseconds=rotation.microseconds)
-            return make_from_time(lambda t: t + interval)
+            def add_interval(t):
+                return t + interval
+            return make_from_time(add_interval)
         elif callable(rotation):
             return rotation
         else:
@@ -160,7 +166,8 @@ class FileSink:
                 raise ValueError("Cannot parse retention from: '%s'" % retention)
             return self.make_retention_function(interval)
         elif isinstance(retention, int):
-            key_log = lambda log: (-os.stat(log).st_mtime, log)
+            def key_log(log):
+                return (-os.stat(log).st_mtime, log)
             def filter_logs(logs):
                 return sorted(logs, key=key_log)[retention:]
             return make_from_filter(filter_logs)

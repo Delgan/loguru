@@ -144,7 +144,9 @@ class Logger:
         parent_status = next((s for n, s in activation_list if name[:len(n)] == n), None)
         if parent_status != status and not (name == '' and status == True):
             activation_list.append((name, status))
-            activation_list.sort(key=lambda x: x[0].count('.'), reverse=True)
+            def key_sort(x):
+                return x[0].count('.')
+            activation_list.sort(key=key_sort, reverse=True)
 
         with self._lock:
             for n in self._enabled:
@@ -188,7 +190,8 @@ class Logger:
 
             stream_write = stream.write
             if kwargs:
-                write = lambda m: stream_write(m, **kwargs)
+                def write(m):
+                    return stream_write(m, **kwargs)
             else:
                 write = stream_write
 
@@ -203,7 +206,8 @@ class Logger:
             if hasattr(stream, 'stop') and callable(stream.stop):
                 stopper = stream.stop
             else:
-                stopper = lambda: None
+                def stopper():
+                    return None
         elif isinstance(sink, logging.Handler):
             def writer(m):
                 r = m.record
@@ -218,10 +222,12 @@ class Logger:
                 colorize = False
         elif callable(sink):
             if kwargs:
-                writer = lambda m: sink(m, **kwargs)
+                def writer(m):
+                    return sink(m, **kwargs)
             else:
                 writer = sink
-            stopper = lambda: None
+            def stopper():
+                return None
             if colorize is None:
                 colorize = False
         else:

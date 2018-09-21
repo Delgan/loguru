@@ -62,20 +62,29 @@ def parse_duration(duration):
 
 def parse_frequency(frequency):
     frequency = frequency.strip().lower()
-    function = None
 
     if frequency == 'hourly':
-        function = lambda t: t.add(hours=1).start_of('hour')
+        def hourly(t):
+            return t.add(hours=1).start_of('hour')
+        return hourly
     elif frequency == 'daily':
-        function = lambda t: t.add(days=1).start_of('day')
+        def daily(t):
+            return t.add(days=1).start_of('day')
+        return daily
     elif frequency == 'weekly':
-        function = lambda t: t.add(weeks=1).start_of('week')
+        def weekly(t):
+            return t.add(weeks=1).start_of('week')
+        return weekly
     elif frequency == 'monthly':
-        function = lambda t: t.add(months=1).start_of('month')
+        def monthly(t):
+            return t.add(months=1).start_of('month')
+        return monthly
     elif frequency == 'yearly':
-        function = lambda t: t.add(years=1).start_of('year')
+        def yearly(t):
+            return t.add(years=1).start_of('year')
+        return yearly
 
-    return function
+    return None
 
 
 def parse_daytime(daytime):
