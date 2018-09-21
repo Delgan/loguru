@@ -34,16 +34,16 @@ def test_format(message, format, expected, writer):
 
 def test_progressive_format(writer):
     def formatter(record):
-        if record['extra'].get("progessive", False):
-            fmt = "{message}"
-        else:
-            fmt = "[{level.name}] {message}"
-        return fmt + record['extra'].get("end", "\n")
+        fmt = "[{level.name}] {message}"
+        if "noend" not in record['extra']:
+            fmt += "\n"
+        return fmt
+
     logger.start(writer, format=formatter)
-    logger.bind(end=" ").debug("Start:")
+    logger.bind(noend=True).debug("Start: ")
     for _ in range(5):
-        logger.bind(progessive=True, end="").debug(".")
-    logger.bind(progessive=True).debug("")
+        logger.opt(raw=True).debug(".")
+    logger.opt(raw=True).debug("\n")
     logger.debug("End")
     assert writer.read() == ("[DEBUG] Start: .....\n"
                              "[DEBUG] End\n")

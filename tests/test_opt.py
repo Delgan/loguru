@@ -142,6 +142,26 @@ def test_ansi_with_level(writer):
     logger.opt(ansi=True).debug("a <level>level</level> b")
     assert writer.read() == ansimarkup.parse("a <green>level</green> b")+ '\n'
 
+def test_raw(writer):
+    logger.start(writer, format="", colorize=True)
+    logger.opt(raw=True).info("Raw {}", "message")
+    assert writer.read() == "Raw message"
+
+def test_raw_with_format_function(writer):
+    logger.start(writer, format=lambda _: "{time} \n")
+    logger.opt(raw=True).debug("Raw {message} bis", message="message")
+    assert writer.read() == "Raw message bis"
+
+def test_raw_with_ansi(writer):
+    logger.start(writer, format="XYZ", colorize=True)
+    logger.opt(raw=True, ansi=True).info("Raw <red>colors</red> and <lvl>level</lvl>")
+    assert writer.read() == ansimarkup.parse("Raw <red>colors</red> and <b>level</b>")
+
+def test_raw_with_record(writer):
+    logger.start(writer, format="Nope\n")
+    logger.opt(raw=True, record=True).debug("Raw in '{record[function]}'\n")
+    assert writer.read() == "Raw in 'test_raw_with_record'\n"
+
 def test_keep_extra(writer):
     logger.configure(extra=dict(test=123))
     logger.start(writer, format='{extra[test]}')

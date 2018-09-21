@@ -49,21 +49,22 @@ class Logger:
 
     _lock = threading.Lock()
 
-    def __init__(self, extra, exception, record, lazy, ansi, depth):
+    def __init__(self, extra, exception, record, lazy, ansi, raw, depth):
         self.catch = Catcher(self)
         self._extra = extra
         self._record = record
         self._exception = exception
         self._lazy = lazy
         self._ansi = ansi
+        self._raw = raw
         self._depth = depth
 
-    def opt(self, *, exception=None, record=False, lazy=False, ansi=False, depth=0):
-        return Logger(self._extra, exception, record, lazy, ansi, depth)
+    def opt(self, *, exception=None, record=False, lazy=False, ansi=False, raw=False, depth=0):
+        return Logger(self._extra, exception, record, lazy, ansi, raw, depth)
 
     def bind(_self, **kwargs):
         return Logger({**_self._extra, **kwargs}, _self._exception, _self._record,
-                      _self._lazy, _self._ansi, _self._depth)
+                      _self._lazy, _self._ansi, _self._raw, _self._depth)
 
     def level(self, name, no=None, color=None, icon=None):
         if not isinstance(name, str):
@@ -388,7 +389,7 @@ class Logger:
                 record['message'] = _message.format(*args, **kwargs)
 
             for handler in _self._handlers.values():
-                handler.emit(record, level_color, _self._ansi)
+                handler.emit(record, level_color, _self._ansi, _self._raw)
 
         doc = "Log 'message.format(*args, **kwargs)' with severity '%s'." % level_name
         log_function.__doc__ = doc

@@ -120,7 +120,7 @@ class Handler:
         finally:
             del ex_type, ex, tb
 
-    def emit(self, record, level_color=None, ansi_message=False):
+    def emit(self, record, level_color, ansi_message, raw):
         try:
             if self.levelno > record['level'].no:
                 return
@@ -155,7 +155,10 @@ class Handler:
 
                 formatter_record['message'] = message
 
-            formatted = precomputed_format.format_map(formatter_record)
+            if raw:
+                formatted = formatter_record['message']
+            else:
+                formatted = precomputed_format.format_map(formatter_record)
 
             if self.serialize:
                 formatted = self.serialize_record(formatted, record)
