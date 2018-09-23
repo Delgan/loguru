@@ -367,7 +367,7 @@ def test_postprocess_colorize(writer, pyexec, tmpdir):
     logger.start(r'%s', colorize=True, enhance=True)
     def f():
         1 / 0
-    with logger.catch:
+    with logger.catch():
         f()
     """ % str(file.realpath())
 

@@ -14,7 +14,6 @@ import pendulum
 from colorama import AnsiToWin32
 
 from . import _defaults
-from ._catcher import Catcher
 from ._fast_now import fast_now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
@@ -50,7 +49,6 @@ class Logger:
     _lock = threading.Lock()
 
     def __init__(self, extra, exception, record, lazy, ansi, raw, depth):
-        self.catch = Catcher(self)
         self._extra = extra
         self._record = record
         self._exception = exception
@@ -130,6 +128,54 @@ class Logger:
                     self.disable(name)
 
         return [self.start(**params) for params in sinks]
+
+    def catch(self, exception=Exception, *, level="ERROR", reraise=False,
+                       message="An error has been caught in function '{record[function]}', "
+                               "process '{record[process].name}' ({record[process].id}), "
+                               "thread '{record[thread].name}' ({record[thread].id}):"):
+        if callable(exception) and (not isclass(exception) or not issubclass(exception, BaseException)):
+            return self.catch()(exception)
+
+        class Catcher:
+
+            def __init__(self, as_decorator):
+                self._as_decorator = as_decorator
+
+            def __enter__(self_):
+                return None
+
+            def __exit__(self_, type_, value, traceback_):
+                if type_ is None:
+                    return
+
+                if not issubclass(type_, exception):
+                    return False
+
+                if self_._as_decorator:
+                    back, decorator = 2, True
+                else:
+                    back, decorator = 1, False
+
+                logger_ = self.opt(exception=True, record=True, lazy=self._lazy, ansi=self._ansi,
+                                   raw=self._raw, depth=self._depth + back)
+
+                log = logger_._make_log_function(level, decorator)
+
+                log(logger_, message)
+
+                return not reraise
+
+            def __call__(self_, function):
+                catcher = Catcher(True)
+
+                @functools.wraps(function)
+                def catch_wrapper(*args, **kwargs):
+                    with catcher:
+                        return function(*args, **kwargs)
+
+                return catch_wrapper
+
+        return Catcher(False)
 
     def _change_activation(self, name, status):
         if not isinstance(name, str):
