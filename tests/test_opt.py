@@ -55,6 +55,19 @@ def test_exception_class(writer):
     assert lines[0] == "test"
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
+def test_exception_log_funcion(writer):
+    logger.start(writer, format="{level.no} {message}")
+
+    try:
+        1 / 0
+    except:
+        logger.opt(exception=True).log(50, "Error")
+
+    lines = writer.read().strip().splitlines()
+
+    assert lines[0] == "50 Error"
+    assert lines[-1] == "ZeroDivisionError: division by zero"
+
 def test_lazy(writer):
     counter = 0
     def laziness():
@@ -90,19 +103,21 @@ def test_depth(writer):
     logger.start(writer, format="{function} : {message}")
 
     def a():
-        logger.opt(depth=0).debug("Test 1")
-        logger.opt(depth=1).debug("Test 2")
-
+        logger.opt(depth=1).debug("Test 1")
+        logger.opt(depth=0).debug("Test 2")
+        logger.opt(depth=1).log(10, "Test 3")
     a()
 
     logger.stop()
 
-    assert writer.read() == "a : Test 1\ntest_depth : Test 2\n"
+    assert writer.read() == "test_depth : Test 1\na : Test 2\ntest_depth : Test 3\n"
 
 def test_ansi(writer):
     logger.start(writer, format="<red>a</red> {message}", colorize=True)
     logger.opt(ansi=True).debug("<blue>b</blue>")
-    assert writer.read() == ansimarkup.parse("<red>a</red> <blue>b</blue>\n")
+    logger.opt(ansi=True).log(20, "<y>c</y>")
+    assert writer.read() == ansimarkup.parse("<red>a</red> <blue>b</blue>\n"
+                                             "<red>a</red> <y>c</y>\n")
 
 def test_ansi_not_colorize(writer):
     logger.start(writer, format="<red>a</red> {message}", colorize=False)
@@ -145,7 +160,8 @@ def test_ansi_with_level(writer):
 def test_raw(writer):
     logger.start(writer, format="", colorize=True)
     logger.opt(raw=True).info("Raw {}", "message")
-    assert writer.read() == "Raw message"
+    logger.opt(raw=True).log(30, " + The end")
+    assert writer.read() == "Raw message + The end"
 
 def test_raw_with_format_function(writer):
     logger.start(writer, format=lambda _: "{time} \n")
@@ -166,8 +182,9 @@ def test_keep_extra(writer):
     logger.configure(extra=dict(test=123))
     logger.start(writer, format='{extra[test]}')
     logger.opt().debug("")
+    logger.opt().log(50, "")
 
-    assert writer.read() == "123\n"
+    assert writer.read() == "123\n123\n"
 
 def test_before_bind(writer):
     logger.start(writer, format='{message}')

@@ -465,12 +465,12 @@ class Logger:
 
     def exception(_self, _message, *args, **kwargs):
         """Convenience method for logging an 'ERROR' with exception information."""
-        logger = _self.opt(exception=True, record=_self._record,
-                           lazy=_self._lazy, depth=_self._depth + 1)
+        logger = _self.opt(exception=True, record=_self._record, lazy=_self._lazy,
+                           ansi=_self._ansi, raw=_self._raw, depth=_self._depth + 1)
         logger._make_log_function("ERROR")(logger, _message, *args, **kwargs)
 
     def log(_self, _level, _message, *args, **kwargs):
         """Log 'message.format(*args, **kwargs)' with severity _level."""
-        logger = _self.opt(exception=_self._exception, record=_self._record,
-                           lazy=_self._lazy, depth=_self._depth + 1)
+        logger = _self.opt(exception=_self._exception, record=_self._record, lazy=_self._lazy,
+                           ansi=_self._ansi, raw=_self._raw, depth=_self._depth + 1)
         logger._make_log_function(_level)(logger, _message, *args, **kwargs)
