@@ -5,37 +5,39 @@ class Matcher:
 
     def __init__(self, string):
         self.string = string
-        self.last_match = None
+        self._result = None
 
-    def __getattr__(self, attr):
-        return getattr(self.last_match, attr)
-
-    def __getitem__(self, g):
-        return self.last_match[g]
+    def get(self):
+        return self._result
 
     def search(self, pattern, flags=0):
-        self.last_match = search(pattern, self.string, flags)
-        return self.last_match
+        self._result = search(pattern, self.string, flags)
+        return self._result
 
     def match(self, pattern, flags=0):
-        self.last_match = match(pattern, self.string, flags)
-        return self.last_match
+        self._result = match(pattern, self.string, flags)
+        return self._result
 
     def fullmatch(self, pattern, flags=0):
-        self.last_match = fullmatch(pattern, self.string, flags)
-        return self.last_match
+        self._result = fullmatch(pattern, self.string, flags)
+        return self._result
 
     def split(self, pattern, maxsplit=0, flags=0):
-        return split(pattern, self.string, maxsplit, flags)
+        self._result = split(pattern, self.string, maxsplit, flags)
+        return self._result
 
     def findall(self, pattern, flags=0):
-        return findall(pattern, self.string, flags)
+        self._result = findall(pattern, self.string, flags)
+        return self._result
 
     def finditer(self, pattern, flags=0):
-        return finditer(pattern, self.string, flags)
+        self._result = finditer(pattern, self.string, flags)
+        return self._result
 
     def sub(self, pattern, repl, count=0, flags=0):
-        return sub(pattern, repl, self.string, count, flags)
+        self._result = sub(pattern, repl, self.string, count, flags)
+        return self._result
 
     def subn(self, pattern, repl, count=0, flags=0):
-        return subn(pattern, repl, self.string, count, flags)
+        self._result = subn(pattern, repl, self.string, count, flags)
+        return self._result

@@ -39,6 +39,10 @@ class Parser:
             fileobj.close()
 
     @staticmethod
+    def test(string):
+        return Matcher(string)
+
+    @staticmethod
     def _find_iter(fileobj, regex, chunk):
         buffer = fileobj.read(0)
 
@@ -55,7 +59,3 @@ class Parser:
                 end = matches[-2].end()
                 buffer = buffer[end:]
                 yield from matches[:-1]
-
-    @staticmethod
-    def matcher(string):
-        return Matcher(string)
