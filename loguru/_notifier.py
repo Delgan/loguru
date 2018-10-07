@@ -1,38 +1,40 @@
+import textwrap
+
 import notifiers
 
 
 class MetaNotifier:
 
     def __new__(cls):
-        methods = {provider: notifier for provider, notifier in cls.generate_notifiers()}
-        return type("NotifierFactory", (), methods)
+        dict_ = {provider: notificator for provider, notificator in cls.generate_notifiers()}
+        return type("Notifier", (), dict_)
 
     @staticmethod
     def generate_notifiers():
         providers = notifiers.core.all_providers()
-        for provider in providers:
-            notifier = MetaNotifier.make_notifier(provider)
-            yield provider, notifier
+
+        for provider_name in providers:
+            provider = notifiers.core.get_notifier(provider_name, strict=True)
+            method = MetaNotifier.make_method(provider)
+            yield provider_name, method
 
     @staticmethod
-    def make_notifier(provider_name):
-        provider = notifiers.core.get_notifier(provider_name, strict=True)
+    def make_method(provider):
 
-        @classmethod
-        def notifier(_cls, **kwargs):
-            return Notifier(provider, kwargs)
+        def notificator(self, **kwargs):
+            return Notificator(provider, kwargs)
 
-        return notifier
+        return notificator
 
 
-NotifierFactory = MetaNotifier()
+Notifier = MetaNotifier()
 
 
-class Notifier:
+class Notificator:
 
     def __init__(self, provider, parameters):
         self.provider = provider
         self.parameters = parameters
 
-    def notify(self, message):
+    def send(self, message):
         return self.provider.notify(message=message, **self.parameters)
