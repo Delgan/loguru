@@ -66,7 +66,7 @@ def test_compression_renamed_file(tmpdir):
     logger.stop(i)
 
     assert len(tmpdir.listdir()) == 1
-    assert re.match(r'test\.[A-Z0-9]+\.log\.gz', tmpdir.listdir()[0].basename)
+    assert re.match(r'test\.[0-9\-_]+\.log\.gz', tmpdir.listdir()[0].basename)
 
 @pytest.mark.parametrize('ext', ['tar.gz', 'tar.xz', 'tar.bz2'])
 def test_not_overriding_previous_file(tmpdir, ext):

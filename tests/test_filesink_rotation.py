@@ -19,7 +19,7 @@ def test_renaming(tmpdir, name, should_rename):
 
     assert len(tmpdir.listdir()) == 1
     root, ext = os.path.splitext(str(tmpdir.listdir()[0]))
-    reg = re.escape(root) + r'\.[A-Z0-9]+' + re.escape(ext)
+    reg = re.escape(root) + r'\.[0-9\-_]+' + re.escape(ext)
 
     logger.debug("aaaaaaa")
     logger.debug("bbbbbbb")

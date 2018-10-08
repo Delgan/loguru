@@ -3,12 +3,9 @@ import decimal
 import glob
 import numbers
 import os
-import random
 import shutil
 import string
-import time
 
-import base36
 import pendulum
 
 from . import _string_parsers
@@ -273,11 +270,8 @@ class FileSink:
         new_path = self.format_path()
 
         if check_conflict and new_path == old_path:
-            time_part = base36.dumps(int(time.time() * 1000))
-            rand_part = base36.dumps(int(random.random() * 36**4))
-            log_id = "{:0>8}{:0>4}".format(time_part, rand_part).upper()
             root, ext = os.path.splitext(old_path)
-            renamed_path = root + '.' + log_id + ext
+            renamed_path = "{}.{:YYYY-MM-DD_HH-mm-ss_SSSSSS}{}".format(root, fast_now(), ext)
             os.rename(old_path, renamed_path)
             old_path = renamed_path
 
