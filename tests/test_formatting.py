@@ -45,13 +45,9 @@ def test_log_formatters(format, validator, writer, use_log_function):
     assert validator(result)
 
 @pytest.mark.parametrize('format, validator', [
-    ('{time}.log', lambda r: re.fullmatch(r'\d+-\d+-\d+_\d+-\d+-\d+\.log', r)),
+    ('{time}.log', lambda r: re.fullmatch(r'\d+-\d+-\d+_\d+-\d+-\d+\_\d+.log', r)),
     ('{time:HH[h] mm[m] ss[s]}.log', lambda r: re.fullmatch(r'\d+h \d+m \d+s\.log', r)),
     ('{time:HH}x{time:mm}x{time:ss}.log', lambda r: re.fullmatch(r'\d+x\d+x\d+\.log', r)),
-    ('{start_time}.out', lambda r: re.fullmatch(r'\d+-\d+-\d+_\d+-\d+-\d+\.out', r)),
-    ('{start_time:HH[h] mm[m] ss[s]}.out', lambda r: re.fullmatch(r'\d+h \d+m \d+s\.out', r)),
-    ('{n}.out', lambda r: r == '1.out'),
-    ('{n: <2}.out', lambda r: r == '1 .out'),
     ('%s_{{a}}_天_{{1}}_%d', lambda r: r == '%s_{a}_天_{1}_%d'),
 ])
 @pytest.mark.parametrize('part', ["file", "dir", "both"])

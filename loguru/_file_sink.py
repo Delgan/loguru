@@ -16,7 +16,7 @@ class FileDateTime(pendulum.DateTime):
 
     def __format__(self, spec):
         if not spec:
-            spec = "YYY-MM-DD_HH-mm-ss"
+            spec = "YYY-MM-DD_HH-mm-ss_SSSSSS"
         return super().__format__(spec)
 
     @classmethod
@@ -30,14 +30,12 @@ class FileSink:
 
     def __init__(self, path, *, rotation=None, retention=None, compression=None, delay=False,
                  mode='a', buffering=1, **kwargs):
-        self.start_time = FileDateTime.now()
         self.mode = mode
         self.buffering = buffering
         self.kwargs = kwargs.copy()
         self.path = str(path)
         self.file = None
         self.file_path = None
-        self.created = 1
 
         self.rotation_function = self.make_rotation_function(rotation)
         self.retention_function = self.make_retention_function(retention)
@@ -58,15 +56,8 @@ class FileSink:
             self.write = self.rotating_write
 
     def format_path(self):
-        now = FileDateTime.now()
-
-        record = {
-            "time": now,
-            "start_time": self.start_time,
-            "n": self.created,
-        }
-
-        return os.path.abspath(self.path.format_map(record))
+        path = self.path.format_map({'time': FileDateTime.now()})
+        return os.path.abspath(path)
 
     @staticmethod
     def make_glob_pattern(path):
@@ -88,11 +79,11 @@ class FileSink:
             return rotation_function
 
         def make_from_time(step_forward, time_init=None):
-            time_limit = self.start_time
+            start_time = time_limit = fast_now()
             if time_init is not None:
                 t = time_init
                 time_limit = time_limit.at(t.hour, t.minute, t.second, t.microsecond)
-            if time_limit <= self.start_time:
+            if time_limit <= start_time:
                 time_limit = step_forward(time_limit)
             def rotation_function(message, file):
                 nonlocal time_limit
@@ -287,7 +278,6 @@ class FileSink:
             os.makedirs(new_dir, exist_ok=True)
             self.file = open(new_path, mode=self.mode, buffering=self.buffering, **self.kwargs)
             self.file_path = new_path
-            self.created += 1
 
     def stop(self):
         rotating = self.rotation_function is not None

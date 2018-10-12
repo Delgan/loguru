@@ -73,14 +73,16 @@ def test_not_managed_files(tmpdir):
 
     assert len(tmpdir.listdir()) == len(others)
 
-def test_manage_formatted_files(tmpdir):
-    f1 = tmpdir.join('temp/1/file.log')
-    f2 = tmpdir.join('temp/file1.log')
-    f3 = tmpdir.join('temp/d1/f1.1.log')
+def test_manage_formatted_files(monkeypatch_now, tmpdir):
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00"))
 
-    a = logger.start(tmpdir.join('temp/{n}/file.log'), retention=0)
-    b = logger.start(tmpdir.join('temp/file{n}.log'), retention=0)
-    c = logger.start(tmpdir.join('temp/d{n}/f{n}.{n}.log'), retention=0)
+    f1 = tmpdir.join('temp/2018/file.log')
+    f2 = tmpdir.join('temp/file2018.log')
+    f3 = tmpdir.join('temp/d2018/f2018.2018.log')
+
+    a = logger.start(tmpdir.join('temp/{time:YYYY}/file.log'), retention=0)
+    b = logger.start(tmpdir.join('temp/file{time:YYYY}.log'), retention=0)
+    c = logger.start(tmpdir.join('temp/d{time:YYYY}/f{time:YYYY}.{time:YYYY}.log'), retention=0)
 
     logger.debug("test")
 
@@ -113,7 +115,7 @@ def test_manage_formatted_files_without_extension(tmpdir):
     tmpdir.join('file_7').write("")
     tmpdir.join('file_6').write("")
 
-    i = logger.start(tmpdir.join('file_{n}'), retention=0)
+    i = logger.start(tmpdir.join('file_{time}'), retention=0)
     logger.debug("1")
     logger.stop(i)
 

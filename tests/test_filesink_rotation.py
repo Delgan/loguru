@@ -6,33 +6,32 @@ import re
 from loguru import logger
 
 
-@pytest.mark.parametrize('name, should_rename', [
-    ('test.log', True),
-    ('{n}.log', False),
-    ('{start_time}.log', True),
-    ('test.log.{n}', False),
-    ('test.log.1', True),
+@pytest.mark.parametrize('name, regex', [
+    ('test.log', r'test(\.[0-9\-_]+)?\.log'),
+    ('{time}.log', r'[0-9\-_]+\.log'),
+    ('test.log.1', r'test\.log(\.[0-9\-_]+)?\.1'),
+    ('test.{time}.log', r'test\.[0-9\-_]+\.log')
 ])
-def test_renaming(tmpdir, name, should_rename):
+def test_renaming(monkeypatch_now, tmpdir, name, regex):
+    now = pendulum.parse("2017-06-18 12:00:00")
+
+    def patched(*a, **k):
+        nonlocal now
+        now = now.add(seconds=1)
+        return now
+
+    monkeypatch_now(patched)
+
     file = tmpdir.join(name)
     i = logger.start(file, format="{message}", rotation="10 B")
-
-    assert len(tmpdir.listdir()) == 1
-    root, ext = os.path.splitext(str(tmpdir.listdir()[0]))
-    reg = re.escape(root) + r'\.[0-9\-_]+' + re.escape(ext)
 
     logger.debug("aaaaaaa")
     logger.debug("bbbbbbb")
     logger.debug("ccccccc")
+    logger.stop()
 
-    renamed = sum(re.match(reg, str(f.realpath())) is not None for f in tmpdir.listdir())
-
-    if should_rename:
-        assert renamed == len(tmpdir.listdir()) - 1
-    else:
-        assert renamed == 0
-
-    assert len(tmpdir.listdir()) == 3
+    print(tmpdir.listdir())
+    assert all([re.match(regex, f.basename) for f in tmpdir.listdir()])
     assert {f.read() for f in tmpdir.listdir()} == {'aaaaaaa\n', 'bbbbbbb\n', 'ccccccc\n'}
 
 @pytest.mark.parametrize('size', [
@@ -114,13 +113,15 @@ def test_function_rotation(tmpdir):
     assert len(tmpdir.listdir()) == 2
 
 @pytest.mark.parametrize('mode', ['w', 'x'])
-def test_rotation_at_stop(tmpdir, mode):
-    i = logger.start(tmpdir.join("test_{n}.log"), rotation="10 MB", mode=mode)
+def test_rotation_at_stop(monkeypatch_now, tmpdir, mode):
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00"))
+
+    i = logger.start(tmpdir.join("test_{time:YYYY}.log"), rotation="10 MB", mode=mode)
     logger.debug("test")
     logger.stop(i)
 
     assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("test_1.log").check(exists=1)
+    assert tmpdir.join("test_2018.log").check(exists=1)
 
 @pytest.mark.parametrize('mode', ['a', 'a+'])
 def test_no_rotation_at_stop(tmpdir, mode):
