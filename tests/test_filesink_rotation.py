@@ -2,43 +2,68 @@ import pytest
 import pendulum
 import datetime
 import os
-import re
 from loguru import logger
 
+def test_renaming(monkeypatch_now, tmpdir):
+    i = logger.start(tmpdir.join("file.log"), rotation=0, format="{message}")
 
-@pytest.mark.parametrize('name, regex', [
-    ('test.log', r'test(\.[0-9\-_]+)?\.log'),
-    ('{time}.log', r'[0-9\-_]+\.log'),
-    ('test.log.1', r'test\.log(\.[0-9\-_]+)?\.1'),
-    ('test.{time}.log', r'test\.[0-9\-_]+\.log')
-])
-def test_renaming(monkeypatch_now, tmpdir, name, regex):
-    now = pendulum.parse("2017-06-18 12:00:00")
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00.000000"))
+    logger.debug("a")
+    assert tmpdir.join("file.log").read() == "a\n"
+    assert tmpdir.join("file.2018-01-01_00-00-00_000000.log").read() == ""
 
-    def patched(*a, **k):
-        nonlocal now
-        now = now.add(seconds=1)
-        return now
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2019-01-01 00:00:00.000000"))
+    logger.debug("b")
+    assert tmpdir.join("file.log").read() == "b\n"
+    assert tmpdir.join("file.2019-01-01_00-00-00_000000.log").read() == "a\n"
+    assert tmpdir.join("file.2018-01-01_00-00-00_000000.log").read() == ""
 
-    monkeypatch_now(patched)
+def test_no_renaming(monkeypatch_now, tmpdir):
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00.000000"))
+    i = logger.start(tmpdir.join("file_{time}.log"), rotation=0, format="{message}")
 
-    file = tmpdir.join(name)
-    i = logger.start(file, format="{message}", rotation="10 B")
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2019-01-01 00:00:00.000000"))
+    logger.debug("a")
+    assert tmpdir.join("file_2018-01-01_00-00-00_000000.log").read() == ""
+    assert tmpdir.join("file_2019-01-01_00-00-00_000000.log").read() == "a\n"
 
-    logger.debug("aaaaaaa")
-    logger.debug("bbbbbbb")
-    logger.debug("ccccccc")
-    logger.stop()
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2020-01-01 00:00:00.000000"))
+    logger.debug("b")
+    assert tmpdir.join("file_2018-01-01_00-00-00_000000.log").read() == ""
+    assert tmpdir.join("file_2019-01-01_00-00-00_000000.log").read() == "a\n"
+    assert tmpdir.join("file_2020-01-01_00-00-00_000000.log").read() == "b\n"
 
-    print(tmpdir.listdir())
-    assert all([re.match(regex, f.basename) for f in tmpdir.listdir()])
-    assert {f.read() for f in tmpdir.listdir()} == {'aaaaaaa\n', 'bbbbbbb\n', 'ccccccc\n'}
+def test_delayed(monkeypatch_now, tmpdir):
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00.000000"))
+    i = logger.start(tmpdir.join('file.log'), rotation=0, delay=True, format="{message}")
+    logger.debug('a')
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 2
+    assert tmpdir.join("file.log").read() == "a\n"
+    assert tmpdir.join("file.2018-01-01_00-00-00_000000.log").read() == ""
+
+def test_delayed_early_stop(monkeypatch_now, tmpdir):
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00.000000"))
+    i = logger.start(tmpdir.join('file.log'), rotation=0, delay=True, format="{message}")
+    logger.stop(i)
+
+    assert len(tmpdir.listdir()) == 0
 
 @pytest.mark.parametrize('size', [
     8, 8.0, 7.99, "8 B", "8e-6MB", "0.008 kiB", "64b"
 ])
-def test_size_rotation(tmpdir, size):
-    file = tmpdir.join("test.log")
+def test_size_rotation(monkeypatch_now, tmpdir, size):
+    date = pendulum.parse("2018-01-01 00:00:00.000000")
+
+    def patch(*a, **k):
+        nonlocal date
+        date = date.add(seconds=1)
+        return date
+
+    monkeypatch_now(patch)
+
+    file = tmpdir.join("test_{time}.log")
     i = logger.start(file.realpath(), format='{message}', rotation=size, mode='w')
 
     logger.debug("abcde")
@@ -47,8 +72,7 @@ def test_size_rotation(tmpdir, size):
 
     logger.stop(i)
 
-    assert len(tmpdir.listdir()) == 3
-    assert {f.read() for f in tmpdir.listdir()} == {'abcde\n', 'fghij\n', 'klmno\n'}
+    assert [f.read() for f in sorted(tmpdir.listdir())] == ['abcde\n', 'fghij\n', 'klmno\n']
 
 # TODO: Decomment test cases once pendulum/#211 is fixed
 @pytest.mark.parametrize('when, hours', [
@@ -91,7 +115,7 @@ def test_time_rotation(monkeypatch_now, tmpdir, when, hours):
 
     monkeypatch_now(lambda *a, **k: now)
 
-    i = logger.start(tmpdir.join('test.log').realpath(), format='{message}', rotation=when, mode='w')
+    i = logger.start(tmpdir.join('test_{time}.log').realpath(), format='{message}', rotation=when, mode='w')
 
     for h, m in zip(hours, ['a', 'b', 'c', 'd', 'e']):
         now = now.add(hours=h)
@@ -100,37 +124,45 @@ def test_time_rotation(monkeypatch_now, tmpdir, when, hours):
     logger.stop(i)
 
     assert len(tmpdir.listdir()) == 4
-    assert {f.read() for f in tmpdir.listdir()} == {'a\n', 'b\nc\n', 'd\n', 'e\n'}
+    assert [f.read() for f in sorted(tmpdir.listdir())] == ['a\n', 'b\nc\n', 'd\n', 'e\n']
 
-def test_function_rotation(tmpdir):
+def test_function_rotation(monkeypatch_now, tmpdir):
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00.000000"))
     x = iter([False, True, False])
-    i = logger.start(tmpdir.join("test.log"), rotation=lambda *_: next(x))
+    i = logger.start(tmpdir.join("test_{time}.log"), rotation=lambda *_: next(x), format="{message}")
     logger.debug("a")
-    assert len(tmpdir.listdir()) == 1
+    assert tmpdir.join("test_2018-01-01_00-00-00_000000.log").read() == "a\n"
+
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2019-01-01 00:00:00.000000"))
     logger.debug("b")
-    assert len(tmpdir.listdir()) == 2
+    assert tmpdir.join("test_2019-01-01_00-00-00_000000.log").read()== "b\n"
+
+    monkeypatch_now(lambda *a, **k: pendulum.parse("2020-01-01 00:00:00.000000"))
     logger.debug("c")
+
     assert len(tmpdir.listdir()) == 2
+    assert tmpdir.join("test_2018-01-01_00-00-00_000000.log").read() == "a\n"
+    assert tmpdir.join("test_2019-01-01_00-00-00_000000.log").read()== "b\nc\n"
 
 @pytest.mark.parametrize('mode', ['w', 'x'])
 def test_rotation_at_stop(monkeypatch_now, tmpdir, mode):
     monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00"))
 
-    i = logger.start(tmpdir.join("test_{time:YYYY}.log"), rotation="10 MB", mode=mode)
+    i = logger.start(tmpdir.join("test_{time:YYYY}.log"), rotation="10 MB", mode=mode, format="{message}")
     logger.debug("test")
     logger.stop(i)
 
     assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("test_2018.log").check(exists=1)
+    assert tmpdir.join("test_2018.log").read() == "test\n"
 
 @pytest.mark.parametrize('mode', ['a', 'a+'])
 def test_no_rotation_at_stop(tmpdir, mode):
-    i = logger.start(tmpdir.join("test.log"), rotation="10 MB", mode=mode)
+    i = logger.start(tmpdir.join("test.log"), rotation="10 MB", mode=mode, format="{message}")
     logger.debug("test")
     logger.stop(i)
 
     assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("test.log").check(exists=1)
+    assert tmpdir.join("test.log").read() == "test\n"
 
 @pytest.mark.parametrize('rotation', [
     "w7", "w10", "w-1", "h", "M",

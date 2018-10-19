@@ -16,7 +16,7 @@ class FileDateTime(pendulum.DateTime):
 
     def __format__(self, spec):
         if not spec:
-            spec = "YYY-MM-DD_HH-mm-ss_SSSSSS"
+            spec = "YYYY-MM-DD_HH-mm-ss_SSSSSS"
         return super().__format__(spec)
 
     @classmethod
@@ -34,26 +34,55 @@ class FileSink:
         self.buffering = buffering
         self.kwargs = kwargs.copy()
         self.path = str(path)
-        self.file = None
-        self.file_path = None
 
         self.rotation_function = self.make_rotation_function(rotation)
         self.retention_function = self.make_retention_function(retention)
         self.compression_function = self.make_compression_function(compression)
         self.glob_pattern = self.make_glob_pattern(self.path)
 
+        self.file = None
+        self.file_path = None
+        self.write = None
+        self.file_write = None
+
         if delay:
             self.write = self.delayed_write
         else:
-            self.initialize_write_function()
+            self.initialize_file(rename_existing=False)
+            self.setup_write_function()
 
-    def initialize_write_function(self):
-        self.terminate(create_new=True)
+    def setup_write_function(self):
+        self.file_write = self.file.write
 
         if self.rotation_function is None:
-            self.write = self.file.write
+            self.write = self.file_write
         else:
             self.write = self.rotating_write
+
+    def delayed_write(self, message):
+        self.initialize_file(rename_existing=False)
+        self.setup_write_function()
+        self.write(message)
+
+    def rotating_write(self, message):
+        if self.rotation_function(message, self.file):
+            self.terminate(teardown=True)
+            self.initialize_file(rename_existing=True)
+            self.setup_write_function()
+        self.file_write(message)
+
+    def initialize_file(self, *, rename_existing):
+        new_path = self.format_path()
+        new_dir = os.path.dirname(new_path)
+        os.makedirs(new_dir, exist_ok=True)
+
+        if rename_existing and os.path.isfile(new_path):
+            root, ext = os.path.splitext(new_path)
+            renamed_path = "{}.{:YYYY-MM-DD_HH-mm-ss_SSSSSS}{}".format(root, fast_now(), ext)
+            os.rename(new_path, renamed_path)
+
+        self.file = open(new_path, mode=self.mode, buffering=self.buffering, **self.kwargs)
+        self.file_path = new_path
 
     def format_path(self):
         path = self.path.format_map({'time': FileDateTime.now()})
@@ -227,7 +256,12 @@ class FileSink:
                 raise ValueError("Invalid compression format: '%s'" % ext)
 
             def compression_function(path_in):
-                path_out = path_in + '.' + ext
+                path_out = "{}.{}".format(path_in, ext)
+                if os.path.isfile(path_out):
+                    root, ext_before = os.path.splitext(path_in)
+                    renamed_template = "{}.{:YYYY-MM-DD_HH-mm-ss_SSSSSS}{}.{}"
+                    renamed_path = renamed_template.format(root, fast_now(), ext_before, ext)
+                    os.rename(path_out, renamed_path)
                 compress(path_in, path_out)
                 os.remove(path_in)
 
@@ -237,52 +271,20 @@ class FileSink:
         else:
             raise ValueError("Cannot infer compression for objects of type: '%s'" % type(compression).__name__)
 
-    def rotating_write(self, message):
-        if self.rotation_function(message, self.file):
-            compress = self.compression_function is not None
-            manage = self.retention_function is not None
-            self.terminate(check_conflict=True, exec_compression=compress, exec_retention=manage, create_new=True)
-        self.file.write(message)
+    def stop(self):
+        self.terminate(teardown=self.rotation_function is None)
 
-    def delayed_write(self, message):
-        self.initialize_write_function()
-        self.write(message)
+    def terminate(self, *, teardown):
+        if self.file is not None:
+            self.file.close()
 
-    def terminate(self, *, check_conflict=False, exec_compression=False, exec_retention=False, create_new=False):
-        old_file = self.file
-        old_path = self.file_path
+        if teardown:
+            if self.compression_function is not None and self.file_path is not None:
+                self.compression_function(self.file_path)
+
+            if self.retention_function is not None:
+                logs = glob.glob(self.glob_pattern)
+                self.retention_function(logs)
 
         self.file = None
         self.file_path = None
-
-        if old_file is not None:
-            old_file.close()
-
-        new_path = self.format_path()
-
-        if check_conflict and new_path == old_path:
-            root, ext = os.path.splitext(old_path)
-            renamed_path = "{}.{:YYYY-MM-DD_HH-mm-ss_SSSSSS}{}".format(root, fast_now(), ext)
-            os.rename(old_path, renamed_path)
-            old_path = renamed_path
-
-        if exec_compression:
-            self.compression_function(old_path)
-
-        if exec_retention:
-            logs = glob.glob(self.glob_pattern)
-            self.retention_function(logs)
-
-        if create_new:
-            new_dir = os.path.dirname(new_path)
-            os.makedirs(new_dir, exist_ok=True)
-            self.file = open(new_path, mode=self.mode, buffering=self.buffering, **self.kwargs)
-            self.file_path = new_path
-
-    def stop(self):
-        rotating = self.rotation_function is not None
-        appending = 'a' in self.mode
-        compression = (self.compression_function is not None) and (not rotating or not appending)
-        retention = (self.retention_function is not None) and (not rotating or not appending)
-        check = compression
-        self.terminate(check_conflict=check, exec_compression=compression, exec_retention=retention, create_new=False)
