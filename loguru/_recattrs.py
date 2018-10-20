@@ -113,11 +113,11 @@ class ExceptionRecattr:
 
         return tb, hacky_int
 
-    def format_exception(self, enhanced, colored):
+    def format_exception(self, backtrace, colored):
         type_, value, ex_traceback = self.type, self.value, self._extended_traceback
         hacky_int = self._hacky_int
 
-        if not enhanced:
+        if not backtrace:
             error = traceback.format_exception(type_, value, ex_traceback)
         elif colored:
             error = self.exception_formatter_colored.format_exception(type_, value, ex_traceback)

@@ -209,7 +209,7 @@ class Logger:
 
     def start(self, sink, *, level=_defaults.LOGURU_LEVEL, format=_defaults.LOGURU_FORMAT,
                     filter=_defaults.LOGURU_FILTER, colorize=_defaults.LOGURU_COLORIZE,
-                    serialize=_defaults.LOGURU_SERIALIZE, enhance=_defaults.LOGURU_ENHANCE,
+                    serialize=_defaults.LOGURU_SERIALIZE, backtrace=_defaults.LOGURU_BACKTRACE,
                     enqueue=_defaults.LOGURU_ENQUEUE, catch=_defaults.LOGURU_CATCH, **kwargs):
         if colorize is None and serialize:
             colorize = False
@@ -217,13 +217,13 @@ class Logger:
         if isclass(sink):
             sink = sink(**kwargs)
             return self.start(sink, level=level, format=format, filter=filter, colorize=colorize,
-                              serialize=serialize, enhance=enhance, enqueue=enqueue,
+                              serialize=serialize, backtrace=backtrace, enqueue=enqueue,
                               catch=catch)
         elif isinstance(sink, (str, PathLike)):
             path = sink
             sink = FileSink(path, **kwargs)
             return self.start(sink, level=level, format=format, filter=filter, colorize=colorize,
-                              serialize=serialize, enhance=enhance, enqueue=enqueue,
+                              serialize=serialize, backtrace=backtrace, enqueue=enqueue,
                               catch=catch)
         elif hasattr(sink, 'write') and callable(sink.write):
             if colorize is None:
@@ -322,7 +322,7 @@ class Logger:
                 filter_=filter_func,
                 colorize=colorize,
                 serialize=serialize,
-                enhance=enhance,
+                backtrace=backtrace,
                 catch=catch,
                 enqueue=enqueue,
                 colors=colors,

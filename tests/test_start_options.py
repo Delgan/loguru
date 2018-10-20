@@ -100,8 +100,8 @@ def test_colorize(message, format, expected, colorize, writer):
     logger.debug(message)
     assert writer.read() == expected
 
-def test_enhance(writer):
-    logger.start(writer, format='{message}', enhance=True)
+def test_backtrace(writer):
+    logger.start(writer, format='{message}', backtrace=True)
     try:
         1 / 0
     except:
@@ -111,7 +111,7 @@ def test_enhance(writer):
     logger.stop()
     writer.clear()
 
-    logger.start(writer, format='{message}', enhance=False)
+    logger.start(writer, format='{message}', backtrace=False)
     try:
         1 / 0
     except:

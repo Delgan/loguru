@@ -15,7 +15,7 @@ class StrRecord(str):
 class Handler:
 
     def __init__(self, *, writer, stopper, levelno, formatter, is_formatter_dynamic, filter_,
-                 colorize, serialize, enhance, catch, enqueue, colors=[]):
+                 colorize, serialize, backtrace, catch, enqueue, colors=[]):
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
@@ -24,7 +24,7 @@ class Handler:
         self.filter = filter_
         self.colorize = colorize
         self.serialize = serialize
-        self.enhance = enhance
+        self.backtrace = backtrace
         self.catch = catch
         self.enqueue = enqueue
 
@@ -142,7 +142,7 @@ class Handler:
 
             error = ""
             if record['exception']:
-                error = record['exception'].format_exception(self.enhance, self.colorize)
+                error = record['exception'].format_exception(self.backtrace, self.colorize)
             formatter_record = {**record, **{"exception": error}}
 
             if ansi_message:
