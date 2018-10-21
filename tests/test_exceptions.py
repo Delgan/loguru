@@ -37,9 +37,6 @@ def compare_outputs(tmpdir, pyexec):
         for result, expected in zip_longest(result_with_loguru, result_without_loguru):
             if expected.startswith('Traceback'):
                 trace_index += 1
-                if trace_index == caught_trace_index:
-                    assert 'catch point marked' in result
-                    result = result.replace(', catch point marked', '', 1)
             if trace_index == caught_trace_index and expected.startswith('  File'):
                 scope_index += 1
                 if scope_index == caught_scope_index:
@@ -376,7 +373,7 @@ def test_postprocess_colorize(writer, pyexec, tmpdir):
 
     lines = file.read().strip().splitlines()
 
-    assert re.match(r"^\S*Traceback \(most recent call last, catch point marked\):\S*$", lines[1])
+    assert re.match(r"^\S*Traceback \(most recent call last\):\S*$", lines[1])
     assert re.match(r"^\S*>.*line.*\D7\D.*$", lines[3])
 
 def test_frame_values_backward(writer):

@@ -2,30 +2,22 @@ import random
 import re
 import sys
 import traceback
+from collections import namedtuple
 
 from better_exceptions_fork import ExceptionFormatter
 
 
-class HackyInt(int):
-
-    rand = "{:0>32}".format(random.randrange(10**31))
-
-    def __str__(self):
-        return self.rand
-
-    def __eq__(self, other):
-        return False
+loguru_traceback = namedtuple('loguru_traceback', ('tb_frame', 'tb_lasti', 'tb_lineno', 'tb_next'))
 
 
-class loguru_traceback:
-    __slots__ = ('tb_frame', 'tb_lasti', 'tb_lineno', 'tb_next', '__is_caught_point__')
+loguru_frame = namedtuple('loguru_frame', ('f_back', 'f_builtins', 'f_code', 'f_globals', 'f_lasti',
+                                           'f_lineno', 'f_locals', 'f_trace'))
 
-    def __init__(self, frame, lasti, lineno, next_=None, is_caught_point=False):
-        self.tb_frame = frame
-        self.tb_lasti = lasti
-        self.tb_lineno = lineno
-        self.tb_next = next_
-        self.__is_caught_point__ = is_caught_point
+
+loguru_code = namedtuple('loguru_code', ('co_argcount', 'co_code', 'co_cellvars', 'co_consts',
+                                         'co_filename', 'co_firstlineno', 'co_flags', 'co_lnotab',
+                                         'co_freevars', 'co_kwonlyargcount', 'co_name', 'co_names',
+                                         'co_nlocals', 'co_stacksize', 'co_varnames'))
 
 
 class LevelRecattr(str):
@@ -48,6 +40,7 @@ class ExceptionRecattr:
 
     exception_formatter_colored = ExceptionFormatter(colored=True)
     exception_formatter_not_colored = ExceptionFormatter(colored=False)
+    _catch_point_identifier = " <Loguru catch point here>"
 
     def __init__(self, exception, decorated):
         if isinstance(exception, BaseException):
@@ -62,11 +55,8 @@ class ExceptionRecattr:
         self.traceback = traceback
 
         if traceback:
-            tb, h = self._extend_traceback(traceback, decorated)
-            self._hacky_int = h
-            self._extended_traceback = tb
+            self._extended_traceback = self._extend_traceback(traceback, decorated)
         else:
-            self._hacky_int = None
             self._extended_traceback = None
 
     def __reduce__(self):
@@ -78,44 +68,51 @@ class ExceptionRecattr:
         if decorated:
             bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
             tb = tb.tb_next
-
-        root_frame = tb.tb_frame.f_back
-
-        loguru_tracebacks = []
-        while tb:
-            loguru_tb = loguru_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, None)
-            loguru_tracebacks.append(loguru_tb)
-            tb = tb.tb_next
-
-        for prev_tb, next_tb in zip(loguru_tracebacks, loguru_tracebacks[1:]):
-            prev_tb.tb_next = next_tb
-
-        # root_tb
-        tb = loguru_tracebacks[0] if loguru_tracebacks else None
-        frames = []
-        while root_frame:
-            frames.insert(0, root_frame)
-            root_frame = root_frame.f_back
-
-        if decorated:
-            frames = [f for f in frames if (f.f_code.co_filename, f.f_lineno) != bad_frame]
-            caught_tb = None
+            caught = False
         else:
-            caught_tb = tb
+            bad_frame = None
+            tb = self._make_catch_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, tb.tb_next)
+            caught = True
 
-        for f in reversed(frames):
-            tb = loguru_traceback(f, f.f_lasti, f.f_lineno, tb)
-            if decorated and caught_tb is None:
-                caught_tb = tb
+        frame = tb.tb_frame
 
-        hacky_int = HackyInt(caught_tb.tb_lineno)
-        caught_tb.tb_lineno = hacky_int
+        while True:
+            frame = frame.f_back
 
-        return tb, hacky_int
+            if not frame:
+                break
+
+            if (frame.f_code.co_filename, frame.f_lineno) == bad_frame:
+                continue
+
+            if not caught:
+                caught = True
+                tb = self._make_catch_traceback(frame, frame.f_lasti, frame.f_lineno, tb)
+            else:
+                tb = loguru_traceback(frame, frame.f_lasti, frame.f_lineno, tb)
+
+        return tb
+
+    def _make_catch_traceback(self, frame, lasti, lineno, next_):
+            f = frame
+            c = frame.f_code
+            code = loguru_code(c.co_argcount, c.co_code, c.co_cellvars, c.co_consts, c.co_filename,
+                               c.co_firstlineno, c.co_flags, c.co_lnotab, c.co_freevars,
+                               c.co_kwonlyargcount, c.co_name + self._catch_point_identifier,
+                               c.co_names, c.co_nlocals, c.co_stacksize, c.co_varnames)
+            frame = loguru_frame(f.f_back, f.f_builtins, code, f.f_globals, f.f_lasti, f.f_lineno,
+                                 f.f_locals, f.f_trace)
+            tb = loguru_traceback(frame, lasti, lineno, next_)
+            return tb
+
+    def _format_catch_point(self, error):
+        regex = r'.*%s.*' % re.escape(self._catch_point_identifier)
+        def replace(match):
+            return match.group(0).replace(" ", ">", 1).replace(self._catch_point_identifier, "")
+        return re.sub(regex, replace, error, re.MULTILINE)
 
     def format_exception(self, backtrace, colored):
         type_, value, ex_traceback = self.type, self.value, self._extended_traceback
-        hacky_int = self._hacky_int
 
         if not backtrace:
             error = traceback.format_exception(type_, value, ex_traceback)
@@ -126,26 +123,4 @@ class ExceptionRecattr:
 
         error = ''.join(error)
 
-        if hacky_int is not None:
-            reg = r'(?:^\S*(Traceback \(most recent call last\):)\S*$|^\S*  \S*File.*\D(%s)\D.*$)' % str(hacky_int)
-            matches = re.finditer(reg, error, flags=re.M)
-
-            tb_match = None
-
-            for match in matches:
-                tb, line = match.groups()
-                if tb is not None:
-                    tb_match = match
-                if line is not None:
-                    s, e = match.span(2)
-                    error = error[:s] + str(int(hacky_int)) + error[e:]
-                    s = match.start(0)
-                    error = error[:s] + error[s:].replace(' ', '>', 1)
-                    if tb_match is not None:
-                        old = "Traceback (most recent call last):"
-                        new = "Traceback (most recent call last, catch point marked):"
-                        s = tb_match.start(0)
-                        error = error[:s] + error[s:].replace(old, new, 1)
-                    break
-
-        return error
+        return self._format_catch_point(error)
