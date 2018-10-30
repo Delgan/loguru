@@ -298,6 +298,22 @@ def test_suppressed_exception_indirect(compare):
 
     compare(template, 0, 1)
 
+def test_arguments_exception(compare):
+    template = """
+    {catch}
+    def f():
+        pass
+
+    x = 42
+
+    {try}:
+        f(x)
+    {except}:
+        {log}
+    """
+
+    compare(template, 0)
+
 @pytest.mark.parametrize('rec', [1, 2, 3])
 @pytest.mark.parametrize('catch_mode', ['explicit', 'decorator', 'context_manager'])
 def test_raising_recursion(writer, rec, catch_mode):

@@ -65,6 +65,8 @@ class ExceptionRecattr:
         return (ExceptionRecattr, args)
 
     def _extend_traceback(self, tb, decorated):
+        frame = tb.tb_frame
+
         if decorated:
             bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
             tb = tb.tb_next
@@ -73,8 +75,6 @@ class ExceptionRecattr:
             bad_frame = None
             tb = self._make_catch_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, tb.tb_next)
             caught = True
-
-        frame = tb.tb_frame
 
         while True:
             frame = frame.f_back
