@@ -314,6 +314,27 @@ def test_arguments_exception(compare):
 
     compare(template, 0)
 
+def test_double_wrapping(compare):
+    template = """
+    def g(x):
+        1 / x
+
+    {catch}
+    {catch}
+    def f(y):
+        g(y)
+
+    {try}:
+        {try}:
+            f(0)
+        {except}:
+            {log}
+    {except}:
+        {log}
+    """
+
+    compare(template, 0)
+
 @pytest.mark.parametrize('rec', [1, 2, 3])
 @pytest.mark.parametrize('catch_mode', ['explicit', 'decorator', 'context_manager'])
 def test_raising_recursion(writer, rec, catch_mode):
