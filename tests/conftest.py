@@ -69,8 +69,8 @@ def pyexec(tmpdir):
 def monkeypatch_now(monkeypatch):
 
     def monkeypatch_now(func):
-        monkeypatch.setattr(loguru._logger, 'fast_now', func)
-        monkeypatch.setattr(loguru._file_sink, 'fast_now', func)
+        monkeypatch.setattr(loguru._logger, 'pendulum_now', func)
+        monkeypatch.setattr(loguru._file_sink, 'pendulum_now', func)
 
     return monkeypatch_now
 

@@ -7,9 +7,9 @@ import shutil
 import string
 
 import pendulum
+from pendulum import now as pendulum_now
 
 from . import _string_parsers
-from ._fast_now import fast_now
 
 
 class FileDateTime(pendulum.DateTime):
@@ -22,7 +22,7 @@ class FileDateTime(pendulum.DateTime):
     @classmethod
     def now(cls):
         # TODO: Use FileDateTime.now() instead, when pendulum/#203 fixed
-        t = fast_now()
+        t = pendulum_now()
         return cls(t.year, t.month, t.day, t.hour, t.minute, t.second, t.microsecond, t.tzinfo, fold=t.fold)
 
 
@@ -78,7 +78,7 @@ class FileSink:
 
         if rename_existing and os.path.isfile(new_path):
             root, ext = os.path.splitext(new_path)
-            renamed_path = "{}.{:YYYY-MM-DD_HH-mm-ss_SSSSSS}{}".format(root, fast_now(), ext)
+            renamed_path = "{}.{:YYYY-MM-DD_HH-mm-ss_SSSSSS}{}".format(root, pendulum_now(), ext)
             os.rename(new_path, renamed_path)
 
         self.file = open(new_path, mode=self.mode, buffering=self.buffering, **self.kwargs)
@@ -108,7 +108,7 @@ class FileSink:
             return rotation_function
 
         def make_from_time(step_forward, time_init=None):
-            start_time = time_limit = fast_now()
+            start_time = time_limit = pendulum_now()
             if time_init is not None:
                 t = time_init
                 time_limit = time_limit.at(t.hour, t.minute, t.second, t.microsecond)
@@ -191,7 +191,7 @@ class FileSink:
         elif isinstance(retention, datetime.timedelta):
             seconds = retention.total_seconds()
             def filter_logs(logs):
-                t = fast_now().timestamp()
+                t = pendulum_now().timestamp()
                 return [log for log in logs if os.stat(log).st_mtime <= t - seconds]
             return make_from_filter(filter_logs)
         elif callable(retention):
@@ -260,7 +260,7 @@ class FileSink:
                 if os.path.isfile(path_out):
                     root, ext_before = os.path.splitext(path_in)
                     renamed_template = "{}.{:YYYY-MM-DD_HH-mm-ss_SSSSSS}{}.{}"
-                    renamed_path = renamed_template.format(root, fast_now(), ext_before, ext)
+                    renamed_path = renamed_template.format(root, pendulum_now(), ext_before, ext)
                     os.rename(path_out, renamed_path)
                 compress(path_in, path_out)
                 os.remove(path_in)

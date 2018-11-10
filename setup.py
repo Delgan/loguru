@@ -12,16 +12,6 @@ with open('loguru/__init__.py', 'r') as file:
 with open('README.rst', 'rb') as file:
     readme = file.read().decode('utf-8')
 
-LOGURU_EXTENSIONS = os.getenv("LOGURU_EXTENSIONS", None)
-
-if LOGURU_EXTENSIONS == "0":
-    ext_modules = []
-else:
-    optional = LOGURU_EXTENSIONS != "1"
-    ext_modules = [
-        Extension('loguru._extensions.fast_now', sources=['loguru/_extensions/fast_now.c'], optional=optional),
-    ]
-
 setup(
     name='loguru',
     version=version,
@@ -47,5 +37,4 @@ setup(
             'pytest-cov>=2.5.1',
         ],
     },
-    ext_modules=ext_modules,
 )

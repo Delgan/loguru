@@ -11,10 +11,10 @@ from os.path import basename, normcase, splitext
 from threading import current_thread
 
 import pendulum
+from pendulum import now as pendulum_now
 from colorama import AnsiToWin32
 
 from . import _defaults
-from ._fast_now import fast_now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
@@ -22,7 +22,7 @@ from ._recattrs import LevelRecattr, FileRecattr, ThreadRecattr, ProcessRecattr,
 
 Level = namedtuple('Level', ['no', 'color', 'icon'])
 
-start_time = fast_now()
+start_time = pendulum_now()
 
 
 class Logger:
@@ -384,7 +384,7 @@ class Logger:
                         return
                 _self._enabled[name] = True
 
-            now = fast_now()
+            now = pendulum_now()
 
             if level_id is None:
                 level_no, level_color, level_icon = level, '', ' '
