@@ -1,7 +1,6 @@
 import pytest
 import os
 from loguru import logger
-import pendulum
 
 @pytest.mark.parametrize('compression', [
     'gz', 'bz2', 'zip', 'xz', 'lzma',
@@ -64,8 +63,8 @@ def test_no_compression_at_stop_with_rotation(tmpdir, mode):
     assert len(tmpdir.listdir()) == 1
     assert tmpdir.join("test.log").check(exists=1)
 
-def test_rename_existing_before_compression(monkeypatch_now, tmpdir):
-    monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00.000000"))
+def test_rename_existing_before_compression(monkeypatch_date, tmpdir):
+    monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
     i = logger.start(tmpdir.join('test.log'), compression="tar.gz")
     logger.debug("test")
     logger.stop(i)

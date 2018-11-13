@@ -1,19 +1,19 @@
 import pytest
-import pendulum
 import datetime
 import os
 from loguru import logger
 
 
-@pytest.mark.parametrize('retention', ['1 hour', '1H', ' 1 h ', datetime.timedelta(hours=1), pendulum.Duration(hours=1.0)])
-def test_retention_time(monkeypatch_now, tmpdir, retention):
+@pytest.mark.parametrize('retention', ['1 hour', '1H', ' 1 h ', datetime.timedelta(hours=1)])
+def test_retention_time(monkeypatch_date, tmpdir, retention):
     i = logger.start(tmpdir.join('test.log.x'), retention=retention)
     logger.debug("test")
     logger.stop(i)
 
     assert len(tmpdir.listdir()) == 1
 
-    monkeypatch_now(lambda *a, **k: pendulum.now().add(hours=24))
+    future = datetime.datetime.now() + datetime.timedelta(days=1)
+    monkeypatch_date(future.year, future.month, future.day, future.hour, future.minute, future.second, future.microsecond)
 
     i = logger.start(tmpdir.join('test.log'), retention=retention)
     logger.debug("test")
@@ -92,8 +92,8 @@ def test_not_managed_files(tmpdir):
 
     assert len(tmpdir.listdir()) == len(others)
 
-def test_manage_formatted_files(monkeypatch_now, tmpdir):
-    monkeypatch_now(lambda *a, **k: pendulum.parse("2018-01-01 00:00:00"))
+def test_manage_formatted_files(monkeypatch_date, tmpdir):
+    monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
 
     f1 = tmpdir.join('temp/2018/file.log')
     f2 = tmpdir.join('temp/file2018.log')

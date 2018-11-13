@@ -5,11 +5,8 @@ from loguru import logger
 
 @pytest.mark.parametrize('format, validator', [
     ('{name}', lambda r: r == 'tests.test_formatting'),
-    ('{time}', lambda r: re.fullmatch(r'\d+-\d+-\d+T\d+:\d+:\d+[.,]\d+[+-]\d+:\d+', r)),
-    ('{time:HH[h] mm[m] ss[s]}', lambda r: re.fullmatch(r'\d+h \d+m \d+s', r)),
-    ('{time:HH}x{time:mm}x{time:ss}', lambda r: re.fullmatch(r'\d+x\d+x\d+', r)),
-    ('{time.int_timestamp}', lambda r: re.fullmatch(r'\d+', r)),
-    ('{elapsed}', lambda r: re.fullmatch(r'(\s*([\d.]+) ([a-zA-Z]+)\s*)+', r)),
+    ('{time}', lambda r: re.fullmatch(r'\d+-\d+-\d+T\d+:\d+:\d+[.,]\d+[+-]\d{4}', r)),
+    ('{elapsed}', lambda r: re.fullmatch(r'\d:\d{2}:\d{2}\.\d{6}', r)),
     ('{elapsed.seconds}', lambda r: re.fullmatch(r'\d+', r)),
     ('{line}', lambda r: re.fullmatch(r'\d+', r)),
     ('{level}', lambda r: r == 'DEBUG'),
@@ -46,8 +43,6 @@ def test_log_formatters(format, validator, writer, use_log_function):
 
 @pytest.mark.parametrize('format, validator', [
     ('{time}.log', lambda r: re.fullmatch(r'\d+-\d+-\d+_\d+-\d+-\d+\_\d+.log', r)),
-    ('{time:HH[h] mm[m] ss[s]}.log', lambda r: re.fullmatch(r'\d+h \d+m \d+s\.log', r)),
-    ('{time:HH}x{time:mm}x{time:ss}.log', lambda r: re.fullmatch(r'\d+x\d+x\d+\.log', r)),
     ('%s_{{a}}_天_{{1}}_%d', lambda r: r == '%s_{a}_天_{1}_%d'),
 ])
 @pytest.mark.parametrize('part', ["file", "dir", "both"])

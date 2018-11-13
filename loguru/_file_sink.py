@@ -6,24 +6,19 @@ import os
 import shutil
 import string
 
-import pendulum
-from pendulum import now as pendulum_now
-
-from . import _string_parsers
+from . import _string_parsers as string_parsers
+from ._datetime import now
 
 
-class FileDateTime(pendulum.DateTime):
+class FileDateFormatter:
+
+    def __init__(self):
+        self.datetime = now()
 
     def __format__(self, spec):
         if not spec:
-            spec = "YYYY-MM-DD_HH-mm-ss_SSSSSS"
-        return super().__format__(spec)
-
-    @classmethod
-    def now(cls):
-        # TODO: Use FileDateTime.now() instead, when pendulum/#203 fixed
-        t = pendulum_now()
-        return cls(t.year, t.month, t.day, t.hour, t.minute, t.second, t.microsecond, t.tzinfo, fold=t.fold)
+            spec = "%Y-%m-%d_%H-%M-%S_%f"
+        return self.datetime.__format__(spec)
 
 
 class FileSink:
@@ -78,14 +73,14 @@ class FileSink:
 
         if rename_existing and os.path.isfile(new_path):
             root, ext = os.path.splitext(new_path)
-            renamed_path = "{}.{:YYYY-MM-DD_HH-mm-ss_SSSSSS}{}".format(root, pendulum_now(), ext)
+            renamed_path = "{}.{}{}".format(root, FileDateFormatter(), ext)
             os.rename(new_path, renamed_path)
 
         self.file = open(new_path, mode=self.mode, buffering=self.buffering, **self.kwargs)
         self.file_path = new_path
 
     def format_path(self):
-        path = self.path.format_map({'time': FileDateTime.now()})
+        path = self.path.format_map({'time': FileDateFormatter()})
         return os.path.abspath(path)
 
     @staticmethod
@@ -108,15 +103,17 @@ class FileSink:
             return rotation_function
 
         def make_from_time(step_forward, time_init=None):
-            start_time = time_limit = pendulum_now()
+            start_time = time_limit = now().replace(tzinfo=None)
             if time_init is not None:
-                t = time_init
-                time_limit = time_limit.at(t.hour, t.minute, t.second, t.microsecond)
+                time_limit = time_limit.replace(hour=time_init.hour,
+                                                minute=time_init.minute,
+                                                second=time_init.second,
+                                                microsecond=time_init.microsecond)
             if time_limit <= start_time:
                 time_limit = step_forward(time_limit)
             def rotation_function(message, file):
                 nonlocal time_limit
-                record_time = message.record['time']
+                record_time = message.record['time'].replace(tzinfo=None)
                 if record_time >= time_limit:
                     while time_limit <= record_time:
                         time_limit = step_forward(time_limit)
@@ -127,40 +124,38 @@ class FileSink:
         if rotation is None:
             return None
         elif isinstance(rotation, str):
-            size = _string_parsers.parse_size(rotation)
+            size = string_parsers.parse_size(rotation)
             if size is not None:
                 return self.make_rotation_function(size)
-            interval = _string_parsers.parse_duration(rotation)
+            interval = string_parsers.parse_duration(rotation)
             if interval is not None:
                 return self.make_rotation_function(interval)
-            frequency = _string_parsers.parse_frequency(rotation)
+            frequency = string_parsers.parse_frequency(rotation)
             if frequency is not None:
                 return make_from_time(frequency)
-            daytime = _string_parsers.parse_daytime(rotation)
+            daytime = string_parsers.parse_daytime(rotation)
             if daytime is not None:
                 day, time = daytime
                 if day is None:
                     return self.make_rotation_function(time)
                 if time is None:
-                    time = pendulum.parse('00:00', exact=True, strict=False)
+                    time = datetime.time(0, 0, 0)
                 def next_day(t):
-                    return t.next(day, keep_time=True)
+                    while True:
+                         t += datetime.timedelta(days=1)
+                         if t.weekday() == day:
+                            return t
                 return make_from_time(next_day, time_init=time)
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         elif isinstance(rotation, (numbers.Real, decimal.Decimal)):
             return make_from_size(rotation)
         elif isinstance(rotation, datetime.time):
-            time = pendulum.Time(hour=rotation.hour, minute=rotation.minute,
-                                 second=rotation.second, microsecond=rotation.microsecond,
-                                 tzinfo=rotation.tzinfo, fold=rotation.fold)
             def next_day(t):
-                return t.add(days=1)
-            return make_from_time(next_day, time_init=time)
+                return t + datetime.timedelta(days=1)
+            return make_from_time(next_day, time_init=rotation)
         elif isinstance(rotation, datetime.timedelta):
-            interval = pendulum.Duration(days=rotation.days, seconds=rotation.seconds,
-                                         microseconds=rotation.microseconds)
             def add_interval(t):
-                return t + interval
+                return t + rotation
             return make_from_time(add_interval)
         elif callable(rotation):
             return rotation
@@ -178,7 +173,7 @@ class FileSink:
         if retention is None:
             return None
         elif isinstance(retention, str):
-            interval = _string_parsers.parse_duration(retention)
+            interval = string_parsers.parse_duration(retention)
             if interval is None:
                 raise ValueError("Cannot parse retention from: '%s'" % retention)
             return self.make_retention_function(interval)
@@ -191,7 +186,7 @@ class FileSink:
         elif isinstance(retention, datetime.timedelta):
             seconds = retention.total_seconds()
             def filter_logs(logs):
-                t = pendulum_now().timestamp()
+                t = now().timestamp()
                 return [log for log in logs if os.stat(log).st_mtime <= t - seconds]
             return make_from_filter(filter_logs)
         elif callable(retention):
@@ -259,8 +254,9 @@ class FileSink:
                 path_out = "{}.{}".format(path_in, ext)
                 if os.path.isfile(path_out):
                     root, ext_before = os.path.splitext(path_in)
-                    renamed_template = "{}.{:YYYY-MM-DD_HH-mm-ss_SSSSSS}{}.{}"
-                    renamed_path = renamed_template.format(root, pendulum_now(), ext_before, ext)
+                    renamed_template = "{}.{}{}.{}"
+                    date = FileDateFormatter()
+                    renamed_path = renamed_template.format(root, date, ext_before, ext)
                     os.rename(path_out, renamed_path)
                 compress(path_in, path_out)
                 os.remove(path_in)

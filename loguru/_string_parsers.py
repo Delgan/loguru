@@ -1,20 +1,23 @@
 import datetime
 import re
 
-import pendulum
-
 
 def parse_size(size):
     size = size.strip()
-    reg = r'([e\+\-\.\d]+)\s*([kmgtpezy])?(i)?(b)'
-    match = re.fullmatch(reg, size, flags=re.I)
+    reg = re.compile(r'([e\+\-\.\d]+)\s*([kmgtpezy])?(i)?(b)', flags=re.I)
+
+    match = reg.fullmatch(size)
+
     if not match:
         return None
+
     s, u, i, b = match.groups()
+
     try:
         s = float(s)
     except ValueError:
         raise ValueError("Invalid float value while parsing size: '%s'" % s)
+
     u = 'kmgtpezy'.index(u.lower()) + 1 if u else 0
     i = 1024 if i else 1000
     b = {'b': 8, 'B': 1}[b] if b else 1
@@ -25,6 +28,7 @@ def parse_size(size):
 
 def parse_duration(duration):
     duration = duration.strip()
+    reg = r'(?:([e\+\-\.\d]+)\s*([a-z]+)[\s\,]*)'
 
     units = [
         ('y|years?', 31536000),
@@ -38,7 +42,6 @@ def parse_duration(duration):
         ('us|microseconds?', 0.000001),
     ]
 
-    reg = r'(?:([e\+\-\.\d]+)\s*([a-z]+)[\s\,]*)'
     if not re.fullmatch(reg + '+', duration, flags=re.I):
         return None
 
@@ -57,7 +60,7 @@ def parse_duration(duration):
 
         seconds += value * unit
 
-    return pendulum.Duration(seconds=seconds)
+    return datetime.timedelta(seconds=seconds)
 
 
 def parse_frequency(frequency):
@@ -65,68 +68,107 @@ def parse_frequency(frequency):
 
     if frequency == 'hourly':
         def hourly(t):
-            return t.add(hours=1).start_of('hour')
+            dt = t + datetime.timedelta(hours=1)
+            return dt.replace(minute=0, second=0, microsecond=0)
         return hourly
     elif frequency == 'daily':
         def daily(t):
-            return t.add(days=1).start_of('day')
+            dt = t + datetime.timedelta(days=1)
+            return dt.replace(hour=0, minute=0, second=0, microsecond=0)
         return daily
     elif frequency == 'weekly':
         def weekly(t):
-            return t.add(weeks=1).start_of('week')
+            dt = t + datetime.timedelta(days=7 - t.weekday())
+            return dt.replace(hour=0, minute=0, second=0, microsecond=0)
         return weekly
     elif frequency == 'monthly':
         def monthly(t):
-            return t.add(months=1).start_of('month')
+            if t.month == 12:
+                y, m = t.year + 1, 1
+            else:
+                y, m = t.year, t.month + 1
+            return t.replace(year=y, month=m, day=1, hour=0, minute=0, second=0, microsecond=0)
         return monthly
     elif frequency == 'yearly':
         def yearly(t):
-            return t.add(years=1).start_of('year')
+            y = t.year + 1
+            return t.replace(year=y, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         return yearly
 
     return None
 
 
-def parse_daytime(daytime):
-    daytime = daytime.strip()
-
-    daytime_reg = re.compile(r'^(.*?)\s+at\s+(.*)$', flags=re.I)
-    day_reg = re.compile(r'^w\d+$', flags=re.I)
-    time_reg = re.compile(r'^[\d\.\:\,]+(?:\s*[ap]m)?$', flags=re.I)
-
+def parse_day(day):
+    day = day.strip().lower()
     days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-    pdays = [getattr(pendulum, day.upper()) for day in days]
+    reg = re.compile(r'^w\d+$', flags=re.I)
 
-    daytime_match = daytime_reg.match(daytime)
-    if daytime_match:
-        day, time = daytime_match.groups()
-    elif time_reg.match(daytime):
-        day, time = None, daytime
-    elif day_reg.match(daytime) or daytime.lower() in days:
-        day, time = daytime, None
+    if day in days:
+        day = days.index(day)
+    elif reg.match(day):
+        day = int(day[1:])
+        if not 0 <= day < 7:
+            raise ValueError("Invalid weekday value while parsing day (expected [0-6]): '%d'" % day)
     else:
+        day = None
+
+    return day
+
+
+def parse_time(time):
+    time = time.strip()
+    reg = re.compile(r'^[\d\.\:]+\s*(?:[ap]m)?$', flags=re.I)
+
+    if not reg.match(time):
         return None
 
-    if day is not None:
-        day_ = day.lower()
-        if day_reg.match(day):
-            d = int(day[1:])
-            if not 0 <= d < len(days):
-                raise ValueError("Invalid weekday index while parsing daytime: '%d'" % d)
-            day = pdays[d]
-        elif day_ in days:
-            day = pdays[days.index(day_)]
-        else:
-            raise ValueError("Invalid weekday value while parsing daytime: '%s'" % day)
+    formats = [
+        "%H",
+        "%H:%M",
+        "%H:%M:%S",
+        "%H:%M:%S.%f",
+        "%I %p",
+        "%I:%M %S",
+        "%I:%M:%S %p",
+        "%I:%M:%S.%f %p"
+    ]
 
-    if time is not None:
-        time_ = time
+    for format_ in formats:
         try:
-            time = pendulum.parse(time, exact=True, strict=False)
-        except Exception as e:
-            raise ValueError("Invalid time while parsing daytime: '%s'" % time) from e
+            dt = datetime.datetime.strptime(time, format_)
+        except ValueError:
+            pass
         else:
-            if not isinstance(time, datetime.time):
-                raise ValueError("Cannot strictly parse time from: '%s'" % time_)
+            return dt.time()
+
+    raise ValueError("Unrecognized format while parsing time: '%s'" % time)
+
+
+def parse_daytime(daytime):
+    daytime = daytime.strip()
+    reg = re.compile(r'^(.*?)\s+at\s+(.*)$', flags=re.I)
+
+    match = reg.match(daytime)
+    if match:
+        day, time = match.groups()
+    else:
+        day = time = daytime
+
+    try:
+        day = parse_day(day)
+        if match and day is None:
+            raise ValueError
+    except ValueError as e:
+        raise ValueError("Invalid day while parsing daytime: '%s'" % day) from e
+
+    try:
+        time = parse_time(time)
+        if match and time is None:
+            raise ValueError
+    except ValueError as e:
+        raise ValueError("Invalid time while parsing daytime: '%s'" % time) from e
+
+    if day is None and time is None:
+        return None
 
     return day, time

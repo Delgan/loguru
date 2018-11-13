@@ -1,7 +1,7 @@
 import sys
 import logging
 import pytest
-import pendulum
+
 from loguru import logger
 
 class InterceptHandler(logging.Handler):

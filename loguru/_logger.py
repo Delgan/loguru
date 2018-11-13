@@ -4,17 +4,17 @@ import logging
 import os
 import threading
 from collections import namedtuple
+from datetime import timedelta
 from inspect import isclass
 from multiprocessing import current_process
 from os import PathLike
 from os.path import basename, normcase, splitext
 from threading import current_thread
 
-import pendulum
-from pendulum import now as pendulum_now
 from colorama import AnsiToWin32
 
 from . import _defaults
+from ._datetime import now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
@@ -22,7 +22,7 @@ from ._recattrs import LevelRecattr, FileRecattr, ThreadRecattr, ProcessRecattr,
 
 Level = namedtuple('Level', ['no', 'color', 'icon'])
 
-start_time = pendulum_now()
+start_time = now()
 
 
 class Logger:
@@ -384,7 +384,7 @@ class Logger:
                         return
                 _self._enabled[name] = True
 
-            now = pendulum_now()
+            current_datetime = now()
 
             if level_id is None:
                 level_no, level_color, level_icon = level, '', ' '
@@ -402,8 +402,8 @@ class Logger:
             file_name = basename(file_path)
             thread = current_thread()
             process = current_process()
-            diff = now - start_time
-            elapsed = pendulum.Duration(microseconds=diff.microseconds)
+            diff = current_datetime - start_time
+            elapsed = timedelta(microseconds=diff.microseconds)
 
             level_recattr = LevelRecattr(level_name)
             level_recattr.no, level_recattr.name, level_recattr.icon = level_no, level_name, level_icon
@@ -435,7 +435,7 @@ class Logger:
                 'name': name,
                 'process': process_recattr,
                 'thread': thread_recattr,
-                'time': now,
+                'time': current_datetime,
             }
 
             if _self._lazy:

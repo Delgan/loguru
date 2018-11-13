@@ -5,6 +5,9 @@ import pytest
 import py
 import os
 import subprocess
+import datetime
+import time
+import calendar
 
 default_levels = loguru._logger.Logger._levels.copy()
 
@@ -66,13 +69,24 @@ def pyexec(tmpdir):
     return pyexec
 
 @pytest.fixture
-def monkeypatch_now(monkeypatch):
+def monkeypatch_date(monkeypatch):
 
-    def monkeypatch_now(func):
-        monkeypatch.setattr(loguru._logger, 'pendulum_now', func)
-        monkeypatch.setattr(loguru._file_sink, 'pendulum_now', func)
+    def monkeypatch_date(year, month, day, hour, minute, second, microsecond, zone="UTC", offset=0):
+        tzinfo = datetime.timezone(datetime.timedelta(seconds=offset), zone)
+        dt = datetime.datetime(year, month, day, hour, minute, second, microsecond, tzinfo=tzinfo)
+        struct = time.struct_time([*dt.timetuple()] + [zone, offset])
+        secs = dt.timestamp()
 
-    return monkeypatch_now
+        def patched_time():
+            return secs
+
+        def patched_localtime(t):
+            return struct
+
+        monkeypatch.setattr(loguru._datetime, 'time', patched_time)
+        monkeypatch.setattr(loguru._datetime, 'localtime', patched_localtime)
+
+    return monkeypatch_date
 
 @pytest.fixture
 def make_logging_logger():

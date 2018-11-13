@@ -3,8 +3,7 @@ import random
 import re
 import pathlib
 import io
-
-import pendulum
+from datetime import datetime
 
 from loguru import parser
 
@@ -76,8 +75,8 @@ def test_greedy_pattern():
 
 def test_cast():
     log = dict(num="123", val="1.1", date="2017-03-29 11:11:11")
-    result = parser.cast(log, num=int, val=float, date=pendulum.parse)
-    assert result == dict(num=123, val=1.1, date=pendulum.parse("2017-03-29 11:11:11"))
+    result = parser.cast(log, num=int, val=float, date=lambda d: datetime.strptime(d, '%Y-%m-%d %H:%M:%S'))
+    assert result == dict(num=123, val=1.1, date=datetime(2017, 3, 29, 11, 11, 11))
 
 def test_cast_with_irrelevant_arg():
     log = dict(a="1")
