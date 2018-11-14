@@ -1,8 +1,6 @@
 import re
 from os import PathLike
 
-from ._matcher import Matcher
-
 
 class Parser:
 
@@ -37,10 +35,6 @@ class Parser:
 
         if should_close:
             fileobj.close()
-
-    @staticmethod
-    def test(string):
-        return Matcher(string)
 
     @staticmethod
     def _find_iter(fileobj, regex, chunk):
