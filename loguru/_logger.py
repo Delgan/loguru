@@ -226,13 +226,18 @@ class Logger:
                               serialize=serialize, backtrace=backtrace, enqueue=enqueue,
                               catch=catch)
         elif hasattr(sink, 'write') and callable(sink.write):
-            if colorize is None:
-                try:
-                    colorize = sink.isatty()
-                except Exception:
+            try:
+                converter = AnsiToWin32(sink, convert=None, strip=False)
+            except:
+                if colorize is None:
                     colorize = False
-
-            stream = AnsiToWin32(sink).stream if (colorize and os.name == 'nt') else sink
+                stream = sink
+            else:
+                if colorize is False or not converter.should_wrap():
+                    stream = sink
+                else:
+                    colorize = True
+                    stream = converter.stream
 
             stream_write = stream.write
             if kwargs:

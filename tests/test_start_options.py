@@ -1,9 +1,11 @@
 import json
 import pytest
+import sys
 import multiprocessing
 from loguru import logger
 import ansimarkup
 import io
+import colorama
 
 @pytest.mark.parametrize('level, function, should_output', [
     (0,              lambda x: x.trace,    True),
@@ -99,6 +101,27 @@ def test_colorize(message, format, expected, colorize, writer):
     logger.start(writer, format=format, colorize=colorize)
     logger.debug(message)
     assert writer.read() == expected
+
+@pytest.mark.parametrize("colorize", [True, False, None])
+@pytest.mark.parametrize("should_wrap", [True, False])
+def test_colorize_stream(monkeypatch, capsys, colorize, should_wrap):
+    monkeypatch.setattr(colorama.AnsiToWin32, "should_wrap", lambda _: should_wrap)
+    logger.start(sys.stdout, format="<red>{message}</red>", colorize=colorize)
+    logger.debug("Message")
+    out, err = capsys.readouterr()
+    if colorize or (colorize is None and should_wrap is True):
+        assert out == ansimarkup.parse("<red>Message</red>\n")
+    else:
+        assert out == "Message\n"
+
+def test_auto_colorize_bugged_stream(monkeypatch, capsys):
+    def bugged(*a, **k):
+        raise RuntimeError
+    monkeypatch.setattr(colorama.AnsiToWin32, "__init__", bugged)
+    logger.start(sys.stdout, format="<red>{message}</red>", colorize=None)
+    logger.debug("No error")
+    out, err = capsys.readouterr()
+    assert out == "No error\n"
 
 def test_backtrace(writer):
     logger.start(writer, format='{message}', backtrace=True)

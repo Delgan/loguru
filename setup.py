@@ -25,9 +25,9 @@ setup(
     license="MIT license",
     install_requires=[
         'ansimarkup>=1.4.0',
-        'better_exceptions_fork>=0.2.1.post5',
-        'colorama>=0.3.9',
-        'notifiers>=0.7.4',
+        'better_exceptions_fork>=0.2.1.post6',
+        'colorama>=0.4.0',
+        'notifiers>=1.0.0',
     ],
     extras_require={
         'dev': [
