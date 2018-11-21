@@ -3,15 +3,15 @@ import pytest
 from loguru import logger
 
 
-def test_sinks(capsys, tmpdir):
+def test_handlers(capsys, tmpdir):
     file = tmpdir.join('test.log')
 
-    sinks = [
+    handlers = [
         {'sink': file.realpath(), 'format': 'FileSink: {message}'},
         {'sink': sys.stdout, 'format': 'StdoutSink: {message}'},
     ]
 
-    logger.configure(sinks=sinks)
+    logger.configure(handlers=handlers)
     logger.debug('test')
 
     out, err = capsys.readouterr()
@@ -63,7 +63,7 @@ def test_activation(writer):
 
 def test_dict_unpacking(writer):
     config = {
-        "sinks": [{'sink': writer, 'format': '{level.no} - {extra[x]} {extra[z]} - {message}'}],
+        "handlers": [{'sink': writer, 'format': '{level.no} - {extra[x]} {extra[z]} - {message}'}],
         "levels": [{'name': 'test', 'no': 30}],
         "extra": {'x': 1, 'y': 2, 'z': 3},
     }
@@ -77,7 +77,7 @@ def test_dict_unpacking(writer):
     assert writer.read() == "30 - 1 3 - Yes!\n"
 
 def test_returned_ids(capsys):
-    ids = logger.configure(sinks=[
+    ids = logger.configure(handlers=[
         {'sink': sys.stdout, 'format': '{message}'},
         {'sink': sys.stderr, 'format': '{message}'},
     ])
@@ -112,10 +112,10 @@ def test_dont_reset_by_default(writer):
 
     assert writer.read() == "b 1 Test\n"
 
-def test_reset_previous_sinks(writer):
+def test_reset_previous_handlers(writer):
     logger.start(writer, format="{message}")
 
-    logger.configure(sinks=[])
+    logger.configure(handlers=[])
 
     logger.debug("Test")
 

@@ -105,11 +105,11 @@ class Logger:
 
         return self.level(name)
 
-    def configure(self, *, sinks=None, levels=None, extra=None, activation=None):
-        if sinks is not None:
+    def configure(self, *, handlers=None, levels=None, extra=None, activation=None):
+        if handlers is not None:
             self.stop()
         else:
-            sinks = []
+            handlers = []
 
         if levels is not None:
             for params in levels:
@@ -127,7 +127,7 @@ class Logger:
                 else:
                     self.disable(name)
 
-        return [self.start(**params) for params in sinks]
+        return [self.start(**params) for params in handlers]
 
     def catch(self, exception=Exception, *, level="ERROR", reraise=False,
                        message="An error has been caught in function '{record[function]}', "
