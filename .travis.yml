@@ -1,7 +1,11 @@
 language: python
 
+dist: xenial
+sudo: required
+
 python:
   - '3.6'
+  - '3.7'
 
 install:
   - pip install -v -e .[dev]
