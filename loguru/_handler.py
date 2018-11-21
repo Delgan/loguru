@@ -76,7 +76,7 @@ class Handler:
     def make_ansimarkup(color):
         color = ansimarkup.parse(color)
         custom_markup = dict(level=color, lvl=color)
-        am = ansimarkup.AnsiMarkup(tags=custom_markup)
+        am = ansimarkup.AnsiMarkup(tags=custom_markup, strict=True)
         return am
 
     @staticmethod
