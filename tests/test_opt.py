@@ -135,27 +135,55 @@ def test_ansi_with_record(writer):
     logger_.opt(ansi=True, record=True).debug("{record[extra][start]}B{record[extra][end]}")
     assert writer.read() == ansimarkup.parse("<red>B</red>\n")
 
-@pytest.mark.xfail
 def test_ansi_nested(writer):
     logger.start(writer, format="(<red>[{message}]</red>)", colorize=True)
-    logger.opt(ansi=True).debug("A <green>B</green> C <blue>D</blue> E")
+    logger.opt(ansi=True).debug("A<green>B</green>C<blue>D</blue>E")
     assert writer.read() == ansimarkup.parse("(<red>[A<green>B</green>C<blue>D</blue>E]</red>)\n")
 
-def test_ansi_raising(writer):
+@pytest.mark.parametrize("message", ["X </red> <red> Y", "<red>", "</red>"])
+def test_ansi_raising(writer, message):
     logger.start(writer, format="<red>{message}</red>", colorize=True, catch=False)
     with pytest.raises(ansimarkup.markup.MismatchedTag):
-        logger.opt(ansi=True).debug("X </red> <red> Y")
+        logger.opt(ansi=True).debug(message)
 
 def test_ansi_with_args(writer):
     logger.start(writer, format="=> {message} <=", colorize=True)
     logger.opt(ansi=True).debug("the {0}test{end}", "<red>", end="</red>")
-    assert writer.read() == ansimarkup.parse("=> the <red>test</red> <=") + '\n'
+    assert writer.read() == ansimarkup.parse("=> the <red>test</red> <=\n")
 
 def test_ansi_with_level(writer):
     logger.start(writer, format="{message}", colorize=True)
     logger.level("DEBUG", color="<green>")
     logger.opt(ansi=True).debug("a <level>level</level> b")
-    assert writer.read() == ansimarkup.parse("a <green>level</green> b")+ '\n'
+    assert writer.read() == ansimarkup.parse("a <green>level</green> b\n")
+
+def test_ansi_double_message(writer):
+    logger.start(writer, format="<red><b>{message}...</b> - <c>...{message}</c></red>", colorize=True)
+    logger.opt(ansi=True).debug("<g>Double</g>")
+    assert writer.read() == ansimarkup.parse("<red><b><g>Double</g>...</b> - <c>...<g>Double</g></c></red>\n")
+
+def test_ansi_with_dynamic_formatter_colorized(writer):
+    logger.start(writer, format=lambda r: "<red>{message}</red>", colorize=True)
+    logger.opt(ansi=True).debug("<b>a</b> <y>b</y>")
+    assert writer.read() == ansimarkup.parse("<red><b>a</b> <y>b</y></red>")
+
+def test_ansi_with_dynamic_formatter_decolorized(writer):
+    logger.start(writer, format=lambda r: "<red>{message}</red>", colorize=False)
+    logger.opt(ansi=True).debug("<b>a</b> <y>b</y>")
+    assert writer.read() == "a b"
+
+def test_ansi_with_format_specs(writer):
+    fmt = "<g>{level.no:03d} {message!s:->11} {{nope}} {extra[a][b]!r}<g>"
+    logger.start(writer, colorize=False, format=fmt)
+    logger.bind(a={"b": "c"}).opt(ansi=True).debug("<g>{X}</g>")
+    assert writer.read() == "010 -{X} {nope} 'c'\n"
+
+def test_ansi_with_message_specs(writer):
+    logger.start(writer, colorize=False, format="<g>{message}</g>")
+    logger.opt(ansi=True).debug("{} <b>A</b> {{nope}} {key:03d} {let!r}", 1, key=10, let='c')
+    logger.opt(ansi=True).debug("<b>{0:0{1}d}</b>", 2, 4)
+    assert writer.read() == ("1 A {nope} 010 'c'\n"
+                             "0002\n")
 
 def test_raw(writer):
     logger.start(writer, format="", colorize=True)
@@ -168,10 +196,15 @@ def test_raw_with_format_function(writer):
     logger.opt(raw=True).debug("Raw {message} bis", message="message")
     assert writer.read() == "Raw message bis"
 
-def test_raw_with_ansi(writer):
+def test_raw_with_ansi_colorized(writer):
     logger.start(writer, format="XYZ", colorize=True)
     logger.opt(raw=True, ansi=True).info("Raw <red>colors</red> and <lvl>level</lvl>")
     assert writer.read() == ansimarkup.parse("Raw <red>colors</red> and <b>level</b>")
+
+def test_raw_with_ansi_decolorized(writer):
+    logger.start(writer, format="XYZ", colorize=False)
+    logger.opt(raw=True, ansi=True).info("Raw <red>colors</red> and <lvl>level</lvl>")
+    assert writer.read() == "Raw colors and level"
 
 def test_raw_with_record(writer):
     logger.start(writer, format="Nope\n")

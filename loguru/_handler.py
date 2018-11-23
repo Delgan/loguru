@@ -4,6 +4,7 @@ import multiprocessing
 import sys
 import threading
 import traceback
+import string
 
 import ansimarkup
 
@@ -96,6 +97,29 @@ class Handler:
             return
         self.precolorized_formats[color] = self.colorize_format(self.static_format, color)
 
+    @staticmethod
+    def format_message_only(format_, message):
+        formatted = ""
+        formatter = string.Formatter()
+
+        for literal_text, field_name, format_spec, conversion in formatter.parse(format_):
+            if field_name is None:
+                literal_text = literal_text.replace("{", "{{").replace("}", "}}")
+            elif field_name == "message":
+                value = formatter.convert_field(message, conversion)
+                value = formatter.format_field(value, format_spec)
+                literal_text += value.replace("{", "{{").replace("}", "}}")
+            else:
+                literal_text += "{%s" % field_name
+                if conversion:
+                    literal_text += "!%s" % conversion
+                if format_spec:
+                    literal_text += ":%s" % format_spec
+                literal_text += "}"
+            formatted += literal_text
+
+        return formatted
+
     def handle_error(self, record=None):
         if not self.catch:
             raise
@@ -129,7 +153,22 @@ class Handler:
                 if not self.filter(record):
                     return
 
-            if self.is_formatter_dynamic:
+            if ansi_message:
+                if self.is_formatter_dynamic:
+                    format_ = self.formatter(record)
+                else:
+                    format_ = self.static_format
+
+                message = record['message']
+                format_ = self.format_message_only(format_, message)
+
+                if self.colorize:
+                    precomputed_format = self.colorize_format(format_, level_color)
+                    record['message'] = self.colorize_format(message, level_color)
+                else:
+                    precomputed_format = self.decolorize_format(format_)
+                    record['message'] = self.decolorize_format(message)
+            elif self.is_formatter_dynamic:
                 if self.colorize:
                     precomputed_format = self.colorize_format(self.formatter(record), level_color)
                 else:
@@ -144,16 +183,6 @@ class Handler:
             if record['exception']:
                 error = record['exception'].format_exception(self.backtrace, self.colorize)
             formatter_record = {**record, **{"exception": error}}
-
-            if ansi_message:
-                message = record['message']
-
-                if self.colorize:
-                    message = self.colorize_format(message, level_color)
-                else:
-                    message = self.decolorize_format(message)
-
-                formatter_record['message'] = message
 
             if raw:
                 formatted = formatter_record['message']
@@ -179,7 +208,7 @@ class Handler:
         message = None
         queue = self.queue
         try:
-            while 1:
+            while True:
                 message = queue.get()
                 if message is None:
                     break
