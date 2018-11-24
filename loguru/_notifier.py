@@ -2,7 +2,6 @@ import notifiers
 
 
 class MetaNotifier:
-
     def __new__(cls):
         dict_ = {provider: notificator for provider, notificator in cls.generate_notifiers()}
         return type("Notifier", (), dict_)
@@ -18,7 +17,6 @@ class MetaNotifier:
 
     @staticmethod
     def make_method(provider):
-
         def notificator(self, **kwargs):
             return Notificator(provider, kwargs)
 
@@ -29,7 +27,6 @@ Notifier = MetaNotifier()
 
 
 class Notificator:
-
     def __init__(self, provider, parameters):
         self.provider = provider
         self.parameters = parameters

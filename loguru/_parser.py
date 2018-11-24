@@ -3,7 +3,6 @@ from os import PathLike
 
 
 class Parser:
-
     @staticmethod
     def cast(_dict, **kwargs):
         dict_ = _dict.copy()
@@ -13,20 +12,26 @@ class Parser:
         return dict_
 
     @staticmethod
-    def parse(file, pattern, *, chunk=2**16):
+    def parse(file, pattern, *, chunk=2 ** 16):
         if isinstance(file, (str, PathLike)):
             should_close = True
             fileobj = open(str(file))
-        elif hasattr(file, 'read') and callable(file.read):
+        elif hasattr(file, "read") and callable(file.read):
             should_close = False
             fileobj = file
         else:
-            raise ValueError("Invalid file, it should be a string path or a file object, not: '%s'" % type(file).__name__)
+            raise ValueError(
+                "Invalid file, it should be a string path or a file object, not: '%s'"
+                % type(file).__name__
+            )
 
         try:
             regex = re.compile(pattern)
         except TypeError:
-            raise ValueError("Invalid pattern, it should be a string or a compiled regex, not: '%s'" % type(pattern).__name__)
+            raise ValueError(
+                "Invalid pattern, it should be a string or a compiled regex, not: '%s'"
+                % type(pattern).__name__
+            )
 
         matches = Parser._find_iter(fileobj, regex, chunk)
 

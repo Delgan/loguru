@@ -5,33 +5,51 @@ from collections import namedtuple
 
 from better_exceptions_fork import ExceptionFormatter
 
-loguru_traceback = namedtuple('loguru_traceback', ('tb_frame', 'tb_lasti', 'tb_lineno', 'tb_next'))
+loguru_traceback = namedtuple("loguru_traceback", ("tb_frame", "tb_lasti", "tb_lineno", "tb_next"))
 
 
-loguru_frame = namedtuple('loguru_frame', ('f_back', 'f_builtins', 'f_code', 'f_globals', 'f_lasti',
-                                           'f_lineno', 'f_locals', 'f_trace'))
+loguru_frame = namedtuple(
+    "loguru_frame",
+    ("f_back", "f_builtins", "f_code", "f_globals", "f_lasti", "f_lineno", "f_locals", "f_trace"),
+)
 
 
-loguru_code = namedtuple('loguru_code', ('co_argcount', 'co_code', 'co_cellvars', 'co_consts',
-                                         'co_filename', 'co_firstlineno', 'co_flags', 'co_lnotab',
-                                         'co_freevars', 'co_kwonlyargcount', 'co_name', 'co_names',
-                                         'co_nlocals', 'co_stacksize', 'co_varnames'))
+loguru_code = namedtuple(
+    "loguru_code",
+    (
+        "co_argcount",
+        "co_code",
+        "co_cellvars",
+        "co_consts",
+        "co_filename",
+        "co_firstlineno",
+        "co_flags",
+        "co_lnotab",
+        "co_freevars",
+        "co_kwonlyargcount",
+        "co_name",
+        "co_names",
+        "co_nlocals",
+        "co_stacksize",
+        "co_varnames",
+    ),
+)
 
 
 class LevelRecattr(str):
-    __slots__ = ('name', 'no', 'icon')
+    __slots__ = ("name", "no", "icon")
 
 
 class FileRecattr(str):
-    __slots__ = ('name', 'path')
+    __slots__ = ("name", "path")
 
 
 class ThreadRecattr(str):
-    __slots__ = ('name', 'id')
+    __slots__ = ("name", "id")
 
 
 class ProcessRecattr(str):
-    __slots__ = ('name', 'id')
+    __slots__ = ("name", "id")
 
 
 class ExceptionRecattr:
@@ -42,7 +60,7 @@ class ExceptionRecattr:
 
     def __init__(self, exception, decorated):
         if isinstance(exception, BaseException):
-            type_, value, traceback = type(exception), exception, exception.__traceback__
+            type_, value, traceback = (type(exception), exception, exception.__traceback__)
         elif isinstance(exception, tuple):
             type_, value, traceback = exception
         else:
@@ -92,21 +110,37 @@ class ExceptionRecattr:
         return tb
 
     def _make_catch_traceback(self, frame, lasti, lineno, next_):
-            f = frame
-            c = frame.f_code
-            code = loguru_code(c.co_argcount, c.co_code, c.co_cellvars, c.co_consts, c.co_filename,
-                               c.co_firstlineno, c.co_flags, c.co_lnotab, c.co_freevars,
-                               c.co_kwonlyargcount, c.co_name + self._catch_point_identifier,
-                               c.co_names, c.co_nlocals, c.co_stacksize, c.co_varnames)
-            frame = loguru_frame(f.f_back, f.f_builtins, code, f.f_globals, f.f_lasti, f.f_lineno,
-                                 f.f_locals, f.f_trace)
-            tb = loguru_traceback(frame, lasti, lineno, next_)
-            return tb
+        f = frame
+        c = frame.f_code
+        code = loguru_code(
+            c.co_argcount,
+            c.co_code,
+            c.co_cellvars,
+            c.co_consts,
+            c.co_filename,
+            c.co_firstlineno,
+            c.co_flags,
+            c.co_lnotab,
+            c.co_freevars,
+            c.co_kwonlyargcount,
+            c.co_name + self._catch_point_identifier,
+            c.co_names,
+            c.co_nlocals,
+            c.co_stacksize,
+            c.co_varnames,
+        )
+        frame = loguru_frame(
+            f.f_back, f.f_builtins, code, f.f_globals, f.f_lasti, f.f_lineno, f.f_locals, f.f_trace
+        )
+        tb = loguru_traceback(frame, lasti, lineno, next_)
+        return tb
 
     def _format_catch_point(self, error):
-        regex = r'.*%s.*' % re.escape(self._catch_point_identifier)
+        regex = r".*%s.*" % re.escape(self._catch_point_identifier)
+
         def replace(match):
             return match.group(0).replace(" ", ">", 1).replace(self._catch_point_identifier, "")
+
         return re.sub(regex, replace, error, re.MULTILINE)
 
     def format_exception(self, backtrace, colored):
@@ -117,8 +151,10 @@ class ExceptionRecattr:
         elif colored:
             error = self.exception_formatter_colored.format_exception(type_, value, ex_traceback)
         else:
-            error = self.exception_formatter_not_colored.format_exception(type_, value, ex_traceback)
+            error = self.exception_formatter_not_colored.format_exception(
+                type_, value, ex_traceback
+            )
 
-        error = ''.join(error)
+        error = "".join(error)
 
         return self._format_catch_point(error)

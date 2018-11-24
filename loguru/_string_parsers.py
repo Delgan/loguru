@@ -4,7 +4,7 @@ import re
 
 def parse_size(size):
     size = size.strip()
-    reg = re.compile(r'([e\+\-\.\d]+)\s*([kmgtpezy])?(i)?(b)', flags=re.I)
+    reg = re.compile(r"([e\+\-\.\d]+)\s*([kmgtpezy])?(i)?(b)", flags=re.I)
 
     match = reg.fullmatch(size)
 
@@ -18,31 +18,31 @@ def parse_size(size):
     except ValueError:
         raise ValueError("Invalid float value while parsing size: '%s'" % s)
 
-    u = 'kmgtpezy'.index(u.lower()) + 1 if u else 0
+    u = "kmgtpezy".index(u.lower()) + 1 if u else 0
     i = 1024 if i else 1000
-    b = {'b': 8, 'B': 1}[b] if b else 1
-    size = s * i**u / b
+    b = {"b": 8, "B": 1}[b] if b else 1
+    size = s * i ** u / b
 
     return size
 
 
 def parse_duration(duration):
     duration = duration.strip()
-    reg = r'(?:([e\+\-\.\d]+)\s*([a-z]+)[\s\,]*)'
+    reg = r"(?:([e\+\-\.\d]+)\s*([a-z]+)[\s\,]*)"
 
     units = [
-        ('y|years?', 31536000),
-        ('mo|months?', 2628000),
-        ('w|weeks?', 604800),
-        ('d|days?', 86400),
-        ('h|hours?', 3600),
-        ('m|minutes?', 60),
-        ('s|seconds?', 1),
-        ('ms|milliseconds?', 0.001),
-        ('us|microseconds?', 0.000001),
+        ("y|years?", 31536000),
+        ("mo|months?", 2628000),
+        ("w|weeks?", 604800),
+        ("d|days?", 86400),
+        ("h|hours?", 3600),
+        ("m|minutes?", 60),
+        ("s|seconds?", 1),
+        ("ms|milliseconds?", 0.001),
+        ("us|microseconds?", 0.000001),
     ]
 
-    if not re.fullmatch(reg + '+', duration, flags=re.I):
+    if not re.fullmatch(reg + "+", duration, flags=re.I):
         return None
 
     seconds = 0
@@ -66,33 +66,43 @@ def parse_duration(duration):
 def parse_frequency(frequency):
     frequency = frequency.strip().lower()
 
-    if frequency == 'hourly':
+    if frequency == "hourly":
+
         def hourly(t):
             dt = t + datetime.timedelta(hours=1)
             return dt.replace(minute=0, second=0, microsecond=0)
+
         return hourly
-    elif frequency == 'daily':
+    elif frequency == "daily":
+
         def daily(t):
             dt = t + datetime.timedelta(days=1)
             return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
         return daily
-    elif frequency == 'weekly':
+    elif frequency == "weekly":
+
         def weekly(t):
             dt = t + datetime.timedelta(days=7 - t.weekday())
             return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
         return weekly
-    elif frequency == 'monthly':
+    elif frequency == "monthly":
+
         def monthly(t):
             if t.month == 12:
                 y, m = t.year + 1, 1
             else:
                 y, m = t.year, t.month + 1
             return t.replace(year=y, month=m, day=1, hour=0, minute=0, second=0, microsecond=0)
+
         return monthly
-    elif frequency == 'yearly':
+    elif frequency == "yearly":
+
         def yearly(t):
             y = t.year + 1
             return t.replace(year=y, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
         return yearly
 
     return None
@@ -100,8 +110,8 @@ def parse_frequency(frequency):
 
 def parse_day(day):
     day = day.strip().lower()
-    days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-    reg = re.compile(r'^w\d+$', flags=re.I)
+    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    reg = re.compile(r"^w\d+$", flags=re.I)
 
     if day in days:
         day = days.index(day)
@@ -117,7 +127,7 @@ def parse_day(day):
 
 def parse_time(time):
     time = time.strip()
-    reg = re.compile(r'^[\d\.\:]+\s*(?:[ap]m)?$', flags=re.I)
+    reg = re.compile(r"^[\d\.\:]+\s*(?:[ap]m)?$", flags=re.I)
 
     if not reg.match(time):
         return None
@@ -130,7 +140,7 @@ def parse_time(time):
         "%I %p",
         "%I:%M %S",
         "%I:%M:%S %p",
-        "%I:%M:%S.%f %p"
+        "%I:%M:%S.%f %p",
     ]
 
     for format_ in formats:
@@ -146,7 +156,7 @@ def parse_time(time):
 
 def parse_daytime(daytime):
     daytime = daytime.strip()
-    reg = re.compile(r'^(.*?)\s+at\s+(.*)$', flags=re.I)
+    reg = re.compile(r"^(.*?)\s+at\s+(.*)$", flags=re.I)
 
     match = reg.match(daytime)
     if match:

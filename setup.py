@@ -31,6 +31,7 @@ setup(
     ],
     extras_require={
         'dev': [
+            'black>=18.6b4',
             'coveralls>=1.3.0',
             'isort>=4.3.4',
             'pytest>=3.5.0',

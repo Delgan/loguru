@@ -10,13 +10,26 @@ import ansimarkup
 
 
 class StrRecord(str):
-    __slots__ = ('record', )
+    __slots__ = ("record",)
 
 
 class Handler:
-
-    def __init__(self, *, writer, stopper, levelno, formatter, is_formatter_dynamic, filter_,
-                 colorize, serialize, backtrace, catch, enqueue, colors=[]):
+    def __init__(
+        self,
+        *,
+        writer,
+        stopper,
+        levelno,
+        formatter,
+        is_formatter_dynamic,
+        filter_,
+        colorize,
+        serialize,
+        backtrace,
+        catch,
+        enqueue,
+        colors=[]
+    ):
         self.writer = writer
         self.stopper = stopper
         self.levelno = levelno
@@ -53,22 +66,25 @@ class Handler:
     def serialize_record(text, record):
         exc = record["exception"]
         serializable = {
-            'text': text,
-            'record': {
-                'elapsed': dict(repr=record['elapsed'], seconds=record['elapsed'].total_seconds()),
-                'exception': exc and dict(type=exc.type.__name__, value=exc.value, traceback=bool(exc.traceback)),
-                'extra': record['extra'],
-                'file': dict(name=record['file'].name, path=record['file'].path),
-                'function': record['function'],
-                'level': dict(icon=record['level'].icon, name=record['level'].name, no=record['level'].no),
-                'line': record['line'],
-                'message': record['message'],
-                'module': record['module'],
-                'name': record['name'],
-                'process': dict(id=record['process'].id, name=record['process'].name),
-                'thread': dict(id=record['thread'].id, name=record['thread'].name),
-                'time': dict(repr=record['time'], timestamp=record['time'].timestamp()),
-            }
+            "text": text,
+            "record": {
+                "elapsed": dict(repr=record["elapsed"], seconds=record["elapsed"].total_seconds()),
+                "exception": exc
+                and dict(type=exc.type.__name__, value=exc.value, traceback=bool(exc.traceback)),
+                "extra": record["extra"],
+                "file": dict(name=record["file"].name, path=record["file"].path),
+                "function": record["function"],
+                "level": dict(
+                    icon=record["level"].icon, name=record["level"].name, no=record["level"].no
+                ),
+                "line": record["line"],
+                "message": record["message"],
+                "module": record["module"],
+                "name": record["name"],
+                "process": dict(id=record["process"].id, name=record["process"].name),
+                "thread": dict(id=record["thread"].id, name=record["thread"].name),
+                "time": dict(repr=record["time"], timestamp=record["time"].timestamp()),
+            },
         }
 
         return json.dumps(serializable, default=str) + "\n"
@@ -83,7 +99,7 @@ class Handler:
     @staticmethod
     @functools.lru_cache(maxsize=32)
     def decolorize_format(format_):
-        am = Handler.make_ansimarkup('')
+        am = Handler.make_ansimarkup("")
         return am.strip(format_)
 
     @staticmethod
@@ -130,15 +146,15 @@ class Handler:
         ex_type, ex, tb = sys.exc_info()
 
         try:
-            sys.stderr.write('--- Logging error in Loguru ---\n')
-            sys.stderr.write('Record was: ')
+            sys.stderr.write("--- Logging error in Loguru ---\n")
+            sys.stderr.write("Record was: ")
             try:
                 sys.stderr.write(str(record))
             except Exception:
-                sys.stderr.write('/!\\ Unprintable record /!\\')
-            sys.stderr.write('\n')
+                sys.stderr.write("/!\\ Unprintable record /!\\")
+            sys.stderr.write("\n")
             traceback.print_exception(ex_type, ex, tb, None, sys.stderr)
-            sys.stderr.write('--- End of logging error ---\n')
+            sys.stderr.write("--- End of logging error ---\n")
         except OSError:
             pass
         finally:
@@ -146,7 +162,7 @@ class Handler:
 
     def emit(self, record, level_color, ansi_message, raw):
         try:
-            if self.levelno > record['level'].no:
+            if self.levelno > record["level"].no:
                 return
 
             if self.filter is not None:
@@ -159,15 +175,15 @@ class Handler:
                 else:
                     format_ = self.static_format
 
-                message = record['message']
+                message = record["message"]
                 format_ = self.format_message_only(format_, message)
 
                 if self.colorize:
                     precomputed_format = self.colorize_format(format_, level_color)
-                    record['message'] = self.colorize_format(message, level_color)
+                    record["message"] = self.colorize_format(message, level_color)
                 else:
                     precomputed_format = self.decolorize_format(format_)
-                    record['message'] = self.decolorize_format(message)
+                    record["message"] = self.decolorize_format(message)
             elif self.is_formatter_dynamic:
                 if self.colorize:
                     precomputed_format = self.colorize_format(self.formatter(record), level_color)
@@ -180,12 +196,12 @@ class Handler:
                     precomputed_format = self.decolorized_format
 
             error = ""
-            if record['exception']:
-                error = record['exception'].format_exception(self.backtrace, self.colorize)
+            if record["exception"]:
+                error = record["exception"].format_exception(self.backtrace, self.colorize)
             formatter_record = {**record, **{"exception": error}}
 
             if raw:
-                formatted = formatter_record['message']
+                formatted = formatter_record["message"]
             else:
                 formatted = precomputed_format.format_map(formatter_record)
 
@@ -214,7 +230,7 @@ class Handler:
                     break
                 self.writer(message)
         except Exception:
-            if message and hasattr(message, 'record'):
+            if message and hasattr(message, "record"):
                 message = message.record
             self.handle_error(message)
 
