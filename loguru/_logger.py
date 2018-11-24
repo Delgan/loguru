@@ -76,185 +76,6 @@ class Logger:
         self._raw = raw
         self._depth = depth
 
-    def opt(self, *, exception=None, record=False, lazy=False, ansi=False, raw=False, depth=0):
-        return Logger(self._extra, exception, record, lazy, ansi, raw, depth)
-
-    def bind(_self, **kwargs):
-        return Logger(
-            {**_self._extra, **kwargs},
-            _self._exception,
-            _self._record,
-            _self._lazy,
-            _self._ansi,
-            _self._raw,
-            _self._depth,
-        )
-
-    def level(self, name, no=None, color=None, icon=None):
-        if not isinstance(name, str):
-            raise ValueError(
-                "Invalid level name, it should be a string, not: '%s'" % type(name).__name__
-            )
-
-        if no is color is icon is None:
-            try:
-                return self._levels[name]
-            except KeyError:
-                raise ValueError("Level '%s' does not exist" % name)
-
-        if name not in self._levels:
-            if no is None:
-                raise ValueError(
-                    "Level '%s' does not exist, you have to create it by specifying a level no"
-                    % name
-                )
-            else:
-                old_no, old_color, old_icon = None, "", " "
-        else:
-            old_no, old_color, old_icon = self.level(name)
-
-        if no is None:
-            no = old_no
-
-        if color is None:
-            color = old_color
-
-        if icon is None:
-            icon = old_icon
-
-        if not isinstance(no, int):
-            raise ValueError(
-                "Invalid level no, it should be an integer, not: '%s'" % type(no).__name__
-            )
-
-        if no < 0:
-            raise ValueError("Invalid level no, it should be a positive integer, not: %d" % no)
-
-        self._levels[name] = Level(no, color, icon)
-
-        with self._lock:
-            for handler in self._handlers.values():
-                handler.update_format(color)
-
-        return self.level(name)
-
-    def configure(self, *, handlers=None, levels=None, extra=None, activation=None):
-        if handlers is not None:
-            self.stop()
-        else:
-            handlers = []
-
-        if levels is not None:
-            for params in levels:
-                self.level(**params)
-
-        if extra is not None:
-            with self._lock:
-                self._extra_class.clear()
-                self._extra_class.update(extra)
-
-        if activation is not None:
-            for name, state in activation:
-                if state:
-                    self.enable(name)
-                else:
-                    self.disable(name)
-
-        return [self.start(**params) for params in handlers]
-
-    def catch(
-        self,
-        exception=Exception,
-        *,
-        level="ERROR",
-        reraise=False,
-        message="An error has been caught in function '{record[function]}', "
-        "process '{record[process].name}' ({record[process].id}), "
-        "thread '{record[thread].name}' ({record[thread].id}):"
-    ):
-        if callable(exception) and (
-            not isclass(exception) or not issubclass(exception, BaseException)
-        ):
-            return self.catch()(exception)
-
-        class Catcher:
-            def __init__(self, as_decorator):
-                self._as_decorator = as_decorator
-
-            def __enter__(self_):
-                return None
-
-            def __exit__(self_, type_, value, traceback_):
-                if type_ is None:
-                    return
-
-                if not issubclass(type_, exception):
-                    return False
-
-                if self_._as_decorator:
-                    back, decorator = 2, True
-                else:
-                    back, decorator = 1, False
-
-                logger_ = self.opt(
-                    exception=True,
-                    record=True,
-                    lazy=self._lazy,
-                    ansi=self._ansi,
-                    raw=self._raw,
-                    depth=self._depth + back,
-                )
-
-                log = logger_._make_log_function(level, decorator)
-
-                log(logger_, message)
-
-                return not reraise
-
-            def __call__(self_, function):
-                catcher = Catcher(True)
-
-                @functools.wraps(function)
-                def catch_wrapper(*args, **kwargs):
-                    with catcher:
-                        return function(*args, **kwargs)
-
-                return catch_wrapper
-
-        return Catcher(False)
-
-    def _change_activation(self, name, status):
-        if not isinstance(name, str):
-            raise ValueError("Invalid name, it should be a string, not: '%s'" % type(name).__name__)
-
-        if name != "":
-            name += "."
-
-        with self._lock:
-            activation_list = [(n, s) for n, s in self._activation_list if n[: len(name)] != name]
-
-        parent_status = next((s for n, s in activation_list if name[: len(n)] == n), None)
-        if parent_status != status and not (name == "" and status == True):
-            activation_list.append((name, status))
-
-            def key_sort(x):
-                return x[0].count(".")
-
-            activation_list.sort(key=key_sort, reverse=True)
-
-        with self._lock:
-            for n in self._enabled:
-                if (n + ".")[: len(name)] == name:
-                    self._enabled[n] = status
-
-            self._activation_list[:] = activation_list
-
-    def enable(self, name):
-        self._change_activation(name, True)
-
-    def disable(self, name):
-        self._change_activation(name, False)
-
     def start(
         self,
         sink,
@@ -461,6 +282,185 @@ class Logger:
             levelnos = (h.levelno for h in self._handlers.values())
             self.__class__._min_level = min(levelnos, default=float("inf"))
 
+    def catch(
+        self,
+        exception=Exception,
+        *,
+        level="ERROR",
+        reraise=False,
+        message="An error has been caught in function '{record[function]}', "
+        "process '{record[process].name}' ({record[process].id}), "
+        "thread '{record[thread].name}' ({record[thread].id}):"
+    ):
+        if callable(exception) and (
+            not isclass(exception) or not issubclass(exception, BaseException)
+        ):
+            return self.catch()(exception)
+
+        class Catcher:
+            def __init__(self, as_decorator):
+                self._as_decorator = as_decorator
+
+            def __enter__(self_):
+                return None
+
+            def __exit__(self_, type_, value, traceback_):
+                if type_ is None:
+                    return
+
+                if not issubclass(type_, exception):
+                    return False
+
+                if self_._as_decorator:
+                    back, decorator = 2, True
+                else:
+                    back, decorator = 1, False
+
+                logger_ = self.opt(
+                    exception=True,
+                    record=True,
+                    lazy=self._lazy,
+                    ansi=self._ansi,
+                    raw=self._raw,
+                    depth=self._depth + back,
+                )
+
+                log = logger_._make_log_function(level, decorator)
+
+                log(logger_, message)
+
+                return not reraise
+
+            def __call__(self_, function):
+                catcher = Catcher(True)
+
+                @functools.wraps(function)
+                def catch_wrapper(*args, **kwargs):
+                    with catcher:
+                        return function(*args, **kwargs)
+
+                return catch_wrapper
+
+        return Catcher(False)
+
+    def opt(self, *, exception=None, record=False, lazy=False, ansi=False, raw=False, depth=0):
+        return Logger(self._extra, exception, record, lazy, ansi, raw, depth)
+
+    def bind(_self, **kwargs):
+        return Logger(
+            {**_self._extra, **kwargs},
+            _self._exception,
+            _self._record,
+            _self._lazy,
+            _self._ansi,
+            _self._raw,
+            _self._depth,
+        )
+
+    def level(self, name, no=None, color=None, icon=None):
+        if not isinstance(name, str):
+            raise ValueError(
+                "Invalid level name, it should be a string, not: '%s'" % type(name).__name__
+            )
+
+        if no is color is icon is None:
+            try:
+                return self._levels[name]
+            except KeyError:
+                raise ValueError("Level '%s' does not exist" % name)
+
+        if name not in self._levels:
+            if no is None:
+                raise ValueError(
+                    "Level '%s' does not exist, you have to create it by specifying a level no"
+                    % name
+                )
+            else:
+                old_no, old_color, old_icon = None, "", " "
+        else:
+            old_no, old_color, old_icon = self.level(name)
+
+        if no is None:
+            no = old_no
+
+        if color is None:
+            color = old_color
+
+        if icon is None:
+            icon = old_icon
+
+        if not isinstance(no, int):
+            raise ValueError(
+                "Invalid level no, it should be an integer, not: '%s'" % type(no).__name__
+            )
+
+        if no < 0:
+            raise ValueError("Invalid level no, it should be a positive integer, not: %d" % no)
+
+        self._levels[name] = Level(no, color, icon)
+
+        with self._lock:
+            for handler in self._handlers.values():
+                handler.update_format(color)
+
+        return self.level(name)
+
+    def enable(self, name):
+        self._change_activation(name, True)
+
+    def disable(self, name):
+        self._change_activation(name, False)
+
+    def configure(self, *, handlers=None, levels=None, extra=None, activation=None):
+        if handlers is not None:
+            self.stop()
+        else:
+            handlers = []
+
+        if levels is not None:
+            for params in levels:
+                self.level(**params)
+
+        if extra is not None:
+            with self._lock:
+                self._extra_class.clear()
+                self._extra_class.update(extra)
+
+        if activation is not None:
+            for name, state in activation:
+                if state:
+                    self.enable(name)
+                else:
+                    self.disable(name)
+
+        return [self.start(**params) for params in handlers]
+
+    def _change_activation(self, name, status):
+        if not isinstance(name, str):
+            raise ValueError("Invalid name, it should be a string, not: '%s'" % type(name).__name__)
+
+        if name != "":
+            name += "."
+
+        with self._lock:
+            activation_list = [(n, s) for n, s in self._activation_list if n[: len(name)] != name]
+
+        parent_status = next((s for n, s in activation_list if name[: len(n)] == n), None)
+        if parent_status != status and not (name == "" and status == True):
+            activation_list.append((name, status))
+
+            def key_sort(x):
+                return x[0].count(".")
+
+            activation_list.sort(key=key_sort, reverse=True)
+
+        with self._lock:
+            for n in self._enabled:
+                if (n + ".")[: len(name)] == name:
+                    self._enabled[n] = status
+
+            self._activation_list[:] = activation_list
+
     @staticmethod
     @functools.lru_cache()
     def _make_log_function(level, decorated=False):
@@ -583,18 +583,6 @@ class Logger:
     error = _make_log_function.__func__("ERROR")
     critical = _make_log_function.__func__("CRITICAL")
 
-    def exception(_self, _message, *args, **kwargs):
-        """Convenience method for logging an 'ERROR' with exception information."""
-        logger = _self.opt(
-            exception=True,
-            record=_self._record,
-            lazy=_self._lazy,
-            ansi=_self._ansi,
-            raw=_self._raw,
-            depth=_self._depth + 1,
-        )
-        logger._make_log_function("ERROR")(logger, _message, *args, **kwargs)
-
     def log(_self, _level, _message, *args, **kwargs):
         """Log 'message.format(*args, **kwargs)' with severity _level."""
         logger = _self.opt(
@@ -606,3 +594,15 @@ class Logger:
             depth=_self._depth + 1,
         )
         logger._make_log_function(_level)(logger, _message, *args, **kwargs)
+
+    def exception(_self, _message, *args, **kwargs):
+        """Convenience method for logging an 'ERROR' with exception information."""
+        logger = _self.opt(
+            exception=True,
+            record=_self._record,
+            lazy=_self._lazy,
+            ansi=_self._ansi,
+            raw=_self._raw,
+            depth=_self._depth + 1,
+        )
+        logger._make_log_function("ERROR")(logger, _message, *args, **kwargs)
