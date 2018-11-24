@@ -1,5 +1,6 @@
 from os import environ
 
+
 def env(key, type_, default=None):
     if key not in environ:
         return default

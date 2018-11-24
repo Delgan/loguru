@@ -1,5 +1,6 @@
 import pytest
 import os
+import sys
 from loguru import logger
 
 @pytest.mark.parametrize('compression', [
@@ -79,3 +80,33 @@ def test_rename_existing_before_compression(monkeypatch_date, tmpdir):
 def test_invalid_compression(compression):
     with pytest.raises(ValueError):
         logger.start('test.log', compression=compression)
+
+@pytest.mark.parametrize('ext', ['gz', 'tar.gz'])
+def test_gzip_module_unavailable(ext, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'gzip', None)
+    with pytest.raises(ImportError):
+        logger.start("test.log", compression=ext)
+
+@pytest.mark.parametrize('ext', ['bz2', 'tar.bz2'])
+def test_bz2_module_unavailable(ext, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'bz2', None)
+    with pytest.raises(ImportError):
+        logger.start("test.log", compression=ext)
+
+@pytest.mark.parametrize('ext', ['xz', 'lzma', 'tar.xz'])
+def test_lzma_module_unavailable(ext, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'lzma', None)
+    with pytest.raises(ImportError):
+        logger.start("test.log", compression=ext)
+
+@pytest.mark.parametrize('ext', ['tar', 'tar.gz', 'tar.bz2', 'tar.xz'])
+def test_tarfile_module_unavailable(ext, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'tarfile', None)
+    with pytest.raises(ImportError):
+        logger.start("test.log", compression=ext)
+
+@pytest.mark.parametrize('ext', ['zip'])
+def test_zipfile_module_unavailable(ext, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'zipfile', None)
+    with pytest.raises(ImportError):
+        logger.start("test.log", compression=ext)

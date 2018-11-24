@@ -1,7 +1,6 @@
 import functools
 import itertools
 import logging
-import os
 import threading
 from collections import namedtuple
 from datetime import timedelta
@@ -18,7 +17,8 @@ from ._datetime import now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
-from ._recattrs import LevelRecattr, FileRecattr, ThreadRecattr, ProcessRecattr, ExceptionRecattr
+from ._recattrs import (ExceptionRecattr, FileRecattr, LevelRecattr,
+                        ProcessRecattr, ThreadRecattr)
 
 Level = namedtuple('Level', ['no', 'color', 'icon'])
 
@@ -228,7 +228,7 @@ class Logger:
         elif hasattr(sink, 'write') and callable(sink.write):
             try:
                 converter = AnsiToWin32(sink, convert=None, strip=False)
-            except:
+            except Exception:
                 if colorize is None:
                     colorize = False
                 stream = sink

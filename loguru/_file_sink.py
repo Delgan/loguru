@@ -11,7 +11,6 @@ from ._datetime import now
 
 
 class FileDateFormatter:
-
     def __init__(self):
         self.datetime = now()
 
@@ -22,9 +21,18 @@ class FileDateFormatter:
 
 
 class FileSink:
-
-    def __init__(self, path, *, rotation=None, retention=None, compression=None, delay=False,
-                 mode='a', buffering=1, **kwargs):
+    def __init__(
+        self,
+        path,
+        *,
+        rotation=None,
+        retention=None,
+        compression=None,
+        delay=False,
+        mode="a",
+        buffering=1,
+        **kwargs
+    ):
         self.mode = mode
         self.buffering = buffering
         self.kwargs = kwargs.copy()
@@ -80,45 +88,49 @@ class FileSink:
         self.file_path = new_path
 
     def format_path(self):
-        path = self.path.format_map({'time': FileDateFormatter()})
+        path = self.path.format_map({"time": FileDateFormatter()})
         return os.path.abspath(path)
 
     @staticmethod
     def make_glob_pattern(path):
         tokens = string.Formatter().parse(path)
-        parts = (glob.escape(text) + '*' * (name is not None) for text, name, *_ in tokens)
-        root, ext = os.path.splitext(''.join(parts))
+        parts = (glob.escape(text) + "*" * (name is not None) for text, name, *_ in tokens)
+        root, ext = os.path.splitext("".join(parts))
         if ext:
-            pattern = root + '.*'
+            pattern = root + ".*"
         else:
-            pattern = root + '*'
+            pattern = root + "*"
         return pattern
 
     def make_rotation_function(self, rotation):
-
         def make_from_size(size_limit):
             def rotation_function(message, file):
                 file.seek(0, 2)
                 return file.tell() + len(message) >= size_limit
+
             return rotation_function
 
         def make_from_time(step_forward, time_init=None):
             start_time = time_limit = now().replace(tzinfo=None)
             if time_init is not None:
-                time_limit = time_limit.replace(hour=time_init.hour,
-                                                minute=time_init.minute,
-                                                second=time_init.second,
-                                                microsecond=time_init.microsecond)
+                time_limit = time_limit.replace(
+                    hour=time_init.hour,
+                    minute=time_init.minute,
+                    second=time_init.second,
+                    microsecond=time_init.microsecond,
+                )
             if time_limit <= start_time:
                 time_limit = step_forward(time_limit)
+
             def rotation_function(message, file):
                 nonlocal time_limit
-                record_time = message.record['time'].replace(tzinfo=None)
+                record_time = message.record["time"].replace(tzinfo=None)
                 if record_time >= time_limit:
                     while time_limit <= record_time:
                         time_limit = step_forward(time_limit)
                     return True
                 return False
+
             return rotation_function
 
         if rotation is None:
@@ -140,34 +152,42 @@ class FileSink:
                     return self.make_rotation_function(time)
                 if time is None:
                     time = datetime.time(0, 0, 0)
+
                 def next_day(t):
                     while True:
-                         t += datetime.timedelta(days=1)
-                         if t.weekday() == day:
+                        t += datetime.timedelta(days=1)
+                        if t.weekday() == day:
                             return t
+
                 return make_from_time(next_day, time_init=time)
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         elif isinstance(rotation, (numbers.Real, decimal.Decimal)):
             return make_from_size(rotation)
         elif isinstance(rotation, datetime.time):
+
             def next_day(t):
                 return t + datetime.timedelta(days=1)
+
             return make_from_time(next_day, time_init=rotation)
         elif isinstance(rotation, datetime.timedelta):
+
             def add_interval(t):
                 return t + rotation
+
             return make_from_time(add_interval)
         elif callable(rotation):
             return rotation
         else:
-            raise ValueError("Cannot infer rotation for objects of type: '%s'" % type(rotation).__name__)
+            raise ValueError(
+                "Cannot infer rotation for objects of type: '%s'" % type(rotation).__name__
+            )
 
     def make_retention_function(self, retention):
-
         def make_from_filter(filter_logs):
             def retention_function(logs):
                 for log in filter_logs(logs):
                     os.remove(log)
+
             return retention_function
 
         if retention is None:
@@ -178,74 +198,92 @@ class FileSink:
                 raise ValueError("Cannot parse retention from: '%s'" % retention)
             return self.make_retention_function(interval)
         elif isinstance(retention, int):
+
             def key_log(log):
                 return (-os.stat(log).st_mtime, log)
+
             def filter_logs(logs):
                 return sorted(logs, key=key_log)[retention:]
+
             return make_from_filter(filter_logs)
         elif isinstance(retention, datetime.timedelta):
             seconds = retention.total_seconds()
+
             def filter_logs(logs):
                 t = now().timestamp()
                 return [log for log in logs if os.stat(log).st_mtime <= t - seconds]
+
             return make_from_filter(filter_logs)
         elif callable(retention):
             return retention
         else:
-            raise ValueError("Cannot infer retention for objects of type: '%s'" % type(retention).__name__)
+            raise ValueError(
+                "Cannot infer retention for objects of type: '%s'" % type(retention).__name__
+            )
 
     def make_compression_function(self, compression):
-
         def make_compress_generic(opener, **kwargs):
             def compress(path_in, path_out):
-                with open(path_in, 'rb') as f_in:
-                    with opener(path_out, 'wb', **kwargs) as f_out:
+                with open(path_in, "rb") as f_in:
+                    with opener(path_out, "wb", **kwargs) as f_out:
                         shutil.copyfileobj(f_in, f_out)
+
             return compress
 
         def make_compress_archive(mode):
             import tarfile
+
             def compress(path_in, path_out):
-                with tarfile.open(path_out, 'w:' + mode) as f_comp:
+                with tarfile.open(path_out, "w:" + mode) as f_comp:
                     f_comp.add(path_in, os.path.basename(path_in))
+
             return compress
 
         def make_compress_zipped():
-            import zlib, zipfile
+            import zipfile
+
             def compress(path_in, path_out):
-                with zipfile.ZipFile(path_out, 'w', compression=zipfile.ZIP_DEFLATED) as f_comp:
+                with zipfile.ZipFile(path_out, "w", compression=zipfile.ZIP_DEFLATED) as f_comp:
                     f_comp.write(path_in, os.path.basename(path_in))
+
             return compress
 
         if compression is None:
             return None
         elif isinstance(compression, str):
-            ext = compression.strip().lstrip('.')
+            ext = compression.strip().lstrip(".")
 
-            if ext == 'gz':
-                import zlib, gzip
+            if ext == "gz":
+                import gzip
+
                 compress = make_compress_generic(gzip.open)
-            elif ext == 'bz2':
+            elif ext == "bz2":
                 import bz2
+
                 compress = make_compress_generic(bz2.open)
-            elif ext == 'xz':
+            elif ext == "xz":
                 import lzma
+
                 compress = make_compress_generic(lzma.open, format=lzma.FORMAT_XZ)
-            elif ext == 'lzma':
+            elif ext == "lzma":
                 import lzma
+
                 compress = make_compress_generic(lzma.open, format=lzma.FORMAT_ALONE)
-            elif ext == 'tar':
-                compress = make_compress_archive('')
-            elif ext == 'tar.gz':
-                import zlib, gzip
-                compress = make_compress_archive('gz')
-            elif ext == 'tar.bz2':
+            elif ext == "tar":
+                compress = make_compress_archive("")
+            elif ext == "tar.gz":
+                import gzip
+
+                compress = make_compress_archive("gz")
+            elif ext == "tar.bz2":
                 import bz2
-                compress = make_compress_archive('bz2')
-            elif ext == 'tar.xz':
+
+                compress = make_compress_archive("bz2")
+            elif ext == "tar.xz":
                 import lzma
-                compress = make_compress_archive('xz')
-            elif ext == 'zip':
+
+                compress = make_compress_archive("xz")
+            elif ext == "zip":
                 compress = make_compress_zipped()
             else:
                 raise ValueError("Invalid compression format: '%s'" % ext)
@@ -265,7 +303,9 @@ class FileSink:
         elif callable(compression):
             return compression
         else:
-            raise ValueError("Cannot infer compression for objects of type: '%s'" % type(compression).__name__)
+            raise ValueError(
+                "Cannot infer compression for objects of type: '%s'" % type(compression).__name__
+            )
 
     def stop(self):
         self.terminate(teardown=self.rotation_function is None)

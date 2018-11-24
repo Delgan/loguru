@@ -32,6 +32,7 @@ setup(
     extras_require={
         'dev': [
             'coveralls>=1.3.0',
+            'isort>=4.3.4',
             'pytest>=3.5.0',
             'pytest-cov>=2.5.1',
         ],
