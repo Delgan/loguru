@@ -2,42 +2,68 @@ import json
 import pytest
 import sys
 import multiprocessing
+from unittest.mock import MagicMock
 from loguru import logger
 import ansimarkup
 import io
+import os
 import colorama
 
-@pytest.mark.parametrize('level, function, should_output', [
-    (0,              lambda x: x.trace,    True),
-    ("TRACE",        lambda x: x.debug,    True),
-    ("INFO",         lambda x: x.info,     True),
-    (10,             lambda x: x.debug,    True),
-    ("WARNING",      lambda x: x.success,  False),
-    (50,             lambda x: x.error,    False),
-])
+
+class Stream:
+    def __init__(self, tty):
+        self.out = ""
+        self.tty = tty
+
+    def write(self, m):
+        self.out += m
+
+    def isatty(self):
+        return self.tty
+
+    def flush(self):
+        pass
+
+
+@pytest.mark.parametrize(
+    "level, function, should_output",
+    [
+        (0, lambda x: x.trace, True),
+        ("TRACE", lambda x: x.debug, True),
+        ("INFO", lambda x: x.info, True),
+        (10, lambda x: x.debug, True),
+        ("WARNING", lambda x: x.success, False),
+        (50, lambda x: x.error, False),
+    ],
+)
 def test_level(level, function, should_output, writer):
     message = "Test Level"
-    logger.start(writer, level=level, format='{message}')
+    logger.start(writer, level=level, format="{message}")
     function(logger)(message)
-    assert writer.read() == (message + '\n') * should_output
+    assert writer.read() == (message + "\n") * should_output
 
-@pytest.mark.parametrize('message, format, expected', [
-    ('a', 'Message: {message}', 'Message: a\n'),
-    ('b', 'Nope', 'Nope\n'),
-    ('c', '{level} {message} {level}', 'DEBUG c DEBUG\n'),
-    ('d', '{message} {level} {level.no} {level.name}', 'd DEBUG 10 DEBUG\n'),
-    ('e', lambda _: '{message}', 'e'),
-    ('f', lambda r: '{message} ' + r['level'].name, 'f DEBUG'),
-])
+
+@pytest.mark.parametrize(
+    "message, format, expected",
+    [
+        ("a", "Message: {message}", "Message: a\n"),
+        ("b", "Nope", "Nope\n"),
+        ("c", "{level} {message} {level}", "DEBUG c DEBUG\n"),
+        ("d", "{message} {level} {level.no} {level.name}", "d DEBUG 10 DEBUG\n"),
+        ("e", lambda _: "{message}", "e"),
+        ("f", lambda r: "{message} " + r["level"].name, "f DEBUG"),
+    ],
+)
 def test_format(message, format, expected, writer):
     logger.start(writer, format=format)
     logger.debug(message)
     assert writer.read() == expected
 
+
 def test_progressive_format(writer):
     def formatter(record):
         fmt = "[{level.name}] {message}"
-        if "noend" not in record['extra']:
+        if "noend" not in record["extra"]:
             fmt += "\n"
         return fmt
 
@@ -47,19 +73,20 @@ def test_progressive_format(writer):
         logger.opt(raw=True).debug(".")
     logger.opt(raw=True).debug("\n")
     logger.debug("End")
-    assert writer.read() == ("[DEBUG] Start: .....\n"
-                             "[DEBUG] End\n")
+    assert writer.read() == ("[DEBUG] Start: .....\n" "[DEBUG] End\n")
+
 
 def test_function_format_without_exception(writer):
-    logger.start(writer, format=lambda _: '{message}\n')
+    logger.start(writer, format=lambda _: "{message}\n")
     try:
         1 / 0
     except ZeroDivisionError:
         logger.exception("Error!")
     assert writer.read() == "Error!\n"
 
+
 def test_function_format_with_exception(writer):
-    logger.start(writer, format=lambda _: '{message}\n{exception}')
+    logger.start(writer, format=lambda _: "{message}\n{exception}")
     try:
         1 / 0
     except ZeroDivisionError:
@@ -68,89 +95,135 @@ def test_function_format_with_exception(writer):
     assert lines[0] == "Error!"
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
-@pytest.mark.parametrize('filter, should_output', [
-    (None, True),
-    ('', True),
-    ('tests', True),
-    ('test', False),
-    ('testss', False),
-    ('tests.', False),
-    ('tests.test_start_options', True),
-    ('tests.test_start_options.', False),
-    ('test_start_options', False),
-    ('.', False),
-    (lambda r: True, True),
-    (lambda r: False, False),
-    (lambda r: r['level'] == "DEBUG", True),
-    (lambda r: r['level'].no != 10, False),
-])
+
+@pytest.mark.parametrize(
+    "filter, should_output",
+    [
+        (None, True),
+        ("", True),
+        ("tests", True),
+        ("test", False),
+        ("testss", False),
+        ("tests.", False),
+        ("tests.test_start_options", True),
+        ("tests.test_start_options.", False),
+        ("test_start_options", False),
+        (".", False),
+        (lambda r: True, True),
+        (lambda r: False, False),
+        (lambda r: r["level"] == "DEBUG", True),
+        (lambda r: r["level"].no != 10, False),
+    ],
+)
 def test_filter(filter, should_output, writer):
     message = "Test Filter"
-    logger.start(writer, filter=filter, format='{message}')
+    logger.start(writer, filter=filter, format="{message}")
     logger.debug(message)
-    assert writer.read() == (message + '\n') * should_output
+    assert writer.read() == (message + "\n") * should_output
 
-@pytest.mark.parametrize('message, format, expected, colorize', [
-    ('a', '<red>{message}</red>', 'a\n', False),
-    ('b', '<red>{message}</red>', ansimarkup.parse("<red>b</red>\n"), True),
-    ('c', lambda _: '<red>{message}</red>', 'c', False),
-    ('d', lambda _: '<red>{message}</red>', ansimarkup.parse('<red>d</red>'), True),
-    ('<red>nope</red>', '{message}', '<red>nope</red>\n', True),
-])
+
+@pytest.mark.parametrize(
+    "message, format, expected, colorize",
+    [
+        ("a", "<red>{message}</red>", "a\n", False),
+        ("b", "<red>{message}</red>", ansimarkup.parse("<red>b</red>\n"), True),
+        ("c", lambda _: "<red>{message}</red>", "c", False),
+        ("d", lambda _: "<red>{message}</red>", ansimarkup.parse("<red>d</red>"), True),
+        ("<red>nope</red>", "{message}", "<red>nope</red>\n", True),
+    ],
+)
 def test_colorize(message, format, expected, colorize, writer):
     logger.start(writer, format=format, colorize=colorize)
     logger.debug(message)
     assert writer.read() == expected
 
+
 @pytest.mark.parametrize("colorize", [True, False, None])
-@pytest.mark.parametrize("should_wrap", [True, False])
-def test_colorize_stream(monkeypatch, capsys, colorize, should_wrap):
-    monkeypatch.setattr(colorama.AnsiToWin32, "should_wrap", lambda _: should_wrap)
-    logger.start(sys.stdout, format="<red>{message}</red>", colorize=colorize)
+@pytest.mark.parametrize("tty", [True, False])
+def test_colorize_stream_linux(monkeypatch, colorize, tty):
+    mock = MagicMock()
+    monkeypatch.setattr(colorama.AnsiToWin32, "should_wrap", lambda _: False)
+    monkeypatch.setattr(colorama.AnsiToWin32, "write", mock)
+    stream = Stream(tty)
+    logger.start(stream, format="<red>{message}</red>", colorize=colorize)
     logger.debug("Message")
-    out, err = capsys.readouterr()
-    if colorize or (colorize is None and should_wrap is True):
+    out = stream.out
+
+    assert not mock.called
+
+    if colorize or (colorize is None and tty):
         assert out == ansimarkup.parse("<red>Message</red>\n")
     else:
         assert out == "Message\n"
 
-def test_auto_colorize_bugged_stream(monkeypatch, capsys):
+
+@pytest.mark.parametrize("colorize", [True, False, None])
+@pytest.mark.parametrize("tty", [True, False])
+def test_auto_colorize_stream_windows(monkeypatch, colorize, tty):
+    mock = MagicMock()
+    monkeypatch.setattr(colorama.AnsiToWin32, "should_wrap", lambda _: True)
+    monkeypatch.setattr(colorama.AnsiToWin32, "write", mock)
+    stream = Stream(tty)
+    logger.start(stream, format="<blue>{message}</blue>", colorize=colorize)
+    logger.debug("Message")
+
+    if colorize or (colorize is None and tty):
+        assert mock.called
+    else:
+        assert not mock.called
+
+
+@pytest.mark.parametrize("colorize", [True, False, None])
+@pytest.mark.parametrize("tty", [True, False])
+def test_auto_colorize_bugged_stream(monkeypatch, colorize, tty):
     def bugged(*a, **k):
         raise RuntimeError
+
+    mock = MagicMock()
     monkeypatch.setattr(colorama.AnsiToWin32, "__init__", bugged)
-    logger.start(sys.stdout, format="<red>{message}</red>", colorize=None)
+    stream = Stream(tty)
+    logger.start(stream, format="<green>{message}</green>", colorize=colorize)
+    monkeypatch.setattr(colorama.AnsiToWin32, "write", mock)
     logger.debug("No error")
-    out, err = capsys.readouterr()
-    assert out == "No error\n"
+    out = stream.out
+
+    assert not mock.called
+
+    if colorize:
+        assert out == ansimarkup.parse("<green>No error</green>\n")
+    else:
+        assert out == "No error\n"
+
 
 def test_backtrace(writer):
-    logger.start(writer, format='{message}', backtrace=True)
+    logger.start(writer, format="{message}", backtrace=True)
     try:
         1 / 0
     except:
-        logger.exception('')
+        logger.exception("")
     result_with = writer.read().strip()
 
     logger.stop()
     writer.clear()
 
-    logger.start(writer, format='{message}', backtrace=False)
+    logger.start(writer, format="{message}", backtrace=False)
     try:
         1 / 0
     except:
-        logger.exception('')
+        logger.exception("")
     result_without = writer.read().strip()
 
     assert len(result_with) > len(result_without)
 
-@pytest.mark.parametrize('with_exception', [False, True])
+
+@pytest.mark.parametrize("with_exception", [False, True])
 def test_serialize(with_exception):
     record_dict = record_json = None
 
     def sink(message):
         nonlocal record_dict, record_json
         record_dict = message.record
-        record_json = json.loads(message)['record']
+        record_json = json.loads(message)["record"]
 
     logger.configure(extra=dict(not_serializable=object()))
     logger.start(sink, format="{message}", catch=False, serialize=True)
@@ -164,14 +237,18 @@ def test_serialize(with_exception):
 
     assert set(record_dict.keys()) == set(record_json.keys())
 
-@pytest.mark.parametrize('with_exception', [False, True])
+
+@pytest.mark.parametrize("with_exception", [False, True])
 def test_enqueue(with_exception):
     import time
+
     x = []
+
     def sink(message):
         time.sleep(0.1)
         x.append(message)
-    logger.start(sink, format='{message}', enqueue=True)
+
+    logger.start(sink, format="{message}", enqueue=True)
     if not with_exception:
         logger.debug("Test")
     else:
@@ -185,58 +262,73 @@ def test_enqueue(with_exception):
     assert lines[0] == "Test"
     if with_exception:
         assert lines[-1] == "ZeroDivisionError: division by zero"
-        assert sum(line.startswith('> ') for line in lines) == 1
+        assert sum(line.startswith("> ") for line in lines) == 1
+
 
 def test_catch():
     def sink(msg):
         raise 1 / 0
+
     logger.start(sink, catch=False)
     with pytest.raises(ZeroDivisionError):
         logger.debug("fail")
 
+
 def test_function_with_kwargs():
     out = []
+
     def function(message, kw2, kw1):
-        out.append(message + kw1 + 'a' + kw2)
-    logger.start(function, format='{message}', kw1="1", kw2="2")
+        out.append(message + kw1 + "a" + kw2)
+
+    logger.start(function, format="{message}", kw1="1", kw2="2")
     logger.debug("msg")
     assert out == ["msg\n1a2"]
 
+
 def test_class_with_kwargs():
     out = []
+
     class Writer:
         def __init__(self, kw2, kw1):
-            self.end = kw1 + 'b' + kw2
+            self.end = kw1 + "b" + kw2
+
         def write(self, m):
             out.append(m + self.end)
-    logger.start(Writer, format='{message}', kw1="1", kw2="2")
+
+    logger.start(Writer, format="{message}", kw1="1", kw2="2")
     logger.debug("msg")
     assert out == ["msg\n1b2"]
+
 
 def test_file_object_with_kwargs():
     class Writer:
         def __init__(self):
-            self.out = ''
+            self.out = ""
+
         def write(self, m, kw2, kw1):
-            self.out += m + kw1 + 'c' + kw2
+            self.out += m + kw1 + "c" + kw2
+
     writer = Writer()
-    logger.start(writer, format='{message}', kw1="1", kw2="2")
+    logger.start(writer, format="{message}", kw1="1", kw2="2")
     logger.debug("msg")
     assert writer.out == "msg\n1c2"
+
 
 def test_file_mode_a(tmpdir):
     file = tmpdir.join("test.log")
     file.write("base\n")
-    logger.start(file.realpath(), format="{message}", mode='a')
+    logger.start(file.realpath(), format="{message}", mode="a")
     logger.debug("msg")
     assert file.read() == "base\nmsg\n"
+
 
 def test_file_mode_w(tmpdir):
     file = tmpdir.join("test.log")
     file.write("base\n")
-    logger.start(file.realpath(), format="{message}", mode='w')
+    logger.start(file.realpath(), format="{message}", mode="w")
     logger.debug("msg")
     assert file.read() == "msg\n"
+
 
 def test_file_buffering(tmpdir):
     file = tmpdir.join("test.log")
@@ -246,6 +338,7 @@ def test_file_buffering(tmpdir):
     logger.debug("x" * (io.DEFAULT_BUFFER_SIZE * 2))
     assert file.read() != ""
 
+
 def test_file_not_delayed(tmpdir):
     file = tmpdir.join("test.log")
     logger.start(file.realpath(), format="{message}", delay=False)
@@ -254,6 +347,7 @@ def test_file_not_delayed(tmpdir):
     logger.debug("Not delayed")
     assert file.read() == "Not delayed\n"
 
+
 def test_file_delayed(tmpdir):
     file = tmpdir.join("test.log")
     logger.start(file.realpath(), format="{message}", delay=True)
@@ -261,43 +355,54 @@ def test_file_delayed(tmpdir):
     logger.debug("Delayed")
     assert file.read() == "Delayed\n"
 
+
 def test_invalid_function_kwargs():
     def function(message, a="Y"):
         pass
+
     logger.start(function, b="X", catch=False)
     with pytest.raises(TypeError):
         logger.debug("Nope")
 
+
 def test_invalid_class_kwargs():
     class Writer:
         pass
+
     with pytest.raises(TypeError):
         logger.start(Writer, keyword=123)
+
 
 def test_invalid_file_object_kwargs():
     class Writer:
         def __init__(self):
-            self.out = ''
+            self.out = ""
+
         def write(self, m):
             pass
+
     writer = Writer()
-    logger.start(writer, format='{message}', kw1="1", kw2="2", catch=False)
+    logger.start(writer, format="{message}", kw1="1", kw2="2", catch=False)
     with pytest.raises(TypeError):
         logger.debug("msg")
+
 
 def test_invalid_file_kwargs():
     with pytest.raises(TypeError):
         logger.start("file.log", nope=123)
+
 
 @pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
 def test_invalid_level(writer, level):
     with pytest.raises(ValueError):
         logger.start(writer, level=level)
 
+
 @pytest.mark.parametrize("format", [-1, 3.4, object()])
 def test_invalid_format(writer, format):
     with pytest.raises(ValueError):
         logger.start(writer, format=format)
+
 
 @pytest.mark.parametrize("filter", [-1, 3.4, object()])
 def test_invalid_filter(writer, filter):

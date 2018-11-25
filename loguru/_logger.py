@@ -121,18 +121,23 @@ class Logger:
                 catch=catch,
             )
         elif hasattr(sink, "write") and callable(sink.write):
-            try:
-                converter = AnsiToWin32(sink, convert=None, strip=False)
-            except Exception:
-                if colorize is None:
-                    colorize = False
+            if colorize is False:
                 stream = sink
             else:
-                if colorize is False or not converter.should_wrap():
+                try:
+                    converter = AnsiToWin32(sink, convert=None, strip=False)
+                    isatty = converter.stream.isatty()
+                except Exception:
+                    if colorize is None:
+                        colorize = False
                     stream = sink
                 else:
-                    colorize = True
-                    stream = converter.stream
+                    if colorize is None:
+                        colorize = isatty
+                    if converter.should_wrap() and colorize:
+                        stream = converter.stream
+                    else:
+                        stream = sink
 
             stream_write = stream.write
             if kwargs:
@@ -175,6 +180,7 @@ class Logger:
                     (exc.type, exc.value, exc.traceback) if exc else None,
                     r["function"],
                     r["extra"],
+                    **kwargs
                 )
                 sink.handle(record)
 
