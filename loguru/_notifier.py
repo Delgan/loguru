@@ -31,5 +31,6 @@ class Notificator:
         self.provider = provider
         self.parameters = parameters
 
-    def send(self, message):
-        return self.provider.notify(message=message, **self.parameters)
+    def send(self, message, **kwargs):
+        params = {**self.parameters, **kwargs}
+        return self.provider.notify(message=message, **params)
