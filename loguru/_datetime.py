@@ -9,15 +9,6 @@ tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S{1,6}|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|
 pattern = re.compile(r"(?:{0})|\[(?:{0})\]".format(tokens))
 
 
-def now():
-    t = time()
-    local = localtime(t)
-    microsecond = int(abs(t) * 1e6 % 1e6)
-    tzinfo = timezone(timedelta(seconds=local.tm_gmtoff), local.tm_zone)
-    year, month, day, hour, minute, second, _, _, _ = local
-    return datetime(year, month, day, hour, minute, second, microsecond, tzinfo)
-
-
 class datetime(datetime_):
     def __format__(self, spec):
         if not spec:
@@ -79,3 +70,10 @@ class datetime(datetime_):
                 return m[0][1:-1]
 
         return pattern.sub(get, spec)
+
+
+def now():
+    now = datetime.now()
+    local = localtime(now.timestamp())
+    tzinfo = timezone(timedelta(seconds=local.tm_gmtoff), local.tm_zone)
+    return now.replace(tzinfo=tzinfo)

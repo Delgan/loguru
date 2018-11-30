@@ -536,11 +536,13 @@ class Logger:
             file_recattr = FileRecattr(file_name)
             file_recattr.name, file_recattr.path = file_name, file_path
 
-            thread_recattr = ThreadRecattr(thread.ident)
-            thread_recattr.id, thread_recattr.name = thread.ident, thread.name
+            thread_ident = thread.ident
+            thread_recattr = ThreadRecattr(thread_ident)
+            thread_recattr.id, thread_recattr.name = thread_ident, thread.name
 
-            process_recattr = ProcessRecattr(process.ident)
-            process_recattr.id, process_recattr.name = process.ident, process.name
+            process_ident = process.ident
+            process_recattr = ProcessRecattr(process_ident)
+            process_recattr.id, process_recattr.name = process_ident, process.name
 
             if _self._exception:
                 exception = ExceptionRecattr(_self._exception, decorated)
