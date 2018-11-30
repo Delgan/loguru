@@ -524,8 +524,7 @@ class Logger:
             file_name = basename(file_path)
             thread = current_thread()
             process = current_process()
-            diff = current_datetime - start_time
-            elapsed = timedelta(microseconds=diff.microseconds)
+            elapsed = current_datetime - start_time
 
             level_recattr = LevelRecattr(level_name)
             level_recattr.no, level_recattr.name, level_recattr.icon = (
