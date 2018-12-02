@@ -248,6 +248,11 @@ class Logger:
                 % type(format).__name__
             )
 
+        try:
+            encoding = sink.encoding
+        except AttributeError:
+            encoding = "ascii"
+
         with self._lock:
             colors = [lvl.color for lvl in self._levels.values()] + [""]
 
@@ -263,6 +268,7 @@ class Logger:
                 backtrace=backtrace,
                 catch=catch,
                 enqueue=enqueue,
+                encoding=encoding,
                 colors=colors,
             )
 

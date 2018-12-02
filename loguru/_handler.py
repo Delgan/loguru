@@ -28,6 +28,7 @@ class Handler:
         backtrace,
         catch,
         enqueue,
+        encoding,
         colors=[]
     ):
         self.writer = writer
@@ -41,6 +42,7 @@ class Handler:
         self.backtrace = backtrace
         self.catch = catch
         self.enqueue = enqueue
+        self.encoding = encoding
 
         self.static_format = None
         self.decolorized_format = None
@@ -197,7 +199,9 @@ class Handler:
 
             error = ""
             if record["exception"]:
-                error = record["exception"].format_exception(self.backtrace, self.colorize)
+                error = record["exception"].format_exception(
+                    self.backtrace, self.colorize, self.encoding
+                )
             formatter_record = {**record, **{"exception": error}}
 
             if raw:

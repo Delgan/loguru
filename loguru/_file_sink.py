@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import glob
+import locale
 import numbers
 import os
 import shutil
@@ -31,10 +32,12 @@ class FileSink:
         delay=False,
         mode="a",
         buffering=1,
+        encoding=None,
         **kwargs
     ):
         self.mode = mode
         self.buffering = buffering
+        self.encoding = encoding or locale.getpreferredencoding(False)
         self.kwargs = kwargs.copy()
         self.path = str(path)
 
@@ -84,8 +87,14 @@ class FileSink:
             renamed_path = "{}.{}{}".format(root, FileDateFormatter(), ext)
             os.rename(new_path, renamed_path)
 
-        self.file = open(new_path, mode=self.mode, buffering=self.buffering, **self.kwargs)
         self.file_path = new_path
+        self.file = open(
+            new_path,
+            mode=self.mode,
+            buffering=self.buffering,
+            encoding=self.encoding,
+            **self.kwargs
+        )
 
     def format_path(self):
         path = self.path.format_map({"time": FileDateFormatter()})

@@ -54,8 +54,6 @@ class ProcessRecattr(str):
 
 class ExceptionRecattr:
 
-    exception_formatter_colored = ExceptionFormatter(colored=True)
-    exception_formatter_not_colored = ExceptionFormatter(colored=False)
     _catch_point_identifier = " <Loguru catch point here>"
 
     def __init__(self, exception, decorated):
@@ -143,17 +141,17 @@ class ExceptionRecattr:
 
         return re.sub(regex, replace, error, re.MULTILINE)
 
-    def format_exception(self, backtrace, colored):
+    def format_exception(self, backtrace, colored, encoding):
         type_, value, ex_traceback = self.type, self.value, self._extended_traceback
 
         if not backtrace:
             error = traceback.format_exception(type_, value, ex_traceback)
         elif colored:
-            error = self.exception_formatter_colored.format_exception(type_, value, ex_traceback)
+            formatter = ExceptionFormatter(colored=True, encoding=encoding)
+            error = formatter.format_exception(type_, value, ex_traceback)
         else:
-            error = self.exception_formatter_not_colored.format_exception(
-                type_, value, ex_traceback
-            )
+            formatter = ExceptionFormatter(colored=False, encoding=encoding)
+            error = formatter.format_exception(type_, value, ex_traceback)
 
         error = "".join(error)
 
