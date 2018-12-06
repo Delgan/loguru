@@ -3,7 +3,6 @@ from sys import exc_info
 
 
 def get_frame_fallback(n):
-    """Return the frame object for the caller's stack frame."""
     try:
         raise Exception
     except Exception:

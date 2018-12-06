@@ -1,3 +1,8 @@
+"""
+The Loguru library provides pre-instanced objects to facilitate dealing with logging in Python.
+
+Pick one: ``from loguru import logger, notifier, parser``
+"""
 import atexit as _atexit
 import sys as _sys
 

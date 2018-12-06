@@ -31,7 +31,9 @@ LOGURU_AUTOINIT = env("LOGURU_AUTOINIT", bool, True)
 LOGURU_FORMAT = env(
     "LOGURU_FORMAT",
     str,
-    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
 )
 LOGURU_FILTER = env("LOGURU_FILTER", str, None)
 LOGURU_LEVEL = env("LOGURU_LEVEL", str, "DEBUG")

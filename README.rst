@@ -1,31 +1,438 @@
-=======
-loguru
-=======
+.. raw:: html
 
-.. image:: https://img.shields.io/pypi/v/loguru.svg
-    :target: https://pypi.python.org/pypi/loguru
-    :alt: Pypi version
+    <p align="center">
+        <a href="#readme">
+            <img height=150 alt="Loguru logo" src="https://raw.githubusercontent.com/Delgan/loguru/master/docs/_static/img/logo.png">
+            <!-- Logo credits: Sambeet from Pixaday -->
+            <!-- Logo fonts: Comfortaa + Raleway -->
+        </a>
+    </p>
+    <p align="center">
+        <a href="https://pypi.python.org/pypi/loguru"><img alt="Pypi version" src="https://img.shields.io/pypi/v/loguru.svg"></a>
+        <a href="https://travis-ci.org/Delgan/loguru"><img alt="Build status" src="https://img.shields.io/travis/Delgan/loguru.svg"></a>
+        <a href="https://loguru.readthedocs.io/en/stable/index.html"><img alt="Documentation" src="https://img.shields.io/readthedocs/loguru.svg"></a>
+        <a href="https://coveralls.io/github/Delgan/loguru"><img alt="Coverage" src="https://img.shields.io/coveralls/Delgan/loguru.svg"></a>
+        <a href="https://www.codacy.com/app/delgan-py/loguru/dashboard"><img alt="Code quality" src="https://img.shields.io/codacy/grade/4d97edb1bb734a0d9a684a700a84f555.svg"></a>
+        <a href="https://github.com/Delgan/loguru/blob/master/.travis.yml"><img alt="Python versions" src="https://img.shields.io/badge/python-3.6%20%7C%203.7-blue.svg"></a>
+        <a href="https://github.com/Delgan/loguru/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/delgan/loguru.svg"></a>
+    </p>
+    <p align="center">
+        <a href="#readme">
+            <img height=300 alt="Loguru logo" src="https://raw.githubusercontent.com/Delgan/loguru/master/docs/_static/img/demo.gif">
+        </a>
+    </p>
 
-.. image:: https://img.shields.io/travis/Delgan/loguru.svg
-    :target: https://travis-ci.org/Delgan/loguru
-    :alt: Build status
+=========
 
-.. image:: https://img.shields.io/readthedocs/loguru.svg
-    :target: http://loguru.readthedocs.io/en/latest/?badge=latest
-    :alt: Docs
+**Loguru** is a library which aims to bring enjoyable logging in Python.
 
-.. image:: https://img.shields.io/coveralls/Delgan/loguru.svg
-    :target: https://coveralls.io/github/Delgan/loguru
-    :alt: Coverage
+Did you ever feel lazy about configuring a logger and used ``print()`` instead?... I did, yet logging is fundamental to every application and eases the process of debugging. Using **Loguru** you have no excuse not to use logging from the start, this is as simple as ``from loguru import logger``.
 
-.. image:: https://img.shields.io/codacy/grade/4d97edb1bb734a0d9a684a700a84f555.svg
-    :target: https://www.codacy.com/app/delgan-py/loguru/dashboard
-    :alt: Code quality
+Also, this library is intended to make Python logging less painful by adding a bunch of useful functionalities that solve caveats of the standard loggers. Using logs in your application should be an automatism, **Loguru** tries to make it both pleasant and powerful.
 
-.. image:: http://img.shields.io/badge/python-3.6-blue.svg
-    :target: https://github.com/Delgan/loguru/blob/master/.travis.yml
-    :alt: Python versions
 
-.. image:: https://img.shields.io/github/license/delgan/loguru.svg
-    :target: https://github.com/Delgan/loguru/blob/master/LICENSE
-    :alt: License
+.. end-of-readme-intro
+
+Installation
+------------
+
+::
+
+    pip install loguru
+
+
+Features
+--------
+
+* `Ready to use out of the box without boilerplate`_
+* `No Handler, no Formatter, no Filter: one function to rule them all`_
+* `Easier file logging with rotation / retention / compression`_
+* `Modern string formatting using braces style`_
+* `Exceptions catching within threads or main`_
+* `Pretty logging with colors`_
+* `Asynchronous, Thread-safe, Multiprocess-safe`_
+* `Fully descriptive exceptions`_
+* `Structured logging as needed`_
+* `Lazy evaluation of expensive functions`_
+* `Customizable levels`_
+* `Better datetime handling`_
+* `Suitable for scripts and libraries`_
+* `Entirely compatible with standard logging`_
+* `Personalizable defaults through environment variables`_
+* `Convenient parser`_
+* `Exhaustive notifier`_
+* |strike| `10x faster than built-in logging`_ |/strike|
+
+Take the tour
+-------------
+
+.. highlight:: python3
+
+.. |logger| replace:: ``logger``
+.. _logger: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger
+
+.. |parser| replace:: ``parser``
+.. _parser: https://loguru.readthedocs.io/en/stable/api/parser.html#loguru._parser.Parser
+
+.. |notifier| replace:: ``notifier``
+.. _notifier: https://loguru.readthedocs.io/en/stable/api/notifier.html#loguru._notifier.Notifier
+
+.. |start| replace:: ``start()``
+.. _start: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.start
+
+.. |catch| replace:: ``catch()``
+.. _catch: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.catch
+
+.. |bind| replace:: ``bind()``
+.. _bind: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.bind
+
+.. |opt| replace:: ``opt()``
+.. _opt: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.opt
+
+.. |trace| replace:: ``trace()``
+.. _trace: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.trace
+
+.. |success| replace:: ``success()``
+.. _success: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.success
+
+.. |level| replace:: ``level()``
+.. _level: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.level
+
+.. |configure| replace:: ``configure()``
+.. _configure: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.configure
+
+.. |disable| replace:: ``disable()``
+.. _disable: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.disable
+
+.. |enable| replace:: ``enable()``
+.. _enable: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.enable
+
+.. _sinks: https://loguru.readthedocs.io/en/stable/api/logger.html#sink
+.. _record dict: https://loguru.readthedocs.io/en/stable/api/logger.html#record
+.. _log messages: https://loguru.readthedocs.io/en/stable/api/logger.html#message
+.. _easily configurable: https://loguru.readthedocs.io/en/stable/api/logger.html#file
+.. _markup tags: https://loguru.readthedocs.io/en/stable/api/logger.html#color
+.. _fixes it: https://loguru.readthedocs.io/en/stable/api/logger.html#time
+.. _No problem: https://loguru.readthedocs.io/en/stable/api/logger.html#env
+
+Ready to use out of the box without boilerplate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The main concept of `Loguru` is that **there is one and only one** |logger|_.
+
+For convenience, it is pre-configured and outputs to ``stderr`` to begin with (but that's entirely configurable).
+
+::
+
+    from loguru import logger
+
+    logger.debug("That's it, beautiful and simple logging!")
+
+The |logger|_ is just an interface which dispatches log messages to configured handlers. Simple, right?
+
+
+No Handler, no Formatter, no Filter: one function to rule them all
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+How to add an handler? How to setup logs formatting? How to filter messages? How to set level?
+
+One answer: the |start|_ function.
+
+::
+
+    logger.start(sys.stderr, format="{time} {level} {message}", filter="my_module", level="INFO")
+
+This function should be used to register sinks_ which are responsible of managing `log messages`_ contextualized with a `record dict`_. A sink can take many forms: a simple function, a string path, a file-like object, a built-in Handler or a custom class.
+
+
+Easier file logging with rotation / retention / compression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to send logged messages to a file, you just have to use a string path as the sink. It can be automatically timed too for convenience::
+
+    logger.start("file_{time}.log")
+
+It is also `easily configurable`_ if you need rotating logger, if you want to remove older logs, or if you wish to compress your files at closure.
+
+::
+
+    logger.start("file_1.log", rotation="500 MB")    # Automatically rotate too big file
+    logger.start("file_2.log", rotation="12:00")     # New file is created each day at noon
+    logger.start("file_3.log", rotation="1 week")    # Once the file is too old, it's rotated
+
+    logger.start("file_X.log", retention="10 days")  # Cleanup after some time
+
+    logger.start("file_Y.log", compression="zip")    # Save some loved space
+
+
+Modern string formatting using braces style
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`Loguru` favors the much more elegant and powerful ``{}`` formatting over ``%``, logging functions are actually equivalent to ``str.format()``.
+
+::
+
+    logger.info("If you're using Python {}, prefer {feature} of course!", 3.6, feature="f-strings")
+
+
+Exceptions catching within threads or main
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Have you ever seen your program crashing unexpectedly without seeing anything in the logfile? Did you ever noticed that exceptions occuring in threads were not logged? This can be solved using the |catch|_ decorator / context manager which ensures that any error is correctly propagated to the |logger|_.
+
+::
+
+    @logger.catch
+    def my_function(x, y, z):
+        # An error? It's catched anyway!
+        return 1 / (x + y + z)
+
+
+Pretty logging with colors
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`Loguru` automatically adds colors to your logs if your terminal is compatible. You can define your favorite style by using `markup tags`_ in the sink format.
+
+::
+
+    logger.start(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>")
+
+
+Asynchronous, Thread-safe, Multiprocess-safe
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+All sinks added to the |logger|_ are thread-safe by default. If you want async logging or need to use the same sink through different multiprocesses, you just have to ``enqueue`` the messages.
+
+::
+
+    logger.start("somefile.log", enqueue=True)
+
+
+Fully descriptive exceptions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Logging exceptions that occur in your code is important to track bugs, but it's quite useless if you don't know why it failed. `Loguru` help you identify problems by allowing the entire stack trace to be displayed, including variables values.
+
+The code::
+
+    logger.start("output.log", backtrace=True)  # Set 'False' to avoid leaking sensible data in prod
+
+    def func(a, b):
+        return a / b
+
+    def nested(c):
+        try:
+            func(5, c)
+        except ZeroDivisionError:
+            logger.exception("What?!")
+
+    nested(0)
+
+Would result in:
+
+.. code-block:: none
+
+    2018-07-17 01:38:43.975 | ERROR    | __main__:nested:10 - What?!
+    Traceback (most recent call last, catch point marked):
+
+      File "test.py", line 12, in <module>
+        nested(0)
+        └ <function nested at 0x7f5c755322f0>
+
+    > File "test.py", line 8, in nested
+        func(5, c)
+        │       └ 0
+        └ <function func at 0x7f5c79fc2e18>
+
+      File "test.py", line 4, in func
+        return a / b
+               │   └ 0
+               └ 5
+
+    ZeroDivisionError: division by zero
+
+
+Structured logging as needed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Want your logs to be serialized for easier parsing or to pass them around? Using the ``serialize`` argument, each log message will be converted to a JSON string before being sent to the configured sink.
+
+::
+
+    logger.start(custom_sink_function, serialize=True)
+
+Using |bind|_ you can contextualize your logger messages by modifying the `extra` record attribute.
+
+::
+
+    logger.start("file.log", format="{extra[ip]} {extra[user]} {message}")
+    logger_ctx = logger.bind(ip="192.168.0.1", user="someone")
+    logger_ctx.info("Contextualize your logger easily")
+    logger_ctx.bind(user="someoneelse").info("Inline binding of extra attribute")
+
+
+Lazy evaluation of expensive functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Sometime you would like to log verbose information without performance penalty in production, you can use the |opt|_ method to achieve this.
+
+::
+
+    logger.opt(lazy=True).debug("If sink level <= DEBUG: {x}", x=lambda: expensive_function(2**64))
+
+    # By the way, "opt()" serves many usages
+    logger.opt(exception=True).info("Exception with an "INFO" level")
+    logger.opt(ansi=True).info("Per message <blue>colors</blue>")
+    logger.opt(record=True).info("Log record attributes (eg. {record[thread].id})")
+    logger.opt(raw=True).info("Bypass sink formatting\n")
+    logger.opt(depth=1).info("Use parent stack context (useful within wrapped functions)")
+
+Customizable levels
+^^^^^^^^^^^^^^^^^^^
+
+`Loguru` comes with all standard logging levels to which |trace|_ and |success|_ are added. Do you need more? Then, just create it by using the |level|_ function.
+
+::
+
+    new_level = logger.level("SNAKY", no=8, color="<yellow>", icon="🐍")
+
+    logger.log("SNAKY", "Here we go!")
+
+
+Better datetime handling
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The standard logging is bloated with arguments like ``datefmt`` or ``msecs``, ``%(asctime)s`` and ``%(created)s``, naive datetimes without timezone information, not intuitive formatting, etc. `Loguru` `fixes it`_:
+
+::
+
+    logger.start("file.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}")
+
+
+Suitable for scripts and libraries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Using the logger in your scripts is easy, and you can |configure|_ it at start. To use `Loguru` from inside a libary, remember to never call |start|_ but use |disable|_ instead so logging functions become no-op. If an user want to see your library's logs, he can |enable|_ it again.
+
+::
+
+    # For scripts
+    my_logging_config = dict(
+        handlers=[{'sink': sys.stdout, 'colorize': False, format="{time} - {message}"}],
+        extra={"user": "someone"}
+    )
+    logger.configure(**my_logging_config)
+
+    # For libraries
+    logger.disable("my_library")
+    logger.info("No matter started sinks, this message is not displayed")
+    logger.enable("my_library")
+    logger.info("This message however is propagated to the sinks")
+
+
+Entirely compatible with standard logging
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Wish to use built-in logging ``Handler`` as a `Loguru` sink?
+
+::
+
+    handler = logging.handlers.SysLogHandler(address=('localhost', 514))
+    logger.start(handler)
+
+Need to propagate `Loguru` messages to standard `logging`?
+
+::
+
+    class PropagateHandler(logging.Handler):
+        def emit(self, record):
+            logging.getLogger(record.name).handle(record)
+
+    logger.start(PropagateHandler())
+
+Want to intercept standard `logging` messages toward your `Loguru` sinks?
+
+::
+
+    class InterceptHandler(logging.Handler):
+        def emit(self, record):
+            logger_opt = logger.opt(depth=6, exception=record.exc_info)
+            logger_opt.log(record.levelno, record.getMessage())
+
+    logging.getLogger(None).addHandler(InterceptHandler())
+
+
+Personalizable defaults through environment variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Don't like the default logger formatting? Would prefer another ``DEBUG`` color? `No problem`_::
+
+    # Linux / OSX
+    export LOGURU_FORMAT="{time} | <lvl>{message}</lvl>"
+
+    # Windows
+    setx LOGURU_DEBUG_COLOR="<green>"
+
+
+Convenient parser
+^^^^^^^^^^^^^^^^^
+
+It is often useful to extract specific information from generated logs, this is why `Loguru` provides a |parser|_ which helps dealing with logs and regexes.
+
+::
+
+    from loguru import parser
+
+    pattern = r"(?P<time>.*) - (?P<level>[0-9]+) - (?P<message>.*)"
+
+    for groups in parser.parse("file.log", pattern):
+        groups = parser.cast(groups, time=time.strptime, level=int)
+        print("Parsed message at {} with severity {}".format(groups["time"], groups["level"]))
+
+
+Exhaustive notifier
+^^^^^^^^^^^^^^^^^^^
+
+Receive an e-mail when your program fail unexpectedly or send many other kind of notifications using `Loguru` |notifier|_.
+
+::
+
+    from loguru import notifier
+
+    gmail_notifier = notifier.gmail(to="dest@gmail.com", username="you@gmail.com", password="abc123")
+
+    # Send a notification
+    gmail_notifier.send("The application is running!")
+
+    # Be alerted on each error messages
+    logger.start(gmail_notifier.send, level="ERROR")
+
+
+|strike|
+
+10x faster than built-in logging
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+|/strike|
+
+Although logging impact on performances is in most cases negligeable, a zero-cost logger would allow to use it anywhere without much concern. In an upcoming release, Loguru's critical functions will be implemented in C for maximum speed.
+
+
+.. |strike| raw:: html
+
+   <strike>
+
+.. |/strike| raw:: html
+
+   </strike>
+
+.. end-of-readme-usage
+
+
+Project information
+-------------------
+
+* `API Reference <https://loguru.readthedocs.io/en/stable/api.html>`_
+* `Contributing <https://github.com/Delgan/loguru/blob/master/CONTRIBUTING.rst>`_
+* `License <https://github.com/Delgan/loguru/blob/master/LICENSE>`_
+* `Changelog <https://github.com/Delgan/loguru/blob/master/CHANGELOG.rst>`_

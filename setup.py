@@ -7,8 +7,8 @@ except ImportError:
     from distutils.core import setup, Extension
 
 with open("loguru/__init__.py", "r") as file:
-    regex = r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]'
-    version = re.search(regex, file.read(), re.MULTILINE).group(1)
+    regex_version = r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]'
+    version = re.search(regex_version, file.read(), re.MULTILINE).group(1)
 
 with open("README.rst", "rb") as file:
     readme = file.read().decode("utf-8")
@@ -37,6 +37,9 @@ setup(
             "isort>=4.3.4",
             "pytest>=3.5.0",
             "pytest-cov>=2.5.1",
+            "Sphinx>=1.7.4",
+            "sphinx-autobuild>=0.7",
+            "sphinx-rtd-theme>=0.3",
         ]
     },
 )

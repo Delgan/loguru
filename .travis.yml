@@ -8,10 +8,11 @@ python:
   - '3.7'
 
 install:
-  - pip install -v -e .[dev]
+  - pip install -e .[dev]
 
 script:
   - pytest --cov loguru/
 
 after_success:
   - coveralls
+  - cd docs && make html
