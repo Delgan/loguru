@@ -16,6 +16,7 @@ with open("README.rst", "rb") as file:
 setup(
     name="loguru",
     version=version,
+    packages=["loguru"],
     description="Python logging made (stupidly) simple",
     long_description=readme,
     author="Delgan",
@@ -24,6 +25,18 @@ setup(
     download_url="https://github.com/Delgan/loguru/archive/{}.tar.gz".format(version),
     keywords=["loguru", "logging", "logger", "log", "parser", "notifier"],
     license="MIT license",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Natural Language :: English",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: Implementation :: CPython",
+    ],
     install_requires=[
         "ansimarkup>=1.4.0",
         "better_exceptions_fork>=0.2.1.post6",
@@ -42,4 +55,5 @@ setup(
             "sphinx-rtd-theme>=0.3",
         ]
     },
+    python_requires=">=3.6",
 )
