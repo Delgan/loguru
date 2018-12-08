@@ -1,5 +1,5 @@
-Unreleased
-==========
+0.2.0 (2018-12-08)
+==================
 
 - Remove the ``parser`` and refactor it into the ``logger.parse()`` method
 - Remove the ``notifier`` and its dependencies, just ``pip install notifiers`` if user needs it
