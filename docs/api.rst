@@ -7,4 +7,3 @@ API Reference
    :includehidden:
 
    api/logger.rst
-   api/parser.rst

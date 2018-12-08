@@ -1,6 +1,7 @@
 Unreleased
 ==========
 
+- Remove the ``parser`` and refactor it into the ``logger.parse()`` method
 - Remove the ``notifier`` and its dependencies, just ``pip install notifiers`` if user needs it
 
 

@@ -71,9 +71,6 @@ Take the tour
 .. |logger| replace:: ``logger``
 .. _logger: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger
 
-.. |parser| replace:: ``parser``
-.. _parser: https://loguru.readthedocs.io/en/stable/api/parser.html#loguru._parser.Parser
-
 .. |start| replace:: ``start()``
 .. _start: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.start
 
@@ -103,6 +100,9 @@ Take the tour
 
 .. |enable| replace:: ``enable()``
 .. _enable: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.enable
+
+.. |parse| replace:: ``parse()``
+.. _parse: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.parse
 
 .. _sinks: https://loguru.readthedocs.io/en/stable/api/logger.html#sink
 .. _record dict: https://loguru.readthedocs.io/en/stable/api/logger.html#record
@@ -377,16 +377,14 @@ Don't like the default logger formatting? Would prefer another ``DEBUG`` color? 
 Convenient parser
 ^^^^^^^^^^^^^^^^^
 
-It is often useful to extract specific information from generated logs, this is why `Loguru` provides a |parser|_ which helps dealing with logs and regexes.
+It is often useful to extract specific information from generated logs, this is why `Loguru` provides a |parse|_ method which helps dealing with logs and regexes.
 
 ::
 
-    from loguru import parser
-
     pattern = r"(?P<time>.*) - (?P<level>[0-9]+) - (?P<message>.*)"
+    caster_dict = dict(time=time.strptime, level=int)
 
-    for groups in parser.parse("file.log", pattern):
-        groups = parser.cast(groups, time=time.strptime, level=int)
+    for groups in logger.parse("file.log", pattern, cast=caster_dict):
         print("Parsed message at {} with severity {}".format(groups["time"], groups["level"]))
 
 

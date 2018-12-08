@@ -1,6 +1,7 @@
 import functools
 import itertools
 import logging
+import re
 import threading
 from collections import namedtuple
 from inspect import isclass
@@ -59,6 +60,7 @@ class Logger:
     .. |dict| replace:: :class:`dict`
     .. |str.format| replace:: :meth:`str.format()`
     .. |Path| replace:: :class:`pathlib.Path`
+    .. |match.groupdict| replace:: :meth:`re.Match.groupdict()`
     .. |Handler| replace:: :class:`logging.Handler`
     .. |sys.stderr| replace:: :data:`sys.stderr`
     .. |sys.exc_info| replace:: :func:`sys.exc_info()`
@@ -76,6 +78,10 @@ class Logger:
     .. _class: https://docs.python.org/3/tutorial/classes.html
     .. |function| replace:: ``function``
     .. _function: https://docs.python.org/3/library/functions.html#callable
+    .. |re.Pattern| replace:: ``re.Pattern``
+    .. _re.Pattern: https://docs.python.org/3/library/re.html#re-objects
+    .. |re.Match| replace:: ``re.Match``
+    .. _re.Match: https://docs.python.org/3/library/re.html#match-objects
 
     .. _Pendulum: https://pendulum.eustace.io/docs/#tokens
     .. _ansimarkup: https://github.com/gvalkov/python-ansimarkup
@@ -1219,6 +1225,118 @@ class Logger:
                     self._enabled[n] = status
 
             self._activation_list[:] = activation_list
+
+    @staticmethod
+    def parse(file, pattern, *, cast={}, chunk=2 ** 16):
+        """
+        Parse raw logs and extract each entry as a |dict|.
+
+        The logging format has to be specified as the regex ``pattern``, it will then be
+        used to parse the ``file`` and retrieve each entries based on the named groups present
+        in the regex.
+
+        Parameters
+        ----------
+        file : |str|, |Path| or |file-like object|_
+            The path of the log file to be parsed, or alternatively an already opened file object.
+        pattern : |str| or |re.Pattern|_
+            The regex to use for logs parsing, it should contain named groups which will be included
+            in the returned dict.
+        cast : |function|_ or |dict|, optional
+            A function that should convert in-place the regex groups parsed (a dict of string
+            values) to more appropiate types. If a dict is passed, its should be a mapping between
+            keys of parsed log dict and the function that should be used to convert the associated
+            value.
+        chunk : |int|, optional
+            The number of bytes read while iterating through the logs, this avoid having to load the
+            whole file in memory.
+
+        Yields
+        ------
+        :class:`dict`
+            The dict mapping regex named groups to matched values, as returned by |match.groupdict|
+            and optionally converted according to ``cast`` argument.
+
+        Examples
+        --------
+        >>> reg = r"(?P<lvl>[0-9]+): (?P<msg>.*)"    # If log format is "{level.no} - {message}"
+        >>> for e in logger.parse("file.log", reg):  # A file line could be "10 - A debug message"
+        ...     print(e)                             # => {'lvl': '10', 'msg': 'A debug message'}
+        ...
+
+        >>> caster = dict(lvl=int)                   # Parse 'lvl' key as an integer
+        >>> for e in logger.parse("file.log", reg, cast=caster):
+        ...     print(e)                             # => {'lvl': 10, 'msg': 'A debug message'}
+
+        >>> def cast(groups):
+        ...     if "date" in groups:
+        ...         groups["date"] = datetime.strptime(groups["date"], "%Y-%m-%d %H:%M:%S")
+        ...
+        >>> with open("file.log") as file:
+        ...     for log in logger.parse(file, reg, cast=cast):
+        ...         print(log["date"], log["something_else"])
+        """
+        if isinstance(file, (str, PathLike)):
+            should_close = True
+            fileobj = open(str(file))
+        elif hasattr(file, "read") and callable(file.read):
+            should_close = False
+            fileobj = file
+        else:
+            raise ValueError(
+                "Invalid file, it should be a string path or a file object, not: '%s'"
+                % type(file).__name__
+            )
+
+        if isinstance(cast, dict):
+
+            def cast_function(groups):
+                for key, converter in cast.items():
+                    if key in groups:
+                        groups[key] = converter(groups[key])
+
+        elif callable(cast):
+            cast_function = cast
+        else:
+            raise ValueError(
+                "Invalid cast, it should be a function or a dict, not: '%s'" % type(cast).__name__
+            )
+
+        try:
+            regex = re.compile(pattern)
+        except TypeError:
+            raise ValueError(
+                "Invalid pattern, it should be a string or a compiled regex, not: '%s'"
+                % type(pattern).__name__
+            )
+
+        matches = Logger._find_iter(fileobj, regex, chunk)
+
+        for match in matches:
+            groups = match.groupdict()
+            cast_function(groups)
+            yield groups
+
+        if should_close:
+            fileobj.close()
+
+    @staticmethod
+    def _find_iter(fileobj, regex, chunk):
+        buffer = fileobj.read(0)
+
+        while 1:
+            text = fileobj.read(chunk)
+            buffer += text
+            matches = list(regex.finditer(buffer))
+
+            if not text:
+                yield from matches
+                break
+
+            if len(matches) > 1:
+                end = matches[-2].end()
+                buffer = buffer[end:]
+                yield from matches[:-1]
 
     @staticmethod
     @functools.lru_cache()
