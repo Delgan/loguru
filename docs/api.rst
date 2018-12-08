@@ -7,5 +7,4 @@ API Reference
    :includehidden:
 
    api/logger.rst
-   api/notifier.rst
    api/parser.rst

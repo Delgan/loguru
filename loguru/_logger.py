@@ -3,7 +3,6 @@ import itertools
 import logging
 import threading
 from collections import namedtuple
-from datetime import timedelta
 from inspect import isclass
 from multiprocessing import current_process
 from os import PathLike

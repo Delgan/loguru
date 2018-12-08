@@ -74,9 +74,6 @@ Take the tour
 .. |parser| replace:: ``parser``
 .. _parser: https://loguru.readthedocs.io/en/stable/api/parser.html#loguru._parser.Parser
 
-.. |notifier| replace:: ``notifier``
-.. _notifier: https://loguru.readthedocs.io/en/stable/api/notifier.html#loguru._notifier.Notifier
-
 .. |start| replace:: ``start()``
 .. _start: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.start
 
@@ -114,6 +111,9 @@ Take the tour
 .. _markup tags: https://loguru.readthedocs.io/en/stable/api/logger.html#color
 .. _fixes it: https://loguru.readthedocs.io/en/stable/api/logger.html#time
 .. _No problem: https://loguru.readthedocs.io/en/stable/api/logger.html#env
+
+.. |notifiers| replace:: ``notifiers``
+.. _notifiers: https://pypi.org/project/notifiers/
 
 Ready to use out of the box without boilerplate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -393,19 +393,21 @@ It is often useful to extract specific information from generated logs, this is 
 Exhaustive notifier
 ^^^^^^^^^^^^^^^^^^^
 
-Receive an e-mail when your program fail unexpectedly or send many other kind of notifications using `Loguru` |notifier|_.
+`Loguru` can easily be combined with the great |notifiers|_ library (must be installed separately) to receive an e-mail when your program fail unexpectedly or to send many other kind of notifications.
 
 ::
 
-    from loguru import notifier
+    import notifiers
 
-    gmail_notifier = notifier.gmail(to="dest@gmail.com", username="you@gmail.com", password="abc123")
+    def send_mail(message):
+        g = notifiers.get_notifier('gmail')
+        g.notify(message=message, to="dest@gmail.com", username="you@gmail.com", password="abc123")
 
     # Send a notification
-    gmail_notifier.send("The application is running!")
+    send_mail("The application is running!")
 
     # Be alerted on each error messages
-    logger.start(gmail_notifier.send, level="ERROR")
+    logger.start(send_mail, level="ERROR")
 
 
 |strike|
