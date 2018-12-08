@@ -215,7 +215,7 @@ Logging exceptions that occur in your code is important to track bugs, but it's 
 
 The code::
 
-    logger.start("output.log", backtrace=True)  # Set 'False' to avoid leaking sensible data in prod
+    logger.start("output.log", backtrace=True)  # Set 'False' to avoid leaking sensitive data in prod
 
     def func(a, b):
         return a / b
