@@ -1,3 +1,9 @@
+0.2.1 (2018-12-08)
+==================
+
+- Fix typo preventing README to be correctly displayed on PyPI
+
+
 0.2.0 (2018-12-08)
 ==================
 

@@ -9,7 +9,7 @@ import sys as _sys
 from . import _defaults
 from ._logger import Logger as _Logger
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 logger = _Logger({}, None, False, False, False, False, 0)
 
