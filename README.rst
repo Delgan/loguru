@@ -9,8 +9,8 @@
     </p>
     <p align="center">
         <a href="https://pypi.python.org/pypi/loguru"><img alt="Pypi version" src="https://img.shields.io/pypi/v/loguru.svg"></a>
-        <a href="https://travis-ci.org/Delgan/loguru"><img alt="Build status" src="https://img.shields.io/travis/Delgan/loguru.svg"></a>
         <a href="https://loguru.readthedocs.io/en/stable/index.html"><img alt="Documentation" src="https://img.shields.io/readthedocs/loguru.svg"></a>
+        <a href="https://travis-ci.org/Delgan/loguru"><img alt="Build status" src="https://img.shields.io/travis/Delgan/loguru.svg"></a>
         <a href="https://coveralls.io/github/Delgan/loguru"><img alt="Coverage" src="https://img.shields.io/coveralls/Delgan/loguru.svg"></a>
         <a href="https://www.codacy.com/app/delgan-py/loguru/dashboard"><img alt="Code quality" src="https://img.shields.io/codacy/grade/4d97edb1bb734a0d9a684a700a84f555.svg"></a>
         <a href="https://github.com/Delgan/loguru/blob/master/.travis.yml"><img alt="Python versions" src="https://img.shields.io/badge/python-3.6%20%7C%203.7-blue.svg"></a>
@@ -201,7 +201,7 @@ Pretty logging with colors
 Asynchronous, Thread-safe, Multiprocess-safe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All sinks added to the |logger|_ are thread-safe by default. If you want async logging or need to use the same sink through different multiprocesses, you just have to ``enqueue`` the messages.
+All sinks added to the |logger|_ are thread-safe by default. They are not multiprocess-safe, but you can ``enqueue`` the messages to ensure logs integrity. This same argument can also be used if you want async logging.
 
 ::
 
@@ -281,9 +281,9 @@ Sometime you would like to log verbose information without performance penalty i
     logger.opt(lazy=True).debug("If sink level <= DEBUG: {x}", x=lambda: expensive_function(2**64))
 
     # By the way, "opt()" serves many usages
-    logger.opt(exception=True).info("Exception with an "INFO" level")
+    logger.opt(exception=True).info("Error stacktrace added to the log message")
     logger.opt(ansi=True).info("Per message <blue>colors</blue>")
-    logger.opt(record=True).info("Log record attributes (eg. {record[thread].id})")
+    logger.opt(record=True).info("Display values from the record (eg. {record[thread]})")
     logger.opt(raw=True).info("Bypass sink formatting\n")
     logger.opt(depth=1).info("Use parent stack context (useful within wrapped functions)")
 
@@ -312,16 +312,19 @@ The standard logging is bloated with arguments like ``datefmt`` or ``msecs``, ``
 Suitable for scripts and libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Using the logger in your scripts is easy, and you can |configure|_ it at start. To use `Loguru` from inside a libary, remember to never call |start|_ but use |disable|_ instead so logging functions become no-op. If an user want to see your library's logs, he can |enable|_ it again.
+Using the logger in your scripts is easy, and you can |configure|_ it at start. To use `Loguru` from inside a libary, remember to never call |start|_ but use |disable|_ instead so logging functions become no-op. If a developer wishes to see your library's logs, he can |enable|_ it again.
 
 ::
 
     # For scripts
-    my_logging_config = dict(
-        handlers=[{'sink': sys.stdout, 'colorize': False, format="{time} - {message}"}],
-        extra={"user": "someone"}
-    )
-    logger.configure(**my_logging_config)
+    config = {
+        "handlers": [
+            {"sink": sys.stdout, format="{time} - {message}"},
+            {"sink": "file.log", "serialize": True},
+        ],
+        "extra": {"user": "someone"}
+    }
+    logger.configure(**config)
 
     # For libraries
     logger.disable("my_library")
@@ -381,11 +384,12 @@ It is often useful to extract specific information from generated logs, this is 
 
 ::
 
-    pattern = r"(?P<time>.*) - (?P<level>[0-9]+) - (?P<message>.*)"
-    caster_dict = dict(time=time.strptime, level=int)
+    pattern = r"(?P<time>.*) - (?P<level>[0-9]+) - (?P<message>.*)"  # Regex with named groups
+    caster_dict = dict(time=dateutil.parser.parse, level=int)        # Transform matching groups
 
     for groups in logger.parse("file.log", pattern, cast=caster_dict):
-        print("Parsed message at {} with severity {}".format(groups["time"], groups["level"]))
+        print("Parsed:", groups)
+        # {"level": 30, "message": "Log example", "time": datetime(2018, 12, 09, 11, 23, 55)}
 
 
 Exhaustive notifier

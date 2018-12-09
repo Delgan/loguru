@@ -187,7 +187,7 @@ class Logger:
         catch : |bool|, optional
             Whether or not errors occuring while sink handles logs messages should be caught or not.
             If ``True``, an exception message is displayed on |sys.stderr| but the exception is not
-            propagated to the caller, preventing sink from stopping working.
+            propagated to the caller, preventing your app to crash.
         **kwargs
             Additional parameters that will be passed to the sink while creating it or while
             logging messages (the exact behavior depends on the sink type).
@@ -276,11 +276,13 @@ class Logger:
 
         .. rubric:: The record dict
 
-        The record is just a Python dict, accessible from sinks by ``message.record``, and usable
-        for formatting as ``"{key}"``. Some record's values are objects with two or more attibutes,
-        those can be formatted with ``"{key.attr}"`` (``"{key}"`` would display one by default).
-        Formatting directives like ``"{key: >3}"`` also works and is specially useful for time (see
-        bellow).
+        The record is just a Python dict, accessible from sinks by ``message.record``. It contains
+        all contextual information of the logging call (time, function, file, line, level, etc.).
+        Each of its key can be used in the handler's ``format`` so the corresponding value is
+        properly displayed in the logged message (eg. ``"{level}"`` -> ``"INFO"``). Some record's
+        values are objects with two or more attibutes, those can be formatted with ``"{key.attr}"``
+        (``"{key}"`` would display one by default). Formatting directives like ``"{key: >3}"`` also
+        works and is particularly useful for time (see bellow).
 
         +------------+---------------------------------+----------------------------+
         | Key        | Description                     | Attributes                 |
@@ -292,7 +294,7 @@ class Logger:
         |            | ``None`` otherwise              | ``traceback``              |
         +------------+---------------------------------+----------------------------+
         | extra      | The dict of attributes          | None                       |
-        |            | bound by the user               |                            |
+        |            | bound by the user (see |bind|)  |                            |
         +------------+---------------------------------+----------------------------+
         | file       | The file where the logging call | ``name`` (default),        |
         |            | was made                        | ``path``                   |
