@@ -639,6 +639,9 @@ class Logger:
         elif isinstance(sink, logging.Handler):
 
             def writer(m):
+                message = str(m)
+                if not is_formatter_dynamic:
+                    message = message[:-1]
                 r = m.record
                 exc = r["exception"]
                 record = logging.root.makeRecord(
@@ -646,9 +649,9 @@ class Logger:
                     r["level"].no,
                     r["file"].path,
                     r["line"],
-                    r["message"],
+                    message,
                     (),
-                    (exc.type, exc.value, exc.traceback) if exc else None,
+                    None,
                     r["function"],
                     r["extra"],
                     **kwargs
