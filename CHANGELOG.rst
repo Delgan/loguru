@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Fix impossibility to set empty environment variable color on Windows (`#7 <https://github.com/Delgan/loguru/issues/7>`_)
+
+
 0.2.1 (2018-12-08)
 ==================
 

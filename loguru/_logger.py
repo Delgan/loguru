@@ -522,14 +522,17 @@ class Logger:
 
         Each of the |start| default parameter can be modified by setting the ``LOGURU_[PARAM]``
         environment variable. For example on Linux: ``export LOGURU_FORMAT="{time} - {message}"``
-        or ``export LOGURU_ENHANCE=NO``.
+        or ``export LOGURU_BACKTRACE=NO``.
 
         The default levels attributes can also be modified by setting the ``LOGURU_[LEVEL]_[ATTR]``
-        environment variable. For example, on Windows: ``setx LOGURU_DEBUG_COLOR="<blue>"``
-        or ``setx LOGURU_TRACE_ICON="🚀"``.
+        environment variable. For example, on Windows: ``setx LOGURU_DEBUG_COLOR "<blue>"``
+        or ``setx LOGURU_TRACE_ICON "🚀"``.
 
         If you want to disable the pre-configured sink, you can set the ``LOGURU_AUTOINIT``
         variable to ``False``.
+
+        On Linux, you will probably need to edit the ``~/.profile`` file to make this persistent. On
+        Windows, don't forget to restart your terminal for the change to be taken into account.
 
         Examples
         --------
