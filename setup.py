@@ -6,11 +6,13 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-with open("loguru/__init__.py", "r") as file:
+HERE = lambda file_path: os.path.join(os.path.dirname(__file__), file_path)
+
+with open(HERE("loguru/__init__.py"), "r") as file:
     regex_version = r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]'
     version = re.search(regex_version, file.read(), re.MULTILINE).group(1)
 
-with open("README.rst", "rb") as file:
+with open(HERE("README.rst"), "rb") as file:
     readme = file.read().decode("utf-8")
 
 
