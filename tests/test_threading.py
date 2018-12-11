@@ -2,6 +2,7 @@ from threading import Thread
 from loguru import logger
 import time
 
+
 def test_safe(capsys):
     first_thread_initialized = False
     second_thread_initialized = False
@@ -32,7 +33,7 @@ def test_safe(capsys):
         time.sleep(0.5)
         logger.debug("message 2")
 
-    logger.start(non_safe_sink, format="{message}", catch=False)
+    logger.add(non_safe_sink, format="{message}", catch=False)
 
     threads = [Thread(target=first_thread), Thread(target=second_thread)]
 

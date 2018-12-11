@@ -14,6 +14,6 @@ __version__ = "0.2.1"
 logger = _Logger({}, None, False, False, False, False, 0)
 
 if _defaults.LOGURU_AUTOINIT and _sys.stderr:
-    logger.start(_sys.stderr)
+    logger.add(_sys.stderr)
 
-_atexit.register(logger.stop)
+_atexit.register(logger.remove)

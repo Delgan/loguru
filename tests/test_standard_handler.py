@@ -7,9 +7,9 @@ from logging import Formatter
 
 
 def test_stream_handler(capsys):
-    logger.start(StreamHandler(sys.stderr), format="{level} {message}")
+    logger.add(StreamHandler(sys.stderr), format="{level} {message}")
     logger.info("test")
-    logger.stop()
+    logger.remove()
     logger.warning("nope")
 
     out, err = capsys.readouterr()
@@ -19,18 +19,18 @@ def test_stream_handler(capsys):
 
 def test_file_handler(tmpdir):
     file = tmpdir.join("test.log")
-    logger.start(FileHandler(file), format="{message} {level.name}")
+    logger.add(FileHandler(file), format="{message} {level.name}")
     logger.info("test")
-    logger.stop()
+    logger.remove()
     logger.warning("nope")
 
     assert file.read() == "test INFO\n"
 
 
 def test_null_handler(capsys):
-    logger.start(NullHandler())
+    logger.add(NullHandler())
     logger.error("nope")
-    logger.stop()
+    logger.remove()
 
     out, err = capsys.readouterr()
     assert out == ""
@@ -39,7 +39,7 @@ def test_null_handler(capsys):
 
 def test_exception(tmpdir):
     file = tmpdir.join("test.log")
-    logger.start(FileHandler(file), format="{message}")
+    logger.add(FileHandler(file), format="{message}")
 
     try:
         1 / 0
@@ -66,7 +66,7 @@ def test_standard_formatter(capsys, dynamic_format):
     handler = StreamHandler(sys.stdout)
     formatter = Formatter("%(message)s %(levelname)s")
     handler.setFormatter(formatter)
-    logger.start(handler, format=format_)
+    logger.add(handler, format=format_)
     logger.info("Test")
     out, err = capsys.readouterr()
     assert out == "20 Test [Not Chopped] INFO\n"
@@ -83,7 +83,7 @@ def test_standard_formatter_with_new_line(capsys, dynamic_format):
     handler = StreamHandler(sys.stdout)
     formatter = Formatter("%(message)s %(levelname)s")
     handler.setFormatter(formatter)
-    logger.start(handler, format=format_)
+    logger.add(handler, format=format_)
     logger.info("Test")
     out, err = capsys.readouterr()
     assert out == "20 Test\n INFO\n"

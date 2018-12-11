@@ -14,7 +14,7 @@ def test_formatting(make_logging_logger, capsys):
     fmt = "%(name)s - %(filename)s - %(funcName)s - %(levelname)s - %(levelno)s - %(lineno)d - %(module)s - %(message)s"
     expected = "tests.test_propagation - test_propagation.py - test_formatting - DEBUG - 10 - 18 - test_propagation - This is my message\n"
     logging_logger = make_logging_logger("tests.test_propagation", StreamHandler(sys.stderr), fmt)
-    logger.start(PropagateHandler(), format="{message}")
+    logger.add(PropagateHandler(), format="{message}")
     logger.debug("This {verb} my {}", "message", verb="is")
 
     out, err = capsys.readouterr()
@@ -28,7 +28,7 @@ def test_propagate(make_logging_logger, capsys):
     logging_logger.debug("1")
     logger.debug("2")
 
-    logger.start(PropagateHandler(), format="{message}")
+    logger.add(PropagateHandler(), format="{message}")
 
     logger.debug("3")
     logger.trace("4")
@@ -38,15 +38,15 @@ def test_propagate(make_logging_logger, capsys):
     assert err == "1\n3\n"
 
 
-def test_stop_propagation(make_logging_logger, capsys):
+def test_remove_propagation(make_logging_logger, capsys):
     logging_logger = make_logging_logger("tests", StreamHandler(sys.stderr))
 
-    i = logger.start(PropagateHandler(), format="{message}")
+    i = logger.add(PropagateHandler(), format="{message}")
 
     logger.debug("1")
     logging_logger.debug("2")
 
-    logger.stop(i)
+    logger.remove(i)
 
     logger.debug("3")
     logging_logger.debug("4")
@@ -59,7 +59,7 @@ def test_stop_propagation(make_logging_logger, capsys):
 def test_propagate_too_high(make_logging_logger, capsys):
     logging_logger = make_logging_logger("tests.test_propagation.deep", StreamHandler(sys.stderr))
 
-    logger.start(PropagateHandler(), format="{message}")
+    logger.add(PropagateHandler(), format="{message}")
 
     logger.debug("1")
     logging_logger.debug("2")
@@ -72,7 +72,7 @@ def test_propagate_too_high(make_logging_logger, capsys):
 @pytest.mark.parametrize("use_opt", [False, True])
 def test_exception(make_logging_logger, capsys, use_opt):
     logging_logger = make_logging_logger("tests", StreamHandler(sys.stderr))
-    logger.start(PropagateHandler(), format="{message}")
+    logger.add(PropagateHandler(), format="{message}")
 
     try:
         1 / 0

@@ -6,14 +6,14 @@ am = ansimarkup.AnsiMarkup(tags={"empty": ansimarkup.parse("")})
 
 
 def test_log_int_level(writer):
-    logger.start(writer, format="{level.name} -> {level.no} -> {message}", colorize=False)
+    logger.add(writer, format="{level.name} -> {level.no} -> {message}", colorize=False)
     logger.log(10, "test")
 
     assert writer.read() == "Level 10 -> 10 -> test\n"
 
 
 def test_log_str_level(writer):
-    logger.start(writer, format="{level.name} -> {level.no} -> {message}", colorize=False)
+    logger.add(writer, format="{level.name} -> {level.no} -> {message}", colorize=False)
     logger.log("DEBUG", "test")
 
     assert writer.read() == "DEBUG -> 10 -> test\n"
@@ -26,7 +26,7 @@ def test_add_level(writer):
 
     logger.level(name, level, color="<red>", icon=icon)
     fmt = "{level.icon} <level>{level.name}</level> -> {level.no} -> {message}"
-    logger.start(writer, format=fmt, colorize=True)
+    logger.add(writer, format=fmt, colorize=True)
 
     logger.log(name, "test")
     expected = am.parse("%s <red>%s</red> -> %d -> test" % (icon, name, level))
@@ -36,9 +36,9 @@ def test_add_level(writer):
 @pytest.mark.parametrize(
     "colorize, expected", [(False, "foo | 10 | a"), (True, am.parse("<red>foo | 10 | a</red>"))]
 )
-def test_add_level_after_start(writer, colorize, expected):
+def test_add_level_after_add(writer, colorize, expected):
     fmt = "<level>{level.name} | {level.no} | {message}</level>"
-    logger.start(writer, level="DEBUG", format=fmt, colorize=colorize)
+    logger.add(writer, level="DEBUG", format=fmt, colorize=colorize)
     logger.level("foo", 10, color="<red>")
     logger.log("foo", "a")
     assert writer.read() == expected + "\n"
@@ -46,7 +46,7 @@ def test_add_level_after_start(writer, colorize, expected):
 
 def test_add_level_then_log_with_int_value(writer):
     logger.level("foo", 16)
-    logger.start(writer, level="foo", format="{level.name} {level.no} {message}", colorize=False)
+    logger.add(writer, level="foo", format="{level.name} {level.no} {message}", colorize=False)
 
     logger.log(16, "test")
 
@@ -58,7 +58,7 @@ def test_add_malicious_level(writer):
 
     logger.level(name, 45, color="<red>")
     fmt = "{level.name} & {level.no} & <level>{message}</level>"
-    logger.start(writer, format=fmt, colorize=True)
+    logger.add(writer, format=fmt, colorize=True)
 
     logger.log(15, " A ")
     logger.log(name, " B ")
@@ -70,7 +70,7 @@ def test_add_malicious_level(writer):
 def test_add_existing_level(writer):
     logger.level("INFO", 45, color="<red>")
     fmt = "{level.icon} + <level>{level.name}</level> + {level.no} = {message}"
-    logger.start(writer, format=fmt, colorize=True)
+    logger.add(writer, format=fmt, colorize=True)
 
     logger.info("a")
     logger.log("INFO", "b")
@@ -87,7 +87,7 @@ def test_add_existing_level(writer):
 
 def test_blank_color(writer):
     logger.level("INFO", color=" ")
-    logger.start(writer, level="DEBUG", format="<level>{message}</level>", colorize=True)
+    logger.add(writer, level="DEBUG", format="<level>{message}</level>", colorize=True)
     logger.info("Test")
     assert writer.read() == am.parse("<empty>Test</empty>\n")
 
@@ -95,7 +95,7 @@ def test_blank_color(writer):
 def test_edit_level(writer):
     logger.level("info", no=0, color="<bold>", icon="[?]")
     fmt = "<level>->{level.no}, {level.name}, {level.icon}, {message}<-</level>"
-    logger.start(writer, format=fmt, colorize=True)
+    logger.add(writer, format=fmt, colorize=True)
 
     logger.log("info", "nope")
 
@@ -118,7 +118,7 @@ def test_edit_level(writer):
 def test_edit_existing_level(writer):
     logger.level("DEBUG", no=20, icon="!")
     fmt = "{level.no}, <level>{level.name}</level>, {level.icon}, {message}"
-    logger.start(writer, format=fmt, colorize=False)
+    logger.add(writer, format=fmt, colorize=False)
     logger.debug("a")
     assert writer.read() == "20, DEBUG, !, a\n"
 
@@ -133,9 +133,9 @@ def test_get_existing_level():
     assert logger.level("DEBUG") == (10, "<blue><bold>", "🐞")
 
 
-def test_start_custom_level(writer):
+def test_add_custom_level(writer):
     logger.level("foo", 17, color="<yellow>")
-    logger.start(
+    logger.add(
         writer,
         level="foo",
         format="<level>{level.name} + {level.no} + {message}</level>",
@@ -151,22 +151,22 @@ def test_start_custom_level(writer):
 def test_updating_min_level(writer):
     logger.debug("Early exit -> no {error}", nope=None)
 
-    a = logger.start(writer, level="DEBUG")
+    a = logger.add(writer, level="DEBUG")
 
     with pytest.raises(KeyError):
         logger.debug("An {error} will occur!", nope=None)
 
     logger.trace("Early exit -> no {error}", nope=None)
 
-    logger.start(writer, level="INFO")
-    logger.stop(a)
+    logger.add(writer, level="INFO")
+    logger.remove(a)
 
     logger.debug("Early exit -> no {error}", nope=None)
 
 
 @pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
 def test_log_invalid_level(writer, level):
-    logger.start(writer)
+    logger.add(writer)
     with pytest.raises(ValueError):
         logger.log(level, "test")
 

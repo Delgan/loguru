@@ -3,6 +3,7 @@ import itertools
 import logging
 import re
 import threading
+import warnings
 from collections import namedtuple
 from inspect import isclass
 from multiprocessing import current_process
@@ -31,7 +32,7 @@ class Logger:
     a call to one of its methods. There is only one logger, so there is no need to retrieve one
     before usage.
 
-    Handlers to which send log messages are added using the |start| method. Note that you can
+    Handlers to which send log messages are added using the |add| method. Note that you can
     use the |Logger| right after import as it comes pre-configured. Messages can be logged with
     different severity levels and using braces attributes like the |str.format| method do.
 
@@ -42,8 +43,8 @@ class Logger:
     You should not instantiate a |Logger| by yourself, use ``from loguru import logger`` instead.
 
     .. |Logger| replace:: :class:`~Logger`
-    .. |start| replace:: :meth:`~Logger.start()`
-    .. |stop| replace:: :meth:`~Logger.stop()`
+    .. |add| replace:: :meth:`~Logger.add()`
+    .. |remove| replace:: :meth:`~Logger.remove()`
     .. |catch| replace:: :meth:`~Logger.catch()`
     .. |bind| replace:: :meth:`~Logger.bind()`
     .. |opt| replace:: :meth:`~Logger.opt()`
@@ -141,7 +142,7 @@ class Logger:
         self._raw = raw
         self._depth = depth
 
-    def start(
+    def add(
         self,
         sink,
         *,
@@ -155,7 +156,7 @@ class Logger:
         catch=_defaults.LOGURU_CATCH,
         **kwargs
     ):
-        r"""Start sending log messages to a sink adequately configured.
+        r"""Add an handler sending log messages to a sink adequately configured.
 
         Parameters
         ----------
@@ -223,8 +224,8 @@ class Logger:
         Returns
         -------
         :class:`int`
-            An identifier associated with the starteds sink and which should be used to
-            |stop| it.
+            An identifier associated with the added sink and which should be used to
+            |remove| it.
 
         Notes
         -----
@@ -254,11 +255,11 @@ class Logger:
 
         .. rubric:: The logged message
 
-        The logged message passed to all started sinks is nothing more than a string of the
+        The logged message passed to all added sinks is nothing more than a string of the
         formatted log, to which a special attribute is associated: the ``.record`` which is a dict
         containing all contextual information possibly needed (see bellow).
 
-        Logged messages are formatted according to the ``format`` of the started sink. This format
+        Logged messages are formatted according to the ``format`` of the added sink. This format
         is usually a string containing braces fields to display attributes from the record dict.
 
         If fine-grained control is needed, the ``format`` can also be a function which takes the
@@ -520,7 +521,7 @@ class Logger:
         The default values of sink parameters can be entirely customized. This is particularly
         useful if you don't like the log format of the pre-configured sink.
 
-        Each of the |start| default parameter can be modified by setting the ``LOGURU_[PARAM]``
+        Each of the |add| default parameter can be modified by setting the ``LOGURU_[PARAM]``
         environment variable. For example on Linux: ``export LOGURU_FORMAT="{time} - {message}"``
         or ``export LOGURU_BACKTRACE=NO``.
 
@@ -536,18 +537,18 @@ class Logger:
 
         Examples
         --------
-        >>> logger.start(sys.stdout, format="{time} - {level} - {message}", filter="sub.module")
+        >>> logger.add(sys.stdout, format="{time} - {level} - {message}", filter="sub.module")
 
-        >>> logger.start("file_{time}.log", level="TRACE", rotation="100 MB")
+        >>> logger.add("file_{time}.log", level="TRACE", rotation="100 MB")
 
         >>> def my_sink(message):
         ...     record = message.record
         ...     update_db(message, time=record.time, level=record.level)
         ...
-        >>> logger.start(my_sink)
+        >>> logger.add(my_sink)
 
         >>> from logging import StreamHandler
-        >>> logger.start(StreamHandler(sys.stderr), format="{message}")
+        >>> logger.add(StreamHandler(sys.stderr), format="{message}")
 
         >>> class RandomStream:
         ...     def __init__(self, seed, threshold):
@@ -558,15 +559,15 @@ class Logger:
         ...             print(message)
         ...
         >>> stream_object = RandomStream(seed=12345, threhold=0.25)
-        >>> logger.start(stream_object, level="INFO")
-        >>> logger.start(RandomStream, level="DEBUG", seed=34567, threshold=0.5)
+        >>> logger.add(stream_object, level="INFO")
+        >>> logger.add(RandomStream, level="DEBUG", seed=34567, threshold=0.5)
         """
         if colorize is None and serialize:
             colorize = False
 
         if isclass(sink):
             sink = sink(**kwargs)
-            return self.start(
+            return self.add(
                 sink,
                 level=level,
                 format=format,
@@ -580,7 +581,7 @@ class Logger:
         elif isinstance(sink, (str, PathLike)):
             path = sink
             sink = FileSink(path, **kwargs)
-            return self.start(
+            return self.add(
                 sink,
                 level=level,
                 format=format,
@@ -752,21 +753,21 @@ class Logger:
 
         return handler_id
 
-    def stop(self, handler_id=None):
-        """Stop logging to a previously started sink.
+    def remove(self, handler_id=None):
+        """Remove a previously added handler and stop sending logs to its sink.
 
         Parameters
         ----------
         handler_id : |int| or ``None``
-            The id of the sink to stop, as it was returned by the |start| method. If ``None``,
-            all sinks are stopped. The pre-configured sink is guaranteed to have the index ``0``.
+            The id of the sink to remove, as it was returned by the |add| method. If ``None``, all
+            handlers are removed. The pre-configured handler is guaranteed to have the index ``0``.
 
         Examples
         --------
-        >>> i = logger.start(sys.stderr, format="{message}")
+        >>> i = logger.add(sys.stderr, format="{message}")
         >>> logger.info("Logging")
         Logging
-        >>> logger.stop(i)
+        >>> logger.remove(i)
         >>> logger.info("No longer logging")
         """
         with self._lock:
@@ -778,7 +779,7 @@ class Logger:
                 try:
                     handler = self._handlers.pop(handler_id)
                 except KeyError:
-                    raise ValueError("There is no started handler with id '%s'" % handler_id)
+                    raise ValueError("There is no existing handler with id '%s'" % handler_id)
                 handler.stop()
 
             levelnos = (h.levelno for h in self._handlers.values())
@@ -989,7 +990,7 @@ class Logger:
 
         Examples
         --------
-        >>> logger.start(sys.stderr, format="{extra[ip]} - {message}")
+        >>> logger.add(sys.stderr, format="{extra[ip]} - {message}")
         1
         >>> class Server:
         ...     def __init__(self, ip):
@@ -1049,7 +1050,7 @@ class Logger:
         --------
         >>> level = logger.level("ERROR")
         Level(no=40, color='<red><bold>', icon='❌')
-        >>> logger.start(sys.stderr, format="{level.no} {icon} {message}")
+        >>> logger.add(sys.stderr, format="{level.no} {icon} {message}")
         >>> logger.level("CUSTOM", no=15, color="<blue>", icon="@")
         >>> logger.log("CUSTOM", "Logging...")
         15 @ Logging...
@@ -1148,12 +1149,15 @@ class Logger:
     def configure(self, *, handlers=None, levels=None, extra=None, activation=None):
         """Configure the core logger.
 
+        It should be noted that ``extra`` values set using this function are available across all
+        modules, so this is the best way to set overall default values.
+
         Parameters
         ----------
         handlers : |list| of |dict|, optional
-            A list of each handler to be started. The list should contains dicts of params passed to
-            the |start| function as keyword arguments. If not ``None``, all previously started
-            handlers are first stopped.
+            A list of each handler to be added. The list should contains dicts of params passed to
+            the |add| function as keyword arguments. If not ``None``, all previously added
+            handlers are first removed.
         levels : |list| of |dict|, optional
             A list of each level to be added or updated. The list should contains dicts of params
             passed to the |level| function as keyword arguments. This will never remove previously
@@ -1172,7 +1176,7 @@ class Logger:
         Returns
         -------
         :class:`list` of :class:`int`
-            A list containing the identifiers of possibly started sinks.
+            A list containing the identifiers of added sinks (if any).
 
         Examples
         --------
@@ -1186,7 +1190,7 @@ class Logger:
         [1, 2]
         """
         if handlers is not None:
-            self.stop()
+            self.remove()
         else:
             handlers = []
 
@@ -1206,7 +1210,7 @@ class Logger:
                 else:
                     self.disable(name)
 
-        return [self.start(**params) for params in handlers]
+        return [self.add(**params) for params in handlers]
 
     def _change_activation(self, name, status):
         if not isinstance(name, str):
@@ -1492,3 +1496,31 @@ class Logger:
             depth=_self._depth + 1,
         )
         logger._make_log_function("ERROR")(logger, _message, *args, **kwargs)
+
+    def start(self, *args, **kwargs):
+        """Deprecated function to |add| a new handler.
+
+        Warnings
+        --------
+        .. deprecated:: 0.2.2
+          ``start()`` will be removed in Loguru 1.0.0, it is replaced by ``add()`` which is a less
+          confusing name.
+        """
+        warnings.warn(
+            "The 'start()' method is deprecated, please use 'add()' instead", DeprecationWarning
+        )
+        return self.add(*args, **kwargs)
+
+    def stop(self, *args, **kwargs):
+        """Deprecated function to |remove| an existing handler.
+
+        Warnings
+        --------
+        .. deprecated:: 0.2.2
+          ``stop()`` will be removed in Loguru 1.0.0, it is replaced by ``remove()`` which is a less
+          confusing name.
+        """
+        warnings.warn(
+            "The 'stop()' method is deprecated, please use 'remove()' instead", DeprecationWarning
+        )
+        return self.remove(*args, **kwargs)

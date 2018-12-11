@@ -4,83 +4,80 @@ from loguru import logger
 
 
 def test_handlers(capsys, tmpdir):
-    file = tmpdir.join('test.log')
+    file = tmpdir.join("test.log")
 
     handlers = [
-        {'sink': file.realpath(), 'format': 'FileSink: {message}'},
-        {'sink': sys.stdout, 'format': 'StdoutSink: {message}'},
+        {"sink": file.realpath(), "format": "FileSink: {message}"},
+        {"sink": sys.stdout, "format": "StdoutSink: {message}"},
     ]
 
     logger.configure(handlers=handlers)
-    logger.debug('test')
+    logger.debug("test")
 
     out, err = capsys.readouterr()
 
-    assert file.read() == 'FileSink: test\n'
-    assert out == 'StdoutSink: test\n'
-    assert err == ''
+    assert file.read() == "FileSink: test\n"
+    assert out == "StdoutSink: test\n"
+    assert err == ""
+
 
 def test_levels(writer):
-    levels = [
-        {'name': 'my_level', 'icon': 'X', 'no': 12},
-        {'name': 'DEBUG', 'icon': '!'}
-    ]
+    levels = [{"name": "my_level", "icon": "X", "no": 12}, {"name": "DEBUG", "icon": "!"}]
 
-    logger.start(writer, format="{level.no}|{level.name}|{level.icon}|{message}")
+    logger.add(writer, format="{level.no}|{level.name}|{level.icon}|{message}")
     logger.configure(levels=levels)
 
-    logger.log('my_level', 'test')
-    logger.debug('no bug')
+    logger.log("my_level", "test")
+    logger.debug("no bug")
 
-    assert writer.read() == ('12|my_level|X|test\n'
-                             '10|DEBUG|!|no bug\n')
+    assert writer.read() == ("12|my_level|X|test\n" "10|DEBUG|!|no bug\n")
+
 
 def test_extra(writer):
-    extra = {
-        'a': 1,
-        'b': 9
-    }
+    extra = {"a": 1, "b": 9}
 
-    logger.start(writer, format='{extra[a]} {extra[b]}')
+    logger.add(writer, format="{extra[a]} {extra[b]}")
     logger.configure(extra=extra)
 
     logger.debug("")
 
     assert writer.read() == "1 9\n"
 
-def test_activation(writer):
-    activation = [
-        ("tests", False),
-        ("tests.test_configure", True),
-    ]
 
-    logger.start(writer, format="{message}")
+def test_activation(writer):
+    activation = [("tests", False), ("tests.test_configure", True)]
+
+    logger.add(writer, format="{message}")
     logger.configure(activation=activation)
 
     logger.debug("Logging")
 
     assert writer.read() == "Logging\n"
 
+
 def test_dict_unpacking(writer):
     config = {
-        "handlers": [{'sink': writer, 'format': '{level.no} - {extra[x]} {extra[z]} - {message}'}],
-        "levels": [{'name': 'test', 'no': 30}],
-        "extra": {'x': 1, 'y': 2, 'z': 3},
+        "handlers": [{"sink": writer, "format": "{level.no} - {extra[x]} {extra[z]} - {message}"}],
+        "levels": [{"name": "test", "no": 30}],
+        "extra": {"x": 1, "y": 2, "z": 3},
     }
 
     logger.debug("NOPE")
 
     logger.configure(**config)
 
-    logger.log('test', 'Yes!')
+    logger.log("test", "Yes!")
 
     assert writer.read() == "30 - 1 3 - Yes!\n"
 
+
 def test_returned_ids(capsys):
-    ids = logger.configure(handlers=[
-        {'sink': sys.stdout, 'format': '{message}'},
-        {'sink': sys.stderr, 'format': '{message}'},
-    ])
+    ids = logger.configure(
+        handlers=[
+            {"sink": sys.stdout, "format": "{message}"},
+            {"sink": sys.stderr, "format": "{message}"},
+        ]
+    )
 
     assert len(ids) == 2
 
@@ -92,7 +89,7 @@ def test_returned_ids(capsys):
     assert err == "Test\n"
 
     for i in ids:
-        logger.stop(i)
+        logger.remove(i)
 
     logger.debug("Nope")
 
@@ -101,10 +98,11 @@ def test_returned_ids(capsys):
     assert out == ""
     assert err == ""
 
+
 def test_dont_reset_by_default(writer):
     logger.configure(extra={"a": 1})
     logger.level("b", no=30)
-    logger.start(writer, format="{level} {extra[a]} {message}")
+    logger.add(writer, format="{level} {extra[a]} {message}")
 
     logger.configure()
 
@@ -112,8 +110,9 @@ def test_dont_reset_by_default(writer):
 
     assert writer.read() == "b 1 Test\n"
 
+
 def test_reset_previous_handlers(writer):
-    logger.start(writer, format="{message}")
+    logger.add(writer, format="{message}")
 
     logger.configure(handlers=[])
 
@@ -121,29 +120,32 @@ def test_reset_previous_handlers(writer):
 
     assert writer.read() == ""
 
+
 def test_reset_previous_extra(writer):
     logger.configure(extra={"a": 123})
-    logger.start(writer, format="{extra[a]}", catch=False)
+    logger.add(writer, format="{extra[a]}", catch=False)
 
     logger.configure(extra={})
 
     with pytest.raises(KeyError):
         logger.debug("Nope")
 
+
 def test_dont_reset_previous_levels(writer):
     logger.level("abc", no=30)
 
     logger.configure(levels=[])
 
-    logger.start(writer, format="{level} {message}")
+    logger.add(writer, format="{level} {message}")
 
     logger.log("abc", "Test")
 
     assert writer.read() == "abc Test\n"
 
+
 def test_configure_before_bind(writer):
     logger.configure(extra={"a": "default_a", "b": "default_b"})
-    logger.start(writer, format="{extra[a]} {extra[b]} {message}")
+    logger.add(writer, format="{extra[a]} {extra[b]} {message}")
 
     logger.debug("init")
 
@@ -153,22 +155,19 @@ def test_configure_before_bind(writer):
     logger_a.debug("aaa")
     logger_b.debug("bbb")
 
-    assert writer.read() == ("default_a default_b init\n"
-                             "A default_b aaa\n"
-                             "default_a B bbb\n")
+    assert writer.read() == ("default_a default_b init\n" "A default_b aaa\n" "default_a B bbb\n")
+
 
 def test_configure_after_bind(writer):
     logger_a = logger.bind(a="A")
     logger_b = logger.bind(b="B")
 
     logger.configure(extra={"a": "default_a", "b": "default_b"})
-    logger.start(writer, format="{extra[a]} {extra[b]} {message}")
+    logger.add(writer, format="{extra[a]} {extra[b]} {message}")
 
     logger.debug("init")
 
     logger_a.debug("aaa")
     logger_b.debug("bbb")
 
-    assert writer.read() == ("default_a default_b init\n"
-                             "A default_b aaa\n"
-                             "default_a B bbb\n")
+    assert writer.read() == ("default_a default_b init\n" "A default_b aaa\n" "default_a B bbb\n")
