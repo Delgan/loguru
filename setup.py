@@ -26,7 +26,7 @@ def install():
         author="Delgan",
         author_email="delgan.py@gmail.com",
         url="https://github.com/Delgan/loguru",
-        download_url="https://github.com/Delgan/loguru/archive/{}.tar.gz".format(version),
+        download_url=f"https://github.com/Delgan/loguru/archive/{version}.tar.gz",
         keywords=["loguru", "logging", "logger", "log", "parser"],
         license="MIT license",
         classifiers=[
