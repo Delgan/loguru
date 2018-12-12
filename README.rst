@@ -2,7 +2,7 @@
 
     <p align="center">
         <a href="#readme">
-            <img height=150 alt="Loguru logo" src="https://raw.githubusercontent.com/Delgan/loguru/master/docs/_static/img/logo.png">
+            <img alt="Loguru logo" src="https://raw.githubusercontent.com/Delgan/loguru/master/docs/_static/img/logo.png">
             <!-- Logo credits: Sambeet from Pixaday -->
             <!-- Logo fonts: Comfortaa + Raleway -->
         </a>
@@ -18,7 +18,7 @@
     </p>
     <p align="center">
         <a href="#readme">
-            <img height=300 alt="Loguru logo" src="https://raw.githubusercontent.com/Delgan/loguru/master/docs/_static/img/demo.gif">
+            <img alt="Loguru logo" src="https://raw.githubusercontent.com/Delgan/loguru/master/docs/_static/img/demo.gif">
         </a>
     </p>
 
@@ -71,8 +71,8 @@ Take the tour
 .. |logger| replace:: ``logger``
 .. _logger: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger
 
-.. |start| replace:: ``start()``
-.. _start: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.start
+.. |add| replace:: ``add()``
+.. _add: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.add
 
 .. |catch| replace:: ``catch()``
 .. _catch: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.catch
@@ -136,11 +136,11 @@ No Handler, no Formatter, no Filter: one function to rule them all
 
 How to add an handler? How to setup logs formatting? How to filter messages? How to set level?
 
-One answer: the |start|_ function.
+One answer: the |add|_ function.
 
 ::
 
-    logger.start(sys.stderr, format="{time} {level} {message}", filter="my_module", level="INFO")
+    logger.add(sys.stderr, format="{time} {level} {message}", filter="my_module", level="INFO")
 
 This function should be used to register sinks_ which are responsible of managing `log messages`_ contextualized with a `record dict`_. A sink can take many forms: a simple function, a string path, a file-like object, a built-in Handler or a custom class.
 
@@ -150,19 +150,19 @@ Easier file logging with rotation / retention / compression
 
 If you want to send logged messages to a file, you just have to use a string path as the sink. It can be automatically timed too for convenience::
 
-    logger.start("file_{time}.log")
+    logger.add("file_{time}.log")
 
 It is also `easily configurable`_ if you need rotating logger, if you want to remove older logs, or if you wish to compress your files at closure.
 
 ::
 
-    logger.start("file_1.log", rotation="500 MB")    # Automatically rotate too big file
-    logger.start("file_2.log", rotation="12:00")     # New file is created each day at noon
-    logger.start("file_3.log", rotation="1 week")    # Once the file is too old, it's rotated
+    logger.add("file_1.log", rotation="500 MB")    # Automatically rotate too big file
+    logger.add("file_2.log", rotation="12:00")     # New file is created each day at noon
+    logger.add("file_3.log", rotation="1 week")    # Once the file is too old, it's rotated
 
-    logger.start("file_X.log", retention="10 days")  # Cleanup after some time
+    logger.add("file_X.log", retention="10 days")  # Cleanup after some time
 
-    logger.start("file_Y.log", compression="zip")    # Save some loved space
+    logger.add("file_Y.log", compression="zip")    # Save some loved space
 
 
 Modern string formatting using braces style
@@ -195,7 +195,7 @@ Pretty logging with colors
 
 ::
 
-    logger.start(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>")
+    logger.add(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>")
 
 
 Asynchronous, Thread-safe, Multiprocess-safe
@@ -205,7 +205,7 @@ All sinks added to the |logger|_ are thread-safe by default. They are not multip
 
 ::
 
-    logger.start("somefile.log", enqueue=True)
+    logger.add("somefile.log", enqueue=True)
 
 
 Fully descriptive exceptions
@@ -215,7 +215,7 @@ Logging exceptions that occur in your code is important to track bugs, but it's 
 
 The code::
 
-    logger.start("output.log", backtrace=True)  # Set 'False' to avoid leaking sensitive data in prod
+    logger.add("output.log", backtrace=True)  # Set 'False' to avoid leaking sensitive data in prod
 
     def func(a, b):
         return a / b
@@ -259,13 +259,13 @@ Want your logs to be serialized for easier parsing or to pass them around? Using
 
 ::
 
-    logger.start(custom_sink_function, serialize=True)
+    logger.add(custom_sink_function, serialize=True)
 
 Using |bind|_ you can contextualize your logger messages by modifying the `extra` record attribute.
 
 ::
 
-    logger.start("file.log", format="{extra[ip]} {extra[user]} {message}")
+    logger.add("file.log", format="{extra[ip]} {extra[user]} {message}")
     logger_ctx = logger.bind(ip="192.168.0.1", user="someone")
     logger_ctx.info("Contextualize your logger easily")
     logger_ctx.bind(user="someoneelse").info("Inline binding of extra attribute")
@@ -287,6 +287,7 @@ Sometime you would like to log verbose information without performance penalty i
     logger.opt(raw=True).info("Bypass sink formatting\n")
     logger.opt(depth=1).info("Use parent stack context (useful within wrapped functions)")
 
+
 Customizable levels
 ^^^^^^^^^^^^^^^^^^^
 
@@ -294,7 +295,7 @@ Customizable levels
 
 ::
 
-    new_level = logger.level("SNAKY", no=8, color="<yellow>", icon="🐍")
+    new_level = logger.level("SNAKY", no=38, color="<yellow>", icon="🐍")
 
     logger.log("SNAKY", "Here we go!")
 
@@ -306,13 +307,13 @@ The standard logging is bloated with arguments like ``datefmt`` or ``msecs``, ``
 
 ::
 
-    logger.start("file.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}")
+    logger.add("file.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}")
 
 
 Suitable for scripts and libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Using the logger in your scripts is easy, and you can |configure|_ it at start. To use `Loguru` from inside a libary, remember to never call |start|_ but use |disable|_ instead so logging functions become no-op. If a developer wishes to see your library's logs, he can |enable|_ it again.
+Using the logger in your scripts is easy, and you can |configure|_ it at start. To use `Loguru` from inside a libary, remember to never call |add|_ but use |disable|_ instead so logging functions become no-op. If a developer wishes to see your library's logs, he can |enable|_ it again.
 
 ::
 
@@ -328,7 +329,7 @@ Using the logger in your scripts is easy, and you can |configure|_ it at start. 
 
     # For libraries
     logger.disable("my_library")
-    logger.info("No matter started sinks, this message is not displayed")
+    logger.info("No matter added sinks, this message is not displayed")
     logger.enable("my_library")
     logger.info("This message however is propagated to the sinks")
 
@@ -341,7 +342,7 @@ Wish to use built-in logging ``Handler`` as a `Loguru` sink?
 ::
 
     handler = logging.handlers.SysLogHandler(address=('localhost', 514))
-    logger.start(handler)
+    logger.add(handler)
 
 Need to propagate `Loguru` messages to standard `logging`?
 
@@ -351,7 +352,7 @@ Need to propagate `Loguru` messages to standard `logging`?
         def emit(self, record):
             logging.getLogger(record.name).handle(record)
 
-    logger.start(PropagateHandler())
+    logger.add(PropagateHandler(), format="{message}")
 
 Want to intercept standard `logging` messages toward your `Loguru` sinks?
 
@@ -374,7 +375,7 @@ Don't like the default logger formatting? Would prefer another ``DEBUG`` color? 
     export LOGURU_FORMAT="{time} | <lvl>{message}</lvl>"
 
     # Windows
-    setx LOGURU_DEBUG_COLOR="<green>"
+    setx LOGURU_DEBUG_COLOR "<green>"
 
 
 Convenient parser
@@ -401,15 +402,21 @@ Exhaustive notifier
 
     import notifiers
 
-    def send_mail(message):
-        g = notifiers.get_notifier('gmail')
-        g.notify(message=message, to="dest@gmail.com", username="you@gmail.com", password="abc123")
+    params = {
+        "username": "you@gmail.com",
+        "password": "abc123",
+        "to": "dest@gmail.com"
+    }
 
-    # Send a notification
-    send_mail("The application is running!")
+    # Send a single notification
+    notifier = notifiers.get_notifier("gmail")
+    notifier.notify(message="The application is running!", **params)
 
-    # Be alerted on each error messages
-    logger.start(send_mail, level="ERROR")
+    # Be alerted on each error message
+    from notifiers.logging import NotificationHandler
+
+    handler = NotificationHandler("gmail", defaults=params)
+    logger.add(handler, level="ERROR")
 
 
 |strike|
@@ -436,7 +443,7 @@ Although logging impact on performances is in most cases negligeable, a zero-cos
 Project information
 -------------------
 
-* `API Reference <https://loguru.readthedocs.io/en/stable/api.html>`_
+* `Documentation <https://loguru.readthedocs.io/en/stable/api/logger.html>`_
 * `Contributing <https://github.com/Delgan/loguru/blob/master/CONTRIBUTING.rst>`_
 * `License <https://github.com/Delgan/loguru/blob/master/LICENSE>`_
 * `Changelog <https://github.com/Delgan/loguru/blob/master/CHANGELOG.rst>`_
