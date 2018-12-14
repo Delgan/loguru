@@ -107,7 +107,7 @@ class Handler:
     @staticmethod
     @functools.lru_cache(maxsize=32)
     def colorize_format(format_, color):
-        am = Handler.make_ansimarkup(color)
+        am = Handler.make_ansimarkup(color.strip())
         return am.parse(format_)
 
     def update_format(self, color):

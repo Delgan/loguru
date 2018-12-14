@@ -38,7 +38,7 @@ class Stream:
 )
 def test_level(level, function, should_output, writer):
     message = "Test Level"
-    logger.start(writer, level=level, format="{message}")
+    logger.add(writer, level=level, format="{message}")
     function(logger)(message)
     assert writer.read() == (message + "\n") * should_output
 
@@ -55,7 +55,7 @@ def test_level(level, function, should_output, writer):
     ],
 )
 def test_format(message, format, expected, writer):
-    logger.start(writer, format=format)
+    logger.add(writer, format=format)
     logger.debug(message)
     assert writer.read() == expected
 
@@ -67,7 +67,7 @@ def test_progressive_format(writer):
             fmt += "\n"
         return fmt
 
-    logger.start(writer, format=formatter)
+    logger.add(writer, format=formatter)
     logger.bind(noend=True).debug("Start: ")
     for _ in range(5):
         logger.opt(raw=True).debug(".")
@@ -77,7 +77,7 @@ def test_progressive_format(writer):
 
 
 def test_function_format_without_exception(writer):
-    logger.start(writer, format=lambda _: "{message}\n")
+    logger.add(writer, format=lambda _: "{message}\n")
     try:
         1 / 0
     except ZeroDivisionError:
@@ -86,7 +86,7 @@ def test_function_format_without_exception(writer):
 
 
 def test_function_format_with_exception(writer):
-    logger.start(writer, format=lambda _: "{message}\n{exception}")
+    logger.add(writer, format=lambda _: "{message}\n{exception}")
     try:
         1 / 0
     except ZeroDivisionError:
@@ -105,9 +105,9 @@ def test_function_format_with_exception(writer):
         ("test", False),
         ("testss", False),
         ("tests.", False),
-        ("tests.test_start_options", True),
-        ("tests.test_start_options.", False),
-        ("test_start_options", False),
+        ("tests.test_add_options", True),
+        ("tests.test_add_options.", False),
+        ("test_add_options", False),
         (".", False),
         (lambda r: True, True),
         (lambda r: False, False),
@@ -117,7 +117,7 @@ def test_function_format_with_exception(writer):
 )
 def test_filter(filter, should_output, writer):
     message = "Test Filter"
-    logger.start(writer, filter=filter, format="{message}")
+    logger.add(writer, filter=filter, format="{message}")
     logger.debug(message)
     assert writer.read() == (message + "\n") * should_output
 
@@ -133,7 +133,7 @@ def test_filter(filter, should_output, writer):
     ],
 )
 def test_colorize(message, format, expected, colorize, writer):
-    logger.start(writer, format=format, colorize=colorize)
+    logger.add(writer, format=format, colorize=colorize)
     logger.debug(message)
     assert writer.read() == expected
 
@@ -145,7 +145,7 @@ def test_colorize_stream_linux(monkeypatch, colorize, tty):
     monkeypatch.setattr(colorama.AnsiToWin32, "should_wrap", lambda _: False)
     monkeypatch.setattr(colorama.AnsiToWin32, "write", mock)
     stream = Stream(tty)
-    logger.start(stream, format="<red>{message}</red>", colorize=colorize)
+    logger.add(stream, format="<red>{message}</red>", colorize=colorize)
     logger.debug("Message")
     out = stream.out
 
@@ -164,7 +164,7 @@ def test_auto_colorize_stream_windows(monkeypatch, colorize, tty):
     monkeypatch.setattr(colorama.AnsiToWin32, "should_wrap", lambda _: True)
     monkeypatch.setattr(colorama.AnsiToWin32, "write", mock)
     stream = Stream(tty)
-    logger.start(stream, format="<blue>{message}</blue>", colorize=colorize)
+    logger.add(stream, format="<blue>{message}</blue>", colorize=colorize)
     logger.debug("Message")
 
     if colorize or (colorize is None and tty):
@@ -182,7 +182,7 @@ def test_auto_colorize_bugged_stream(monkeypatch, colorize, tty):
     mock = MagicMock()
     monkeypatch.setattr(colorama.AnsiToWin32, "__init__", bugged)
     stream = Stream(tty)
-    logger.start(stream, format="<green>{message}</green>", colorize=colorize)
+    logger.add(stream, format="<green>{message}</green>", colorize=colorize)
     monkeypatch.setattr(colorama.AnsiToWin32, "write", mock)
     logger.debug("No error")
     out = stream.out
@@ -196,17 +196,17 @@ def test_auto_colorize_bugged_stream(monkeypatch, colorize, tty):
 
 
 def test_backtrace(writer):
-    logger.start(writer, format="{message}", backtrace=True)
+    logger.add(writer, format="{message}", backtrace=True)
     try:
         1 / 0
     except:
         logger.exception("")
     result_with = writer.read().strip()
 
-    logger.stop()
+    logger.remove()
     writer.clear()
 
-    logger.start(writer, format="{message}", backtrace=False)
+    logger.add(writer, format="{message}", backtrace=False)
     try:
         1 / 0
     except:
@@ -226,7 +226,7 @@ def test_serialize(with_exception):
         record_json = json.loads(message)["record"]
 
     logger.configure(extra=dict(not_serializable=object()))
-    logger.start(sink, format="{message}", catch=False, serialize=True)
+    logger.add(sink, format="{message}", catch=False, serialize=True)
     if not with_exception:
         logger.debug("Test")
     else:
@@ -248,7 +248,7 @@ def test_enqueue(with_exception):
         time.sleep(0.1)
         x.append(message)
 
-    logger.start(sink, format="{message}", enqueue=True)
+    logger.add(sink, format="{message}", enqueue=True)
     if not with_exception:
         logger.debug("Test")
     else:
@@ -269,7 +269,7 @@ def test_catch():
     def sink(msg):
         raise 1 / 0
 
-    logger.start(sink, catch=False)
+    logger.add(sink, catch=False)
     with pytest.raises(ZeroDivisionError):
         logger.debug("fail")
 
@@ -280,7 +280,7 @@ def test_function_with_kwargs():
     def function(message, kw2, kw1):
         out.append(message + kw1 + "a" + kw2)
 
-    logger.start(function, format="{message}", kw1="1", kw2="2")
+    logger.add(function, format="{message}", kw1="1", kw2="2")
     logger.debug("msg")
     assert out == ["msg\n1a2"]
 
@@ -295,7 +295,7 @@ def test_class_with_kwargs():
         def write(self, m):
             out.append(m + self.end)
 
-    logger.start(Writer, format="{message}", kw1="1", kw2="2")
+    logger.add(Writer, format="{message}", kw1="1", kw2="2")
     logger.debug("msg")
     assert out == ["msg\n1b2"]
 
@@ -309,7 +309,7 @@ def test_file_object_with_kwargs():
             self.out += m + kw1 + "c" + kw2
 
     writer = Writer()
-    logger.start(writer, format="{message}", kw1="1", kw2="2")
+    logger.add(writer, format="{message}", kw1="1", kw2="2")
     logger.debug("msg")
     assert writer.out == "msg\n1c2"
 
@@ -317,7 +317,7 @@ def test_file_object_with_kwargs():
 def test_file_mode_a(tmpdir):
     file = tmpdir.join("test.log")
     file.write("base\n")
-    logger.start(file.realpath(), format="{message}", mode="a")
+    logger.add(file.realpath(), format="{message}", mode="a")
     logger.debug("msg")
     assert file.read() == "base\nmsg\n"
 
@@ -325,14 +325,14 @@ def test_file_mode_a(tmpdir):
 def test_file_mode_w(tmpdir):
     file = tmpdir.join("test.log")
     file.write("base\n")
-    logger.start(file.realpath(), format="{message}", mode="w")
+    logger.add(file.realpath(), format="{message}", mode="w")
     logger.debug("msg")
     assert file.read() == "msg\n"
 
 
 def test_file_buffering(tmpdir):
     file = tmpdir.join("test.log")
-    logger.start(file.realpath(), format="{message}", buffering=-1)
+    logger.add(file.realpath(), format="{message}", buffering=-1)
     logger.debug("x" * (io.DEFAULT_BUFFER_SIZE // 2))
     assert file.read() == ""
     logger.debug("x" * (io.DEFAULT_BUFFER_SIZE * 2))
@@ -341,7 +341,7 @@ def test_file_buffering(tmpdir):
 
 def test_file_not_delayed(tmpdir):
     file = tmpdir.join("test.log")
-    logger.start(file.realpath(), format="{message}", delay=False)
+    logger.add(file.realpath(), format="{message}", delay=False)
     assert file.check(exists=1)
     assert file.read() == ""
     logger.debug("Not delayed")
@@ -350,7 +350,7 @@ def test_file_not_delayed(tmpdir):
 
 def test_file_delayed(tmpdir):
     file = tmpdir.join("test.log")
-    logger.start(file.realpath(), format="{message}", delay=True)
+    logger.add(file.realpath(), format="{message}", delay=True)
     assert file.check(exists=0)
     logger.debug("Delayed")
     assert file.read() == "Delayed\n"
@@ -360,7 +360,7 @@ def test_invalid_function_kwargs():
     def function(message, a="Y"):
         pass
 
-    logger.start(function, b="X", catch=False)
+    logger.add(function, b="X", catch=False)
     with pytest.raises(TypeError):
         logger.debug("Nope")
 
@@ -370,7 +370,7 @@ def test_invalid_class_kwargs():
         pass
 
     with pytest.raises(TypeError):
-        logger.start(Writer, keyword=123)
+        logger.add(Writer, keyword=123)
 
 
 def test_invalid_file_object_kwargs():
@@ -382,29 +382,29 @@ def test_invalid_file_object_kwargs():
             pass
 
     writer = Writer()
-    logger.start(writer, format="{message}", kw1="1", kw2="2", catch=False)
+    logger.add(writer, format="{message}", kw1="1", kw2="2", catch=False)
     with pytest.raises(TypeError):
         logger.debug("msg")
 
 
 def test_invalid_file_kwargs():
     with pytest.raises(TypeError):
-        logger.start("file.log", nope=123)
+        logger.add("file.log", nope=123)
 
 
 @pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
 def test_invalid_level(writer, level):
     with pytest.raises(ValueError):
-        logger.start(writer, level=level)
+        logger.add(writer, level=level)
 
 
 @pytest.mark.parametrize("format", [-1, 3.4, object()])
 def test_invalid_format(writer, format):
     with pytest.raises(ValueError):
-        logger.start(writer, format=format)
+        logger.add(writer, format=format)
 
 
 @pytest.mark.parametrize("filter", [-1, 3.4, object()])
 def test_invalid_filter(writer, filter):
     with pytest.raises(ValueError):
-        logger.start(writer, filter=filter)
+        logger.add(writer, filter=filter)
