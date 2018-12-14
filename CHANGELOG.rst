@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Fix incompatibility with ``awscli`` by downgrading required ``colorama`` dependency version (`#12 <https://github.com/Delgan/loguru/issues/12>`_)
+
+
 0.2.2 (2018-12-12)
 ==================
 
