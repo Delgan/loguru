@@ -762,6 +762,11 @@ class Logger:
             The id of the sink to remove, as it was returned by the |add| method. If ``None``, all
             handlers are removed. The pre-configured handler is guaranteed to have the index ``0``.
 
+        Raises
+        ------
+        ValueError
+            If ``handler_id`` is not ``None`` but there is no active handler with such id.
+
         Examples
         --------
         >>> i = logger.add(sys.stderr, format="{message}")
