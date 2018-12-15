@@ -8,7 +8,7 @@ from loguru import logger
     "compression", ["gz", "bz2", "zip", "xz", "lzma", "tar", "tar.gz", "tar.bz2", "tar.xz"]
 )
 def test_compression_ext(tmpdir, compression):
-    i = logger.add(tmpdir.join("file.log"), compression=compression)
+    i = logger.add(str(tmpdir.join("file.log")), compression=compression)
     logger.remove(i)
 
     assert len(tmpdir.listdir()) == 1
@@ -16,7 +16,7 @@ def test_compression_ext(tmpdir, compression):
 
 
 def test_delayed(tmpdir):
-    i = logger.add(tmpdir.join("file.log"), compression="gz", delay=True)
+    i = logger.add(str(tmpdir.join("file.log")), compression="gz", delay=True)
     logger.debug("a")
     logger.remove(i)
 
@@ -25,7 +25,7 @@ def test_delayed(tmpdir):
 
 
 def test_delayed_early_remove(tmpdir):
-    i = logger.add(tmpdir.join("file.log"), compression="gz", delay=True)
+    i = logger.add(str(tmpdir.join("file.log")), compression="gz", delay=True)
     logger.remove(i)
     assert len(tmpdir.listdir()) == 0
 
@@ -34,7 +34,7 @@ def test_compression_function(tmpdir):
     def compress(file):
         os.replace(file, file + ".rar")
 
-    i = logger.add(tmpdir.join("file.log"), compression=compress)
+    i = logger.add(str(tmpdir.join("file.log")), compression=compress)
     logger.remove(i)
 
     assert len(tmpdir.listdir()) == 1
@@ -43,7 +43,7 @@ def test_compression_function(tmpdir):
 
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
 def test_compression_at_rotation(tmpdir, mode):
-    i = logger.add(tmpdir.join("file.log"), rotation=0, compression="gz", mode=mode)
+    i = logger.add(str(tmpdir.join("file.log")), rotation=0, compression="gz", mode=mode)
     logger.debug("test")
 
     assert len(tmpdir.listdir()) == 2
@@ -53,7 +53,7 @@ def test_compression_at_rotation(tmpdir, mode):
 
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
 def test_compression_at_remove_without_rotation(tmpdir, mode):
-    i = logger.add(tmpdir.join("file.log"), compression="gz", mode=mode)
+    i = logger.add(str(tmpdir.join("file.log")), compression="gz", mode=mode)
     logger.debug("test")
     logger.remove(i)
 
@@ -63,7 +63,7 @@ def test_compression_at_remove_without_rotation(tmpdir, mode):
 
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
 def test_no_compression_at_remove_with_rotation(tmpdir, mode):
-    i = logger.add(tmpdir.join("test.log"), compression="gz", rotation="100 MB", mode=mode)
+    i = logger.add(str(tmpdir.join("test.log")), compression="gz", rotation="100 MB", mode=mode)
     logger.debug("test")
     logger.remove(i)
 
@@ -73,10 +73,10 @@ def test_no_compression_at_remove_with_rotation(tmpdir, mode):
 
 def test_rename_existing_before_compression(monkeypatch_date, tmpdir):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
-    i = logger.add(tmpdir.join("test.log"), compression="tar.gz")
+    i = logger.add(str(tmpdir.join("test.log")), compression="tar.gz")
     logger.debug("test")
     logger.remove(i)
-    j = logger.add(tmpdir.join("test.log"), compression="tar.gz")
+    j = logger.add(str(tmpdir.join("test.log")), compression="tar.gz")
     logger.debug("test")
     logger.remove(j)
     assert len(tmpdir.listdir()) == 2

@@ -5,7 +5,6 @@ import logging
 from loguru import logger
 import pytest
 
-
 message = "test message"
 expected = message + "\n"
 
@@ -49,8 +48,7 @@ def test_devnull(rep):
 )
 def test_file_sink(rep, sink_from_path, tmpdir):
     file = tmpdir.join("test.log")
-    path = file.realpath()
-    sink = sink_from_path(path)
+    sink = sink_from_path(str(file))
     log(sink, rep)
     assert file.read() == expected * rep
 
@@ -58,7 +56,7 @@ def test_file_sink(rep, sink_from_path, tmpdir):
 @repetitions
 def test_file_sink_folder_creation(rep, tmpdir):
     file = tmpdir.join("some", "sub", "folder", "not", "existing", "test.log")
-    log(file.realpath(), rep)
+    log(str(file), rep)
     assert file.read() == expected * rep
 
 
@@ -132,10 +130,12 @@ def test_invalid_sink(sink):
 
 
 def test_deprecated_start_and_stop(writer):
-    i = logger.start(writer, format="{message}")
+    with pytest.warns(DeprecationWarning):
+        i = logger.start(writer, format="{message}")
     logger.debug("Test")
     assert writer.read() == "Test\n"
     writer.clear()
-    logger.stop(i)
+    with pytest.warns(DeprecationWarning):
+        logger.stop(i)
     logger.debug("Test")
     assert writer.read() == ""

@@ -5,7 +5,7 @@ from loguru import logger
 
 
 def test_renaming(monkeypatch_date, tmpdir):
-    i = logger.add(tmpdir.join("file.log"), rotation=0, format="{message}")
+    i = logger.add(str(tmpdir.join("file.log")), rotation=0, format="{message}")
 
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
     logger.debug("a")
@@ -21,7 +21,7 @@ def test_renaming(monkeypatch_date, tmpdir):
 
 def test_no_renaming(monkeypatch_date, tmpdir):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
-    i = logger.add(tmpdir.join("file_{time}.log"), rotation=0, format="{message}")
+    i = logger.add(str(tmpdir.join("file_{time}.log")), rotation=0, format="{message}")
 
     monkeypatch_date(2019, 1, 1, 0, 0, 0, 0)
     logger.debug("a")
@@ -37,7 +37,7 @@ def test_no_renaming(monkeypatch_date, tmpdir):
 
 def test_delayed(monkeypatch_date, tmpdir):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
-    i = logger.add(tmpdir.join("file.log"), rotation=0, delay=True, format="{message}")
+    i = logger.add(str(tmpdir.join("file.log")), rotation=0, delay=True, format="{message}")
     logger.debug("a")
     logger.remove(i)
 
@@ -48,7 +48,7 @@ def test_delayed(monkeypatch_date, tmpdir):
 
 def test_delayed_early_remove(monkeypatch_date, tmpdir):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
-    i = logger.add(tmpdir.join("file.log"), rotation=0, delay=True, format="{message}")
+    i = logger.add(str(tmpdir.join("file.log")), rotation=0, delay=True, format="{message}")
     logger.remove(i)
 
     assert len(tmpdir.listdir()) == 0
@@ -59,7 +59,7 @@ def test_size_rotation(monkeypatch_date, tmpdir, size):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
 
     file = tmpdir.join("test_{time}.log")
-    i = logger.add(file.realpath(), format="{message}", rotation=size, mode="w")
+    i = logger.add(str(file), format="{message}", rotation=size, mode="w")
 
     monkeypatch_date(2018, 1, 1, 0, 0, 1, 0)
     logger.debug("abcde")
@@ -125,9 +125,7 @@ def test_time_rotation(monkeypatch_date, tmpdir, when, hours):
         now.year, now.month, now.day, now.hour, now.minute, now.second, now.microsecond
     )
 
-    i = logger.add(
-        tmpdir.join("test_{time}.log").realpath(), format="{message}", rotation=when, mode="w"
-    )
+    i = logger.add(str(tmpdir.join("test_{time}.log")), format="{message}", rotation=when, mode="w")
 
     from loguru._datetime import now as nownow
 
@@ -145,7 +143,7 @@ def test_time_rotation(monkeypatch_date, tmpdir, when, hours):
 
 def test_time_rotation_dst(monkeypatch_date, tmpdir):
     monkeypatch_date(2018, 10, 27, 5, 0, 0, 0, "CET", 3600)
-    i = logger.add(tmpdir.join("test_{time}.log").realpath(), format="{message}", rotation="1 day")
+    i = logger.add(str(tmpdir.join("test_{time}.log")), format="{message}", rotation="1 day")
     logger.debug("First")
 
     monkeypatch_date(2018, 10, 28, 5, 30, 0, 0, "CEST", 7200)
@@ -164,7 +162,9 @@ def test_time_rotation_dst(monkeypatch_date, tmpdir):
 def test_function_rotation(monkeypatch_date, tmpdir):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
     x = iter([False, True, False])
-    i = logger.add(tmpdir.join("test_{time}.log"), rotation=lambda *_: next(x), format="{message}")
+    i = logger.add(
+        str(tmpdir.join("test_{time}.log")), rotation=lambda *_: next(x), format="{message}"
+    )
     logger.debug("a")
     assert tmpdir.join("test_2018-01-01_00-00-00_000000.log").read() == "a\n"
 
@@ -184,7 +184,7 @@ def test_function_rotation(monkeypatch_date, tmpdir):
 def test_rotation_at_remove(monkeypatch_date, tmpdir, mode):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
     i = logger.add(
-        tmpdir.join("test_{time:YYYY}.log"), rotation="10 MB", mode=mode, format="{message}"
+        str(tmpdir.join("test_{time:YYYY}.log")), rotation="10 MB", mode=mode, format="{message}"
     )
     logger.debug("test")
     logger.remove(i)
@@ -195,7 +195,7 @@ def test_rotation_at_remove(monkeypatch_date, tmpdir, mode):
 
 @pytest.mark.parametrize("mode", ["a", "a+"])
 def test_no_rotation_at_remove(tmpdir, mode):
-    i = logger.add(tmpdir.join("test.log"), rotation="10 MB", mode=mode, format="{message}")
+    i = logger.add(str(tmpdir.join("test.log")), rotation="10 MB", mode=mode, format="{message}")
     logger.debug("test")
     logger.remove(i)
 

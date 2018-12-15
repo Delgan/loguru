@@ -19,7 +19,7 @@ def test_stream_handler(capsys):
 
 def test_file_handler(tmpdir):
     file = tmpdir.join("test.log")
-    logger.add(FileHandler(file), format="{message} {level.name}")
+    logger.add(FileHandler(str(file)), format="{message} {level.name}")
     logger.info("test")
     logger.remove()
     logger.warning("nope")
@@ -39,7 +39,7 @@ def test_null_handler(capsys):
 
 def test_exception(tmpdir):
     file = tmpdir.join("test.log")
-    logger.add(FileHandler(file), format="{message}")
+    logger.add(FileHandler(str(file)), format="{message}")
 
     try:
         1 / 0

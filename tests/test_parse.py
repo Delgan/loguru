@@ -19,21 +19,21 @@ def fileobj():
 def test_parse_file(tmpdir):
     file = tmpdir.join("test.log")
     file.write(TEXT)
-    result, *_ = list(logger.parse(file.realpath(), r"(?P<num>\d+)"))
+    result, *_ = list(logger.parse(str(file), r"(?P<num>\d+)"))
     assert result == dict(num="123456789")
 
 
 def test_parse_fileobj(tmpdir):
     file = tmpdir.join("test.log")
     file.write(TEXT)
-    result, *_ = list(logger.parse(open(file.realpath()), r"^(?P<t>\w+)"))
+    result, *_ = list(logger.parse(open(str(file)), r"^(?P<t>\w+)"))
     assert result == dict(t="This")
 
 
 def test_parse_pathlib(tmpdir):
     file = tmpdir.join("test.log")
     file.write(TEXT)
-    result, *_ = list(logger.parse(pathlib.Path(file.realpath()), r"(?P<r>Random)"))
+    result, *_ = list(logger.parse(pathlib.Path(str(file)), r"(?P<r>Random)"))
     assert result == dict(r="Random")
 
 
@@ -91,7 +91,7 @@ def test_cast_dict(tmpdir):
     file.write("[123] [1.1] [2017-03-29 11:11:11]\n")
     regex = r"\[(?P<num>.*)\] \[(?P<val>.*)\] \[(?P<date>.*)\]"
     caster = dict(num=int, val=float, date=lambda d: datetime.strptime(d, "%Y-%m-%d %H:%M:%S"))
-    result = next(logger.parse(file, regex, cast=caster))
+    result = next(logger.parse(str(file), regex, cast=caster))
     assert result == dict(num=123, val=1.1, date=datetime(2017, 3, 29, 11, 11, 11))
 
 
@@ -105,7 +105,7 @@ def test_cast_function(tmpdir):
         groups["val"] = float(groups["val"])
         groups["date"] = datetime.strptime(groups["date"], "%Y-%m-%d %H:%M:%S")
 
-    result = next(logger.parse(file, regex, cast=caster))
+    result = next(logger.parse(str(file), regex, cast=caster))
     assert result == dict(num=123, val=1.1, date=datetime(2017, 3, 29, 11, 11, 11))
 
 
@@ -114,7 +114,7 @@ def test_cast_with_irrelevant_arg(tmpdir):
     file.write("[123] Blabla")
     regex = r"\[(?P<a>\d+)\] .*"
     caster = dict(a=int, b=float)
-    result = next(logger.parse(file, regex, cast=caster))
+    result = next(logger.parse(str(file), regex, cast=caster))
     assert result == dict(a=123)
 
 
@@ -123,7 +123,7 @@ def test_cast_with_irrelevant_value(tmpdir):
     file.write("[123] Blabla")
     regex = r"\[(?P<a>\d+)\] (?P<b>.*)"
     caster = dict(a=int)
-    result = next(logger.parse(file, regex, cast=caster))
+    result = next(logger.parse(str(file), regex, cast=caster))
     assert result == dict(a=123, b="Blabla")
 
 

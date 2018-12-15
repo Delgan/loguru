@@ -65,9 +65,9 @@ class datetime(datetime_):
 
         def get(m):
             try:
-                return rep[m[0]]
+                return rep[m.group(0)]
             except KeyError:
-                return m[0][1:-1]
+                return m.group(0)[1:-1]
 
         return pattern.sub(get, spec)
 

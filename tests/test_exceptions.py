@@ -427,7 +427,7 @@ def test_postprocess_colorize(writer, pyexec, tmpdir):
     with logger.catch():
         f()
     """ % str(
-        file.realpath()
+        file
     )
 
     code = textwrap.dedent(code)
@@ -509,12 +509,22 @@ def test_frame_values_forward(writer):
     assert next(line_4).endswith(" 2")
 
 
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="Require Python < 3.6")
 def test_no_exception(writer):
     logger.add(writer, backtrace=False, colorize=False, format="{message}")
 
     logger.exception("No Error.")
 
     assert writer.read() == "No Error.\nNoneType: None\n"
+
+
+@pytest.mark.skipif(sys.version_info > (3, 5), reason="Require Python > 3.5")
+def test_no_exception(writer):
+    logger.add(writer, backtrace=False, colorize=False, format="{message}")
+
+    logger.exception("No Error.")
+
+    assert writer.read() == "No Error.\nNoneType\n"
 
 
 def test_enqueue_exception(writer):

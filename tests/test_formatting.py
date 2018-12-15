@@ -62,7 +62,7 @@ def test_file_formatters(tmpdir, format, validator, part):
     elif part == "both":
         file = tmpdir.join(format, format)
 
-    logger.add(file.realpath())
+    logger.add(str(file))
     logger.debug("Message")
 
     files = [f for f in tmpdir.visit() if f.check(file=1)]

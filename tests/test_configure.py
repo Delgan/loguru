@@ -7,7 +7,7 @@ def test_handlers(capsys, tmpdir):
     file = tmpdir.join("test.log")
 
     handlers = [
-        {"sink": file.realpath(), "format": "FileSink: {message}"},
+        {"sink": str(file), "format": "FileSink: {message}"},
         {"sink": sys.stdout, "format": "StdoutSink: {message}"},
     ]
 

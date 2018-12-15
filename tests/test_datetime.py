@@ -14,7 +14,7 @@ def format_tester(request, writer, tmpdir):
         return result
 
     def test_file(fmt):
-        logger.add(tmpdir.join(fmt))
+        logger.add(str(tmpdir.join(fmt)))
         logger.debug("X")
         files = tmpdir.listdir()
         assert len(files) == 1

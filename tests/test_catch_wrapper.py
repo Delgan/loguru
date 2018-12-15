@@ -293,7 +293,7 @@ def test_formatting(tmpdir, pyexec, wrap_mode, format, expected_dec, expected_ct
     {post}
     myfunc()
     """
-    code = code.format(logfile=str(logfile.realpath()), fmt=format, catch=catch, ctx=ctx, post=post)
+    code = code.format(logfile=str(logfile), fmt=format, catch=catch, ctx=ctx, post=post)
     code = textwrap.dedent(code).strip()
 
     pyfile.write(code)

@@ -10,7 +10,7 @@ def test_remove_all(tmpdir, writer, capsys):
 
     logger.debug("This shouldn't be printed.")
 
-    logger.add(file.realpath(), format="{message}")
+    logger.add(str(file), format="{message}")
     logger.add(sys.stdout, format="{message}")
     logger.add(sys.stderr, format="{message}")
     logger.add(writer, format="{message}")
@@ -50,10 +50,11 @@ def test_remove_enqueue(writer):
 
 
 def test_remove_enqueue_filesink(tmpdir):
-    i = logger.add(tmpdir.join("test.log"), format="{message}", enqueue=True)
+    file = tmpdir.join("test.log")
+    i = logger.add(str(file), format="{message}", enqueue=True)
     logger.debug("1")
     logger.remove(i)
-    assert tmpdir.join("test.log").read() == "1\n"
+    assert file.read() == "1\n"
 
 
 @pytest.mark.parametrize("enqueue", [True, False])

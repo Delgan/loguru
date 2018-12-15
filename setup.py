@@ -33,6 +33,7 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: Implementation :: CPython",
@@ -44,15 +45,14 @@ setup(
     ],
     extras_require={
         "dev": [
-            "black>=18.6b4",
             "coveralls>=1.3.0",
             "isort>=4.3.4",
-            "pytest>=3.5.0",
+            "pytest>=3.9.0",
             "pytest-cov>=2.5.1",
             "Sphinx>=1.7.4",
             "sphinx-autobuild>=0.7",
             "sphinx-rtd-theme>=0.3",
         ]
     },
-    python_requires=">=3.6",
+    python_requires=">=3.5",
 )

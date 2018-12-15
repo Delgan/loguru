@@ -317,7 +317,7 @@ def test_file_object_with_kwargs():
 def test_file_mode_a(tmpdir):
     file = tmpdir.join("test.log")
     file.write("base\n")
-    logger.add(file.realpath(), format="{message}", mode="a")
+    logger.add(str(file), format="{message}", mode="a")
     logger.debug("msg")
     assert file.read() == "base\nmsg\n"
 
@@ -325,14 +325,14 @@ def test_file_mode_a(tmpdir):
 def test_file_mode_w(tmpdir):
     file = tmpdir.join("test.log")
     file.write("base\n")
-    logger.add(file.realpath(), format="{message}", mode="w")
+    logger.add(str(file), format="{message}", mode="w")
     logger.debug("msg")
     assert file.read() == "msg\n"
 
 
 def test_file_buffering(tmpdir):
     file = tmpdir.join("test.log")
-    logger.add(file.realpath(), format="{message}", buffering=-1)
+    logger.add(str(file), format="{message}", buffering=-1)
     logger.debug("x" * (io.DEFAULT_BUFFER_SIZE // 2))
     assert file.read() == ""
     logger.debug("x" * (io.DEFAULT_BUFFER_SIZE * 2))
@@ -341,7 +341,7 @@ def test_file_buffering(tmpdir):
 
 def test_file_not_delayed(tmpdir):
     file = tmpdir.join("test.log")
-    logger.add(file.realpath(), format="{message}", delay=False)
+    logger.add(str(file), format="{message}", delay=False)
     assert file.check(exists=1)
     assert file.read() == ""
     logger.debug("Not delayed")
@@ -350,7 +350,7 @@ def test_file_not_delayed(tmpdir):
 
 def test_file_delayed(tmpdir):
     file = tmpdir.join("test.log")
-    logger.add(file.realpath(), format="{message}", delay=True)
+    logger.add(str(file), format="{message}", delay=True)
     assert file.check(exists=0)
     logger.debug("Delayed")
     assert file.read() == "Delayed\n"

@@ -7,7 +7,6 @@ import warnings
 from collections import namedtuple
 from inspect import isclass
 from multiprocessing import current_process
-from os import PathLike
 from os.path import basename, normcase, splitext
 from threading import current_thread
 
@@ -19,6 +18,12 @@ from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
 from ._recattrs import ExceptionRecattr, FileRecattr, LevelRecattr, ProcessRecattr, ThreadRecattr
+
+try:
+    from os import PathLike
+except ImportError:
+    from pathlib import PurePath as PathLike
+
 
 Level = namedtuple("Level", ["no", "color", "icon"])
 
