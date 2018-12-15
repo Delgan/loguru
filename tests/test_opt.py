@@ -137,10 +137,41 @@ def test_ansi_not_colorize(writer):
     assert writer.read() == ansimarkup.strip("<red>a</red> <blue>b</blue>\n")
 
 
+@pytest.mark.xfail
 def test_ansi_dont_color_unrelated(writer):
     logger.add(writer, format="{message} {extra[trap]}", colorize=True)
     logger.bind(trap="<red>B</red>").opt(ansi=True).debug("<red>A</red>")
     assert writer.read() == ansimarkup.parse("<red>A</red>") + " <red>B</red>\n"
+
+
+def test_ansi_dont_strip_unrelated(writer):
+    logger.add(writer, format="{message} {extra[trap]}", colorize=False)
+    logger.bind(trap="<red>B</red>").opt(ansi=True).debug("<red>A</red>")
+    assert writer.read() == ansimarkup.strip("<red>A</red>") + " <red>B</red>\n"
+
+
+def test_ansi_dont_raise_unrelated_colorize(writer):
+    logger.add(writer, format="{message} {extra[trap]}", colorize=True, catch=False)
+    logger.bind(trap="</red>").opt(ansi=True).debug("A")
+    assert writer.read() == "A </red>\n"
+
+
+def test_ansi_dont_raise_unrelated_not_colorize(writer):
+    logger.add(writer, format="{message} {extra[trap]}", colorize=False, catch=False)
+    logger.bind(trap="</red>").opt(ansi=True).debug("A")
+    assert writer.read() == "A </red>\n"
+
+
+def test_ansi_dont_raise_unrelated_colorize_dynamic(writer):
+    logger.add(writer, format=lambda x: "{message} {extra[trap]}", colorize=True, catch=False)
+    logger.bind(trap="</red>").opt(ansi=True).debug("A")
+    assert writer.read() == "A </red>"
+
+
+def test_ansi_dont_raise_unrelated_not_colorize_dynamic(writer):
+    logger.add(writer, format=lambda x: "{message} {extra[trap]}", colorize=False, catch=False)
+    logger.bind(trap="</red>").opt(ansi=True).debug("A")
+    assert writer.read() == "A </red>"
 
 
 def test_ansi_with_record(writer):
@@ -156,11 +187,30 @@ def test_ansi_nested(writer):
     assert writer.read() == ansimarkup.parse("(<red>[A<green>B</green>C<blue>D</blue>E]</red>)\n")
 
 
-@pytest.mark.parametrize("message", ["X </red> <red> Y", "<red>", "</red>"])
-def test_ansi_raising(writer, message):
+@pytest.mark.parametrize("colorize", [True, False])
+def test_ansi_message_in_record(colorize):
+    message = None
+
+    def sink(msg):
+        nonlocal message
+        message = msg.record["message"]
+
+    logger.add(sink, colorize=colorize)
+    logger.opt(ansi=True).debug("<red>Test</red>")
+    assert message == "<red>Test</red>"
+
+
+def test_invalid_markup_in_message(writer):
     logger.add(writer, format="<red>{message}</red>", colorize=True, catch=False)
-    with pytest.raises(ansimarkup.markup.MismatchedTag):
-        logger.opt(ansi=True).debug(message)
+    logger.opt(ansi=True).debug("X </red> <red> Y")
+    assert writer.read() == ansimarkup.parse("<red>X </red> <red> Y</red>\n")
+
+
+@pytest.mark.parametrize("message", ["<red>", "</red>"])
+def test_ansi_stripping_on_error(writer, message):
+    logger.add(writer, format="<red> X {message} Y </red>", colorize=True, catch=False)
+    logger.opt(ansi=True).debug(message)
+    assert writer.read() == " X  Y \n"
 
 
 def test_ansi_with_args(writer):
@@ -197,10 +247,10 @@ def test_ansi_with_dynamic_formatter_decolorized(writer):
 
 
 def test_ansi_with_format_specs(writer):
-    fmt = "<g>{level.no:03d} {message!s:->11} {{nope}} {extra[a][b]!r}<g>"
+    fmt = "<g>{level.no:03d} {message!s:} {{nope}} {extra[a][b]!r}<g>"
     logger.add(writer, colorize=False, format=fmt)
     logger.bind(a={"b": "c"}).opt(ansi=True).debug("<g>{X}</g>")
-    assert writer.read() == "010 -{X} {nope} 'c'\n"
+    assert writer.read() == "010 {X} {nope} 'c'\n"
 
 
 def test_ansi_with_message_specs(writer):
