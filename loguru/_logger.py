@@ -654,10 +654,10 @@ class Logger:
 
             def writer(m):
                 message = str(m)
-                if not is_formatter_dynamic:
-                    message = message[:-1]
                 r = m.record
                 exc = r["exception"]
+                if not is_formatter_dynamic:
+                    message = message[:-1]
                 record = logging.root.makeRecord(
                     r["name"],
                     r["level"].no,
@@ -665,11 +665,13 @@ class Logger:
                     r["line"],
                     message,
                     (),
-                    None,
+                    (exc.type, exc.value, exc.traceback) if exc else None,
                     r["function"],
                     r["extra"],
                     **kwargs
                 )
+                if exc:
+                    record.exc_text = "\n"
                 sink.handle(record)
 
             stopper = sink.close

@@ -2,7 +2,7 @@ import pytest
 from loguru import logger
 import sys
 
-from logging import StreamHandler, FileHandler, NullHandler
+from logging import StreamHandler, FileHandler, NullHandler, Handler
 from logging import Formatter
 
 
@@ -37,7 +37,43 @@ def test_null_handler(capsys):
     assert err == ""
 
 
-def test_exception(tmpdir):
+def test_no_exception():
+    result = None
+
+    class NoExceptionHandler(Handler):
+        def emit(self, record):
+            nonlocal result
+            result = bool(not record.exc_info)
+
+    logger.add(NoExceptionHandler())
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("Error")
+
+    assert result is False
+
+
+def test_exception(capsys):
+    result = None
+
+    class ExceptionHandler(Handler):
+        def emit(self, record):
+            nonlocal result
+            result = bool(record.exc_info)
+
+    logger.add(ExceptionHandler())
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("Error")
+
+    assert result is True
+
+
+def test_exception_formatting(tmpdir):
     file = tmpdir.join("test.log")
     logger.add(FileHandler(str(file)), format="{message}")
 
@@ -47,7 +83,7 @@ def test_exception(tmpdir):
         logger.exception("Error")
 
     result = file.read()
-    lines = result.splitlines()
+    lines = result.strip().splitlines()
 
     error = "ZeroDivisionError: division by zero"
 
