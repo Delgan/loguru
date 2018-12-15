@@ -51,6 +51,7 @@ def format_tester(request, writer, tmpdir):
         ("hh A", (2018, 1, 1, 23, 0, 0, 0), "11 PM"),
         ("[YYYY] MM [DD]", (2018, 2, 3, 11, 9, 0, 2), "YYYY 02 DD"),
         ("[YYYY MM DD]", (2018, 1, 3, 11, 3, 4, 2), "[2018 01 03]"),
+        ("[[YY]]", (2018, 1, 3, 11, 3, 4, 2), "[YY]"),
     ],
 )
 def test_formatting(format_tester, monkeypatch_date, time_format, date, expected):

@@ -329,17 +329,25 @@ class Logger:
         | thread     | The thread in which the         | ``name``, ``id`` (default) |
         |            | logging call was made           |                            |
         +------------+---------------------------------+----------------------------+
-        | time       | The local time when the logging | See |datetime|             |
-        |            | call was made                   |                            |
+        | time       | The aware local time when the   | See |datetime|             |
+        |            | logging call was made           |                            |
         +------------+---------------------------------+----------------------------+
 
         .. _time:
 
         .. rubric:: The time formatting
 
+        To use your favorite time representation, you can precise it directly in the time formatter
+        specifier of you handler format, like for example ``format="{time:HH:mm:ss} {message}"``.
+        Note that this datetime represents your local time, and it is also made timezone-aware,
+        so you can display the UTC offset to avoid ambiguities.
+
         The time field can be formatted using more human-friendly tokens. Those constitute a subset
-        of the one used by the `Pendulum`_ library by `@sdispater`_. To escape a token, just add
-        square brackets around it.
+        of the one used by the `Pendulum`_ library of `@sdispater`_. To escape a token, just add
+        square brackets around it, for example ``"[YY]"`` would display literally ``"YY"``.
+
+        If no time formatter specifier is used, like for example if ``format="{time} {message}"``,
+        the default one will use ISO 8601.
 
         +------------------------+---------+----------------------------------------+
         |                        | Token   | Output                                 |
