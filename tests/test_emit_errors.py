@@ -40,7 +40,7 @@ def test_encoding_error(capsys):
     lines = err.strip().splitlines()
 
     assert out == ""
-    assert lines[0] == "--- Logging error in Loguru ---"
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert lines[1].startswith("Record was: {")
     assert lines[1].endswith("}")
     assert (
@@ -64,7 +64,7 @@ def test_unprintable_record(writer, capsys):
     lines = err.strip().splitlines()
 
     assert out == ""
-    assert lines[0] == "--- Logging error in Loguru ---"
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert lines[1] == "Record was: /!\\ Unprintable record /!\\"
     assert lines[-2] == "ValueError: Failed"
     assert lines[-1] == "--- End of logging error ---"

@@ -28,6 +28,7 @@ class Handler:
         catch,
         enqueue,
         encoding,
+        id_,
         colors=[]
     ):
         self.writer = writer
@@ -42,6 +43,7 @@ class Handler:
         self.catch = catch
         self.enqueue = enqueue
         self.encoding = encoding
+        self.id = id_
 
         self.static_format = None
         self.decolorized_format = None
@@ -124,7 +126,7 @@ class Handler:
         ex_type, ex, tb = sys.exc_info()
 
         try:
-            sys.stderr.write("--- Logging error in Loguru ---\n")
+            sys.stderr.write("--- Logging error in Loguru Handler #%d ---\n" % self.id)
             sys.stderr.write("Record was: ")
             try:
                 sys.stderr.write(str(record))

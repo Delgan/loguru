@@ -744,6 +744,7 @@ class Logger:
             encoding = "ascii"
 
         with self._lock:
+            handler_id = next(self._handlers_count)
             colors = [lvl.color for lvl in self._levels.values()] + [""]
 
             handler = Handler(
@@ -759,10 +760,10 @@ class Logger:
                 catch=catch,
                 enqueue=enqueue,
                 encoding=encoding,
+                id_=handler_id,
                 colors=colors,
             )
 
-            handler_id = next(self._handlers_count)
             self._handlers[handler_id] = handler
             self.__class__._min_level = min(self.__class__._min_level, levelno)
 
