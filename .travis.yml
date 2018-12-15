@@ -15,5 +15,5 @@ script:
   - pytest --cov loguru/
 
 after_success:
-  - coveralls
+  - codecov
   - cd docs && make html

@@ -49,7 +49,7 @@ setup(
     ],
     extras_require={
         "dev": [
-            "coveralls>=1.3.0",
+            "codecov>=2.0.15",
             "isort>=4.3.4",
             "pytest>=3.9.0",
             "pytest-cov>=2.5.1",
