@@ -23,6 +23,10 @@ setup(
     author_email="delgan.py@gmail.com",
     url="https://github.com/Delgan/loguru",
     download_url="https://github.com/Delgan/loguru/archive/{}.tar.gz".format(version),
+    project_urls={
+        "Changelog": "https://github.com/Delgan/loguru/blob/master/CHANGELOG.rst",
+        "Documentation": "https://loguru.readthedocs.io/en/stable/index.html",
+    },
     keywords=["loguru", "logging", "logger", "log", "parser"],
     license="MIT license",
     classifiers=[
