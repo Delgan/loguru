@@ -1,5 +1,5 @@
-Unreleased
-==========
+0.2.3 (2018-12-16)
+==================
 
 - Add support for PyPy
 - Add support for Python 3.5
