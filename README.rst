@@ -13,7 +13,7 @@
         <a href="https://travis-ci.org/Delgan/loguru"><img alt="Build status" src="https://img.shields.io/travis/Delgan/loguru.svg"></a>
         <a href="https://codecov.io/gh/delgan/loguru/branch/master"><img alt="Coverage" src="https://img.shields.io/codecov/c/github/delgan/loguru/master.svg"></a>
         <a href="https://www.codacy.com/app/delgan-py/loguru/dashboard"><img alt="Code quality" src="https://img.shields.io/codacy/grade/4d97edb1bb734a0d9a684a700a84f555.svg"></a>
-        <a href="https://github.com/Delgan/loguru/blob/master/.travis.yml"><img alt="Python versions" src="https://img.shields.io/badge/python-3.5%20%7C%203.6%20%7C%203.7-blue.svg"></a>
+        <a href="https://github.com/Delgan/loguru/blob/master/.travis.yml"><img alt="Python versions" src="https://img.shields.io/badge/python-3.5%2B%20%7C%20PyPy-blue.svg"></a>
         <a href="https://github.com/Delgan/loguru/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/delgan/loguru.svg"></a>
     </p>
     <p align="center">

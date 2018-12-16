@@ -43,10 +43,7 @@ def test_encoding_error(capsys):
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert lines[1].startswith("Record was: {")
     assert lines[1].endswith("}")
-    assert (
-        lines[-2]
-        == "UnicodeEncodeError: 'utf8' codec can't encode characters in position 10-10: too bad"
-    )
+    assert lines[-2].startswith("UnicodeEncodeError:")
     assert lines[-1] == "--- End of logging error ---"
 
 

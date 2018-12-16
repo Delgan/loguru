@@ -1,6 +1,7 @@
 Unreleased
 ==========
 
+- Add support for PyPy
 - Add support for Python 3.5
 - Fix incompatibility with ``awscli`` by downgrading required ``colorama`` dependency version (`#12 <https://github.com/Delgan/loguru/issues/12>`_)
 
