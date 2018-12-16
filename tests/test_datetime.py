@@ -1,30 +1,6 @@
 import pytest
 from loguru import logger
-
-
-@pytest.fixture(params=["log", "file"])
-def format_tester(request, writer, tmpdir):
-
-    mode = request.param
-
-    def test_log(fmt):
-        logger.add(writer, format=fmt)
-        logger.debug("X")
-        result = writer.read().rstrip("\n")
-        return result
-
-    def test_file(fmt):
-        logger.add(str(tmpdir.join(fmt)))
-        logger.debug("X")
-        files = tmpdir.listdir()
-        assert len(files) == 1
-        return files[0].basename
-
-    def format_tester(fmt):
-        tests = dict(log=test_log, file=test_file)
-        return tests[mode]("{time:%s}" % fmt)
-
-    return format_tester
+import sys
 
 
 @pytest.mark.parametrize(
@@ -54,6 +30,28 @@ def format_tester(request, writer, tmpdir):
         ("[[YY]]", (2018, 1, 3, 11, 3, 4, 2), "[YY]"),
     ],
 )
-def test_formatting(format_tester, monkeypatch_date, time_format, date, expected):
+def test_formatting(writer, monkeypatch_date, time_format, date, expected):
     monkeypatch_date(*date)
-    assert format_tester(time_format) == expected
+    logger.add(writer, format="{time:%s}" % time_format)
+    logger.debug("X")
+    result = writer.read()
+    assert result == expected + "\n"
+
+
+def test_stdout_formatting(monkeypatch_date, capsys):
+    monkeypatch_date(2015, 12, 25, 19, 13, 18, 0, "A", 5400)
+    logger.add(sys.stdout, format="{time:YYYY [MM] DD HHmmss Z} {message}")
+    logger.debug("Y")
+    out, err = capsys.readouterr()
+    assert out == "2015 MM 25 191318 +01:30 Y\n"
+    assert err == ""
+
+
+def test_file_formatting(monkeypatch_date, tmpdir):
+    monkeypatch_date(2015, 12, 25, 19, 13, 18, 0, "A", -5400)
+    logger.add(str(tmpdir.join("{time:YYYY [MM] DD HHmmss ZZ}.log")))
+    logger.debug("Z")
+    files = tmpdir.listdir()
+    assert len(files) == 1
+    result = files[0].basename
+    assert result == "2015 MM 25 191318 -0130.log"
