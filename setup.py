@@ -2,9 +2,9 @@ import os
 import re
 
 try:
-    from setuptools import setup, Extension
+    from setuptools import setup
 except ImportError:
-    from distutils.core import setup, Extension
+    from distutils.core import setup
 
 with open("loguru/__init__.py", "r") as file:
     regex_version = r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]'
