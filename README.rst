@@ -178,13 +178,13 @@ Modern string formatting using braces style
 Exceptions catching within threads or main
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Have you ever seen your program crashing unexpectedly without seeing anything in the logfile? Did you ever noticed that exceptions occuring in threads were not logged? This can be solved using the |catch|_ decorator / context manager which ensures that any error is correctly propagated to the |logger|_.
+Have you ever seen your program crashing unexpectedly without seeing anything in the logfile? Did you ever noticed that exceptions occurring in threads were not logged? This can be solved using the |catch|_ decorator / context manager which ensures that any error is correctly propagated to the |logger|_.
 
 ::
 
     @logger.catch
     def my_function(x, y, z):
-        # An error? It's catched anyway!
+        # An error? It's caught anyway!
         return 1 / (x + y + z)
 
 
@@ -313,7 +313,7 @@ The standard logging is bloated with arguments like ``datefmt`` or ``msecs``, ``
 Suitable for scripts and libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Using the logger in your scripts is easy, and you can |configure|_ it at start. To use `Loguru` from inside a libary, remember to never call |add|_ but use |disable|_ instead so logging functions become no-op. If a developer wishes to see your library's logs, he can |enable|_ it again.
+Using the logger in your scripts is easy, and you can |configure|_ it at start. To use `Loguru` from inside a library, remember to never call |add|_ but use |disable|_ instead so logging functions become no-op. If a developer wishes to see your library's logs, he can |enable|_ it again.
 
 ::
 
@@ -426,7 +426,7 @@ Exhaustive notifier
 
 |/strike|
 
-Although logging impact on performances is in most cases negligeable, a zero-cost logger would allow to use it anywhere without much concern. In an upcoming release, Loguru's critical functions will be implemented in C for maximum speed.
+Although logging impact on performances is in most cases negligible, a zero-cost logger would allow to use it anywhere without much concern. In an upcoming release, Loguru's critical functions will be implemented in C for maximum speed.
 
 
 .. |strike| raw:: html
