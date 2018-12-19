@@ -33,7 +33,7 @@ start_time = now()
 class Logger:
     """An object to dispatch logging messages to configured handlers.
 
-    The |Logger| is the core objet of `loguru`, every logging configuration and usage pass through
+    The |Logger| is the core object of `loguru`, every logging configuration and usage pass through
     a call to one of its methods. There is only one logger, so there is no need to retrieve one
     before usage.
 
@@ -41,7 +41,7 @@ class Logger:
     use the |Logger| right after import as it comes pre-configured. Messages can be logged with
     different severity levels and using braces attributes like the |str.format| method do.
 
-    Once a message is logged, a "record" is associated with it. This record is a dict wich contains
+    Once a message is logged, a "record" is associated with it. This record is a dict which contains
     several information about the logging context: time, function, file, line, thread, level...
     It also contains the ``__name__`` of the module, this is why you don't need named loggers.
 
@@ -191,9 +191,9 @@ class Logger:
             queue before reaching the sink. This is useful while logging to a file through multiple
             processes.
         catch : |bool|, optional
-            Whether or not errors occuring while sink handles logs messages should be caught or not.
-            If ``True``, an exception message is displayed on |sys.stderr| but the exception is not
-            propagated to the caller, preventing your app to crash.
+            Whether or not errors occurring while sink handles logs messages should be caught or
+            not. If ``True``, an exception message is displayed on |sys.stderr| but the exception is
+            not propagated to the caller, preventing your app to crash.
         **kwargs
             Additional parameters that will be passed to the sink while creating it or while
             logging messages (the exact behavior depends on the sink type).
@@ -215,7 +215,7 @@ class Logger:
             Whether or not the file should be created as soon as the sink is configured, or delayed
             until first logged message. It defaults to ``False``.
         mode : |str|, optional
-            The openning mode as for built-in |open| function. It defaults to ``"a"`` (open the
+            The opening mode as for built-in |open| function. It defaults to ``"a"`` (open the
             file in appending mode).
         buffering : |int|, optional
             The buffering policy as for built-in |open| function. It defaults to ``1`` (line
@@ -240,7 +240,7 @@ class Logger:
 
         .. rubric:: The sink parameter
 
-        The ``sink`` handles incomming log messages and proceed to their writing somewhere and
+        The ``sink`` handles incoming log messages and proceed to their writing somewhere and
         somehow. A sink can take many forms:
 
         - A |file-like object|_ like ``sys.stderr`` or ``open("somefile.log", "w")``. Anything with
@@ -248,7 +248,7 @@ class Logger:
           method, it will be automatically called after each logged message. If it has a ``.stop()``
           method, it will be automatically called at sink termination.
         - A file path as |str| or |Path|. It can be parametrized with some additional parameters,
-          see bellow.
+          see below.
         - A simple |function|_ like ``lambda msg: print(msg)``. This allows for logging
           procedure entirely defined by user preferences and needs.
         - A built-in |Handler| like ``logging.StreamHandler``. In such a case, the `Loguru` records
@@ -262,7 +262,7 @@ class Logger:
 
         The logged message passed to all added sinks is nothing more than a string of the
         formatted log, to which a special attribute is associated: the ``.record`` which is a dict
-        containing all contextual information possibly needed (see bellow).
+        containing all contextual information possibly needed (see below).
 
         Logged messages are formatted according to the ``format`` of the added sink. This format
         is usually a string containing braces fields to display attributes from the record dict.
@@ -286,9 +286,9 @@ class Logger:
         all contextual information of the logging call (time, function, file, line, level, etc.).
         Each of its key can be used in the handler's ``format`` so the corresponding value is
         properly displayed in the logged message (eg. ``"{level}"`` -> ``"INFO"``). Some record's
-        values are objects with two or more attibutes, those can be formatted with ``"{key.attr}"``
+        values are objects with two or more attributes, those can be formatted with ``"{key.attr}"``
         (``"{key}"`` would display one by default). Formatting directives like ``"{key: >3}"`` also
-        works and is particularly useful for time (see bellow).
+        works and is particularly useful for time (see below).
 
         +------------+---------------------------------+----------------------------+
         | Key        | Description                     | Attributes                 |
@@ -431,7 +431,7 @@ class Logger:
 
         The ``rotation`` check is made before logging each messages. If there is already an existing
         file with the same name that the file to be created, then the existing file is renamed by
-        appending the date to its basename to prevent file overwritting. This parameter accepts:
+        appending the date to its basename to prevent file overwriting. This parameter accepts:
 
         - an |int| which corresponds to the maximum file size in bytes before that the current
           logged file is closed and a new one started over.
@@ -457,7 +457,7 @@ class Logger:
           etc.).
 
         The ``compression`` happens at rotation or at sink stop if rotation is ``None``. This
-        parameter acccepts:
+        parameter accepts:
 
         - a |str| which corresponds to the compressed or archived file extension. This can be one
           of: ``"gz"``, ``"bz2"``, ``"xz"``, ``"lzma"``, ``"tar"``, ``"tar.gz"``, ``"tar.bz2"``,
@@ -1127,7 +1127,7 @@ class Logger:
         return self.level(name)
 
     def disable(self, name):
-        """Disable logging of messages comming from ``name`` module and its children.
+        """Disable logging of messages coming from ``name`` module and its children.
 
         Developers of library using `Loguru` should absolutely disable it to avoid disrupting
         users with unrelated logs messages.
@@ -1147,7 +1147,7 @@ class Logger:
         self._change_activation(name, False)
 
     def enable(self, name):
-        """Enable logging of messages comming from ``name`` module and its children.
+        """Enable logging of messages coming from ``name`` module and its children.
 
         Logging is generally disabled by imported library using `Loguru`, hence this function
         allows users to receive these messages anyway.
@@ -1277,7 +1277,7 @@ class Logger:
             in the returned dict.
         cast : |function|_ or |dict|, optional
             A function that should convert in-place the regex groups parsed (a dict of string
-            values) to more appropiate types. If a dict is passed, its should be a mapping between
+            values) to more appropriate types. If a dict is passed, its should be a mapping between
             keys of parsed log dict and the function that should be used to convert the associated
             value.
         chunk : |int|, optional
