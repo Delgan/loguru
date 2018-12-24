@@ -143,7 +143,7 @@ def test_exception(writer, exception, should_raise, keyword, wrap_mode):
 @wrap_mode
 def test_message(writer, wrap_mode):
     logger.add(writer, format="{message}")
-    message = "An error occured:"
+    message = "An error occurred:"
 
     if wrap_mode == "decorator":
 
