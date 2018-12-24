@@ -107,6 +107,22 @@ def test_lazy(writer):
     assert writer.read() == "10 => 1: 1\n17 => 4: 1\n20 => 7: 2\n"
 
 
+def test_logging_within_lazy_function(writer):
+    logger.add(writer, level=20, format="{message}")
+
+    def laziness():
+        logger.trace("Nope")
+        logger.warning("Yes Warn")
+
+    logger.opt(lazy=True).trace("No", laziness)
+
+    assert writer.read() == ""
+
+    logger.opt(lazy=True).info("Yes", laziness)
+
+    assert writer.read() == "Yes Warn\nYes\n"
+
+
 def test_depth(writer):
     logger.add(writer, format="{function} : {message}")
 
