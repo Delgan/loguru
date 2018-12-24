@@ -931,7 +931,7 @@ class Logger:
         Parameters
         ----------
         exception : |bool|, |tuple| or |Exception|, optional
-            It if does not evaluate as ``False``, the passed exception is formatted and added to the
+            If it does not evaluate as ``False``, the passed exception is formatted and added to the
             log message. It could be an |Exception| object or a ``(type, value, traceback)`` tuple,
             otherwise the exception information is retrieved from |sys.exc_info|.
         record : |bool|, optional
