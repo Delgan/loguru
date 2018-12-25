@@ -1478,7 +1478,9 @@ class Logger:
             elif args or kwargs:
                 record["message"] = _message.format(*args, **kwargs)
 
-            for handler in _self._handlers.values():
+            handlers = _self._handlers.copy().values()
+
+            for handler in handlers:
                 handler.emit(record, level_color, _self._ansi, _self._raw)
 
         doc = r"Log ``_message.format(*args, **kwargs)`` with severity ``'%s'``." % level_name
