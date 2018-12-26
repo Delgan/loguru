@@ -45,6 +45,20 @@ def writer():
 
 
 @pytest.fixture
+def sink_with_logger():
+    class SinkWithLogger:
+        def __init__(self, logger):
+            self.logger = logger
+            self.out = ""
+
+        def write(self, message):
+            self.logger.info(message)
+            self.out += message
+
+    return SinkWithLogger
+
+
+@pytest.fixture
 def pyexec(tmpdir):
     file = tmpdir.join("test.py")
     loguru_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))

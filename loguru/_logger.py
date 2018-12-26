@@ -256,6 +256,9 @@ class Logger:
         - A |class|_ object that will be used to instantiate the sink using ``**kwargs`` attributes
           passed. Hence the class should instantiate objects which are therefore valid sinks.
 
+        Note that you should avoid using  the ``logger`` inside any of your sinks as this would
+        result in infinite recursion or dead lock if the module's sink was not explicitly disabled.
+
         .. _message:
 
         .. rubric:: The logged message

@@ -356,6 +356,14 @@ def test_file_delayed(tmpdir):
     assert file.read() == "Delayed\n"
 
 
+def test_disabled_logger_in_sink(sink_with_logger):
+    sink = sink_with_logger(logger)
+    logger.disable("tests.conftest")
+    logger.add(sink, format="{message}")
+    logger.info("Disabled test")
+    assert sink.out == "Disabled test\n"
+
+
 def test_invalid_function_kwargs():
     def function(message, a="Y"):
         pass
