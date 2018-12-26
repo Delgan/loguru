@@ -1,5 +1,5 @@
-Unreleased
-==========
+0.2.4 (2018-12-26)
+==================
 
 - Fix adding handler while logging which was not thread-safe (`#22 <https://github.com/Delgan/loguru/issues/22>`_)
 
