@@ -161,7 +161,7 @@ class Logger:
         catch=_defaults.LOGURU_CATCH,
         **kwargs
     ):
-        r"""Add an handler sending log messages to a sink adequately configured.
+        r"""Add a handler sending log messages to a sink adequately configured.
 
         Parameters
         ----------
