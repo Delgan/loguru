@@ -134,7 +134,7 @@ The |logger|_ is just an interface which dispatches log messages to configured h
 No Handler, no Formatter, no Filter: one function to rule them all
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-How to add an handler? How to setup logs formatting? How to filter messages? How to set level?
+How to add a handler? How to setup logs formatting? How to filter messages? How to set level?
 
 One answer: the |add|_ function.
 
