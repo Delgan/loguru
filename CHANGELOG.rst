@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Fix race condition permitting to write on a stopped handler
+
+
 0.2.4 (2018-12-26)
 ==================
 

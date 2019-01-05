@@ -52,6 +52,7 @@ class Handler:
         self.lock = threading.Lock()
         self.queue = None
         self.thread = None
+        self.stopped = False
 
         if not self.is_formatter_dynamic:
             self.static_format = self.formatter
@@ -204,6 +205,8 @@ class Handler:
             str_record.record = record
 
             with self.lock:
+                if self.stopped:
+                    return
                 if self.enqueue:
                     self.queue.put(str_record)
                 else:
@@ -227,7 +230,9 @@ class Handler:
             self.handle_error(message)
 
     def stop(self):
-        if self.enqueue:
-            self.queue.put(None)
-            self.thread.join()
-        self.stopper()
+        with self.lock:
+            self.stopped = True
+            if self.enqueue:
+                self.queue.put(None)
+                self.thread.join()
+            self.stopper()

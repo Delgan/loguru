@@ -767,8 +767,11 @@ class Logger:
                 colors=colors,
             )
 
-            self._handlers[handler_id] = handler
+            handlers = self._handlers.copy()
+            handlers[handler_id] = handler
+
             self.__class__._min_level = min(self.__class__._min_level, levelno)
+            self.__class__._handlers = handlers
 
         return handler_id
 
@@ -795,19 +798,22 @@ class Logger:
         >>> logger.info("No longer logging")
         """
         with self._lock:
+            handlers = self._handlers.copy()
+
             if handler_id is None:
-                for handler in self._handlers.values():
+                for handler in handlers.values():
                     handler.stop()
-                self._handlers.clear()
+                handlers.clear()
             else:
                 try:
-                    handler = self._handlers.pop(handler_id)
+                    handler = handlers.pop(handler_id)
                 except KeyError:
                     raise ValueError("There is no existing handler with id '%s'" % handler_id)
                 handler.stop()
 
-            levelnos = (h.levelno for h in self._handlers.values())
+            levelnos = (h.levelno for h in handlers.values())
             self.__class__._min_level = min(levelnos, default=float("inf"))
+            self.__class__._handlers = handlers
 
     def catch(
         self,
@@ -1481,9 +1487,7 @@ class Logger:
             elif args or kwargs:
                 record["message"] = _message.format(*args, **kwargs)
 
-            handlers = _self._handlers.copy().values()
-
-            for handler in handlers:
+            for handler in _self._handlers.values():
                 handler.emit(record, level_color, _self._ansi, _self._raw)
 
         doc = r"Log ``_message.format(*args, **kwargs)`` with severity ``'%s'``." % level_name
