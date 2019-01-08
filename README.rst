@@ -112,8 +112,11 @@ Take the tour
 .. _fixes it: https://loguru.readthedocs.io/en/stable/api/logger.html#time
 .. _No problem: https://loguru.readthedocs.io/en/stable/api/logger.html#env
 
+.. |better_exceptions| replace:: ``better_exceptions``
+.. _better_exceptions: https://github.com/Qix-/better-exceptions
+
 .. |notifiers| replace:: ``notifiers``
-.. _notifiers: https://pypi.org/project/notifiers/
+.. _notifiers: https://github.com/notifiers/notifiers
 
 Ready to use out of the box without boilerplate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -211,7 +214,7 @@ All sinks added to the |logger|_ are thread-safe by default. They are not multip
 Fully descriptive exceptions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Logging exceptions that occur in your code is important to track bugs, but it's quite useless if you don't know why it failed. `Loguru` help you identify problems by allowing the entire stack trace to be displayed, including variables values.
+Logging exceptions that occur in your code is important to track bugs, but it's quite useless if you don't know why it failed. `Loguru` help you identify problems by allowing the entire stack trace to be displayed, including variables values (thanks |better_exceptions|_ for this!).
 
 The code::
 
