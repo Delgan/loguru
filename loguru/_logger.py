@@ -1215,7 +1215,7 @@ class Logger:
         ...            dict(sink="file.log", enqueue=True, serialize=True)],
         ...     levels=[dict(name="NEW", no=13, icon="¤", color="")],
         ...     extra={"common_to_all": "default"},
-        ...     activation=[("my_module.secret": False, "another_library.module": True)]
+        ...     activation=[("my_module.secret", False), ("another_library.module", True)]
         ... )
         [1, 2]
         """
