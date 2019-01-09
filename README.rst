@@ -214,7 +214,7 @@ All sinks added to the |logger|_ are thread-safe by default. They are not multip
 Fully descriptive exceptions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Logging exceptions that occur in your code is important to track bugs, but it's quite useless if you don't know why it failed. `Loguru` help you identify problems by allowing the entire stack trace to be displayed, including variables values (thanks |better_exceptions|_ for this!).
+Logging exceptions that occur in your code is important to track bugs, but it's quite useless if you don't know why it failed. `Loguru` helps you identify problems by allowing the entire stack trace to be displayed, including values of variables (thanks |better_exceptions|_ for this!).
 
 The code::
 
