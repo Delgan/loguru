@@ -1,6 +1,7 @@
 Unreleased
 ==========
 
+- Fix incorrect time formatting of locale month using ``MMM`` and ``MMMM`` tokens (`#34 <https://github.com/Delgan/loguru/pull/34>`_, thanks `@nasyxx <https://github.com/nasyxx>`_)
 - Fix race condition permitting to write on a stopped handler
 
 
