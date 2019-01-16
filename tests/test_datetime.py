@@ -1,4 +1,5 @@
 import pytest
+import datetime
 from loguru import logger
 import sys
 
@@ -36,6 +37,14 @@ def test_formatting(writer, monkeypatch_date, time_format, date, expected):
     logger.debug("X")
     result = writer.read()
     assert result == expected + "\n"
+
+
+def test_locale_formatting(writer, monkeypatch_date):
+    date = (2011, 1, 1, 22, 22, 22, 0)
+    monkeypatch_date(*date)
+    logger.add(writer, format="{time:MMMM MMM dddd ddd}")
+    logger.debug("Test")
+    assert writer.read() == datetime.datetime(*date).strftime("%B %b %A %a\n")
 
 
 def test_stdout_formatting(monkeypatch_date, capsys):
