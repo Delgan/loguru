@@ -323,7 +323,7 @@ Using the logger in your scripts is easy, and you can |configure|_ it at start. 
     # For scripts
     config = {
         "handlers": [
-            {"sink": sys.stdout, format="{time} - {message}"},
+            {"sink": sys.stdout, "format": "{time} - {message}"},
             {"sink": "file.log", "serialize": True},
         ],
         "extra": {"user": "someone"}
