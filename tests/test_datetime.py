@@ -1,8 +1,10 @@
 import pytest
 import datetime
+import time
+import loguru
 from loguru import logger
 import sys
-
+import re
 
 @pytest.mark.parametrize(
     "time_format, date, expected",
@@ -64,3 +66,29 @@ def test_file_formatting(monkeypatch_date, tmpdir):
     assert len(files) == 1
     result = files[0].basename
     assert result == "2015 MM 25 191318 -0130.log"
+
+
+def test_missing_struct_time_fields(writer, monkeypatch, monkeypatch_date):
+
+    class struct_time:
+
+        def __init__(self, struct):
+            self._struct = struct
+
+        def __getattr__(self, attr):
+            if attr in {"tm_gmtoff", "tm_zone"}:
+                raise AttributeError
+            return getattr(self._struct, attr)
+
+
+    def localtime(*args, **kwargs):
+        local = time.localtime(*args, **kwargs)
+        return struct_time(local)
+
+    monkeypatch.setattr(loguru._datetime, "localtime", localtime)
+
+    logger.add(writer, format="{time:YYYY MM DD HH mm ss SSSSSS ZZ zz}")
+    logger.debug("X")
+
+    result = writer.read()
+    assert re.fullmatch(r"\d{4} \d{2} \d{2} \d{2} \d{2} \d{2} \d{6} [+-]\d{4} .*\n", result)
