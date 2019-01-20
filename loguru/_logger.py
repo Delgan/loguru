@@ -183,9 +183,9 @@ class Logger:
             Whether or not the logged message and its records should be first converted to a JSON
             string before being sent to the sink.
         backtrace : |bool|, optional
-            Whether or not the formatted exception should use stack trace to display local
-            variables values. This probably should be set to ``False`` in production to avoid
-            leaking sensitive data.
+            Whether or not the formatted exception should use stack trace to display local variables
+            values and be extended upward beyond the caught frame. This probably should be set to
+            ``False`` in production to avoid leaking sensitive data.
         enqueue : |bool|, optional
             Whether or not the messages to be logged should first pass through a multiprocess-safe
             queue before reaching the sink. This is useful while logging to a file through multiple

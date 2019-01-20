@@ -68,17 +68,19 @@ class ExceptionRecattr:
         self.value = value
         self.traceback = traceback
 
-        if traceback:
-            self._extended_traceback = self._extend_traceback(traceback, decorated)
-        else:
-            self._extended_traceback = None
+        self._decorated = decorated
+        self._extended_traceback = None
+        self._cache = {}
 
     def __reduce__(self):
         exception = (self.type, self.value, None)  # tracebacks are not pickable
-        args = (exception, None)
+        args = (exception, self._decorated)
         return (ExceptionRecattr, args)
 
     def _extend_traceback(self, tb, decorated):
+        if tb is None:
+            return None
+
         frame = tb.tb_frame
 
         if decorated:
@@ -142,17 +144,22 @@ class ExceptionRecattr:
         return re.sub(regex, replace, error, re.MULTILINE)
 
     def format_exception(self, backtrace, colored, encoding):
-        type_, value, ex_traceback = self.type, self.value, self._extended_traceback
+        key = (backtrace, colored, encoding)
+
+        if key in self._cache:
+            return self._cache[key]
+
+        type_, value, traceback_ = self.type, self.value, self.traceback
 
         if not backtrace:
-            error = traceback.format_exception(type_, value, ex_traceback)
-        elif colored:
-            formatter = ExceptionFormatter(colored=True, encoding=encoding)
-            error = formatter.format_exception(type_, value, ex_traceback)
-        else:
-            formatter = ExceptionFormatter(colored=False, encoding=encoding)
-            error = formatter.format_exception(type_, value, ex_traceback)
+            error = traceback.format_exception(type_, value, traceback_)
+            error = "".join(error)
+            return self._cache.setdefault(key, error)
 
-        error = "".join(error)
+        if self._extended_traceback is None:
+            self._extended_traceback = self._extend_traceback(traceback_, self._decorated)
 
-        return self._format_catch_point(error)
+        formatter = ExceptionFormatter(colored=colored, encoding=encoding)
+        error = formatter.format_exception(type_, value, self._extended_traceback)
+        error = self._format_catch_point("".join(error))
+        return self._cache.setdefault(key, error)

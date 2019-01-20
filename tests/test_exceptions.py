@@ -48,7 +48,12 @@ def compare_outputs(tmpdir, pyexec):
 def compare(compare_outputs, request):
     catch_mode = request.param
 
-    add = 'logger.add(sys.stdout, backtrace=False, colorize=False, format="{message}")\n'
+    add = (
+        'import traceback; import loguru;'
+        'format_exception = lambda self, *args: traceback.format_exception(*args);'
+        'loguru._recattrs.ExceptionFormatter.format_exception = format_exception;'
+        'logger.add(sys.stdout, backtrace=True, colorize=False, format="{message}")\n'
+    )
 
     def compare(template, caught_scope_index, caught_trace_index=0, *, disabled=[]):
         template = textwrap.dedent(template)
@@ -350,7 +355,7 @@ def test_double_wrapping(compare):
 @pytest.mark.parametrize("rec", [1, 2, 3])
 @pytest.mark.parametrize("catch_mode", ["explicit", "decorator", "context_manager"])
 def test_raising_recursion(writer, rec, catch_mode):
-    logger.add(writer, format="{message}", backtrace=False)
+    logger.add(writer, format="{message}", backtrace=True, colorize=False)
 
     if catch_mode == "explicit":
 
@@ -383,6 +388,8 @@ def test_raising_recursion(writer, rec, catch_mode):
     lines = writer.read().splitlines()
     assert sum(line.startswith("Traceback") for line in lines) == rec + 1
     assert sum(line.startswith("> File") for line in lines) == rec + 1
+
+
     caughts = [
         (line, next_line) for line, next_line in zip(lines, lines[1:]) if line.startswith("> File")
     ]
@@ -401,7 +408,7 @@ def test_raising_recursion(writer, rec, catch_mode):
 
 
 def test_carret_not_masked(writer):
-    logger.add(writer, backtrace=False, colorize=False)
+    logger.add(writer, backtrace=True, colorize=False)
 
     @logger.catch
     def f(n):
