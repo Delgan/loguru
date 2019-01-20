@@ -13,7 +13,7 @@ install:
   - pip install -e .[dev]
 
 script:
-  - pytest --cov loguru/
+  - pytest --cov
 
 after_success:
   - codecov --flags "py${TRAVIS_PYTHON_VERSION//./}"
