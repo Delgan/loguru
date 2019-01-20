@@ -2,12 +2,9 @@ import loguru
 import logging
 import itertools
 import pytest
-import py
 import os
 import subprocess
-import datetime
 import time
-import calendar
 
 default_levels = loguru._logger.Logger._levels.copy()
 

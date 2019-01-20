@@ -1,7 +1,5 @@
 import pytest
-import traceback
 import textwrap
-import re
 from loguru import logger
 
 zero_division_error = "ZeroDivisionError: division by zero\n"

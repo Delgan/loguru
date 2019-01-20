@@ -127,7 +127,6 @@ def test_time_rotation(monkeypatch_date, tmpdir, when, hours):
 
     i = logger.add(str(tmpdir.join("test_{time}.log")), format="{message}", rotation=when, mode="w")
 
-    from loguru._datetime import now as nownow
 
     for h, m in zip(hours, ["a", "b", "c", "d", "e"]):
         now += datetime.timedelta(hours=h)

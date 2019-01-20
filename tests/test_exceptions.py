@@ -1,7 +1,5 @@
 import pytest
 import textwrap
-import py
-import os
 import sys
 from itertools import zip_longest, dropwhile
 import re

@@ -1,6 +1,4 @@
-import sys
 import logging
-import pytest
 
 from loguru import logger
 
@@ -12,7 +10,7 @@ class InterceptHandler(logging.Handler):
 
 def test_formatting(writer, make_logging_logger):
     fmt = "{name} - {file.name} - {function} - {level.name} - {level.no} - {line} - {module} - {message}"
-    expected = "tests.test_interception - test_interception.py - test_formatting - Level 10 - 10 - 21 - test_interception - This is the message\n"
+    expected = "tests.test_interception - test_interception.py - test_formatting - Level 10 - 10 - 19 - test_interception - This is the message\n"
 
     logging_logger = make_logging_logger("tests", InterceptHandler())
 
