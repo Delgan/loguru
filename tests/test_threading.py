@@ -42,7 +42,7 @@ def test_safe_logging():
     for thread in threads:
         thread.join()
 
-    logger.stop()
+    logger.remove()
 
     assert sink.written in ("___0___\n___1___\n", "___1___\n___0___\n")
 
@@ -73,7 +73,7 @@ def test_safe_adding_while_logging(writer):
     for thread in threads:
         thread.join()
 
-    logger.stop()
+    logger.remove()
 
     assert sink_1.written == "aaa0bbb\nccc1ddd\n"
     assert sink_2.written == "ccc1ddd\n"
@@ -106,7 +106,7 @@ def test_safe_removing_while_logging():
     for thread in threads:
         thread.join()
 
-    logger.stop()
+    logger.remove()
 
     assert sink_1.written == "aaa0bbb\n"
     assert sink_2.written == "aaa0bbb\nccc1ddd\n"
@@ -135,7 +135,7 @@ def test_safe_writing_after_removing(capsys):
     for thread in threads:
         thread.join()
 
-    logger.stop()
+    logger.remove()
 
     out, err = capsys.readouterr()
     assert out == ""
@@ -160,7 +160,7 @@ def test_heavily_threaded_logging(capsys):
     for thread in threads:
         thread.join()
 
-    logger.stop()
+    logger.remove()
 
     out, err = capsys.readouterr()
     assert out == ""
