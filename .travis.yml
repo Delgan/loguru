@@ -16,5 +16,5 @@ script:
   - pytest --cov loguru/
 
 after_success:
-  - codecov
+  - codecov --flags "py${TRAVIS_PYTHON_VERSION//./}"
   - cd docs && make html
