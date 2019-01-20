@@ -58,7 +58,7 @@ def test_remove_interception(writer, make_logging_logger):
 
 
 def test_intercept_too_low(writer, make_logging_logger):
-    logging_logger = make_logging_logger("tests.test_interception", InterceptHandler())
+    make_logging_logger("tests.test_interception", InterceptHandler())
     logger.add(writer, format="{message}")
     logging.getLogger("tests").error("Nope 1")
     logging.getLogger("foobar").error("Nope 2")

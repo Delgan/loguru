@@ -13,7 +13,7 @@ class PropagateHandler(logging.Handler):
 def test_formatting(make_logging_logger, capsys):
     fmt = "%(name)s - %(filename)s - %(funcName)s - %(levelname)s - %(levelno)s - %(lineno)d - %(module)s - %(message)s"
     expected = "tests.test_propagation - test_propagation.py - test_formatting - DEBUG - 10 - 18 - test_propagation - This is my message\n"
-    logging_logger = make_logging_logger("tests.test_propagation", StreamHandler(sys.stderr), fmt)
+    make_logging_logger("tests.test_propagation", StreamHandler(sys.stderr), fmt)
     logger.add(PropagateHandler(), format="{message}")
     logger.debug("This {verb} my {}", "message", verb="is")
 
@@ -71,7 +71,7 @@ def test_propagate_too_high(make_logging_logger, capsys):
 
 @pytest.mark.parametrize("use_opt", [False, True])
 def test_exception(make_logging_logger, capsys, use_opt):
-    logging_logger = make_logging_logger("tests", StreamHandler(sys.stderr))
+    make_logging_logger("tests", StreamHandler(sys.stderr))
     logger.add(PropagateHandler(), format="{message}")
 
     try:
