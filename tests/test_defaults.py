@@ -1,6 +1,5 @@
 import pytest
 from loguru._defaults import env
-import os
 
 
 @pytest.mark.parametrize("value", ["test", ""])

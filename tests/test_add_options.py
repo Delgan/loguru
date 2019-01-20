@@ -1,12 +1,9 @@
 import json
 import pytest
-import sys
-import multiprocessing
 from unittest.mock import MagicMock
 from loguru import logger
 import ansimarkup
 import io
-import os
 import colorama
 
 
