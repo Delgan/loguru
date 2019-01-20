@@ -1,5 +1,5 @@
-Unreleased
-==========
+0.2.5 (2019-01-20)
+==================
 
 - Modify behavior of sink option ``backtrace=False`` so it doesn't extend traceback upward automatically (`#30 <https://github.com/Delgan/loguru/issues/30>`_)
 - Fix import error on some platforms using Python 3.5 with limited ``localtime()`` support (`#33 <https://github.com/Delgan/loguru/issues/33>`_)
