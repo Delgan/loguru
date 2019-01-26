@@ -1,7 +1,7 @@
 API Reference
 =============
 
-..  automodule:: loguru
+.. automodule:: loguru
 
 .. toctree::
    :includehidden:

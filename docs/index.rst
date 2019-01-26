@@ -10,4 +10,5 @@ Table of contents
 
    overview.rst
    api.rst
+   resources.rst
    project.rst

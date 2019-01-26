@@ -1,5 +1,5 @@
 Project Information
-###################
+===================
 
 .. toctree::
 

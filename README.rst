@@ -447,6 +447,7 @@ Project information
 -------------------
 
 * `Documentation <https://loguru.readthedocs.io/en/stable/api/logger.html>`_
+* `Resources <https://loguru.readthedocs.io/en/migration_guide/resources.html>`_
 * `Contributing <https://github.com/Delgan/loguru/blob/master/CONTRIBUTING.rst>`_
 * `License <https://github.com/Delgan/loguru/blob/master/LICENSE>`_
 * `Changelog <https://github.com/Delgan/loguru/blob/master/CHANGELOG.rst>`_
