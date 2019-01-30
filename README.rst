@@ -273,6 +273,14 @@ Using |bind|_ you can contextualize your logger messages by modifying the `extra
     logger_ctx.info("Contextualize your logger easily")
     logger_ctx.bind(user="someoneelse").info("Inline binding of extra attribute")
 
+You can also have more fine-grained control over your logs by combining |bind|_ and ``filter``:
+
+::
+
+    logger.add("special.log", filter=lambda record: "special" in record["extra"])
+    logger.debug("This message is not logged to the file")
+    logger.bind(special=True).info("This message, though, is logged to the file!")
+
 
 Lazy evaluation of expensive functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
