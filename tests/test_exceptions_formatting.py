@@ -55,11 +55,12 @@ def generate(output, outpath):
 )
 def test_exceptions_formatting(filename):
     cwd = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    python = sys.executable or "python"
     filepath = os.path.join("tests", "exceptions", filename + ".py")
     outpath = os.path.abspath(os.path.join(cwd, "tests", "exceptions", "output", filename + ".txt"))
 
     with subprocess.Popen(
-        ["python", filepath],
+        [python, filepath],
         shell=False,
         cwd=cwd,
         stdout=subprocess.PIPE,
@@ -67,6 +68,7 @@ def test_exceptions_formatting(filename):
         universal_newlines=True,
     ) as proc:
         stdout, stderr = proc.communicate()
+        print(stderr, file=sys.stderr)
         assert proc.returncode == 0
         assert stdout == ""
 
