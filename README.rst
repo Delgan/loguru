@@ -236,7 +236,7 @@ Would result in:
 .. code-block:: none
 
     2018-07-17 01:38:43.975 | ERROR    | __main__:nested:10 - What?!
-    Traceback (most recent call last, catch point marked):
+    Traceback (most recent call last):
 
       File "test.py", line 12, in <module>
         nested(0)

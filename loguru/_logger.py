@@ -867,7 +867,7 @@ class Logger:
         ...
         >>> g()
         ERROR - An error has been caught in function 'g', process 'Main' (367), thread 'ch1' (1398):
-        Traceback (most recent call last, catch point marked):
+        Traceback (most recent call last):
           File "program.py", line 12, in <module>
             g()
             └ <function g at 0x7f225fe2bc80>
