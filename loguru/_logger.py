@@ -1211,13 +1211,24 @@ class Logger:
         Examples
         --------
         >>> logger.configure(
-        ...     handlers=[dict(sink=sys.stderr, format="[{time}] {message}"),
-        ...            dict(sink="file.log", enqueue=True, serialize=True)],
+        ...     handlers=[
+        ...         dict(sink=sys.stderr, format="[{time}] {message}"),
+        ...         dict(sink="file.log", enqueue=True, serialize=True),
+        ...     ],
         ...     levels=[dict(name="NEW", no=13, icon="¤", color="")],
         ...     extra={"common_to_all": "default"},
-        ...     activation=[("my_module.secret", False), ("another_library.module", True)]
+        ...     activation=[("my_module.secret", False), ("another_library.module", True)],
         ... )
         [1, 2]
+
+        >>> # Set a default "extra" dict to logger across all modules, without "bind()"
+        >>> extra = {"context": "foo"}
+        >>> logger.configure(extra=extra)
+        >>> logger.start(sys.stderr, format="{extra[context]} - {message}")
+        >>> logger.info("Context without bind")
+        >>> # => "foo - Context without bind"
+        >>> logger.bind(context="bar").info("Suppress global context")
+        >>> # => "bar - Suppress global context"
         """
         if handlers is not None:
             self.remove()
