@@ -56,39 +56,6 @@ def sink_with_logger():
 
 
 @pytest.fixture
-def pyexec(tmpdir):
-    file = tmpdir.join("test.py")
-    loguru_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    loguru_config = (
-        "import sys;"
-        'sys.path.insert(0, r"' + loguru_path + '");'
-        "from loguru import logger;"
-        "logger.remove();\n"
-    )
-
-    def pyexec(code, import_loguru=False, *, pyfile=None):
-        if import_loguru:
-            code = loguru_config + code
-        else:
-            code = "# padding\n" + code
-
-        if pyfile is None:
-            pyfile = file
-        pyfile.write(code)
-        process = subprocess.Popen(
-            "python %s" % pyfile.realpath(),
-            shell=True,
-            universal_newlines=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        out, err = process.communicate()
-        return out, err
-
-    return pyexec
-
-
-@pytest.fixture
 def monkeypatch_date(monkeypatch):
     def monkeypatch_date(year, month, day, hour, minute, second, microsecond, zone="UTC", offset=0):
         dt = loguru._datetime.datetime(year, month, day, hour, minute, second, microsecond)

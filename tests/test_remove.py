@@ -57,22 +57,6 @@ def test_remove_enqueue_filesink(tmpdir):
     assert file.read() == "1\n"
 
 
-@pytest.mark.parametrize("enqueue", [True, False])
-def test_remove_atexit(pyexec, enqueue):
-    code = (
-        """
-    import sys
-    logger.remove()
-    logger.add(sys.stdout, format='{message}', enqueue=%r)
-    logger.debug("!")
-    """
-        % enqueue
-    )
-    out, err = pyexec(textwrap.dedent(code), True)
-    assert out == "!\n"
-    assert err == ""
-
-
 def test_remove_invalid(writer):
     logger.add(writer)
 
