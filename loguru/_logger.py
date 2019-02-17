@@ -37,8 +37,8 @@ class Logger:
     a call to one of its methods. There is only one logger, so there is no need to retrieve one
     before usage.
 
-    Handlers to which send log messages are added using the |add| method. Note that you can
-    use the |Logger| right after import as it comes pre-configured. Messages can be logged with
+    Handlers to which the logger sends log messages are added using the |add| method. Note that you
+    can use the |Logger| right after import as it comes pre-configured. Messages can be logged with
     different severity levels and using braces attributes like the |str.format| method do.
 
     Once a message is logged, a "record" is associated with it. This record is a dict which contains
@@ -169,15 +169,15 @@ class Logger:
             An object in charge of receiving formatted logging messages and propagating them to an
             appropriate endpoint.
         level : |int| or |str|, optional
-            The minimum severity level from which logged messages should be send to the sink.
+            The minimum severity level from which logged messages should be sent to the sink.
         format : |str| or |function|_, optional
             The template used to format logged messages before being sent to the sink.
         filter : |function|_ or |str|, optional
-            A directive used to optionally filter out logged messages before they are send to the
+            A directive used to optionally filter out logged messages before they are sent to the
             sink.
         colorize : |bool|, optional
             Whether or not the color markups contained in the formatted message should be converted
-            to ansi codes for terminal coloration, ore stripped otherwise. If ``None``, the choice
+            to ansi codes for terminal coloration, or stripped otherwise. If ``None``, the choice
             is automatically made based on the sink being a tty or not.
         serialize : |bool|, optional
             Whether or not the logged message and its records should be first converted to a JSON
@@ -340,8 +340,8 @@ class Logger:
 
         .. rubric:: The time formatting
 
-        To use your favorite time representation, you can precise it directly in the time formatter
-        specifier of you handler format, like for example ``format="{time:HH:mm:ss} {message}"``.
+        To use your favorite time representation, you can set it directly in the time formatter
+        specifier of your handler format, like for example ``format="{time:HH:mm:ss} {message}"``.
         Note that this datetime represents your local time, and it is also made timezone-aware,
         so you can display the UTC offset to avoid ambiguities.
 
@@ -429,10 +429,10 @@ class Logger:
         .. rubric:: The file sinks
 
         If the sink is a |str| or a |Path|, the corresponding file will be opened for writing logs.
-        The path can also contains a special ``"{time}"`` field that will be formatted with the
+        The path can also contain a special ``"{time}"`` field that will be formatted with the
         current date at file creation.
 
-        The ``rotation`` check is made before logging each messages. If there is already an existing
+        The ``rotation`` check is made before logging each message. If there is already an existing
         file with the same name that the file to be created, then the existing file is renamed by
         appending the date to its basename to prevent file overwriting. This parameter accepts:
 
@@ -541,7 +541,7 @@ class Logger:
         environment variable. For example on Linux: ``export LOGURU_FORMAT="{time} - {message}"``
         or ``export LOGURU_BACKTRACE=NO``.
 
-        The default levels attributes can also be modified by setting the ``LOGURU_[LEVEL]_[ATTR]``
+        The default levels' attributes can also be modified by setting the ``LOGURU_[LEVEL]_[ATTR]``
         environment variable. For example, on Windows: ``setx LOGURU_DEBUG_COLOR "<blue>"``
         or ``setx LOGURU_TRACE_ICON "🚀"``.
 
@@ -832,7 +832,7 @@ class Logger:
         using threads to propagate errors to the main logger thread.
 
         Note that the visibility of variables values (which uses the cool `better_exceptions`_
-        library from `@Qix-`_) depends on the ``backtrace`` option of each configured sinks.
+        library from `@Qix-`_) depends on the ``backtrace`` option of each configured sink.
 
         The returned object can also be used as a context manager.
 
@@ -1185,11 +1185,11 @@ class Logger:
         Parameters
         ----------
         handlers : |list| of |dict|, optional
-            A list of each handler to be added. The list should contains dicts of params passed to
+            A list of each handler to be added. The list should contain dicts of params passed to
             the |add| function as keyword arguments. If not ``None``, all previously added
             handlers are first removed.
         levels : |list| of |dict|, optional
-            A list of each level to be added or updated. The list should contains dicts of params
+            A list of each level to be added or updated. The list should contain dicts of params
             passed to the |level| function as keyword arguments. This will never remove previously
             created levels.
         extra : |dict|, optional
