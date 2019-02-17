@@ -363,7 +363,7 @@ def test_disabled_logger_in_sink(sink_with_logger):
 
 def test_invalid_function_kwargs():
     def function(message, a="Y"):
-        pass
+        raise NotImplementedError
 
     logger.add(function, b="X", catch=False)
     with pytest.raises(TypeError):
@@ -384,7 +384,7 @@ def test_invalid_file_object_kwargs():
             self.out = ""
 
         def write(self, m):
-            pass
+            raise NotImplementedError
 
     writer = Writer()
     logger.add(writer, format="{message}", kw1="1", kw2="2", catch=False)

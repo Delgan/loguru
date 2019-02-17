@@ -11,8 +11,7 @@ class NonSafeSink:
         self.stopped = False
 
     def write(self, message):
-        if self.stopped:
-            raise RuntimeError("Can't write on stopped sink")
+        assert not self.stopped
 
         length = len(message)
         self.written += message[:length]
