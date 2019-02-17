@@ -28,5 +28,6 @@ try:
         f(0)
     except ZeroDivisionError:
         logger.exception("")
+        raise
 except Exception:
     logger.exception("")
