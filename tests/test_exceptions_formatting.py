@@ -21,7 +21,7 @@ def normalize(formatted_exception):
     return formatted_exception
 
 
-def generate(output, outpath):
+def generate(output, outpath):  # pragma: no cover
     """Generate new output file if exception formatting is updated"""
     with open(outpath, "w") as file:
         file.write(output)

@@ -4,8 +4,6 @@ from loguru import logger
 
 def check_tb_sink(message):
     exception = message.record["exception"]
-    if exception is None:
-        return
     assert exception.traceback is not None
 
 
