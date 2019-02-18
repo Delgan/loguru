@@ -24,9 +24,6 @@ with logger.catch():
 
 
 try:
-    try:
-        f(0)
-    except ZeroDivisionError:
-        logger.exception("")
-except Exception:
+    f(0)
+except ZeroDivisionError:
     logger.exception("")
