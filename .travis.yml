@@ -16,5 +16,10 @@ script:
   - pytest --cov
 
 after_success:
-  - codecov --flags "py${TRAVIS_PYTHON_VERSION//./}"
+  # Report to codecov, with different flags for tests.
+  - coverage xml --include 'loguru/*'
+  - codecov -f coverage.xml --flags loguru "py${TRAVIS_PYTHON_VERSION//./}" --disable search gcov pycov
+  - coverage xml --include 'tests/*'
+  - codecov -f coverage.xml --flags tests "py${TRAVIS_PYTHON_VERSION//./}" --disable search gcov pycov
+
   - cd docs && make html
