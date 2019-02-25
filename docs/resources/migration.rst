@@ -194,3 +194,45 @@ Replacing ``basicConfig()`` and ``dictConfig()`` functions
 The |basicConfig| and |dictConfig| functions are replaced by the |configure| method.
 
 This does not accept ``config.ini`` files, though, so you have to handle that yourself using your favorite format.
+
+
+Making things work with Pytest and caplog
+-----------------------------------------
+
+`Pytest`_ is a very common testing framework. The `caplog`_ fixture captures
+logging output so that it can be tested against. For example::
+
+    # `some_func` adds two numbers, and logs a warning if the first is < 1
+    def test_some_func_logs_warning(caplog):
+        assert some_func(-1, 3) == 2
+        assert "Oh no!" in caplog.text
+        
+If you've followed all the migration guidelines thus far, you'll notice that
+this test will fail. This is because ``pytest`` links to the standard library's
+``logging`` module.
+
+So to fix things, we need to add a sink that propogates Loguru to ``logging``.
+This is done on the fixture itself by mokeypatching ``caplog``. In your
+``conftest.py`` file, add the following::
+
+    import logging
+    import pytest
+    from _pytest.logging import caplog as _caplog
+    from loguru import logger
+    
+    @pytest.fixture
+    def caplog(_caplog):
+        class PropogateHandler(logging.Handler):
+            def emit(self, record):
+                logging.getLogger(record.name).handle(record)
+        
+        handler_id = logger.add(PropogateHandler(), format="{message}")
+        yield _caplog
+        logger.remove(handler_id)
+        
+Run your tests and things should all be working as expected. Additional
+information can be found in `GH#59`_.
+
+.. _pytest: https://docs.pytest.org/en/latest/
+.. _caplog: https://docs.pytest.org/en/latest/logging.html?highlight=caplog#caplog-fixture
+.. _`GH#59`: https://github.com/Delgan/loguru/issues/59
