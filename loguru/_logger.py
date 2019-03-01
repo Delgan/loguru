@@ -744,6 +744,9 @@ class Logger:
         try:
             encoding = sink.encoding
         except AttributeError:
+            encoding = None
+
+        if not encoding:
             encoding = "ascii"
 
         with self._lock:
