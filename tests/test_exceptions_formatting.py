@@ -66,6 +66,7 @@ def test_exceptions_formatting(filename):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
+        env={"PYTHONPATH": cwd},
     ) as proc:
         stdout, stderr = proc.communicate()
         print(stderr, file=sys.stderr)
