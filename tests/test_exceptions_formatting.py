@@ -93,6 +93,23 @@ def test_carret_not_masked(writer):
 
     assert sum(line.startswith("> ") for line in writer.read().splitlines()) == 1
 
+@pytest.mark.parametrize("encoding", ["ascii", "UTF8", None])
+def test_sink_encoding(writer, encoding):
+    writer.encoding = encoding
+    logger.add(writer, backtrace=True, colorize=False, format="")
+
+    def foo(a, b):
+        a / b
+
+    def bar(c):
+        foo(c, 0)
+
+    try:
+        bar(4)
+    except ZeroDivisionError:
+        logger.exception("")
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 def test_no_exception(writer):
     logger.add(writer, backtrace=False, colorize=False, format="{message}")
