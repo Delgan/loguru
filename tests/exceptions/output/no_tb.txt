@@ -1,4 +1,0 @@
-
-ZeroDivisionError: division by zero
-
-ZeroDivisionError: division by zero

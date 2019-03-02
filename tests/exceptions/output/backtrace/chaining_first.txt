@@ -1,0 +1,57 @@
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/backtrace/chaining_first.py", line 25, in <module>
+    a_decorated()
+    └ <function a_decorated at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chaining_first.py", line 10, in a_decorated
+    b()
+    └ <function b at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chaining_first.py", line 18, in b
+    c()
+    └ <function c at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chaining_first.py", line 22, in c
+    1 / 0
+
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/backtrace/chaining_first.py", line 29, in <module>
+    a_not_decorated()
+    └ <function a_not_decorated at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chaining_first.py", line 14, in a_not_decorated
+    b()
+    └ <function b at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chaining_first.py", line 18, in b
+    c()
+    └ <function c at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chaining_first.py", line 22, in c
+    1 / 0
+
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/backtrace/chaining_first.py", line 32, in <module>
+    a_not_decorated()
+    └ <function a_not_decorated at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chaining_first.py", line 14, in a_not_decorated
+    b()
+    └ <function b at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chaining_first.py", line 18, in b
+    c()
+    └ <function c at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chaining_first.py", line 22, in c
+    1 / 0
+
+ZeroDivisionError: division by zero

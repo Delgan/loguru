@@ -1,0 +1,41 @@
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/backtrace/nested_wrapping.py", line 18, in <module>
+    a(0)
+    └ <function a at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/nested_wrapping.py", line 15, in a
+    f(x)
+    │ └ 0
+    └ <function f at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/nested_wrapping.py", line 9, in f
+    1 / i
+        └ 0
+
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/backtrace/nested_wrapping.py", line 23, in <module>
+    f(0)
+    └ <function f at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/nested_wrapping.py", line 9, in f
+    1 / i
+        └ 0
+
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/backtrace/nested_wrapping.py", line 28, in <module>
+    f(0)
+    └ <function f at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/nested_wrapping.py", line 9, in f
+    1 / i
+        └ 0
+
+ZeroDivisionError: division by zero

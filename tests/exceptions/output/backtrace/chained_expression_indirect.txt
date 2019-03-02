@@ -1,0 +1,73 @@
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/backtrace/chained_expression_indirect.py", line 10, in a
+    1 / 0
+
+ZeroDivisionError: division by zero
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/backtrace/chained_expression_indirect.py", line 20, in <module>
+    b()
+    └ <function b at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chained_expression_indirect.py", line 17, in b
+    a()
+    └ <function a at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chained_expression_indirect.py", line 12, in a
+    raise ValueError("NOK")
+          └ <class 'ValueError'>
+
+ValueError: NOK
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/backtrace/chained_expression_indirect.py", line 10, in a
+    1 / 0
+
+ZeroDivisionError: division by zero
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/backtrace/chained_expression_indirect.py", line 23, in <module>
+    a()
+    └ <function a at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chained_expression_indirect.py", line 12, in a
+    raise ValueError("NOK")
+          └ <class 'ValueError'>
+
+ValueError: NOK
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/backtrace/chained_expression_indirect.py", line 10, in a
+    1 / 0
+
+ZeroDivisionError: division by zero
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/backtrace/chained_expression_indirect.py", line 26, in <module>
+    a()
+    └ <function a at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/chained_expression_indirect.py", line 12, in a
+    raise ValueError("NOK")
+          └ <class 'ValueError'>
+
+ValueError: NOK

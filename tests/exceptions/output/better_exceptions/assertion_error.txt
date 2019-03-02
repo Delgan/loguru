@@ -1,0 +1,13 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/better_exceptions/[m[32m[1massertion_error.py[m", line [33m13[m, in [35m<module>[m
+    [38;2;248;248;242mfoo[0m[38;2;248;248;242m([0m[38;2;174;129;255m9[0m[38;2;248;248;242m,[0m [38;2;174;129;255m55[0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function foo at 0xDEADBEEF>[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1massertion_error.py[m", line [33m9[m, in [35mfoo[m
+    [38;2;249;38;114massert[0m [38;2;248;248;242mabc[0m [38;2;249;38;114m>[0m [38;2;174;129;255m10[0m [38;2;249;38;114mand[0m [38;2;248;248;242mxyz[0m [38;2;249;38;114m==[0m [38;2;174;129;255m60[0m
+    [36m       │            └ [m[36m[1m55[m
+    [36m       └ [m[36m[1m9[m
+
+[31m[1mAssertionError[m:[1m [38;2;249;38;114massert[0m [38;2;248;248;242mabc[0m [38;2;249;38;114m>[0m [38;2;174;129;255m10[0m [38;2;249;38;114mand[0m [38;2;248;248;242mxyz[0m [38;2;249;38;114m==[0m [38;2;174;129;255m60[0m[m

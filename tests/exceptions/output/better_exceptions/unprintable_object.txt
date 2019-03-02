@@ -1,0 +1,8 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/better_exceptions/[m[32m[1munprintable_object.py[m", line [33m14[m, in [35m<module>[m
+    [38;2;248;248;242mobj[0m [38;2;249;38;114m+[0m [38;2;174;129;255m1[0m [38;2;249;38;114m/[0m [38;2;174;129;255m0[0m
+    [36m└ [m[36m[1m<unprintable Object object>[m
+
+[31m[1mZeroDivisionError[m:[1m division by zero[m

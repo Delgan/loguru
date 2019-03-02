@@ -1,7 +1,0 @@
-
-Traceback (most recent call last):
-
-> File "tests/exceptions/enqueue_with_others_handlers.py", line 19, in <module>
-    1 / 0
-
-ZeroDivisionError: division by zero

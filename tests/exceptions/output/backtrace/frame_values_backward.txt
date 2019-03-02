@@ -1,0 +1,23 @@
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/backtrace/frame_values_backward.py", line 23, in <module>
+    c(k)
+    │ └ 2
+    └ <function c at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/frame_values_backward.py", line 20, in c
+    b(n - 1)
+    │ └ 2
+    └ <function b at 0xDEADBEEF>
+
+> File "tests/exceptions/backtrace/frame_values_backward.py", line 16, in b
+    a(n - 1)
+    │ └ 1
+    └ <function a at 0xDEADBEEF>
+
+  File "tests/exceptions/backtrace/frame_values_backward.py", line 12, in a
+    1 / n
+        └ 0
+
+ZeroDivisionError: division by zero

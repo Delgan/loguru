@@ -3,7 +3,7 @@ import sys
 import traceback
 from collections import namedtuple
 
-from better_exceptions_fork import ExceptionFormatter
+from ._better_exceptions import ExceptionFormatter
 
 loguru_traceback = namedtuple("loguru_traceback", ("tb_frame", "tb_lasti", "tb_lineno", "tb_next"))
 
@@ -143,8 +143,8 @@ class ExceptionRecattr:
 
         return re.sub(regex, replace, error, re.MULTILINE)
 
-    def format_exception(self, backtrace, colored, encoding):
-        key = (backtrace, colored, encoding)
+    def format_exception(self, backtrace, colorize, encoding):
+        key = (backtrace, colorize, encoding)
 
         if key in self._cache:
             return self._cache[key]
@@ -159,7 +159,7 @@ class ExceptionRecattr:
         if self._extended_traceback is None:
             self._extended_traceback = self._extend_traceback(traceback_, self._decorated)
 
-        formatter = ExceptionFormatter(colored=colored, encoding=encoding)
+        formatter = ExceptionFormatter(colorize=colorize, encoding=encoding)
         error = formatter.format_exception(type_, value, self._extended_traceback)
         error = self._format_catch_point("".join(error))
         return self._cache.setdefault(key, error)

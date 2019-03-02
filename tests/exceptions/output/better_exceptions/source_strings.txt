@@ -1,0 +1,9 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/better_exceptions/[m[32m[1msource_strings.py[m", line [33m11[m, in [35m<module>[m
+    [38;2;248;248;242ma[0m [38;2;249;38;114m+[0m [38;2;230;219;116mb"prefix"[0m [38;2;249;38;114m+[0m [38;2;230;219;116m'single'[0m [38;2;249;38;114m+[0m [38;2;230;219;116m"""triple"""[0m [38;2;249;38;114m+[0m [38;2;174;129;255m1[0m [38;2;249;38;114m+[0m [38;2;248;248;242mb[0m
+    [36m│                                             └ [m[36m[1m0[m
+    [36m└ [m[36m[1m0[m
+
+[31m[1mTypeError[m:[1m unsupported operand type(s) for +: 'int' and 'bytes'[m
