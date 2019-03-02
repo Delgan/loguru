@@ -1,0 +1,16 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/better_exceptions/[m[32m[1mencoding.py[m", line [33m17[m, in [35m<module>[m
+    [38;2;248;248;242mdiv[0m[38;2;248;248;242m([0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function div at 0xDEADBEEF>[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mencoding.py[m", line [33m13[m, in [35mdiv[m
+    [38;2;249;38;114mreturn[0m [38;2;248;248;242m_deep[0m[38;2;248;248;242m([0m[38;2;230;219;116m"天"[0m[38;2;248;248;242m)[0m
+    [36m       └ [m[36m[1m<function _deep at 0xDEADBEEF>[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mencoding.py[m", line [33m9[m, in [35m_deep[m
+    [38;2;249;38;114mreturn[0m [38;2;174;129;255m1[0m [38;2;249;38;114m/[0m [38;2;248;248;242mval[0m
+    [36m           └ [m[36m[1m'天'[m
+
+[31m[1mTypeError[m:[1m unsupported operand type(s) for /: 'int' and 'str'[m

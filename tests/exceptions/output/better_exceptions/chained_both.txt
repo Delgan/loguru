@@ -1,0 +1,49 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mchained_both.py[m", line [33m14[m, in [35mcause[m
+    [38;2;248;248;242mdiv[0m[38;2;248;248;242m([0m[38;2;248;248;242mx[0m[38;2;248;248;242m,[0m [38;2;248;248;242my[0m[38;2;248;248;242m)[0m
+    [36m│   │  └ [m[36m[1m0[m
+    [36m│   └ [m[36m[1m1[m
+    [36m└ [m[36m[1m<function div at 0xDEADBEEF>[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mchained_both.py[m", line [33m9[m, in [35mdiv[m
+    [38;2;248;248;242mx[0m [38;2;249;38;114m/[0m [38;2;248;248;242my[0m
+    [36m│   └ [m[36m[1m0[m
+    [36m└ [m[36m[1m1[m
+
+[31m[1mZeroDivisionError[m:[1m division by zero[m
+
+
+[1mDuring handling of the above exception, another exception occurred:[m
+
+
+[33m[1mTraceback (most recent call last):[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mchained_both.py[m", line [33m21[m, in [35mcontext[m
+    [38;2;248;248;242mcause[0m[38;2;248;248;242m([0m[38;2;248;248;242mx[0m[38;2;248;248;242m,[0m [38;2;248;248;242my[0m[38;2;248;248;242m)[0m
+    [36m│     │  └ [m[36m[1m0[m
+    [36m│     └ [m[36m[1m1[m
+    [36m└ [m[36m[1m<function cause at 0xDEADBEEF>[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mchained_both.py[m", line [33m16[m, in [35mcause[m
+    [38;2;249;38;114mraise[0m [38;2;166;226;46mValueError[0m[38;2;248;248;242m([0m[38;2;230;219;116m"Division error"[0m[38;2;248;248;242m)[0m
+    [36m      └ [m[36m[1m<class 'ValueError'>[m
+
+[31m[1mValueError[m:[1m Division error[m
+
+
+[1mThe above exception was the direct cause of the following exception:[m
+
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/better_exceptions/[m[32m[1mchained_both.py[m", line [33m27[m, in [35m<module>[m
+    [38;2;248;248;242mcontext[0m[38;2;248;248;242m([0m[38;2;174;129;255m1[0m[38;2;248;248;242m,[0m [38;2;174;129;255m0[0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function context at 0xDEADBEEF>[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mchained_both.py[m", line [33m23[m, in [35mcontext[m
+    [38;2;249;38;114mraise[0m [38;2;166;226;46mValueError[0m[38;2;248;248;242m([0m[38;2;230;219;116m"Cause error"[0m[38;2;248;248;242m)[0m [38;2;249;38;114mfrom[0m [38;2;248;248;242me[0m
+    [36m      └ [m[36m[1m<class 'ValueError'>[m
+
+[31m[1mValueError[m:[1m Cause error[m

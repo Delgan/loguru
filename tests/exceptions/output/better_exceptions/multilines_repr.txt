@@ -1,0 +1,17 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/better_exceptions/[m[32m[1mmultilines_repr.py[m", line [33m18[m, in [35m<module>[m
+    [38;2;248;248;242mmultiline[0m[38;2;248;248;242m([0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function multiline at 0xDEADBEEF>[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mmultilines_repr.py[m", line [33m15[m, in [35mmultiline[m
+    [38;2;248;248;242ma[0m [38;2;249;38;114m+[0m [38;2;248;248;242mb[0m
+    [36m│   └ [m[36m[1m[[1, 2, 3][m
+    [36m│     [m[36m[1m [4, 5, 6][m
+    [36m│     [m[36m[1m [7, 8, 9]][m
+    [36m└ [m[36m[1m[[1, 2, 3][m
+    [36m  [m[36m[1m [4, 5, 6][m
+    [36m  [m[36m[1m [7, 8, 9]][m
+
+[31m[1mTypeError[m:[1m unsupported operand type(s) for +: 'A' and 'A'[m

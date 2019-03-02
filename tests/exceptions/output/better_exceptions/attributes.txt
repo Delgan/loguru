@@ -1,0 +1,20 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/better_exceptions/[m[32m[1mattributes.py[m", line [33m24[m, in [35m<module>[m
+    [38;2;248;248;242mfoo[0m[38;2;248;248;242m([0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function foo at 0xDEADBEEF>[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mattributes.py[m", line [33m21[m, in [35mfoo[m
+    [38;2;249;38;114m...[0m [38;2;249;38;114m+[0m [38;2;174;129;255m1[0m [38;2;249;38;114m+[0m [38;2;248;248;242mbar[0m[38;2;248;248;242m([0m[38;2;248;248;242ma[0m[38;2;248;248;242m)[0m[38;2;249;38;114m.[0m[38;2;248;248;242mb[0m [38;2;249;38;114m+[0m [38;2;248;248;242ma[0m[38;2;249;38;114m.[0m[38;2;248;248;242mforbidden[0m [38;2;249;38;114m+[0m [38;2;248;248;242ma[0m[38;2;249;38;114m.[0m[38;2;248;248;242mnope[0m[38;2;249;38;114m.[0m[38;2;248;248;242ma[0m [38;2;249;38;114m+[0m [38;2;248;248;242mx[0m[38;2;249;38;114m.[0m[38;2;248;248;242m__bool__[0m [38;2;249;38;114mor[0m [38;2;248;248;242ma[0m[38;2;249;38;114m.[0m [38;2;248;248;242mb[0m [38;2;249;38;114m.[0m [38;2;248;248;242misdigit[0m[38;2;248;248;242m([0m[38;2;248;248;242m)[0m [38;2;249;38;114mand[0m [38;2;174;129;255m.3[0m [38;2;249;38;114m+[0m [38;2;249;38;114m...[0m
+    [36m              │      │ │           │          │ │           │  │   └ [m[36m[1m<method 'isdigit' of 'str' objects>[m
+    [36m              │      │ │           │          │ │           │  └ [m[36m[1m'123'[m
+    [36m              │      │ │           │          │ │           └ [m[36m[1m<__main__.Obj object at 0xDEADBEEF>[m
+    [36m              │      │ │           │          │ └ [m[36m[1m<slot wrapper '__bool__' of 'NoneType' objects>[m
+    [36m              │      │ │           │          └ [m[36m[1mNone[m
+    [36m              │      │ │           └ [m[36m[1m<__main__.Obj object at 0xDEADBEEF>[m
+    [36m              │      │ └ [m[36m[1m<property object at 0xDEADBEEF>[m
+    [36m              │      └ [m[36m[1m<__main__.Obj object at 0xDEADBEEF>[m
+    [36m              └ [m[36m[1m<__main__.Obj object at 0xDEADBEEF>[m
+
+[31m[1mTypeError[m:[1m unsupported operand type(s) for +: 'ellipsis' and 'int'[m

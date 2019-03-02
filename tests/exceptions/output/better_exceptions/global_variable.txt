@@ -1,0 +1,13 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/better_exceptions/[m[32m[1mglobal_variable.py[m", line [33m16[m, in [35m<module>[m
+    [38;2;248;248;242mfunc[0m[38;2;248;248;242m([0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function func at 0xDEADBEEF>[m
+
+  File "[32mtests/exceptions/better_exceptions/[m[32m[1mglobal_variable.py[m", line [33m13[m, in [35mfunc[m
+    [38;2;249;38;114mreturn[0m [38;2;174;129;255m1[0m [38;2;249;38;114m/[0m [38;2;174;129;255m0[0m [38;2;249;38;114m+[0m [38;2;248;248;242mfoo[0m [38;2;249;38;114m+[0m [38;2;248;248;242mbar[0m [38;2;249;38;114m+[0m [38;2;102;217;239mFalse[0m
+    [36m               │     └ [m[36m[1mFalse[m
+    [36m               └ [m[36m[1mNone[m
+
+[31m[1mZeroDivisionError[m:[1m division by zero[m
