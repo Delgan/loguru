@@ -1,0 +1,10 @@
+coverage:
+  status:
+    project: yes
+    patch: yes
+    changes: yes
+
+comment:
+  layout: "header, diff"
+  behavior: default
+  require_changes: no
