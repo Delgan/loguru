@@ -1,0 +1,17 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/ownership/[m[32m[1mstring_lib.py[m", line [33m10[m, in [35m<module>[m
+    [38;2;248;248;242mexecute[0m[38;2;248;248;242m([0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function execute at 0xDEADBEEF>[m
+
+  File "usersite/lib.py", line 14, in execute
+    exec("divide(1, 0)")
+    └ <built-in function exec>
+  File "<string>", line 1, in <module>
+  File "usersite/lib.py", line 2, in divide
+    x / y
+    │   └ 0
+    └ 1
+
+[31m[1mZeroDivisionError[m:[1m division by zero[m

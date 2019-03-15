@@ -18,6 +18,8 @@ def normalize(exception):
         )
         exception = re.sub(r"(\r\n|\r|\n)", "\n", exception)
 
+    exception = re.sub(r'"[^"]*usersite/lib.py"', '"usersite/lib.py"', exception)
+
     exception = re.sub(r"\b0x[0-9a-fA-F]+\b", "0xDEADBEEF", exception)
 
     if platform.python_implementation() == "PyPy":
@@ -115,6 +117,13 @@ def test_backtrace(filename):
 )
 def test_better_exceptions(filename):
     compare_exception("better_exceptions", filename)
+
+
+@pytest.mark.parametrize(
+    "filename", ["callback", "direct", "indirect", "string_lib", "string_source"]
+)
+def test_exception_ownership(filename):
+    compare_exception("ownership", filename)
 
 
 def test_carret_not_masked(writer):

@@ -1,0 +1,13 @@
+
+[33m[1mTraceback (most recent call last):[m
+
+> File "[32mtests/exceptions/ownership/[m[32m[1mdirect.py[m", line [33m10[m, in [35m<module>[m
+    [38;2;248;248;242mdivide[0m[38;2;248;248;242m([0m[38;2;174;129;255m10[0m[38;2;248;248;242m,[0m [38;2;174;129;255m0[0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function divide at 0xDEADBEEF>[m
+
+  File "usersite/lib.py", line 2, in divide
+    x / y
+    │   └ 0
+    └ 10
+
+[31m[1mZeroDivisionError[m:[1m division by zero[m
