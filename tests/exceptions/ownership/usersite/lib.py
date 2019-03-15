@@ -1,0 +1,14 @@
+def divide(x, y):
+    x / y
+
+
+def divide_indirect(a, b):
+    divide(a, b)
+
+
+def callme(callback):
+    callback()
+
+
+def execute():
+    exec("divide(1, 0)")
