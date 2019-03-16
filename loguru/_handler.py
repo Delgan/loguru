@@ -173,26 +173,34 @@ class Handler:
 
     @staticmethod
     def _serialize_record(text, record):
-        exc = record["exception"]
         serializable = {
             "text": text,
             "record": {
-                "elapsed": dict(repr=record["elapsed"], seconds=record["elapsed"].total_seconds()),
-                "exception": exc
-                and dict(type=exc.type.__name__, value=exc.value, traceback=bool(exc.traceback)),
+                "elapsed": {
+                    "repr": record["elapsed"],
+                    "seconds": record["elapsed"].total_seconds(),
+                },
+                "exception": record["exception"]
+                and {
+                    "type": record["exception"].type.__name__,
+                    "value": record["exception"].value,
+                    "traceback": bool(record["exception"].traceback),
+                },
                 "extra": record["extra"],
-                "file": dict(name=record["file"].name, path=record["file"].path),
+                "file": {"name": record["file"].name, "path": record["file"].path},
                 "function": record["function"],
-                "level": dict(
-                    icon=record["level"].icon, name=record["level"].name, no=record["level"].no
-                ),
+                "level": {
+                    "icon": record["level"].icon,
+                    "name": record["level"].name,
+                    "no": record["level"].no,
+                },
                 "line": record["line"],
                 "message": record["message"],
                 "module": record["module"],
                 "name": record["name"],
-                "process": dict(id=record["process"].id, name=record["process"].name),
-                "thread": dict(id=record["thread"].id, name=record["thread"].name),
-                "time": dict(repr=record["time"], timestamp=record["time"].timestamp()),
+                "process": {"id": record["process"].id, "name": record["process"].name},
+                "thread": {"id": record["thread"].id, "name": record["thread"].name},
+                "time": {"repr": record["time"], "timestamp": record["time"].timestamp()},
             },
         }
 
