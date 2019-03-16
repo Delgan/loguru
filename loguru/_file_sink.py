@@ -35,50 +35,41 @@ class FileSink:
         encoding=None,
         **kwargs
     ):
-        self.mode = mode
-        self.buffering = buffering
         self.encoding = encoding or locale.getpreferredencoding(False)
-        self.kwargs = kwargs.copy()
-        self.path = str(path)
 
-        self.rotation_function = self.make_rotation_function(rotation)
-        self.retention_function = self.make_retention_function(retention)
-        self.compression_function = self.make_compression_function(compression)
-        self.glob_pattern = self.make_glob_pattern(self.path)
+        self._mode = mode
+        self._buffering = buffering
 
-        self.file = None
-        self.file_path = None
-        self.write = None
-        self.file_write = None
+        self._kwargs = kwargs.copy()
+        self._path = str(path)
 
-        if delay:
-            self.write = self.delayed_write
-        else:
-            self.initialize_file(rename_existing=False)
-            self.setup_write_function()
+        self._rotation_function = self._make_rotation_function(rotation)
+        self._retention_function = self._make_retention_function(retention)
+        self._compression_function = self._make_compression_function(compression)
+        self._glob_pattern = self._make_glob_pattern(self._path)
 
-    def setup_write_function(self):
-        self.file_write = self.file.write
+        self._file = None
+        self._file_path = None
 
-        if self.rotation_function is None:
-            self.write = self.file_write
-        else:
-            self.write = self.rotating_write
+        if not delay:
+            self._initialize_file(rename_existing=False)
 
-    def delayed_write(self, message):
-        self.initialize_file(rename_existing=False)
-        self.setup_write_function()
-        self.write(message)
+    def write(self, message):
+        if self._file is None:
+            self._initialize_file(rename_existing=False)
 
-    def rotating_write(self, message):
-        if self.rotation_function(message, self.file):
-            self.terminate(teardown=True)
-            self.initialize_file(rename_existing=True)
-            self.setup_write_function()
-        self.file_write(message)
+        if self._rotation_function is not None and self._rotation_function(message, self._file):
+            self._terminate(teardown=True)
+            self._initialize_file(rename_existing=True)
 
-    def initialize_file(self, *, rename_existing):
-        new_path = self.format_path()
+        self._file.write(message)
+
+    def stop(self):
+        self._terminate(teardown=self._rotation_function is None)
+
+    def _initialize_file(self, *, rename_existing):
+        new_path = self._path.format_map({"time": FileDateFormatter()})
+        new_path = os.path.abspath(new_path)
         new_dir = os.path.dirname(new_path)
         os.makedirs(new_dir, exist_ok=True)
 
@@ -87,21 +78,17 @@ class FileSink:
             renamed_path = "{}.{}{}".format(root, FileDateFormatter(), ext)
             os.rename(new_path, renamed_path)
 
-        self.file_path = new_path
-        self.file = open(
+        self._file_path = new_path
+        self._file = open(
             new_path,
-            mode=self.mode,
-            buffering=self.buffering,
             encoding=self.encoding,
-            **self.kwargs
+            mode=self._mode,
+            buffering=self._buffering,
+            **self._kwargs
         )
 
-    def format_path(self):
-        path = self.path.format_map({"time": FileDateFormatter()})
-        return os.path.abspath(path)
-
     @staticmethod
-    def make_glob_pattern(path):
+    def _make_glob_pattern(path):
         tokens = string.Formatter().parse(path)
         parts = (glob.escape(text) + "*" * (name is not None) for text, name, *_ in tokens)
         root, ext = os.path.splitext("".join(parts))
@@ -111,7 +98,7 @@ class FileSink:
             pattern = root + "*"
         return pattern
 
-    def make_rotation_function(self, rotation):
+    def _make_rotation_function(self, rotation):
         def make_from_size(size_limit):
             def rotation_function(message, file):
                 file.seek(0, 2)
@@ -147,10 +134,10 @@ class FileSink:
         elif isinstance(rotation, str):
             size = string_parsers.parse_size(rotation)
             if size is not None:
-                return self.make_rotation_function(size)
+                return self._make_rotation_function(size)
             interval = string_parsers.parse_duration(rotation)
             if interval is not None:
-                return self.make_rotation_function(interval)
+                return self._make_rotation_function(interval)
             frequency = string_parsers.parse_frequency(rotation)
             if frequency is not None:
                 return make_from_time(frequency)
@@ -158,7 +145,7 @@ class FileSink:
             if daytime is not None:
                 day, time = daytime
                 if day is None:
-                    return self.make_rotation_function(time)
+                    return self._make_rotation_function(time)
                 if time is None:
                     time = datetime.time(0, 0, 0)
 
@@ -191,7 +178,7 @@ class FileSink:
                 "Cannot infer rotation for objects of type: '%s'" % type(rotation).__name__
             )
 
-    def make_retention_function(self, retention):
+    def _make_retention_function(self, retention):
         def make_from_filter(filter_logs):
             def retention_function(logs):
                 for log in filter_logs(logs):
@@ -205,7 +192,7 @@ class FileSink:
             interval = string_parsers.parse_duration(retention)
             if interval is None:
                 raise ValueError("Cannot parse retention from: '%s'" % retention)
-            return self.make_retention_function(interval)
+            return self._make_retention_function(interval)
         elif isinstance(retention, int):
 
             def key_log(log):
@@ -230,7 +217,7 @@ class FileSink:
                 "Cannot infer retention for objects of type: '%s'" % type(retention).__name__
             )
 
-    def make_compression_function(self, compression):
+    def _make_compression_function(self, compression):
         def make_compress_generic(opener, **kwargs):
             def compress(path_in, path_out):
                 with open(path_in, "rb") as f_in:
@@ -316,20 +303,17 @@ class FileSink:
                 "Cannot infer compression for objects of type: '%s'" % type(compression).__name__
             )
 
-    def stop(self):
-        self.terminate(teardown=self.rotation_function is None)
-
-    def terminate(self, *, teardown):
-        if self.file is not None:
-            self.file.close()
+    def _terminate(self, *, teardown):
+        if self._file is not None:
+            self._file.close()
 
         if teardown:
-            if self.compression_function is not None and self.file_path is not None:
-                self.compression_function(self.file_path)
+            if self._compression_function is not None and self._file_path is not None:
+                self._compression_function(self._file_path)
 
-            if self.retention_function is not None:
-                logs = glob.glob(self.glob_pattern)
-                self.retention_function(logs)
+            if self._retention_function is not None:
+                logs = glob.glob(self._glob_pattern)
+                self._retention_function(logs)
 
-        self.file = None
-        self.file_path = None
+        self._file = None
+        self._file_path = None
