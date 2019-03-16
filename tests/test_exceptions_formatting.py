@@ -156,6 +156,28 @@ def test_sink_encoding(writer, encoding):
         logger.exception("")
 
 
+def test_has_sys_real_prefix(writer, monkeypatch):
+    monkeypatch.setattr(sys, "real_prefix", "/foo/bar/baz", raising=False)
+    logger.add(writer, backtrace=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
+def test_has_site_getsitepackages(writer, monkeypatch):
+    monkeypatch.setattr(site, "getsitepackages", lambda: ["foo", "bar", "baz"], raising=False)
+    logger.add(writer, backtrace=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
 def test_no_sys_real_prefix(writer, monkeypatch):
     monkeypatch.delattr(sys, "real_prefix", raising=False)
     logger.add(writer, backtrace=True, colorize=False, format="")
