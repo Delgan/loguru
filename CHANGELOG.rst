@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- The ``record["exception"]`` attribute is now unpackable as a ``(type, value, traceback)`` tuple
+
+
 0.2.5 (2019-01-20)
 ==================
 
