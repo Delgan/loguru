@@ -158,6 +158,7 @@ class Logger:
         colorize=_defaults.LOGURU_COLORIZE,
         serialize=_defaults.LOGURU_SERIALIZE,
         backtrace=_defaults.LOGURU_BACKTRACE,
+        diagnose=_defaults.LOGURU_DIAGNOSE,
         enqueue=_defaults.LOGURU_ENQUEUE,
         catch=_defaults.LOGURU_CATCH,
         **kwargs
@@ -184,9 +185,12 @@ class Logger:
             Whether or not the logged message and its records should be first converted to a JSON
             string before being sent to the sink.
         backtrace : |bool|, optional
-            Whether or not the formatted exception should use stack trace to display local variables
-            values and be extended upward beyond the caught frame. This probably should be set to
-            ``False`` in production to avoid leaking sensitive data.
+            Whether or not the exception trace formatted should be extended upward, beyond the
+            catching point, to show the full stacktrace which generated the error.
+        diagnose : |bool|, optional
+            Whether or not the exception trace should display the variables values to eases the
+            debugging. This should be set to ``False`` in production to avoid leaking sensitive
+            data.
         enqueue : |bool|, optional
             Whether or not the messages to be logged should first pass through a multiprocess-safe
             queue before reaching the sink. This is useful while logging to a file through multiple
@@ -540,7 +544,7 @@ class Logger:
 
         Each of the |add| default parameter can be modified by setting the ``LOGURU_[PARAM]``
         environment variable. For example on Linux: ``export LOGURU_FORMAT="{time} - {message}"``
-        or ``export LOGURU_BACKTRACE=NO``.
+        or ``export LOGURU_DIAGNOSE=NO``.
 
         The default levels' attributes can also be modified by setting the ``LOGURU_[LEVEL]_[ATTR]``
         environment variable. For example, on Windows: ``setx LOGURU_DEBUG_COLOR "<blue>"``
@@ -592,6 +596,7 @@ class Logger:
                 colorize=colorize,
                 serialize=serialize,
                 backtrace=backtrace,
+                diagnose=diagnose,
                 enqueue=enqueue,
                 catch=catch,
             )
@@ -606,6 +611,7 @@ class Logger:
                 colorize=colorize,
                 serialize=serialize,
                 backtrace=backtrace,
+                diagnose=diagnose,
                 enqueue=enqueue,
                 catch=catch,
             )
@@ -764,6 +770,7 @@ class Logger:
                 colorize=colorize,
                 serialize=serialize,
                 backtrace=backtrace,
+                diagnose=diagnose,
                 catch=catch,
                 enqueue=enqueue,
                 encoding=encoding,
@@ -836,7 +843,7 @@ class Logger:
         using threads to propagate errors to the main logger thread.
 
         Note that the visibility of variables values (which uses the cool `better_exceptions`_
-        library from `@Qix-`_) depends on the ``backtrace`` option of each configured sink.
+        library from `@Qix-`_) depends on the ``diagnose`` option of each configured sink.
 
         The returned object can also be used as a context manager.
 
