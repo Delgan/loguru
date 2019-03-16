@@ -2,7 +2,7 @@ import sys
 from loguru import logger
 
 logger.remove()
-logger.add(sys.stderr, format="", colorize=False, backtrace=True)
+logger.add(sys.stderr, format="", colorize=False, backtrace=True, diagnose=False)
 
 k = 2
 

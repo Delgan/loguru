@@ -116,8 +116,8 @@ def test_backtrace(filename):
         "unprintable_object",
     ],
 )
-def test_better_exceptions(filename):
-    compare_exception("better_exceptions", filename)
+def test_diagnose(filename):
+    compare_exception("diagnose", filename)
 
 
 @pytest.mark.parametrize(
@@ -127,8 +127,9 @@ def test_exception_ownership(filename):
     compare_exception("ownership", filename)
 
 
-def test_carret_not_masked(writer):
-    logger.add(writer, backtrace=True, colorize=False, format="")
+@pytest.mark.parametrize("diagnose", [False, True])
+def test_carret_not_masked(writer, diagnose):
+    logger.add(writer, backtrace=True, diagnose=diagnose, colorize=False, format="")
 
     @logger.catch
     def f(n):
@@ -139,11 +140,23 @@ def test_carret_not_masked(writer):
 
     assert sum(line.startswith("> ") for line in writer.read().splitlines()) == 1
 
+@pytest.mark.parametrize("diagnose", [False, True])
+def test_no_carret_if_no_backtrace(writer,diagnose):
+    logger.add(writer, backtrace=False, diagnose=diagnose, colorize=False, format="")
+
+    @logger.catch
+    def f(n):
+        1 / n
+        f(n - 1)
+
+    f(30)
+
+    assert sum(line.startswith("> ") for line in writer.read().splitlines()) == 0
 
 @pytest.mark.parametrize("encoding", ["ascii", "UTF8", None])
 def test_sink_encoding(writer, encoding):
     writer.encoding = encoding
-    logger.add(writer, backtrace=True, colorize=False, format="")
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
 
     def foo(a, b):
         a / b
@@ -156,53 +169,58 @@ def test_sink_encoding(writer, encoding):
     except ZeroDivisionError:
         logger.exception("")
 
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 def test_has_sys_real_prefix(writer, monkeypatch):
     monkeypatch.setattr(sys, "real_prefix", "/foo/bar/baz", raising=False)
-    logger.add(writer, backtrace=True, colorize=False, format="")
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
     try:
         1 / 0
     except ZeroDivisionError:
         logger.exception("")
+
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_has_site_getsitepackages(writer, monkeypatch):
     monkeypatch.setattr(site, "getsitepackages", lambda: ["foo", "bar", "baz"], raising=False)
-    logger.add(writer, backtrace=True, colorize=False, format="")
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
     try:
         1 / 0
     except ZeroDivisionError:
         logger.exception("")
+
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_no_sys_real_prefix(writer, monkeypatch):
     monkeypatch.delattr(sys, "real_prefix", raising=False)
-    logger.add(writer, backtrace=True, colorize=False, format="")
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
     try:
         1 / 0
     except ZeroDivisionError:
         logger.exception("")
+
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_no_site_getsitepackages(writer, monkeypatch):
     monkeypatch.delattr(site, "getsitepackages", raising=False)
-    logger.add(writer, backtrace=True, colorize=False, format="")
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
     try:
         1 / 0
     except ZeroDivisionError:
         logger.exception("")
+
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_no_exception(writer):
-    logger.add(writer, backtrace=False, colorize=False, format="{message}")
+    logger.add(writer, backtrace=False, diagnose=False, colorize=False, format="{message}")
 
     logger.exception("No Error.")
 

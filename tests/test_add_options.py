@@ -212,6 +212,25 @@ def test_backtrace(writer):
 
     assert len(result_with) > len(result_without)
 
+def test_diagnose(writer):
+    logger.add(writer, format="{message}", diagnose=True)
+    try:
+        1 / 0
+    except:
+        logger.exception("")
+    result_with = writer.read().strip()
+
+    logger.remove()
+    writer.clear()
+
+    logger.add(writer, format="{message}", diagnose=False)
+    try:
+        1 / 0
+    except:
+        logger.exception("")
+    result_without = writer.read().strip()
+
+    assert len(result_with) > len(result_without)
 
 @pytest.mark.parametrize("with_exception", [False, True])
 def test_serialize(with_exception):

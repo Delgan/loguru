@@ -11,9 +11,9 @@ def check_tb_sink(message):
 
 logger.remove()
 
-logger.add(check_tb_sink, enqueue=False, catch=False)
-logger.add(sys.stderr, enqueue=True, catch=False, format="")
-logger.add(check_tb_sink, enqueue=False, catch=False)
+logger.add(check_tb_sink, enqueue=False, catch=False, backtrace=True, diagnose=False)
+logger.add(sys.stderr, format="", enqueue=True, catch=False, backtrace=True, diagnose=False)
+logger.add(check_tb_sink, enqueue=False, catch=False, backtrace=True, diagnose=False)
 
 try:
     1 / 0

@@ -1,7 +1,7 @@
 
 [33m[1mTraceback (most recent call last):[m
 
-> File "[32mtests/exceptions/better_exceptions/[m[32m[1msyntax_error.py[m", line [33m16[m, in [35m<module>[m
+  File "[32mtests/exceptions/diagnose/[m[32m[1msyntax_error.py[m", line [33m16[m, in [35m<module>[m
     [38;2;166;226;46mexec[0m[38;2;248;248;242m([0m[38;2;248;248;242mcode[0m[38;2;248;248;242m)[0m
     [36m│    └ [m[36m[1m'\nif True:\n    a = 5\n    b = 7 *\n'[m
     [36m└ [m[36m[1m<built-in function exec>[m

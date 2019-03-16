@@ -27,6 +27,7 @@ class Handler:
         colorize,
         serialize,
         backtrace,
+        diagnose,
         catch,
         enqueue,
         encoding,
@@ -42,6 +43,7 @@ class Handler:
         self._colorize = colorize
         self._serialize = serialize
         self._backtrace = backtrace
+        self._diagnose = diagnose
         self._catch = catch
         self._enqueue = enqueue
         self._encoding = encoding
@@ -102,17 +104,23 @@ class Handler:
 
             exception = record["exception"]
 
-            if exception:
+            if not exception:
+                error = ""
+            else:
                 type_, value, tb = exception
+
                 if self._backtrace:
                     tb = self._exception_extender.extend_traceback(tb, decorated=decorated)
+
+                if self._diagnose:
                     lines = self._exception_formatter.format_exception(type_, value, tb)
-                    error = self._exception_extender.reformat("".join(lines))
                 else:
                     lines = traceback.format_exception(type_, value, tb)
-                    error = "".join(lines)
-            else:
-                error = ""
+
+                error = "".join(lines)
+
+                if self._backtrace:
+                    error = self._exception_extender.reformat(error)
 
             formatter_record = {**record, **{"exception": error}}
 

@@ -1,6 +1,7 @@
 Unreleased
 ==========
 
+- Change the behavior of ``backtrace`` argument so it only extends the stacktrace upward, the display of variables values is now controlled with the new ``diagnose`` argument (`#49 <https://github.com/Delgan/loguru/issues/49>`_)
 - The ``record["exception"]`` attribute is now unpackable as a ``(type, value, traceback)`` tuple
 
 

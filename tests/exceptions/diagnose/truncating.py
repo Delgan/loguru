@@ -2,15 +2,12 @@ import sys
 from loguru import logger
 
 logger.remove()
-logger.add(sys.stderr, format="", colorize=True, backtrace=True)
-
-
-def _deep(val):
-    return 1 / val
+logger.add(sys.stderr, format="", colorize=True, backtrace=False, diagnose=True)
 
 
 def div():
-    return _deep("天")
+    var = "9" * 150
+    return 1 / var
 
 
 try:

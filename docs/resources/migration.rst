@@ -129,7 +129,7 @@ Replacing ``exc_info`` argument
 
 While calling standard logging function, you can pass ``exc_info`` as an argument to add stacktrace to the message. Instead of that, you should use the |opt| method with ``exception`` parameter, replacing ``logger.debug("Debug error:", exc_info=True)`` with ``logger.opt(exception=True).debug("Debug error:")``.
 
-The formatted exception will include the whole stacktrace and variables. To prevent that, make sure to use ``backtrace=False`` while adding your sink.
+The formatted exception will include the whole stacktrace and variables. To prevent that, make sure to use ``backtrace=False`` and ``diagnose=False`` while adding your sink.
 
 
 Replacing ``extra`` argument and ``LoggerAdapter`` objects
