@@ -33,48 +33,146 @@ class Handler:
         id_,
         colors=[]
     ):
-        self.writer = writer
-        self.stopper = stopper
-        self.levelno = levelno
-        self.formatter = formatter
-        self.is_formatter_dynamic = is_formatter_dynamic
-        self.filter = filter_
-        self.colorize = colorize
-        self.serialize = serialize
-        self.backtrace = backtrace
-        self.catch = catch
-        self.enqueue = enqueue
-        self.encoding = encoding
-        self.id = id_
+        self._writer = writer
+        self._stopper = stopper
+        self._levelno = levelno
+        self._formatter = formatter
+        self._is_formatter_dynamic = is_formatter_dynamic
+        self._filter = filter_
+        self._colorize = colorize
+        self._serialize = serialize
+        self._backtrace = backtrace
+        self._catch = catch
+        self._enqueue = enqueue
+        self._encoding = encoding
+        self._id = id_
 
-        self.static_format = None
-        self.decolorized_format = None
-        self.precolorized_formats = {}
+        self._static_format = None
+        self._decolorized_format = None
+        self._precolorized_formats = {}
 
-        self.lock = threading.Lock()
-        self.queue = None
-        self.thread = None
-        self.stopped = False
+        self._lock = threading.Lock()
+        self._queue = None
+        self._thread = None
+        self._stopped = False
 
-        self.exception_extender = ExceptionExtender()
-        self.exception_formatter = ExceptionFormatter(
-            colorize=self.colorize, encoding=self.encoding
+        self._exception_extender = ExceptionExtender()
+        self._exception_formatter = ExceptionFormatter(
+            colorize=self._colorize, encoding=self._encoding
         )
 
-        if not self.is_formatter_dynamic:
-            self.static_format = self.formatter
-            self.decolorized_format = self.decolorize_format(self.static_format)
+        if not self._is_formatter_dynamic:
+            self._static_format = self._formatter
+            self._decolorized_format = self._decolorize_format(self._static_format)
 
             for color in colors:
                 self.update_format(color)
 
-        if self.enqueue:
-            self.queue = multiprocessing.SimpleQueue()
-            self.thread = threading.Thread(target=self.queued_writer, daemon=True)
-            self.thread.start()
+        if self._enqueue:
+            self._queue = multiprocessing.SimpleQueue()
+            self._thread = threading.Thread(target=self._queued_writer, daemon=True)
+            self._thread.start()
+
+    def emit(self, record, level_color, ansi_message, raw, decorated):
+        try:
+            if self._levelno > record["level"].no:
+                return
+
+            if self._filter is not None:
+                if not self._filter(record):
+                    return
+
+            if self._is_formatter_dynamic:
+                format_ = self._formatter(record)
+                if self._colorize:
+                    if ansi_message:
+                        precomputed_format = format_
+                    else:
+                        precomputed_format = self._colorize_format(format_, level_color)
+                else:
+                    precomputed_format = self._decolorize_format(format_)
+            else:
+                if self._colorize:
+                    if ansi_message:
+                        precomputed_format = self._static_format
+                    else:
+                        precomputed_format = self._precolorized_formats[level_color]
+                else:
+                    precomputed_format = self._decolorized_format
+
+            exception = record["exception"]
+
+            if exception:
+                type_, value, tb = exception
+                if self._backtrace:
+                    tb = self._exception_extender.extend_traceback(tb, decorated=decorated)
+                    lines = self._exception_formatter.format_exception(type_, value, tb)
+                    error = self._exception_extender.reformat("".join(lines))
+                else:
+                    lines = traceback.format_exception(type_, value, tb)
+                    error = "".join(lines)
+            else:
+                error = ""
+
+            formatter_record = {**record, **{"exception": error}}
+
+            if ansi_message and not self._colorize:
+                formatter_record["message"] = self._decolorize_format(record["message"])
+
+            if raw:
+                formatted = formatter_record["message"]
+            else:
+                formatted = precomputed_format.format_map(formatter_record)
+
+            if ansi_message and self._colorize:
+                try:
+                    formatted = self._colorize_format(formatted, level_color)
+                except ansimarkup.AnsiMarkupError:
+                    formatter_record["message"] = self._decolorize_format(record["message"])
+
+                    if self._is_formatter_dynamic:
+                        precomputed_format = self._decolorize_format(format_)
+                    else:
+                        precomputed_format = self._decolorized_format
+
+                    formatted = precomputed_format.format_map(formatter_record)
+
+            if self._serialize:
+                formatted = self._serialize_record(formatted, record)
+
+            str_record = StrRecord(formatted)
+            str_record.record = record
+
+            with self._lock:
+                if self._stopped:
+                    return
+                if self._enqueue:
+                    self._queue.put(str_record)
+                else:
+                    self._writer(str_record)
+
+        except Exception:
+            self._handle_error(record)
+
+    def stop(self):
+        with self._lock:
+            self._stopped = True
+            if self._enqueue:
+                self._queue.put(None)
+                self._thread.join()
+            self._stopper()
+
+    def update_format(self, color):
+        if self._is_formatter_dynamic or not self._colorize or color in self._precolorized_formats:
+            return
+        self._precolorized_formats[color] = self._colorize_format(self._static_format, color)
+
+    @property
+    def levelno(self):
+        return self._levelno
 
     @staticmethod
-    def serialize_record(text, record):
+    def _serialize_record(text, record):
         exc = record["exception"]
         serializable = {
             "text": text,
@@ -101,7 +199,7 @@ class Handler:
         return json.dumps(serializable, default=str) + "\n"
 
     @staticmethod
-    def make_ansimarkup(color):
+    def _make_ansimarkup(color):
         color = ansimarkup.parse(color)
         custom_markup = dict(level=color, lvl=color)
         am = ansimarkup.AnsiMarkup(tags=custom_markup, strict=True)
@@ -109,23 +207,18 @@ class Handler:
 
     @staticmethod
     @functools.lru_cache(maxsize=32)
-    def decolorize_format(format_):
-        am = Handler.make_ansimarkup("")
+    def _decolorize_format(format_):
+        am = Handler._make_ansimarkup("")
         return am.strip(format_)
 
     @staticmethod
     @functools.lru_cache(maxsize=32)
-    def colorize_format(format_, color):
-        am = Handler.make_ansimarkup(color.strip())
+    def _colorize_format(format_, color):
+        am = Handler._make_ansimarkup(color.strip())
         return am.parse(format_)
 
-    def update_format(self, color):
-        if self.is_formatter_dynamic or not self.colorize or color in self.precolorized_formats:
-            return
-        self.precolorized_formats[color] = self.colorize_format(self.static_format, color)
-
-    def handle_error(self, record=None):
-        if not self.catch:
+    def _handle_error(self, record=None):
+        if not self._catch:
             raise
 
         if not sys.stderr:
@@ -134,7 +227,7 @@ class Handler:
         ex_type, ex, tb = sys.exc_info()
 
         try:
-            sys.stderr.write("--- Logging error in Loguru Handler #%d ---\n" % self.id)
+            sys.stderr.write("--- Logging error in Loguru Handler #%d ---\n" % self._id)
             sys.stderr.write("Record was: ")
             try:
                 sys.stderr.write(str(record))
@@ -148,105 +241,16 @@ class Handler:
         finally:
             del ex_type, ex, tb
 
-    def emit(self, record, level_color, ansi_message, raw, decorated):
-        try:
-            if self.levelno > record["level"].no:
-                return
-
-            if self.filter is not None:
-                if not self.filter(record):
-                    return
-
-            if self.is_formatter_dynamic:
-                format_ = self.formatter(record)
-                if self.colorize:
-                    if ansi_message:
-                        precomputed_format = format_
-                    else:
-                        precomputed_format = self.colorize_format(format_, level_color)
-                else:
-                    precomputed_format = self.decolorize_format(format_)
-            else:
-                if self.colorize:
-                    if ansi_message:
-                        precomputed_format = self.static_format
-                    else:
-                        precomputed_format = self.precolorized_formats[level_color]
-                else:
-                    precomputed_format = self.decolorized_format
-
-            exception = record["exception"]
-
-            if exception:
-                type_, value, tb = exception
-                if self.backtrace:
-                    tb = self.exception_extender.extend_traceback(tb, decorated=decorated)
-                    lines = self.exception_formatter.format_exception(type_, value, tb)
-                    error = self.exception_extender.reformat("".join(lines))
-                else:
-                    lines = traceback.format_exception(type_, value, tb)
-                    error = "".join(lines)
-            else:
-                error = ""
-
-            formatter_record = {**record, **{"exception": error}}
-
-            if ansi_message and not self.colorize:
-                formatter_record["message"] = self.decolorize_format(record["message"])
-
-            if raw:
-                formatted = formatter_record["message"]
-            else:
-                formatted = precomputed_format.format_map(formatter_record)
-
-            if ansi_message and self.colorize:
-                try:
-                    formatted = self.colorize_format(formatted, level_color)
-                except ansimarkup.AnsiMarkupError:
-                    formatter_record["message"] = self.decolorize_format(record["message"])
-
-                    if self.is_formatter_dynamic:
-                        precomputed_format = self.decolorize_format(format_)
-                    else:
-                        precomputed_format = self.decolorized_format
-
-                    formatted = precomputed_format.format_map(formatter_record)
-
-            if self.serialize:
-                formatted = self.serialize_record(formatted, record)
-
-            str_record = StrRecord(formatted)
-            str_record.record = record
-
-            with self.lock:
-                if self.stopped:
-                    return
-                if self.enqueue:
-                    self.queue.put(str_record)
-                else:
-                    self.writer(str_record)
-
-        except Exception:
-            self.handle_error(record)
-
-    def queued_writer(self):
+    def _queued_writer(self):
         message = None
-        queue = self.queue
+        queue = self._queue
         try:
             while True:
                 message = queue.get()
                 if message is None:
                     break
-                self.writer(message)
+                self._writer(message)
         except Exception:
             if message and hasattr(message, "record"):
                 message = message.record
-            self.handle_error(message)
-
-    def stop(self):
-        with self.lock:
-            self.stopped = True
-            if self.enqueue:
-                self.queue.put(None)
-                self.thread.join()
-            self.stopper()
+            self._handle_error(message)

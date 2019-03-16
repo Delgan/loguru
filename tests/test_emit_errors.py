@@ -71,7 +71,7 @@ def test_unprintable_record(writer, capsys):
 def test_enqueue_broken_sink(monkeypatch):
     out = []
     monkeypatch.setattr(
-        loguru._handler.Handler, "handle_error", lambda *args: out.append("Handled")
+        loguru._handler.Handler, "_handle_error", lambda *args: out.append("Handled")
     )
     logger.add(broken_sink, enqueue=True)
     logger.debug("a")
