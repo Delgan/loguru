@@ -4,6 +4,7 @@ import re
 import site
 import subprocess
 import sys
+import types
 
 import pytest
 
@@ -209,3 +210,38 @@ def test_no_exception(writer):
         "No Error.\nNoneType\n",
         "No Error.\nNoneType: None\n",  # Old versions of Python 3.5
     )
+
+
+def test_exception_is_none():
+    err = object()
+
+    def writer(msg):
+        nonlocal err
+        err = msg.record["exception"]
+
+    logger.add(writer)
+
+    logger.error("No exception")
+
+    assert err is None
+
+
+def test_exception_is_unpackable():
+    err = object()
+
+    def writer(msg):
+        nonlocal err
+        err = msg.record["exception"]
+
+    logger.add(writer)
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("Exception")
+
+    type_, value, traceback = err
+
+    assert type_ == ZeroDivisionError
+    assert isinstance(value, ZeroDivisionError)
+    assert isinstance(traceback, types.TracebackType)

@@ -2,6 +2,7 @@ import functools
 import itertools
 import logging
 import re
+import sys
 import threading
 import warnings
 from collections import namedtuple
@@ -1472,7 +1473,14 @@ class Logger:
             process_recattr.id, process_recattr.name = process_ident, process.name
 
             if _self._exception:
-                exception = ExceptionRecattr(_self._exception, decorated)
+                exc = _self._exception
+                if isinstance(exc, BaseException):
+                    type_, value, traceback = (type(exc), exc, exc.__traceback__)
+                elif isinstance(exc, tuple):
+                    type_, value, traceback = exc
+                else:
+                    type_, value, traceback = sys.exc_info()
+                exception = ExceptionRecattr(type_, value, traceback)
             else:
                 exception = None
 
@@ -1502,7 +1510,7 @@ class Logger:
                 record["message"] = _message.format(*args, **kwargs)
 
             for handler in _self._handlers.values():
-                handler.emit(record, level_color, _self._ansi, _self._raw)
+                handler.emit(record, level_color, _self._ansi, _self._raw, decorated)
 
         doc = r"Log ``_message.format(*args, **kwargs)`` with severity ``'%s'``." % level_name
         log_function.__doc__ = doc

@@ -7,6 +7,8 @@ import traceback
 
 import ansimarkup
 
+from ._better_exceptions import ExceptionExtender, ExceptionFormatter
+
 
 class StrRecord(str):
     __slots__ = ("record",)
@@ -53,6 +55,11 @@ class Handler:
         self.queue = None
         self.thread = None
         self.stopped = False
+
+        self.exception_extender = ExceptionExtender()
+        self.exception_formatter = ExceptionFormatter(
+            colorize=self.colorize, encoding=self.encoding
+        )
 
         if not self.is_formatter_dynamic:
             self.static_format = self.formatter
@@ -141,7 +148,7 @@ class Handler:
         finally:
             del ex_type, ex, tb
 
-    def emit(self, record, level_color, ansi_message, raw):
+    def emit(self, record, level_color, ansi_message, raw, decorated):
         try:
             if self.levelno > record["level"].no:
                 return
@@ -171,7 +178,14 @@ class Handler:
             exception = record["exception"]
 
             if exception:
-                error = exception.format_exception(self.backtrace, self.colorize, self.encoding)
+                type_, value, tb = exception
+                if self.backtrace:
+                    tb = self.exception_extender.extend_traceback(tb, decorated=decorated)
+                    lines = self.exception_formatter.format_exception(type_, value, tb)
+                    error = self.exception_extender.reformat("".join(lines))
+                else:
+                    lines = traceback.format_exception(type_, value, tb)
+                    error = "".join(lines)
             else:
                 error = ""
 
