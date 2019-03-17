@@ -1,13 +1,43 @@
 
 [33m[1mTraceback (most recent call last):[m
 
-> File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m11[m, in [35m<module>[m
+  File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m18[m, in [35m<module>[m
+    [38;2;248;248;242mtest[0m[38;2;248;248;242m([0m[38;2;248;248;242mbacktrace[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mcolorize[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mdiagnose[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function test at 0xDEADBEEF>[m
+
+> File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m13[m, in [35mtest[m
     [38;2;166;226;46mexec[0m[38;2;248;248;242m([0m[38;2;230;219;116m"foo()"[0m[38;2;248;248;242m)[0m
     [36m└ [m[36m[1m<built-in function exec>[m
 
   File "[32m[m[32m[1m<string>[m", line [33m1[m, in [35m<module>[m
 
-  File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m8[m, in [35mfoo[m
+  File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m10[m, in [35mfoo[m
     [38;2;174;129;255m1[0m [38;2;249;38;114m/[0m [38;2;174;129;255m0[0m
 
 [31m[1mZeroDivisionError[m:[1m division by zero[m
+
+[33m[1mTraceback (most recent call last):[m
+  File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m19[m, in [35m<module>[m
+    [38;2;248;248;242mtest[0m[38;2;248;248;242m([0m[38;2;248;248;242mbacktrace[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mcolorize[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mdiagnose[0m[38;2;249;38;114m=[0m[38;2;102;217;239mFalse[0m[38;2;248;248;242m)[0m
+> File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m13[m, in [35mtest[m
+    [38;2;166;226;46mexec[0m[38;2;248;248;242m([0m[38;2;230;219;116m"foo()"[0m[38;2;248;248;242m)[0m
+  File "[32m[m[32m[1m<string>[m", line [33m1[m, in [35m<module>[m
+  File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m10[m, in [35mfoo[m
+    [38;2;174;129;255m1[0m [38;2;249;38;114m/[0m [38;2;174;129;255m0[0m
+[31m[1mZeroDivisionError[m:[1m division by zero[m
+
+[33m[1mTraceback (most recent call last):[m
+  File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m13[m, in [35mtest[m
+    [38;2;166;226;46mexec[0m[38;2;248;248;242m([0m[38;2;230;219;116m"foo()"[0m[38;2;248;248;242m)[0m
+  File "[32m[m[32m[1m<string>[m", line [33m1[m, in [35m<module>[m
+  File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m10[m, in [35mfoo[m
+    [38;2;174;129;255m1[0m [38;2;249;38;114m/[0m [38;2;174;129;255m0[0m
+[31m[1mZeroDivisionError[m:[1m division by zero[m
+
+Traceback (most recent call last):
+  File "tests/exceptions/ownership/string_source.py", line 13, in test
+    exec("foo()")
+  File "<string>", line 1, in <module>
+  File "tests/exceptions/ownership/string_source.py", line 10, in foo
+    1 / 0
+ZeroDivisionError: division by zero

@@ -1,7 +1,8 @@
 Unreleased
 ==========
 
-- Change the behavior of ``backtrace`` argument so it only extends the stacktrace upward, the display of variables values is now controlled with the new ``diagnose`` argument (`#49 <https://github.com/Delgan/loguru/issues/49>`_)
+- Modify behavior of sink option ``backtrace`` so it only extends the stacktrace upward, the display of variables values is now controlled with the new ``diagnose`` argument (`#49 <https://github.com/Delgan/loguru/issues/49>`_)
+- Add coloration of exception traceback even if ``diagnose`` and ``backtrace`` options are ``False``
 - The ``record["exception"]`` attribute is now unpackable as a ``(type, value, traceback)`` tuple
 
 

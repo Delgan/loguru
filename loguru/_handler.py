@@ -60,7 +60,7 @@ class Handler:
 
         self._exception_extender = ExceptionExtender()
         self._exception_formatter = ExceptionFormatter(
-            colorize=self._colorize, encoding=self._encoding
+            colorize=self._colorize, encoding=self._encoding, show_values=self._diagnose
         )
 
         if not self._is_formatter_dynamic:
@@ -112,11 +112,7 @@ class Handler:
                 if self._backtrace:
                     tb = self._exception_extender.extend_traceback(tb, decorated=decorated)
 
-                if self._diagnose:
-                    lines = self._exception_formatter.format_exception(type_, value, tb)
-                else:
-                    lines = traceback.format_exception(type_, value, tb)
-
+                lines = self._exception_formatter.format_exception(type_, value, tb)
                 error = "".join(lines)
 
                 if self._backtrace:

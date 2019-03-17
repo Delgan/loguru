@@ -1,7 +1,11 @@
 
 [33m[1mTraceback (most recent call last):[m
 
-> File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m10[m, in [35m<module>[m
+  File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m18[m, in [35m<module>[m
+    [38;2;248;248;242mtest[0m[38;2;248;248;242m([0m[38;2;248;248;242mbacktrace[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mcolorize[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mdiagnose[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m)[0m
+    [36m└ [m[36m[1m<function test at 0xDEADBEEF>[m
+
+> File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m13[m, in [35mtest[m
     [38;2;248;248;242mdivide_indirect[0m[38;2;248;248;242m([0m[38;2;174;129;255m10[0m[38;2;248;248;242m,[0m [38;2;174;129;255m0[0m[38;2;248;248;242m)[0m
     [36m└ [m[36m[1m<function divide_indirect at 0xDEADBEEF>[m
 
@@ -16,3 +20,32 @@
     └ 10
 
 [31m[1mZeroDivisionError[m:[1m division by zero[m
+
+[33m[1mTraceback (most recent call last):[m
+  File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m19[m, in [35m<module>[m
+    [38;2;248;248;242mtest[0m[38;2;248;248;242m([0m[38;2;248;248;242mbacktrace[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mcolorize[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mdiagnose[0m[38;2;249;38;114m=[0m[38;2;102;217;239mFalse[0m[38;2;248;248;242m)[0m
+> File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m13[m, in [35mtest[m
+    [38;2;248;248;242mdivide_indirect[0m[38;2;248;248;242m([0m[38;2;174;129;255m10[0m[38;2;248;248;242m,[0m [38;2;174;129;255m0[0m[38;2;248;248;242m)[0m
+  File "usersite/lib.py", line 6, in divide_indirect
+    divide(a, b)
+  File "usersite/lib.py", line 2, in divide
+    x / y
+[31m[1mZeroDivisionError[m:[1m division by zero[m
+
+[33m[1mTraceback (most recent call last):[m
+  File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m13[m, in [35mtest[m
+    [38;2;248;248;242mdivide_indirect[0m[38;2;248;248;242m([0m[38;2;174;129;255m10[0m[38;2;248;248;242m,[0m [38;2;174;129;255m0[0m[38;2;248;248;242m)[0m
+  File "usersite/lib.py", line 6, in divide_indirect
+    divide(a, b)
+  File "usersite/lib.py", line 2, in divide
+    x / y
+[31m[1mZeroDivisionError[m:[1m division by zero[m
+
+Traceback (most recent call last):
+  File "tests/exceptions/ownership/indirect.py", line 13, in test
+    divide_indirect(10, 0)
+  File "usersite/lib.py", line 6, in divide_indirect
+    divide(a, b)
+  File "usersite/lib.py", line 2, in divide
+    x / y
+ZeroDivisionError: division by zero

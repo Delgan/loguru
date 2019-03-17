@@ -214,8 +214,17 @@ class ExceptionFormatter:
         "value": "\x1b[36m\x1b[1m{}\x1b[m",
     }
 
-    def __init__(self, colorize=False, theme=None, style=None, max_length=128, encoding="ascii"):
+    def __init__(
+        self,
+        colorize=False,
+        show_values=True,
+        theme=None,
+        style=None,
+        max_length=128,
+        encoding="ascii",
+    ):
         self._colorize = colorize
+        self._show_values = show_values
         self._theme = theme or self.default_theme
         self._syntax_highlighter = SyntaxHighlighter(style)
         self._max_length = max_length
@@ -305,8 +314,10 @@ class ExceptionFormatter:
         filename = frame.tb_frame.f_code.co_filename
         function = frame.tb_frame.f_code.co_name
         source = linecache.getline(filename, lineno).strip()
-        relevant_values = self._get_relevant_values(source, frame.tb_frame)
-
+        if self._show_values:
+            relevant_values = self._get_relevant_values(source, frame.tb_frame)
+        else:
+            relevant_values = None
         return filename, lineno, function, source, relevant_values
 
     def _get_relevant_values(self, source, frame):
@@ -387,13 +398,18 @@ class ExceptionFormatter:
             next(my_files)
             is_mine = my_files.send(filename)
 
-            if self._colorize and is_mine:
-                source = self._syntax_highlighter.highlight(source)
+            if source:
+                if self._colorize and is_mine:
+                    source = self._syntax_highlighter.highlight(source)
 
-            values = self._format_relevant_values(relevant_values, self._colorize and is_mine)
-            frame_lines = [source] + values
-            formatted_source = "\n    ".join(frame_lines)
-            formatted_frames.append((filename, lineno, function, formatted_source))
+                if self._show_values:
+                    values = self._format_relevant_values(
+                        relevant_values, self._colorize and is_mine
+                    )
+                    frame_lines = [source] + values
+                    source = "\n    ".join(frame_lines)
+
+            formatted_frames.append((filename, lineno, function, source))
 
         return formatted_frames
 
@@ -429,7 +445,7 @@ class ExceptionFormatter:
                         frame = '  File "{}", line {}, in {}{}'.format(file, line, function, end)
                     else:
                         frame = '  File "{}, line {}{}'.format(file, line, end)
-                if is_mine or prepend_with_new_line:
+                if self._show_values and (is_mine or prepend_with_new_line):
                     frame = "\n" + frame
                 prepend_with_new_line = is_mine
 
@@ -455,7 +471,11 @@ class ExceptionFormatter:
                 cause = "The above exception was the direct cause of the following exception:"
                 if self._colorize:
                     cause = self._theme["cause"].format(cause)
-                yield "\n\n" + cause + "\n\n\n"
+                if self._show_values:
+                    yield "\n\n" + cause + "\n\n\n"
+                else:
+                    yield "\n" + cause + "\n\n"
+
             elif (
                 exc_value.__context__ is not None
                 and id(exc_value.__context__) not in seen
@@ -468,7 +488,10 @@ class ExceptionFormatter:
                 context = "During handling of the above exception, another exception occurred:"
                 if self._colorize:
                     context = self._theme["context"].format(context)
-                yield "\n\n" + context + "\n\n\n"
+                if self._show_values:
+                    yield "\n\n" + context + "\n\n\n"
+                else:
+                    yield "\n" + context + "\n\n"
 
         if exc_traceback is not None:
             introduction = "Traceback (most recent call last):"
@@ -479,7 +502,7 @@ class ExceptionFormatter:
         frames = self._extract_frames(exc_traceback)
         formatted_frames = self._format_frames(frames)
 
-        if issubclass(exc_type, AssertionError) and not str(exc_value):
+        if issubclass(exc_type, AssertionError) and not str(exc_value) and self._show_values:
             *_, final_source, _ = self._get_frame_information(frames[-1])
             if self._colorize:
                 final_source = self._syntax_highlighter.highlight(final_source)
@@ -504,7 +527,7 @@ class ExceptionFormatter:
                 error_message = self._theme["exception_type"].format(error_message)
             error_message += "\n"
 
-        if formatted_frames:
+        if formatted_frames and self._show_values:
             error_message = "\n" + error_message
 
         exception_only[-1] = error_message

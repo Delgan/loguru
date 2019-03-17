@@ -140,8 +140,9 @@ def test_carret_not_masked(writer, diagnose):
 
     assert sum(line.startswith("> ") for line in writer.read().splitlines()) == 1
 
+
 @pytest.mark.parametrize("diagnose", [False, True])
-def test_no_carret_if_no_backtrace(writer,diagnose):
+def test_no_carret_if_no_backtrace(writer, diagnose):
     logger.add(writer, backtrace=False, diagnose=diagnose, colorize=False, format="")
 
     @logger.catch
@@ -152,6 +153,7 @@ def test_no_carret_if_no_backtrace(writer,diagnose):
     f(30)
 
     assert sum(line.startswith("> ") for line in writer.read().splitlines()) == 0
+
 
 @pytest.mark.parametrize("encoding", ["ascii", "UTF8", None])
 def test_sink_encoding(writer, encoding):
@@ -170,6 +172,7 @@ def test_sink_encoding(writer, encoding):
         logger.exception("")
 
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
 
 def test_has_sys_real_prefix(writer, monkeypatch):
     monkeypatch.setattr(sys, "real_prefix", "/foo/bar/baz", raising=False)
