@@ -331,7 +331,7 @@ class ExceptionFormatter:
 
             if type_ == tokenize.NAME and not keyword.iskeyword(string):
                 if not is_attribute:
-                    for variables in (frame.f_locals, frame.f_globals, frame.f_builtins):
+                    for variables in (frame.f_locals, frame.f_globals):
                         try:
                             value = variables[string]
                         except KeyError:

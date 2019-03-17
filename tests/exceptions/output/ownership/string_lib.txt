@@ -11,7 +11,6 @@
 
   File "usersite/lib.py", line 14, in execute
     exec("divide(1, 0)")
-    └ <built-in function exec>
   File "<string>", line 1, in <module>
   File "usersite/lib.py", line 2, in divide
     x / y
