@@ -11,6 +11,5 @@
 
   File "[32mtests/exceptions/diagnose/[m[32m[1mno_error_message.py[m", line [33m9[m, in [35mfoo[m
     [38;2;249;38;114mraise[0m [38;2;166;226;46mValueError[0m[38;2;248;248;242m([0m[38;2;230;219;116m""[0m[38;2;248;248;242m)[0m
-    [36m      └ [m[36m[1m<class 'ValueError'>[m
 
 [31m[1mValueError[m

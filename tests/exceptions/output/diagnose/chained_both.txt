@@ -28,7 +28,6 @@
 
   File "[32mtests/exceptions/diagnose/[m[32m[1mchained_both.py[m", line [33m16[m, in [35mcause[m
     [38;2;249;38;114mraise[0m [38;2;166;226;46mValueError[0m[38;2;248;248;242m([0m[38;2;230;219;116m"Division error"[0m[38;2;248;248;242m)[0m
-    [36m      └ [m[36m[1m<class 'ValueError'>[m
 
 [31m[1mValueError[m:[1m Division error[m
 
@@ -44,6 +43,5 @@
 
   File "[32mtests/exceptions/diagnose/[m[32m[1mchained_both.py[m", line [33m23[m, in [35mcontext[m
     [38;2;249;38;114mraise[0m [38;2;166;226;46mValueError[0m[38;2;248;248;242m([0m[38;2;230;219;116m"Cause error"[0m[38;2;248;248;242m)[0m [38;2;249;38;114mfrom[0m [38;2;248;248;242me[0m
-    [36m      └ [m[36m[1m<class 'ValueError'>[m
 
 [31m[1mValueError[m:[1m Cause error[m

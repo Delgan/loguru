@@ -7,7 +7,6 @@
 
 > File "[32mtests/exceptions/ownership/[m[32m[1mstring_source.py[m", line [33m13[m, in [35mtest[m
     [38;2;166;226;46mexec[0m[38;2;248;248;242m([0m[38;2;230;219;116m"foo()"[0m[38;2;248;248;242m)[0m
-    [36m└ [m[36m[1m<built-in function exec>[m
 
   File "[32m[m[32m[1m<string>[m", line [33m1[m, in [35m<module>[m
 
