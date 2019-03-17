@@ -2,11 +2,11 @@
 [33m[1mTraceback (most recent call last):[m
 
   File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m18[m, in [35m<module>[m
-    [38;2;248;248;242mtest[0m[38;2;248;248;242m([0m[38;2;248;248;242mbacktrace[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mcolorize[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mdiagnose[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m)[0m
+    [38;5;231mtest[0m[38;5;231m([0m[38;5;231mbacktrace[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m,[0m [38;5;231mcolorize[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m,[0m [38;5;231mdiagnose[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m)[0m
     [36m└ [m[36m[1m<function test at 0xDEADBEEF>[m
 
 > File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m13[m, in [35mtest[m
-    [38;2;248;248;242mdivide_indirect[0m[38;2;248;248;242m([0m[38;2;174;129;255m10[0m[38;2;248;248;242m,[0m [38;2;174;129;255m0[0m[38;2;248;248;242m)[0m
+    [38;5;231mdivide_indirect[0m[38;5;231m([0m[38;5;141m10[0m[38;5;231m,[0m [38;5;141m0[0m[38;5;231m)[0m
     [36m└ [m[36m[1m<function divide_indirect at 0xDEADBEEF>[m
 
   File "usersite/lib.py", line 6, in divide_indirect
@@ -23,9 +23,9 @@
 
 [33m[1mTraceback (most recent call last):[m
   File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m19[m, in [35m<module>[m
-    [38;2;248;248;242mtest[0m[38;2;248;248;242m([0m[38;2;248;248;242mbacktrace[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mcolorize[0m[38;2;249;38;114m=[0m[38;2;102;217;239mTrue[0m[38;2;248;248;242m,[0m [38;2;248;248;242mdiagnose[0m[38;2;249;38;114m=[0m[38;2;102;217;239mFalse[0m[38;2;248;248;242m)[0m
+    [38;5;231mtest[0m[38;5;231m([0m[38;5;231mbacktrace[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m,[0m [38;5;231mcolorize[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m,[0m [38;5;231mdiagnose[0m[38;5;197m=[0m[38;5;81mFalse[0m[38;5;231m)[0m
 > File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m13[m, in [35mtest[m
-    [38;2;248;248;242mdivide_indirect[0m[38;2;248;248;242m([0m[38;2;174;129;255m10[0m[38;2;248;248;242m,[0m [38;2;174;129;255m0[0m[38;2;248;248;242m)[0m
+    [38;5;231mdivide_indirect[0m[38;5;231m([0m[38;5;141m10[0m[38;5;231m,[0m [38;5;141m0[0m[38;5;231m)[0m
   File "usersite/lib.py", line 6, in divide_indirect
     divide(a, b)
   File "usersite/lib.py", line 2, in divide
@@ -34,7 +34,7 @@
 
 [33m[1mTraceback (most recent call last):[m
   File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m13[m, in [35mtest[m
-    [38;2;248;248;242mdivide_indirect[0m[38;2;248;248;242m([0m[38;2;174;129;255m10[0m[38;2;248;248;242m,[0m [38;2;174;129;255m0[0m[38;2;248;248;242m)[0m
+    [38;5;231mdivide_indirect[0m[38;5;231m([0m[38;5;141m10[0m[38;5;231m,[0m [38;5;141m0[0m[38;5;231m)[0m
   File "usersite/lib.py", line 6, in divide_indirect
     divide(a, b)
   File "usersite/lib.py", line 2, in divide
