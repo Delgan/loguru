@@ -48,15 +48,15 @@ loguru_code = namedtuple(
 class SyntaxHighlighter:
 
     default_style = {
-        "comment": "\x1b[38;2;117;113;94m{}\x1b[0m",
-        "keyword": "\x1b[38;2;249;38;114m{}\x1b[0m",
-        "builtin": "\x1b[38;2;166;226;46m{}\x1b[0m",
-        "string": "\x1b[38;2;230;219;116m{}\x1b[0m",
-        "number": "\x1b[38;2;174;129;255m{}\x1b[0m",
-        "operator": "\x1b[38;2;249;38;114m{}\x1b[0m",
-        "punctuation": "\x1b[38;2;248;248;242m{}\x1b[0m",
-        "constant": "\x1b[38;2;102;217;239m{}\x1b[0m",
-        "identifier": "\x1b[38;2;248;248;242m{}\x1b[0m",
+        "comment": "\x1b[38;5;59m{}\x1b[0m",
+        "keyword": "\x1b[38;5;197m{}\x1b[0m",
+        "builtin": "\x1b[38;5;155m{}\x1b[0m",
+        "string": "\x1b[38;5;222m{}\x1b[0m",
+        "number": "\x1b[38;5;141m{}\x1b[0m",
+        "operator": "\x1b[38;5;197m{}\x1b[0m",
+        "punctuation": "\x1b[38;5;231m{}\x1b[0m",
+        "constant": "\x1b[38;5;81m{}\x1b[0m",
+        "identifier": "\x1b[38;5;231m{}\x1b[0m",
         "other": "{}",
     }
 
