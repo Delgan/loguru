@@ -1,20 +1,20 @@
 
-[33m[1mTraceback (most recent call last):[m
+[33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1mattributes.py[m", line [33m24[m, in [35m<module>[m
-    [38;5;231mfoo[0m[38;5;231m([0m[38;5;231m)[0m
-    [36m└ [m[36m[1m<function foo at 0xDEADBEEF>[m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1mattributes.py[0m", line [33m24[0m, in [35m<module>[0m
+    [1mfoo[0m[1m([0m[1m)[0m
+    [36m└ [0m[36m[1m<function foo at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1mattributes.py[m", line [33m21[m, in [35mfoo[m
-    [38;5;197m...[0m [38;5;197m+[0m [38;5;141m1[0m [38;5;197m+[0m [38;5;231mbar[0m[38;5;231m([0m[38;5;231ma[0m[38;5;231m)[0m[38;5;197m.[0m[38;5;231mb[0m [38;5;197m+[0m [38;5;231ma[0m[38;5;197m.[0m[38;5;231mforbidden[0m [38;5;197m+[0m [38;5;231ma[0m[38;5;197m.[0m[38;5;231mnope[0m[38;5;197m.[0m[38;5;231ma[0m [38;5;197m+[0m [38;5;231mx[0m[38;5;197m.[0m[38;5;231m__bool__[0m [38;5;197mor[0m [38;5;231ma[0m[38;5;197m.[0m [38;5;231mb[0m [38;5;197m.[0m [38;5;231misdigit[0m[38;5;231m([0m[38;5;231m)[0m [38;5;197mand[0m [38;5;141m.3[0m [38;5;197m+[0m [38;5;197m...[0m
-    [36m              │      │ │           │          │ │           │  │   └ [m[36m[1m<method 'isdigit' of 'str' objects>[m
-    [36m              │      │ │           │          │ │           │  └ [m[36m[1m'123'[m
-    [36m              │      │ │           │          │ │           └ [m[36m[1m<__main__.Obj object at 0xDEADBEEF>[m
-    [36m              │      │ │           │          │ └ [m[36m[1m<slot wrapper '__bool__' of 'NoneType' objects>[m
-    [36m              │      │ │           │          └ [m[36m[1mNone[m
-    [36m              │      │ │           └ [m[36m[1m<__main__.Obj object at 0xDEADBEEF>[m
-    [36m              │      │ └ [m[36m[1m<property object at 0xDEADBEEF>[m
-    [36m              │      └ [m[36m[1m<__main__.Obj object at 0xDEADBEEF>[m
-    [36m              └ [m[36m[1m<__main__.Obj object at 0xDEADBEEF>[m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1mattributes.py[0m", line [33m21[0m, in [35mfoo[0m
+    [35m[1m...[0m [35m[1m+[0m [34m[1m1[0m [35m[1m+[0m [1mbar[0m[1m([0m[1ma[0m[1m)[0m[35m[1m.[0m[1mb[0m [35m[1m+[0m [1ma[0m[35m[1m.[0m[1mforbidden[0m [35m[1m+[0m [1ma[0m[35m[1m.[0m[1mnope[0m[35m[1m.[0m[1ma[0m [35m[1m+[0m [1mx[0m[35m[1m.[0m[1m__bool__[0m [35m[1mor[0m [1ma[0m[35m[1m.[0m [1mb[0m [35m[1m.[0m [1misdigit[0m[1m([0m[1m)[0m [35m[1mand[0m [34m[1m.3[0m [35m[1m+[0m [35m[1m...[0m
+    [36m              │      │ │           │          │ │           │  │   └ [0m[36m[1m<method 'isdigit' of 'str' objects>[0m
+    [36m              │      │ │           │          │ │           │  └ [0m[36m[1m'123'[0m
+    [36m              │      │ │           │          │ │           └ [0m[36m[1m<__main__.Obj object at 0xDEADBEEF>[0m
+    [36m              │      │ │           │          │ └ [0m[36m[1m<slot wrapper '__bool__' of 'NoneType' objects>[0m
+    [36m              │      │ │           │          └ [0m[36m[1mNone[0m
+    [36m              │      │ │           └ [0m[36m[1m<__main__.Obj object at 0xDEADBEEF>[0m
+    [36m              │      │ └ [0m[36m[1m<property object at 0xDEADBEEF>[0m
+    [36m              │      └ [0m[36m[1m<__main__.Obj object at 0xDEADBEEF>[0m
+    [36m              └ [0m[36m[1m<__main__.Obj object at 0xDEADBEEF>[0m
 
-[31m[1mTypeError[m:[1m unsupported operand type(s) for +: 'ellipsis' and 'int'[m
+[31m[1mTypeError[0m:[1m unsupported operand type(s) for +: 'ellipsis' and 'int'[0m

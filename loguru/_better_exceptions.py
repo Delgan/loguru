@@ -48,15 +48,15 @@ loguru_code = namedtuple(
 class SyntaxHighlighter:
 
     default_style = {
-        "comment": "\x1b[38;5;59m{}\x1b[0m",
-        "keyword": "\x1b[38;5;197m{}\x1b[0m",
-        "builtin": "\x1b[38;5;155m{}\x1b[0m",
-        "string": "\x1b[38;5;222m{}\x1b[0m",
-        "number": "\x1b[38;5;141m{}\x1b[0m",
-        "operator": "\x1b[38;5;197m{}\x1b[0m",
-        "punctuation": "\x1b[38;5;231m{}\x1b[0m",
-        "constant": "\x1b[38;5;81m{}\x1b[0m",
-        "identifier": "\x1b[38;5;231m{}\x1b[0m",
+        "comment": "\x1b[30m\x1b[1m{}\x1b[0m",
+        "keyword": "\x1b[35m\x1b[1m{}\x1b[0m",
+        "builtin": "\x1b[1m{}\x1b[0m",
+        "string": "\x1b[36m{}\x1b[0m",
+        "number": "\x1b[34m\x1b[1m{}\x1b[0m",
+        "operator": "\x1b[35m\x1b[1m{}\x1b[0m",
+        "punctuation": "\x1b[1m{}\x1b[0m",
+        "constant": "\x1b[36m\x1b[1m{}\x1b[0m",
+        "identifier": "\x1b[1m{}\x1b[0m",
         "other": "{}",
     }
 
@@ -201,17 +201,18 @@ class ExceptionExtender:
 class ExceptionFormatter:
 
     default_theme = {
-        "introduction": "\x1b[33m\x1b[1m{}\x1b[m",
-        "cause": "\x1b[1m{}\x1b[m",
-        "context": "\x1b[1m{}\x1b[m",
-        "dirname": "\x1b[32m{}\x1b[m",
-        "basename": "\x1b[32m\x1b[1m{}\x1b[m",
-        "line": "\x1b[33m{}\x1b[m",
-        "function": "\x1b[35m{}\x1b[m",
-        "exception_type": "\x1b[31m\x1b[1m{}\x1b[m",
-        "exception_value": "\x1b[1m{}\x1b[m",
-        "arrows": "\x1b[36m{}\x1b[m",
-        "value": "\x1b[36m\x1b[1m{}\x1b[m",
+        # Some terminals support "31+1" (red + bold) but not "91" (bright red), see Repl.it
+        "introduction": "\x1b[33m\x1b[1m{}\x1b[0m",
+        "cause": "\x1b[1m{}\x1b[0m",
+        "context": "\x1b[1m{}\x1b[0m",
+        "dirname": "\x1b[32m{}\x1b[0m",
+        "basename": "\x1b[32m\x1b[1m{}\x1b[0m",
+        "line": "\x1b[33m{}\x1b[0m",
+        "function": "\x1b[35m{}\x1b[0m",
+        "exception_type": "\x1b[31m\x1b[1m{}\x1b[0m",
+        "exception_value": "\x1b[1m{}\x1b[0m",
+        "arrows": "\x1b[36m{}\x1b[0m",
+        "value": "\x1b[36m\x1b[1m{}\x1b[0m",
     }
 
     def __init__(

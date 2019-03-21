@@ -1,12 +1,12 @@
 
-[33m[1mTraceback (most recent call last):[m
+[33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1mindentation_error.py[m", line [33m16[m, in [35m<module>[m
-    [38;5;155mexec[0m[38;5;231m([0m[38;5;231mcode[0m[38;5;231m)[0m
-    [36m     └ [m[36m[1m'\nif True:\n    a = 5\n        print("foobar")  #intentional faulty indentation here.\n    b = 7\n'[m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1mindentation_error.py[0m", line [33m16[0m, in [35m<module>[0m
+    [1mexec[0m[1m([0m[1mcode[0m[1m)[0m
+    [36m     └ [0m[36m[1m'\nif True:\n    a = 5\n        print("foobar")  #intentional faulty indentation here.\n    b = 7\n'[0m
 
-  File "[32m[m[32m[1m<string>[m, line [33m4
-[m    [38;5;155mprint[0m[38;5;231m([0m[38;5;222m"foobar"[0m[38;5;231m)[0m  [38;5;59m#intentional faulty indentation here.[0m
+  File "[32m[0m[32m[1m<string>[0m, line [33m4
+[0m    [1mprint[0m[1m([0m[36m"foobar"[0m[1m)[0m  [30m[1m#intentional faulty indentation here.[0m
     ^
 
-[31m[1mIndentationError[m:[1m unexpected indent[m
+[31m[1mIndentationError[0m:[1m unexpected indent[0m

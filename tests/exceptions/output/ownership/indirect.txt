@@ -1,13 +1,13 @@
 
-[33m[1mTraceback (most recent call last):[m
+[33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m18[m, in [35m<module>[m
-    [38;5;231mtest[0m[38;5;231m([0m[38;5;231mbacktrace[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m,[0m [38;5;231mcolorize[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m,[0m [38;5;231mdiagnose[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m)[0m
-    [36m└ [m[36m[1m<function test at 0xDEADBEEF>[m
+  File "[32mtests/exceptions/ownership/[0m[32m[1mindirect.py[0m", line [33m18[0m, in [35m<module>[0m
+    [1mtest[0m[1m([0m[1mbacktrace[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mcolorize[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mdiagnose[0m[35m[1m=[0m[36m[1mTrue[0m[1m)[0m
+    [36m└ [0m[36m[1m<function test at 0xDEADBEEF>[0m
 
-> File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m13[m, in [35mtest[m
-    [38;5;231mdivide_indirect[0m[38;5;231m([0m[38;5;141m10[0m[38;5;231m,[0m [38;5;141m0[0m[38;5;231m)[0m
-    [36m└ [m[36m[1m<function divide_indirect at 0xDEADBEEF>[m
+> File "[32mtests/exceptions/ownership/[0m[32m[1mindirect.py[0m", line [33m13[0m, in [35mtest[0m
+    [1mdivide_indirect[0m[1m([0m[34m[1m10[0m[1m,[0m [34m[1m0[0m[1m)[0m
+    [36m└ [0m[36m[1m<function divide_indirect at 0xDEADBEEF>[0m
 
   File "usersite/lib.py", line 6, in divide_indirect
     divide(a, b)
@@ -19,27 +19,27 @@
     │   └ 0
     └ 10
 
-[31m[1mZeroDivisionError[m:[1m division by zero[m
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
-[33m[1mTraceback (most recent call last):[m
-  File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m19[m, in [35m<module>[m
-    [38;5;231mtest[0m[38;5;231m([0m[38;5;231mbacktrace[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m,[0m [38;5;231mcolorize[0m[38;5;197m=[0m[38;5;81mTrue[0m[38;5;231m,[0m [38;5;231mdiagnose[0m[38;5;197m=[0m[38;5;81mFalse[0m[38;5;231m)[0m
-> File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m13[m, in [35mtest[m
-    [38;5;231mdivide_indirect[0m[38;5;231m([0m[38;5;141m10[0m[38;5;231m,[0m [38;5;141m0[0m[38;5;231m)[0m
+[33m[1mTraceback (most recent call last):[0m
+  File "[32mtests/exceptions/ownership/[0m[32m[1mindirect.py[0m", line [33m19[0m, in [35m<module>[0m
+    [1mtest[0m[1m([0m[1mbacktrace[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mcolorize[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mdiagnose[0m[35m[1m=[0m[36m[1mFalse[0m[1m)[0m
+> File "[32mtests/exceptions/ownership/[0m[32m[1mindirect.py[0m", line [33m13[0m, in [35mtest[0m
+    [1mdivide_indirect[0m[1m([0m[34m[1m10[0m[1m,[0m [34m[1m0[0m[1m)[0m
   File "usersite/lib.py", line 6, in divide_indirect
     divide(a, b)
   File "usersite/lib.py", line 2, in divide
     x / y
-[31m[1mZeroDivisionError[m:[1m division by zero[m
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
-[33m[1mTraceback (most recent call last):[m
-  File "[32mtests/exceptions/ownership/[m[32m[1mindirect.py[m", line [33m13[m, in [35mtest[m
-    [38;5;231mdivide_indirect[0m[38;5;231m([0m[38;5;141m10[0m[38;5;231m,[0m [38;5;141m0[0m[38;5;231m)[0m
+[33m[1mTraceback (most recent call last):[0m
+  File "[32mtests/exceptions/ownership/[0m[32m[1mindirect.py[0m", line [33m13[0m, in [35mtest[0m
+    [1mdivide_indirect[0m[1m([0m[34m[1m10[0m[1m,[0m [34m[1m0[0m[1m)[0m
   File "usersite/lib.py", line 6, in divide_indirect
     divide(a, b)
   File "usersite/lib.py", line 2, in divide
     x / y
-[31m[1mZeroDivisionError[m:[1m division by zero[m
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
 Traceback (most recent call last):
   File "tests/exceptions/ownership/indirect.py", line 13, in test
