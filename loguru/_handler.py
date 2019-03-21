@@ -102,12 +102,12 @@ class Handler:
                 else:
                     precomputed_format = self._decolorized_format
 
-            exception = record["exception"]
+            formatter_record = record.copy()
 
-            if not exception:
+            if not record["exception"]:
                 error = ""
             else:
-                type_, value, tb = exception
+                type_, value, tb = record["exception"]
 
                 if self._backtrace:
                     tb = self._exception_extender.extend_traceback(tb, decorated=decorated)
@@ -118,7 +118,7 @@ class Handler:
                 if self._backtrace:
                     error = self._exception_extender.reformat(error)
 
-            formatter_record = {**record, **{"exception": error}}
+            formatter_record["exception"] = error
 
             if ansi_message and not self._colorize:
                 formatter_record["message"] = self._decolorize_format(record["message"])
