@@ -1,13 +1,13 @@
 
-[33m[1mTraceback (most recent call last):[m
+[33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1massertion_error.py[m", line [33m13[m, in [35m<module>[m
-    [38;5;231mfoo[0m[38;5;231m([0m[38;5;141m9[0m[38;5;231m,[0m [38;5;141m55[0m[38;5;231m)[0m
-    [36m└ [m[36m[1m<function foo at 0xDEADBEEF>[m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1massertion_error.py[0m", line [33m13[0m, in [35m<module>[0m
+    [1mfoo[0m[1m([0m[34m[1m9[0m[1m,[0m [34m[1m55[0m[1m)[0m
+    [36m└ [0m[36m[1m<function foo at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1massertion_error.py[m", line [33m9[m, in [35mfoo[m
-    [38;5;197massert[0m [38;5;231mabc[0m [38;5;197m>[0m [38;5;141m10[0m [38;5;197mand[0m [38;5;231mxyz[0m [38;5;197m==[0m [38;5;141m60[0m
-    [36m       │            └ [m[36m[1m55[m
-    [36m       └ [m[36m[1m9[m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1massertion_error.py[0m", line [33m9[0m, in [35mfoo[0m
+    [35m[1massert[0m [1mabc[0m [35m[1m>[0m [34m[1m10[0m [35m[1mand[0m [1mxyz[0m [35m[1m==[0m [34m[1m60[0m
+    [36m       │            └ [0m[36m[1m55[0m
+    [36m       └ [0m[36m[1m9[0m
 
-[31m[1mAssertionError[m:[1m [38;5;197massert[0m [38;5;231mabc[0m [38;5;197m>[0m [38;5;141m10[0m [38;5;197mand[0m [38;5;231mxyz[0m [38;5;197m==[0m [38;5;141m60[0m[m
+[31m[1mAssertionError[0m:[1m [35m[1massert[0m [1mabc[0m [35m[1m>[0m [34m[1m10[0m [35m[1mand[0m [1mxyz[0m [35m[1m==[0m [34m[1m60[0m[0m

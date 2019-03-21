@@ -1,17 +1,17 @@
 
-[33m[1mTraceback (most recent call last):[m
+[33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1mmultilines_repr.py[m", line [33m18[m, in [35m<module>[m
-    [38;5;231mmultiline[0m[38;5;231m([0m[38;5;231m)[0m
-    [36m└ [m[36m[1m<function multiline at 0xDEADBEEF>[m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1mmultilines_repr.py[0m", line [33m18[0m, in [35m<module>[0m
+    [1mmultiline[0m[1m([0m[1m)[0m
+    [36m└ [0m[36m[1m<function multiline at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1mmultilines_repr.py[m", line [33m15[m, in [35mmultiline[m
-    [38;5;231ma[0m [38;5;197m+[0m [38;5;231mb[0m
-    [36m│   └ [m[36m[1m[[1, 2, 3][m
-    [36m│     [m[36m[1m [4, 5, 6][m
-    [36m│     [m[36m[1m [7, 8, 9]][m
-    [36m└ [m[36m[1m[[1, 2, 3][m
-    [36m  [m[36m[1m [4, 5, 6][m
-    [36m  [m[36m[1m [7, 8, 9]][m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1mmultilines_repr.py[0m", line [33m15[0m, in [35mmultiline[0m
+    [1ma[0m [35m[1m+[0m [1mb[0m
+    [36m│   └ [0m[36m[1m[[1, 2, 3][0m
+    [36m│     [0m[36m[1m [4, 5, 6][0m
+    [36m│     [0m[36m[1m [7, 8, 9]][0m
+    [36m└ [0m[36m[1m[[1, 2, 3][0m
+    [36m  [0m[36m[1m [4, 5, 6][0m
+    [36m  [0m[36m[1m [7, 8, 9]][0m
 
-[31m[1mTypeError[m:[1m unsupported operand type(s) for +: 'A' and 'A'[m
+[31m[1mTypeError[0m:[1m unsupported operand type(s) for +: 'A' and 'A'[0m

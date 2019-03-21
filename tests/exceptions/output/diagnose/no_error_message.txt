@@ -1,15 +1,15 @@
 
-[33m[1mTraceback (most recent call last):[m
+[33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1mno_error_message.py[m", line [33m17[m, in [35m<module>[m
-    [38;5;231mbar[0m[38;5;231m([0m[38;5;231m)[0m
-    [36m└ [m[36m[1m<function bar at 0xDEADBEEF>[m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1mno_error_message.py[0m", line [33m17[0m, in [35m<module>[0m
+    [1mbar[0m[1m([0m[1m)[0m
+    [36m└ [0m[36m[1m<function bar at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1mno_error_message.py[m", line [33m13[m, in [35mbar[m
-    [38;5;231mfoo[0m[38;5;231m([0m[38;5;231m)[0m
-    [36m└ [m[36m[1m<function foo at 0xDEADBEEF>[m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1mno_error_message.py[0m", line [33m13[0m, in [35mbar[0m
+    [1mfoo[0m[1m([0m[1m)[0m
+    [36m└ [0m[36m[1m<function foo at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[m[32m[1mno_error_message.py[m", line [33m9[m, in [35mfoo[m
-    [38;5;197mraise[0m [38;5;155mValueError[0m[38;5;231m([0m[38;5;222m""[0m[38;5;231m)[0m
+  File "[32mtests/exceptions/diagnose/[0m[32m[1mno_error_message.py[0m", line [33m9[0m, in [35mfoo[0m
+    [35m[1mraise[0m [1mValueError[0m[1m([0m[36m""[0m[1m)[0m
 
-[31m[1mValueError[m
+[31m[1mValueError[0m

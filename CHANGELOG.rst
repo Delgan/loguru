@@ -4,7 +4,7 @@ Unreleased
 - Modify behavior of sink option ``backtrace`` so it only extends the stacktrace upward, the display of variables values is now controlled with the new ``diagnose`` argument (`#49 <https://github.com/Delgan/loguru/issues/49>`_)
 - Add coloration of exception traceback even if ``diagnose`` and ``backtrace`` options are ``False``
 - The ``record["exception"]`` attribute is now unpackable as a ``(type, value, traceback)`` tuple
-
+- Fix exception stack trace not colorizing source code lines on Windows
 
 0.2.5 (2019-01-20)
 ==================
