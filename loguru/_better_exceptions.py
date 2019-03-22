@@ -233,6 +233,10 @@ class ExceptionFormatter:
         self._lib_dirs = self._get_lib_dirs()
         self._pipe_char = self._get_char("\u2502", "|")
         self._cap_char = self._get_char("\u2514", "->")
+        self._location_regex = (
+            r'  File "(?P<file>.*?)", line (?P<line>[^,]+)(?:, in (?P<function>.*))?'
+            r"(?P<end>\n[\s\S]*)"
+        )
 
     def _get_char(self, char, default):
         try:
@@ -266,16 +270,25 @@ class ExceptionFormatter:
 
         return [os.path.abspath(d) + os.sep for d in lib_dirs]
 
-    def _colorize_filepath(self, filepath):
-        dirname, basename = os.path.split(filepath)
+    def _colorize_location(self, file, line, function, end):
+        dirname, basename = os.path.split(file)
 
         if dirname:
             dirname += os.sep
 
         dirname = self._theme["dirname"].format(dirname)
         basename = self._theme["basename"].format(basename)
+        file = dirname + basename
 
-        return dirname + basename
+        line = self._theme["line"].format(line)
+
+        if function is not None:
+            function = self._theme["function"].format(function)
+            frame = '  File "{}", line {}, in {}{}'.format(file, line, function, end)
+        else:
+            frame = '  File "{}, line {}{}'.format(file, line, end)
+
+        return frame
 
     def _format_value(self, v):
         try:
@@ -288,18 +301,11 @@ class ExceptionFormatter:
             v = v[:max_length] + "..."
         return v
 
-    def _are_files_mine(self):
-        is_previous_mine = True  # Heuristic for file location like "<string>"
-
-        while True:
-            file = yield
-            filepath = os.path.abspath(file)
-            if not filepath.endswith(".py"):
-                is_mine = is_previous_mine
-            else:
-                is_mine = not any(filepath.lower().startswith(d.lower()) for d in self._lib_dirs)
-            yield is_mine
-            is_previous_mine = is_mine
+    def _is_file_mine(self, file):
+        filepath = os.path.abspath(file).lower()
+        if not filepath.endswith(".py"):
+            return False
+        return not any(filepath.startswith(d.lower()) for d in self._lib_dirs)
 
     def _extract_frames(self, tb):
         frames = []
@@ -391,15 +397,12 @@ class ExceptionFormatter:
     def _format_frames(self, frames):
         formatted_frames = []
 
-        my_files = self._are_files_mine()
-
         for frame in frames:
             filename, lineno, function, source, relevant_values = self._get_frame_information(frame)
 
-            next(my_files)
-            is_mine = my_files.send(filename)
-
             if source:
+                is_mine = self._is_file_mine(filename)
+
                 if self._colorize and is_mine:
                     source = self._syntax_highlighter.highlight(source)
 
@@ -415,16 +418,11 @@ class ExceptionFormatter:
         return formatted_frames
 
     def _format_locations(self, formatted_frames):
-        location_regex = (
-            r'  File "(?P<file>.*?)", line (?P<line>[^,]+)(?:, in (?P<function>.*))?'
-            r"(?P<end>[\s\S]*)"
-        )
         lines = []
         prepend_with_new_line = False
-        my_files = self._are_files_mine()
 
         for frame in formatted_frames:
-            match = re.match(location_regex, frame)
+            match = re.match(self._location_regex, frame)
 
             if match:
                 group = match.groupdict()
@@ -435,19 +433,13 @@ class ExceptionFormatter:
                     group["end"],
                 )
 
-                next(my_files)
-                is_mine = my_files.send(file)
+                is_mine = self._is_file_mine(file)
 
                 if self._colorize and is_mine:
-                    file = self._colorize_filepath(file)
-                    line = self._theme["line"].format(line)
-                    if function is not None:
-                        function = self._theme["function"].format(function)
-                        frame = '  File "{}", line {}, in {}{}'.format(file, line, function, end)
-                    else:
-                        frame = '  File "{}, line {}{}'.format(file, line, end)
+                    frame = self._colorize_location(file, line, function, end)
                 if self._show_values and (is_mine or prepend_with_new_line):
                     frame = "\n" + frame
+
                 prepend_with_new_line = is_mine
 
             lines.append(frame)
@@ -511,8 +503,13 @@ class ExceptionFormatter:
 
         exception_only = traceback.format_exception_only(exc_type, exc_value)
 
-        # This relies on implementation details: https://git.io/fhFSK
+        # This relies on implementation details: https://git.io/fjJTm
         if self._colorize and len(exception_only) >= 3 and issubclass(exc_type, SyntaxError):
+            match = re.match(self._location_regex, exception_only[0])
+            group = match.groupdict()
+            exception_only[0] = '\n' + self._colorize_location(
+                group["file"], group["line"], group["function"], group["end"]
+            )
             exception_only[1] = self._syntax_highlighter.highlight(exception_only[1])
 
         error_message = exception_only[-1]
