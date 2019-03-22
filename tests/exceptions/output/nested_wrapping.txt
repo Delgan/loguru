@@ -30,7 +30,7 @@ ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
 
-> File "tests/exceptions/nested_wrapping.py", line 28, in <module>
+> File "tests/exceptions/nested_wrapping.py", line 27, in <module>
     f(0)
     └ <function f at 0xDEADBEEF>
 
