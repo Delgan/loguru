@@ -39,6 +39,7 @@ def generate(output, outpath):
     os.makedirs(os.path.dirname(outpath), exist_ok=True)
     with open(outpath, "w") as file:
         file.write(output)
+    assert False  # Avoid forgetting to remove "generate()" inadvertently
 
 
 def compare_exception(dirname, filename):
