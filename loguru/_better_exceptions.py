@@ -385,7 +385,7 @@ class ExceptionFormatter:
                 if self._colorize and is_mine:
                     frame = self._colorize_location(file, line, function, end)
 
-                if self._extend and function.endswith(self._catch_point_identifier):
+                if self._extend and function and function.endswith(self._catch_point_identifier):
                     frame = ">" + frame[1:].replace(self._catch_point_identifier, "", 1)
 
                 if self._show_values and (is_mine or prepend_with_new_line):
@@ -446,7 +446,12 @@ class ExceptionFormatter:
         frames = self._extract_frames(exc_traceback)
         formatted_frames = self._format_frames(frames)
 
-        if self._show_values and issubclass(exc_type, AssertionError) and not str(exc_value):
+        if (
+            self._show_values
+            and issubclass(exc_type, AssertionError)
+            and not str(exc_value)
+            and frames
+        ):
             *_, final_source = self._get_frame_information(frames[-1])
             if self._colorize:
                 final_source = self._syntax_highlighter.highlight(final_source)

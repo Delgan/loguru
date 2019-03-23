@@ -1,0 +1,8 @@
+
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
+
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
+
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
+
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
