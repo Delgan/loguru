@@ -10,39 +10,19 @@ import site
 import sys
 import sysconfig
 import tokenize
-import traceback
+import traceback as traceback_
 from collections import namedtuple
 
 
-loguru_traceback = namedtuple("loguru_traceback", ("tb_frame", "tb_lasti", "tb_lineno", "tb_next"))
+class traceback:
+    __slots__ = ("tb_frame", "tb_lasti", "tb_lineno", "tb_next", "caught_here")
 
-
-loguru_frame = namedtuple(
-    "loguru_frame",
-    ("f_back", "f_builtins", "f_code", "f_globals", "f_lasti", "f_lineno", "f_locals", "f_trace"),
-)
-
-
-loguru_code = namedtuple(
-    "loguru_code",
-    (
-        "co_argcount",
-        "co_code",
-        "co_cellvars",
-        "co_consts",
-        "co_filename",
-        "co_firstlineno",
-        "co_flags",
-        "co_lnotab",
-        "co_freevars",
-        "co_kwonlyargcount",
-        "co_name",
-        "co_names",
-        "co_nlocals",
-        "co_stacksize",
-        "co_varnames",
-    ),
-)
+    def __init__(self, frame, lasti, lineno, next_, *, caught_here=False):
+        self.tb_frame = frame
+        self.tb_lasti = lasti
+        self.tb_lineno = lineno
+        self.tb_next = next_
+        self.caught_here = caught_here
 
 
 class SyntaxHighlighter:
@@ -170,32 +150,6 @@ class ExceptionFormatter:
             r"(?P<end>\n[\s\S]*)"
         )
 
-    def _make_catch_traceback(self, frame, lasti, lineno, next_):
-        f = frame
-        c = frame.f_code
-        code = loguru_code(
-            c.co_argcount,
-            c.co_code,
-            c.co_cellvars,
-            c.co_consts,
-            c.co_filename,
-            c.co_firstlineno,
-            c.co_flags,
-            c.co_lnotab,
-            c.co_freevars,
-            c.co_kwonlyargcount,
-            c.co_name + self._catch_point_identifier,
-            c.co_names,
-            c.co_nlocals,
-            c.co_stacksize,
-            c.co_varnames,
-        )
-        frame = loguru_frame(
-            f.f_back, f.f_builtins, code, f.f_globals, f.f_lasti, f.f_lineno, f.f_locals, f.f_trace
-        )
-        tb = loguru_traceback(frame, lasti, lineno, next_)
-        return tb
-
     def extend_traceback(self, tb, *, decorated=False):
         if tb is None:
             return None
@@ -208,7 +162,7 @@ class ExceptionFormatter:
             caught = False
         else:
             bad_frame = None
-            tb = self._make_catch_traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, tb.tb_next)
+            tb = traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, tb.tb_next, caught_here=True)
             caught = True
 
         while True:
@@ -222,9 +176,9 @@ class ExceptionFormatter:
 
             if not caught:
                 caught = True
-                tb = self._make_catch_traceback(frame, frame.f_lasti, frame.f_lineno, tb)
+                tb = traceback(frame, frame.f_lasti, frame.f_lineno, tb, caught_here=True)
             else:
-                tb = loguru_traceback(frame, frame.f_lasti, frame.f_lineno, tb)
+                tb = traceback(frame, frame.f_lasti, frame.f_lineno, tb)
 
         return tb
 
@@ -311,11 +265,7 @@ class ExceptionFormatter:
         filename = frame.tb_frame.f_code.co_filename
         function = frame.tb_frame.f_code.co_name
         source = linecache.getline(filename, lineno).strip()
-        if self._show_values:
-            relevant_values = self._get_relevant_values(source, frame.tb_frame)
-        else:
-            relevant_values = None
-        return filename, lineno, function, source, relevant_values
+        return filename, lineno, function, source
 
     def _get_relevant_values(self, source, frame):
         values = []
@@ -388,20 +338,27 @@ class ExceptionFormatter:
         formatted_frames = []
 
         for frame in frames:
-            filename, lineno, function, source, relevant_values = self._get_frame_information(frame)
+            filename, lineno, function, source = self._get_frame_information(frame)
 
             if source:
                 is_mine = self._is_file_mine(filename)
+                lines = []
 
                 if self._colorize and is_mine:
-                    source = self._syntax_highlighter.highlight(source)
+                    lines.append(self._syntax_highlighter.highlight(source))
+                else:
+                    lines.append(source)
 
                 if self._show_values:
-                    values = self._format_relevant_values(
-                        relevant_values, self._colorize and is_mine
-                    )
-                    frame_lines = [source] + values
-                    source = "\n    ".join(frame_lines)
+                    relevant_values = self._get_relevant_values(source, frame.tb_frame)
+                    colorize_values = self._colorize and is_mine
+                    values = self._format_relevant_values(relevant_values, colorize_values)
+                    lines += values
+
+                source = "\n    ".join(lines)
+
+            if self._extend and isinstance(frame, traceback) and frame.caught_here:
+                function += self._catch_point_identifier
 
             formatted_frames.append((filename, lineno, function, source))
 
@@ -428,7 +385,7 @@ class ExceptionFormatter:
                 if self._colorize and is_mine:
                     frame = self._colorize_location(file, line, function, end)
 
-                if function.endswith(self._catch_point_identifier):
+                if self._extend and function.endswith(self._catch_point_identifier):
                     frame = ">" + frame[1:].replace(self._catch_point_identifier, "", 1)
 
                 if self._show_values and (is_mine or prepend_with_new_line):
@@ -489,13 +446,13 @@ class ExceptionFormatter:
         frames = self._extract_frames(exc_traceback)
         formatted_frames = self._format_frames(frames)
 
-        if issubclass(exc_type, AssertionError) and not str(exc_value) and self._show_values:
-            *_, final_source, _ = self._get_frame_information(frames[-1])
+        if self._show_values and issubclass(exc_type, AssertionError) and not str(exc_value):
+            *_, final_source = self._get_frame_information(frames[-1])
             if self._colorize:
                 final_source = self._syntax_highlighter.highlight(final_source)
             exc_value.args = (final_source,)
 
-        exception_only = traceback.format_exception_only(exc_type, exc_value)
+        exception_only = traceback_.format_exception_only(exc_type, exc_value)
 
         # This relies on implementation details: https://git.io/fjJTm
         if self._colorize and len(exception_only) >= 3 and issubclass(exc_type, SyntaxError):
@@ -524,7 +481,7 @@ class ExceptionFormatter:
 
         exception_only[-1] = error_message
 
-        frames_lines = traceback.format_list(formatted_frames) + exception_only
+        frames_lines = traceback_.format_list(formatted_frames) + exception_only
         lines = self._format_locations(frames_lines)
 
         yield "".join(lines)
