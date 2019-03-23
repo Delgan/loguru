@@ -129,6 +129,18 @@ def test_exception_ownership(filename):
     compare_exception("ownership", filename)
 
 
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "assertionerror_without_traceback",
+        "syntaxerror_without_traceback",
+        "zerodivisionerror_without_traceback",
+    ],
+)
+def test_exception_others(filename):
+    compare_exception("others", filename)
+
+
 @pytest.mark.parametrize("diagnose", [False, True])
 def test_carret_not_masked(writer, diagnose):
     logger.add(writer, backtrace=True, diagnose=diagnose, colorize=False, format="")
