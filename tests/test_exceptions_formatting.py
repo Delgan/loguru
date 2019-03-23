@@ -84,6 +84,7 @@ def compare_exception(dirname, filename):
         "frame_values_forward",
         "function",
         "head_recursion",
+        "missing_attributes_traceback_objects",
         "nested",
         "nested_wrapping",
         "no_tb",
