@@ -7,7 +7,7 @@ import traceback
 
 import ansimarkup
 
-from ._better_exceptions import ExceptionExtender, ExceptionFormatter
+from ._better_exceptions import ExceptionFormatter
 
 
 class StrRecord(str):
@@ -58,9 +58,11 @@ class Handler:
         self._thread = None
         self._stopped = False
 
-        self._exception_extender = ExceptionExtender()
         self._exception_formatter = ExceptionFormatter(
-            colorize=self._colorize, encoding=self._encoding, show_values=self._diagnose
+            colorize=self._colorize,
+            encoding=self._encoding,
+            show_values=self._diagnose,
+            extend=self._backtrace,
         )
 
         if not self._is_formatter_dynamic:
@@ -108,15 +110,10 @@ class Handler:
                 error = ""
             else:
                 type_, value, tb = record["exception"]
-
-                if self._backtrace:
-                    tb = self._exception_extender.extend_traceback(tb, decorated=decorated)
-
-                lines = self._exception_formatter.format_exception(type_, value, tb)
+                lines = self._exception_formatter.format_exception(
+                    type_, value, tb, decorated=decorated
+                )
                 error = "".join(lines)
-
-                if self._backtrace:
-                    error = self._exception_extender.reformat(error)
 
             formatter_record["exception"] = error
 

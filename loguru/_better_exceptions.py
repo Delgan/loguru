@@ -127,9 +127,74 @@ class SyntaxHighlighter:
             return
 
 
-class ExceptionExtender:
+class ExceptionFormatter:
 
-    _catch_point_identifier = " <Loguru catch point here>"
+    default_theme = {
+        # Some terminals support "31+1" (red + bold) but not "91" (bright red), see Repl.it
+        "introduction": "\x1b[33m\x1b[1m{}\x1b[0m",
+        "cause": "\x1b[1m{}\x1b[0m",
+        "context": "\x1b[1m{}\x1b[0m",
+        "dirname": "\x1b[32m{}\x1b[0m",
+        "basename": "\x1b[32m\x1b[1m{}\x1b[0m",
+        "line": "\x1b[33m{}\x1b[0m",
+        "function": "\x1b[35m{}\x1b[0m",
+        "exception_type": "\x1b[31m\x1b[1m{}\x1b[0m",
+        "exception_value": "\x1b[1m{}\x1b[0m",
+        "arrows": "\x1b[36m{}\x1b[0m",
+        "value": "\x1b[36m\x1b[1m{}\x1b[0m",
+    }
+
+    def __init__(
+        self,
+        colorize=False,
+        show_values=True,
+        theme=None,
+        style=None,
+        max_length=128,
+        encoding="ascii",
+        extend=False,
+    ):
+        self._colorize = colorize
+        self._show_values = show_values
+        self._theme = theme or self.default_theme
+        self._extend = extend
+        self._syntax_highlighter = SyntaxHighlighter(style)
+        self._max_length = max_length
+        self._encoding = encoding
+        self._lib_dirs = self._get_lib_dirs()
+        self._pipe_char = self._get_char("\u2502", "|")
+        self._cap_char = self._get_char("\u2514", "->")
+        self._catch_point_identifier = " <Loguru catch point here>"
+        self._location_regex = (
+            r'  File "(?P<file>.*?)", line (?P<line>[^,]+)(?:, in (?P<function>.*))?'
+            r"(?P<end>\n[\s\S]*)"
+        )
+
+    def _make_catch_traceback(self, frame, lasti, lineno, next_):
+        f = frame
+        c = frame.f_code
+        code = loguru_code(
+            c.co_argcount,
+            c.co_code,
+            c.co_cellvars,
+            c.co_consts,
+            c.co_filename,
+            c.co_firstlineno,
+            c.co_flags,
+            c.co_lnotab,
+            c.co_freevars,
+            c.co_kwonlyargcount,
+            c.co_name + self._catch_point_identifier,
+            c.co_names,
+            c.co_nlocals,
+            c.co_stacksize,
+            c.co_varnames,
+        )
+        frame = loguru_frame(
+            f.f_back, f.f_builtins, code, f.f_globals, f.f_lasti, f.f_lineno, f.f_locals, f.f_trace
+        )
+        tb = loguru_traceback(frame, lasti, lineno, next_)
+        return tb
 
     def extend_traceback(self, tb, *, decorated=False):
         if tb is None:
@@ -162,81 +227,6 @@ class ExceptionExtender:
                 tb = loguru_traceback(frame, frame.f_lasti, frame.f_lineno, tb)
 
         return tb
-
-    def reformat(self, error):
-        regex = r".*%s.*" % re.escape(self._catch_point_identifier)
-
-        def replace(match):
-            return match.group(0).replace(" ", ">", 1).replace(self._catch_point_identifier, "")
-
-        return re.sub(regex, replace, error, re.MULTILINE)
-
-    def _make_catch_traceback(self, frame, lasti, lineno, next_):
-        f = frame
-        c = frame.f_code
-        code = loguru_code(
-            c.co_argcount,
-            c.co_code,
-            c.co_cellvars,
-            c.co_consts,
-            c.co_filename,
-            c.co_firstlineno,
-            c.co_flags,
-            c.co_lnotab,
-            c.co_freevars,
-            c.co_kwonlyargcount,
-            c.co_name + self._catch_point_identifier,
-            c.co_names,
-            c.co_nlocals,
-            c.co_stacksize,
-            c.co_varnames,
-        )
-        frame = loguru_frame(
-            f.f_back, f.f_builtins, code, f.f_globals, f.f_lasti, f.f_lineno, f.f_locals, f.f_trace
-        )
-        tb = loguru_traceback(frame, lasti, lineno, next_)
-        return tb
-
-
-class ExceptionFormatter:
-
-    default_theme = {
-        # Some terminals support "31+1" (red + bold) but not "91" (bright red), see Repl.it
-        "introduction": "\x1b[33m\x1b[1m{}\x1b[0m",
-        "cause": "\x1b[1m{}\x1b[0m",
-        "context": "\x1b[1m{}\x1b[0m",
-        "dirname": "\x1b[32m{}\x1b[0m",
-        "basename": "\x1b[32m\x1b[1m{}\x1b[0m",
-        "line": "\x1b[33m{}\x1b[0m",
-        "function": "\x1b[35m{}\x1b[0m",
-        "exception_type": "\x1b[31m\x1b[1m{}\x1b[0m",
-        "exception_value": "\x1b[1m{}\x1b[0m",
-        "arrows": "\x1b[36m{}\x1b[0m",
-        "value": "\x1b[36m\x1b[1m{}\x1b[0m",
-    }
-
-    def __init__(
-        self,
-        colorize=False,
-        show_values=True,
-        theme=None,
-        style=None,
-        max_length=128,
-        encoding="ascii",
-    ):
-        self._colorize = colorize
-        self._show_values = show_values
-        self._theme = theme or self.default_theme
-        self._syntax_highlighter = SyntaxHighlighter(style)
-        self._max_length = max_length
-        self._encoding = encoding
-        self._lib_dirs = self._get_lib_dirs()
-        self._pipe_char = self._get_char("\u2502", "|")
-        self._cap_char = self._get_char("\u2514", "->")
-        self._location_regex = (
-            r'  File "(?P<file>.*?)", line (?P<line>[^,]+)(?:, in (?P<function>.*))?'
-            r"(?P<end>\n[\s\S]*)"
-        )
 
     def _get_char(self, char, default):
         try:
@@ -437,6 +427,10 @@ class ExceptionFormatter:
 
                 if self._colorize and is_mine:
                     frame = self._colorize_location(file, line, function, end)
+
+                if function.endswith(self._catch_point_identifier):
+                    frame = ">" + frame[1:].replace(self._catch_point_identifier, "", 1)
+
                 if self._show_values and (is_mine or prepend_with_new_line):
                     frame = "\n" + frame
 
@@ -507,7 +501,7 @@ class ExceptionFormatter:
         if self._colorize and len(exception_only) >= 3 and issubclass(exc_type, SyntaxError):
             match = re.match(self._location_regex, exception_only[0])
             group = match.groupdict()
-            exception_only[0] = '\n' + self._colorize_location(
+            exception_only[0] = "\n" + self._colorize_location(
                 group["file"], group["line"], group["function"], group["end"]
             )
             exception_only[1] = self._syntax_highlighter.highlight(exception_only[1])
@@ -535,5 +529,7 @@ class ExceptionFormatter:
 
         yield "".join(lines)
 
-    def format_exception(self, type_, value, tb):
+    def format_exception(self, type_, value, tb, *, decorated=False):
+        if self._extend:
+            tb = self.extend_traceback(tb, decorated=decorated)
         yield from self._format_exception(value, tb)
