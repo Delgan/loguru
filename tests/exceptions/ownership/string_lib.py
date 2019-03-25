@@ -16,6 +16,7 @@ def test(*, backtrace, colorize, diagnose):
 
 
 test(backtrace=True, colorize=True, diagnose=True)
+test(backtrace=False, colorize=True, diagnose=True)
 test(backtrace=True, colorize=True, diagnose=False)
 test(backtrace=False, colorize=True, diagnose=False)
 test(backtrace=False, colorize=False, diagnose=False)

@@ -14,6 +14,7 @@ from threading import current_thread
 from colorama import AnsiToWin32
 
 from . import _defaults
+from ._better_exceptions import ExceptionFormatter
 from ._datetime import now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
@@ -760,6 +761,11 @@ class Logger:
             handler_id = next(self._handlers_count)
             colors = [lvl.color for lvl in self._levels.values()] + [""]
 
+            exception_formatter = ExceptionFormatter(
+                colorize=colorize, encoding=encoding, show_values=diagnose, extend=backtrace,
+                skip_frame=(self.catch.__code__.co_filename, "catch_wrapper")
+            )
+
             handler = Handler(
                 writer=writer,
                 stopper=stopper,
@@ -769,12 +775,10 @@ class Logger:
                 filter_=filter_func,
                 colorize=colorize,
                 serialize=serialize,
-                backtrace=backtrace,
-                diagnose=diagnose,
                 catch=catch,
                 enqueue=enqueue,
-                encoding=encoding,
                 id_=handler_id,
+                exception_formatter=exception_formatter,
                 colors=colors,
             )
 
@@ -914,9 +918,9 @@ class Logger:
                     return False
 
                 if self_._as_decorator:
-                    back, decorator = 2, True
+                    back = 2
                 else:
-                    back, decorator = 1, False
+                    back = 1
 
                 logger_ = self.opt(
                     exception=True,
@@ -927,7 +931,7 @@ class Logger:
                     depth=self._depth + back,
                 )
 
-                log = logger_._make_log_function(level, decorator)
+                log = logger_._make_log_function(level)
 
                 log(logger_, message)
 
@@ -1404,7 +1408,7 @@ class Logger:
 
     @staticmethod
     @functools.lru_cache()
-    def _make_log_function(level, decorated=False):
+    def _make_log_function(level):
 
         if isinstance(level, str):
             level_id = level_name = level
@@ -1517,7 +1521,7 @@ class Logger:
                 record["message"] = _message.format(*args, **kwargs)
 
             for handler in _self._handlers.values():
-                handler.emit(record, level_color, _self._ansi, _self._raw, decorated)
+                handler.emit(record, level_color, _self._ansi, _self._raw)
 
         doc = r"Log ``_message.format(*args, **kwargs)`` with severity ``'%s'``." % level_name
         log_function.__doc__ = doc

@@ -9,13 +9,11 @@ def test(*, backtrace, colorize, diagnose):
     logger.remove()
     logger.add(sys.stderr, format="", colorize=colorize, backtrace=backtrace, diagnose=diagnose)
 
+    @logger.catch
     def callback():
         divide(1, 0)
 
-    try:
-        callme(callback)
-    except ZeroDivisionError:
-        logger.exception("")
+    callme(callback)
 
 
 test(backtrace=True, colorize=True, diagnose=True)

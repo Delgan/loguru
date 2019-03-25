@@ -12,3 +12,7 @@ def callme(callback):
 
 def execute():
     exec("divide(1, 0)")
+
+
+def syntaxerror():
+    exec("foo =")

@@ -133,6 +133,7 @@ class ExceptionFormatter:
         max_length=128,
         encoding="ascii",
         extend=False,
+        skip_frame=None,
     ):
         self._colorize = colorize
         self._show_values = show_values
@@ -141,6 +142,7 @@ class ExceptionFormatter:
         self._syntax_highlighter = SyntaxHighlighter(style)
         self._max_length = max_length
         self._encoding = encoding
+        self._skip_frame = skip_frame
         self._lib_dirs = self._get_lib_dirs()
         self._pipe_char = self._get_char("\u2502", "|")
         self._cap_char = self._get_char("\u2514", "->")
@@ -150,35 +152,36 @@ class ExceptionFormatter:
             r"(?P<end>\n[\s\S]*)"
         )
 
-    def extend_traceback(self, tb, *, decorated=False):
+    def improve_traceback(self, tb):
         if tb is None:
             return None
 
-        frame = tb.tb_frame
+        root = tb
+        tbs = [traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, tb.tb_next)]
 
-        if decorated:
-            bad_frame = (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_lineno)
+        if self._extend:
+            frame = tb.tb_frame.f_back
+
+            while frame:
+                tbs.insert(0, traceback(frame, frame.f_lasti, frame.f_lineno, tb))
+                frame = frame.f_back
+
+            for tb in reversed(tbs):
+                if (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_code.co_name) != self._skip_frame:
+                    tb.caught_here = True
+                    break
+
+        tb = root.tb_next
+
+        while tb:
+            tbs.append(traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, tb.tb_next))
             tb = tb.tb_next
-            caught = False
-        else:
-            bad_frame = None
-            tb = traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, tb.tb_next, caught_here=True)
-            caught = True
 
-        while True:
-            frame = frame.f_back
+        tb = None
 
-            if not frame:
-                break
-
-            if (frame.f_code.co_filename, frame.f_lineno) == bad_frame:
-                continue
-
-            if not caught:
-                caught = True
-                tb = traceback(frame, frame.f_lasti, frame.f_lineno, tb, caught_here=True)
-            else:
-                tb = traceback(frame, frame.f_lasti, frame.f_lineno, tb)
+        for t in reversed(tbs):
+            if (t.tb_frame.f_code.co_filename, t.tb_frame.f_code.co_name) != self._skip_frame:
+                tb = traceback(t.tb_frame, t.tb_lasti, t.tb_lineno, tb, caught_here=t.caught_here)
 
         return tb
 
@@ -463,9 +466,13 @@ class ExceptionFormatter:
         if self._colorize and len(exception_only) >= 3 and issubclass(exc_type, SyntaxError):
             match = re.match(self._location_regex, exception_only[0])
             group = match.groupdict()
-            exception_only[0] = "\n" + self._colorize_location(
+            colorized_location = self._colorize_location(
                 group["file"], group["line"], group["function"], group["end"]
             )
+            if self._show_values:
+                exception_only[0] = "\n" + colorized_location
+            else:
+                exception_only[0] = colorized_location
             exception_only[1] = self._syntax_highlighter.highlight(exception_only[1])
 
         error_message = exception_only[-1]
@@ -481,7 +488,7 @@ class ExceptionFormatter:
                 error_message = self._theme["exception_type"].format(error_message)
             error_message += "\n"
 
-        if formatted_frames and self._show_values:
+        if self._show_values and formatted_frames:
             error_message = "\n" + error_message
 
         exception_only[-1] = error_message
@@ -491,7 +498,6 @@ class ExceptionFormatter:
 
         yield "".join(lines)
 
-    def format_exception(self, type_, value, tb, *, decorated=False):
-        if self._extend:
-            tb = self.extend_traceback(tb, decorated=decorated)
+    def format_exception(self, type_, value, tb):
+        tb = self.improve_traceback(tb)
         yield from self._format_exception(value, tb)

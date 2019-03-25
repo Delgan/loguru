@@ -1,0 +1,18 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/backtrace/nested_explicit_catch_up.py", line 18, in <module>
+    foo()
+  File "tests/exceptions/backtrace/nested_explicit_catch_up.py", line 10, in foo
+    bar()
+  File "tests/exceptions/backtrace/nested_explicit_catch_up.py", line 15, in bar
+    1 / 0
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+> File "tests/exceptions/backtrace/nested_explicit_catch_up.py", line 18, in <module>
+    foo()
+  File "tests/exceptions/backtrace/nested_explicit_catch_up.py", line 10, in foo
+    bar()
+  File "tests/exceptions/backtrace/nested_explicit_catch_up.py", line 15, in bar
+    1 / 0
+ZeroDivisionError: division by zero

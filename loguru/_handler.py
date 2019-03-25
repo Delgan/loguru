@@ -7,8 +7,6 @@ import traceback
 
 import ansimarkup
 
-from ._better_exceptions import ExceptionFormatter
-
 
 class StrRecord(str):
     __slots__ = ("record",)
@@ -26,11 +24,9 @@ class Handler:
         filter_,
         colorize,
         serialize,
-        backtrace,
-        diagnose,
         catch,
         enqueue,
-        encoding,
+        exception_formatter,
         id_,
         colors=[]
     ):
@@ -42,11 +38,9 @@ class Handler:
         self._filter = filter_
         self._colorize = colorize
         self._serialize = serialize
-        self._backtrace = backtrace
-        self._diagnose = diagnose
         self._catch = catch
         self._enqueue = enqueue
-        self._encoding = encoding
+        self._exception_formatter = exception_formatter
         self._id = id_
 
         self._static_format = None
@@ -57,13 +51,6 @@ class Handler:
         self._queue = None
         self._thread = None
         self._stopped = False
-
-        self._exception_formatter = ExceptionFormatter(
-            colorize=self._colorize,
-            encoding=self._encoding,
-            show_values=self._diagnose,
-            extend=self._backtrace,
-        )
 
         if not self._is_formatter_dynamic:
             self._static_format = self._formatter
@@ -77,7 +64,7 @@ class Handler:
             self._thread = threading.Thread(target=self._queued_writer, daemon=True)
             self._thread.start()
 
-    def emit(self, record, level_color, ansi_message, raw, decorated):
+    def emit(self, record, level_color, ansi_message, raw):
         try:
             if self._levelno > record["level"].no:
                 return
@@ -110,9 +97,7 @@ class Handler:
                 error = ""
             else:
                 type_, value, tb = record["exception"]
-                lines = self._exception_formatter.format_exception(
-                    type_, value, tb, decorated=decorated
-                )
+                lines = self._exception_formatter.format_exception(type_, value, tb)
                 error = "".join(lines)
 
             formatter_record["exception"] = error
