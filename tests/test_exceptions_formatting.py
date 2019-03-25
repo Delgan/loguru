@@ -86,6 +86,8 @@ def compare_exception(dirname, filename):
         "head_recursion",
         "missing_attributes_traceback_objects",
         "nested",
+        "nested_decorator_catch_up",
+        "nested_explicit_catch_up",
         "nested_wrapping",
         "no_tb",
         "not_enough_arguments",
@@ -123,7 +125,17 @@ def test_diagnose(filename):
 
 
 @pytest.mark.parametrize(
-    "filename", ["callback", "direct", "indirect", "string_lib", "string_source"]
+    "filename",
+    [
+        "callback",
+        "catch_decorator",
+        "catch_decorator_from_lib",
+        "direct",
+        "indirect",
+        "string_lib",
+        "string_source",
+        "syntaxerror",
+    ],
 )
 def test_exception_ownership(filename):
     compare_exception("ownership", filename)

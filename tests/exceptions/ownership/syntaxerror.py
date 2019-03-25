@@ -1,5 +1,5 @@
 import os, site, sys
-from usersite.lib import callme, divide
+from usersite.lib import syntaxerror
 from loguru import logger
 
 site.USER_SITE = os.path.abspath(os.path.join(os.path.dirname(__file__), "usersite"))
@@ -9,12 +9,9 @@ def test(*, backtrace, colorize, diagnose):
     logger.remove()
     logger.add(sys.stderr, format="", colorize=colorize, backtrace=backtrace, diagnose=diagnose)
 
-    def callback():
-        divide(1, 0)
-
     try:
-        callme(callback)
-    except ZeroDivisionError:
+        syntaxerror()
+    except SyntaxError:
         logger.exception("")
 
 
