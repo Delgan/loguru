@@ -127,18 +127,15 @@ class Logger:
         ),
     }
 
-    _handlers_count = itertools.count()
-    _handlers = {}
 
     _extra_class = {}
 
-    _min_level = float("inf")
     _enabled = {}
     _activation_list = []
 
     _lock = threading.Lock()
 
-    def __init__(self, extra, exception, record, lazy, ansi, raw, depth):
+    def __init__(self, extra, exception, record, lazy, ansi, raw, depth, handlers=None, level=float("inf")):
         self._extra = extra
         self._record = record
         self._exception = exception
@@ -146,6 +143,10 @@ class Logger:
         self._ansi = ansi
         self._raw = raw
         self._depth = depth
+        
+        self._handlers = handlers or {}
+        self._handlers_count = itertools.count(len(self._handlers))
+        self._min_level = level
 
     def add(
         self,
@@ -770,8 +771,8 @@ class Logger:
             handlers = self._handlers.copy()
             handlers[handler_id] = handler
 
-            self.__class__._min_level = min(self.__class__._min_level, levelno)
-            self.__class__._handlers = handlers
+            self._min_level = min(self._min_level, levelno)
+            self._handlers = handlers
 
         return handler_id
 
@@ -812,8 +813,8 @@ class Logger:
                 handler.stop()
 
             levelnos = (h.levelno for h in handlers.values())
-            self.__class__._min_level = min(levelnos, default=float("inf"))
-            self.__class__._handlers = handlers
+            self._min_level = min(levelnos, default=float("inf"))
+            self._handlers = handlers
 
     def catch(
         self,
@@ -1044,6 +1045,8 @@ class Logger:
             _self._ansi,
             _self._raw,
             _self._depth,
+            _self._handlers,
+            _self._min_level
         )
 
     def level(self, name, no=None, color=None, icon=None):
