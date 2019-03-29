@@ -1001,7 +1001,7 @@ class Logger:
         >>> func()
         [18:11:54] DEBUG in 'func' - Get parent context
         """
-        return Logger(self._extra, exception, record, lazy, ansi, raw, depth)
+        return Logger(self._extra, exception, record, lazy, ansi, raw, depth, self._handlers, self._min_level)
 
     def bind(_self, **kwargs):
         """Bind attributes to the ``extra`` dict of each logged message record.
