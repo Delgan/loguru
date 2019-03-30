@@ -1,22 +1,20 @@
 
-  File "[32m[0m[32m[1m<string>[0m, line [33m1[0m
-    [1mfoo[0m [35m[1m=[0m
+  File "<string>", line 1
+    foo =
         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
-
-  File "[32m[0m[32m[1m<string>[0m, line [33m1[0m
-    [1mfoo[0m [35m[1m=[0m
+  File "<string>", line 1
+    foo =
         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
-  File "[32m[0m[32m[1m<string>[0m, line [33m1[0m
-    [1mfoo[0m [35m[1m=[0m
+  File "<string>", line 1
+    foo =
         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
-
-  File "[32m[0m[32m[1m<string>[0m, line [33m1[0m
-    [1mfoo[0m [35m[1m=[0m
+  File "<string>", line 1
+    foo =
         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m

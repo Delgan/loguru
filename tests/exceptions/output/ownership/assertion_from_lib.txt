@@ -1,0 +1,57 @@
+
+[33m[1mTraceback (most recent call last):[0m
+
+  File "[32mtests/exceptions/ownership/[0m[32m[1massertion_from_lib.py[0m", line [33m19[0m, in [35m<module>[0m
+    [1mtest[0m[1m([0m[1mbacktrace[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mcolorize[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mdiagnose[0m[35m[1m=[0m[36m[1mTrue[0m[1m)[0m
+    [36m└ [0m[36m[1m<function test at 0xDEADBEEF>[0m
+
+> File "[32mtests/exceptions/ownership/[0m[32m[1massertion_from_lib.py[0m", line [33m14[0m, in [35mtest[0m
+    [1massertionerror[0m[1m([0m[1ma[0m[1m,[0m [1mb[0m[1m)[0m
+    [36m│              │  └ [0m[36m[1m2[0m
+    [36m│              └ [0m[36m[1m1[0m
+    [36m└ [0m[36m[1m<function assertionerror at 0xDEADBEEF>[0m
+
+  File "usersite/lib.py", line 22, in assertionerror
+    assert x == y
+           │    └ 2
+           └ 1
+
+[31m[1mAssertionError[0m: [35m[1massert[0m [1mx[0m [35m[1m==[0m [1my[0m
+
+[33m[1mTraceback (most recent call last):[0m
+
+  File "[32mtests/exceptions/ownership/[0m[32m[1massertion_from_lib.py[0m", line [33m14[0m, in [35mtest[0m
+    [1massertionerror[0m[1m([0m[1ma[0m[1m,[0m [1mb[0m[1m)[0m
+    [36m│              │  └ [0m[36m[1m2[0m
+    [36m│              └ [0m[36m[1m1[0m
+    [36m└ [0m[36m[1m<function assertionerror at 0xDEADBEEF>[0m
+
+  File "usersite/lib.py", line 22, in assertionerror
+    assert x == y
+           │    └ 2
+           └ 1
+
+[31m[1mAssertionError[0m: [35m[1massert[0m [1mx[0m [35m[1m==[0m [1my[0m
+
+[33m[1mTraceback (most recent call last):[0m
+  File "[32mtests/exceptions/ownership/[0m[32m[1massertion_from_lib.py[0m", line [33m21[0m, in [35m<module>[0m
+    [1mtest[0m[1m([0m[1mbacktrace[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mcolorize[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mdiagnose[0m[35m[1m=[0m[36m[1mFalse[0m[1m)[0m
+> File "[32mtests/exceptions/ownership/[0m[32m[1massertion_from_lib.py[0m", line [33m14[0m, in [35mtest[0m
+    [1massertionerror[0m[1m([0m[1ma[0m[1m,[0m [1mb[0m[1m)[0m
+  File "usersite/lib.py", line 22, in assertionerror
+    assert x == y
+[31m[1mAssertionError[0m
+
+[33m[1mTraceback (most recent call last):[0m
+  File "[32mtests/exceptions/ownership/[0m[32m[1massertion_from_lib.py[0m", line [33m14[0m, in [35mtest[0m
+    [1massertionerror[0m[1m([0m[1ma[0m[1m,[0m [1mb[0m[1m)[0m
+  File "usersite/lib.py", line 22, in assertionerror
+    assert x == y
+[31m[1mAssertionError[0m
+
+Traceback (most recent call last):
+  File "tests/exceptions/ownership/assertion_from_lib.py", line 14, in test
+    assertionerror(a, b)
+  File "usersite/lib.py", line 22, in assertionerror
+    assert x == y
+AssertionError

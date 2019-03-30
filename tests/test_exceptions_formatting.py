@@ -61,6 +61,7 @@ def compare_exception(dirname, filename):
         print(stderr, file=sys.stderr)
         assert proc.returncode == 0
         assert stdout == ""
+        assert stderr != ""
 
     stderr = normalize(stderr)
 
@@ -86,6 +87,7 @@ def compare_exception(dirname, filename):
         "head_recursion",
         "missing_attributes_traceback_objects",
         "nested",
+        "nested_chained_catch_up",
         "nested_decorator_catch_up",
         "nested_explicit_catch_up",
         "nested_wrapping",
@@ -106,6 +108,8 @@ def test_backtrace(filename):
     "filename",
     [
         "assertion_error",
+        "assertion_error_custom",
+        "assertion_error_in_string",
         "attributes",
         "chained_both",
         "encoding",
@@ -116,6 +120,7 @@ def test_backtrace(filename):
         "source_multilines",
         "source_strings",
         "syntax_error",
+        "syntax_highlighting",
         "truncating",
         "unprintable_object",
     ],
@@ -127,6 +132,8 @@ def test_diagnose(filename):
 @pytest.mark.parametrize(
     "filename",
     [
+        "assertion_from_lib",
+        "assertion_from_local",
         "callback",
         "catch_decorator",
         "catch_decorator_from_lib",
@@ -154,7 +161,7 @@ def test_exception_others(filename):
 
 
 @pytest.mark.parametrize("diagnose", [False, True])
-def test_carret_not_masked(writer, diagnose):
+def test_caret_not_masked(writer, diagnose):
     logger.add(writer, backtrace=True, diagnose=diagnose, colorize=False, format="")
 
     @logger.catch
@@ -168,7 +175,7 @@ def test_carret_not_masked(writer, diagnose):
 
 
 @pytest.mark.parametrize("diagnose", [False, True])
-def test_no_carret_if_no_backtrace(writer, diagnose):
+def test_no_caret_if_no_backtrace(writer, diagnose):
     logger.add(writer, backtrace=False, diagnose=diagnose, colorize=False, format="")
 
     @logger.catch

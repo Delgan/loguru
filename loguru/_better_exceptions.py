@@ -10,24 +10,12 @@ import site
 import sys
 import sysconfig
 import tokenize
-import traceback as traceback_
-from collections import namedtuple
-
-
-class traceback:
-    __slots__ = ("tb_frame", "tb_lasti", "tb_lineno", "tb_next", "caught_here")
-
-    def __init__(self, frame, lasti, lineno, next_, *, caught_here=False):
-        self.tb_frame = frame
-        self.tb_lasti = lasti
-        self.tb_lineno = lineno
-        self.tb_next = next_
-        self.caught_here = caught_here
+import traceback
 
 
 class SyntaxHighlighter:
 
-    default_style = {
+    _default_style = {
         "comment": "\x1b[30m\x1b[1m{}\x1b[0m",
         "keyword": "\x1b[35m\x1b[1m{}\x1b[0m",
         "builtin": "\x1b[1m{}\x1b[0m",
@@ -40,12 +28,12 @@ class SyntaxHighlighter:
         "other": "{}",
     }
 
-    builtins = set(dir(builtins))
-    constants = {"True", "False", "None"}
-    punctation = {"(", ")", "[", "]", "{", "}", ":", ",", ";"}
+    _builtins = set(dir(builtins))
+    _constants = {"True", "False", "None"}
+    _punctation = {"(", ")", "[", "]", "{", "}", ":", ",", ";"}
 
     def __init__(self, style=None):
-        self._style = style or self.default_style
+        self._style = style or self._default_style
 
     def highlight(self, source):
         style = self._style
@@ -56,16 +44,16 @@ class SyntaxHighlighter:
             type_, string, start, end, line = token
 
             if type_ == tokenize.NAME:
-                if string in self.constants:
+                if string in self._constants:
                     color = style["constant"]
                 elif keyword.iskeyword(string):
                     color = style["keyword"]
-                elif string in self.builtins:
+                elif string in self._builtins:
                     color = style["builtin"]
                 else:
                     color = style["identifier"]
             elif type_ == tokenize.OP:
-                if string in self.punctation:
+                if string in self._punctation:
                     color = style["punctuation"]
                 else:
                     color = style["operator"]
@@ -109,8 +97,7 @@ class SyntaxHighlighter:
 
 class ExceptionFormatter:
 
-    default_theme = {
-        # Some terminals support "31+1" (red + bold) but not "91" (bright red), see Repl.it
+    _default_theme = {
         "introduction": "\x1b[33m\x1b[1m{}\x1b[0m",
         "cause": "\x1b[1m{}\x1b[0m",
         "context": "\x1b[1m{}\x1b[0m",
@@ -127,73 +114,29 @@ class ExceptionFormatter:
     def __init__(
         self,
         colorize=False,
-        show_values=True,
+        backtrace=False,
+        diagnose=True,
         theme=None,
         style=None,
         max_length=128,
         encoding="ascii",
-        extend=False,
-        skip_frame=None,
+        hidden_frames_filename=None,
     ):
         self._colorize = colorize
-        self._show_values = show_values
-        self._theme = theme or self.default_theme
-        self._extend = extend
+        self._diagnose = diagnose
+        self._theme = theme or self._default_theme
+        self._backtrace = backtrace
         self._syntax_highlighter = SyntaxHighlighter(style)
         self._max_length = max_length
         self._encoding = encoding
-        self._skip_frame = skip_frame
+        self._hidden_frames_filename = hidden_frames_filename
         self._lib_dirs = self._get_lib_dirs()
         self._pipe_char = self._get_char("\u2502", "|")
         self._cap_char = self._get_char("\u2514", "->")
         self._catch_point_identifier = " <Loguru catch point here>"
-        self._location_regex = (
-            r'  File "(?P<file>.*?)", line (?P<line>[^,]+)(?:, in (?P<function>.*))?'
-            r"(?P<end>\n[\s\S]*)"
-        )
 
-    def improve_traceback(self, tb):
-        if tb is None:
-            return None
-
-        root = tb
-        tbs = [traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, tb.tb_next)]
-
-        if self._extend:
-            frame = tb.tb_frame.f_back
-
-            while frame:
-                tbs.insert(0, traceback(frame, frame.f_lasti, frame.f_lineno, tb))
-                frame = frame.f_back
-
-            for tb in reversed(tbs):
-                if (tb.tb_frame.f_code.co_filename, tb.tb_frame.f_code.co_name) != self._skip_frame:
-                    tb.caught_here = True
-                    break
-
-        tb = root.tb_next
-
-        while tb:
-            tbs.append(traceback(tb.tb_frame, tb.tb_lasti, tb.tb_lineno, tb.tb_next))
-            tb = tb.tb_next
-
-        tb = None
-
-        for t in reversed(tbs):
-            if (t.tb_frame.f_code.co_filename, t.tb_frame.f_code.co_name) != self._skip_frame:
-                tb = traceback(t.tb_frame, t.tb_lasti, t.tb_lineno, tb, caught_here=t.caught_here)
-
-        return tb
-
-    def _get_char(self, char, default):
-        try:
-            char.encode(self._encoding)
-        except UnicodeEncodeError:
-            return default
-        else:
-            return char
-
-    def _get_lib_dirs(self):
+    @staticmethod
+    def _get_lib_dirs():
         # https://git.io/fh5wm
         # https://stackoverflow.com/q/122327/2291710
         lib_dirs = [
@@ -217,36 +160,13 @@ class ExceptionFormatter:
 
         return [os.path.abspath(d) + os.sep for d in lib_dirs]
 
-    def _colorize_location(self, file, line, function, end):
-        dirname, basename = os.path.split(file)
-
-        if dirname:
-            dirname += os.sep
-
-        dirname = self._theme["dirname"].format(dirname)
-        basename = self._theme["basename"].format(basename)
-        file = dirname + basename
-
-        line = self._theme["line"].format(line)
-
-        if function is not None:
-            function = self._theme["function"].format(function)
-            frame = '  File "{}", line {}, in {}{}'.format(file, line, function, end)
-        else:
-            frame = '  File "{}, line {}{}'.format(file, line, end)
-
-        return frame
-
-    def _format_value(self, v):
+    def _get_char(self, char, default):
         try:
-            v = repr(v)
-        except Exception:
-            v = "<unprintable %s object>" % type(v).__name__
-
-        max_length = self._max_length
-        if max_length is not None and len(v) > max_length:
-            v = v[:max_length] + "..."
-        return v
+            char.encode(self._encoding)
+        except UnicodeEncodeError:
+            return default
+        else:
+            return char
 
     def _is_file_mine(self, file):
         filepath = os.path.abspath(file).lower()
@@ -254,24 +174,64 @@ class ExceptionFormatter:
             return False
         return not any(filepath.startswith(d.lower()) for d in self._lib_dirs)
 
-    def _extract_frames(self, tb):
-        frames = []
+    def _extract_frames(self, tb, is_first):
+        frames, final_source = [], None
+
+        if tb is None:
+            return frames, final_source
+
+        def is_valid(frame):
+            return frame.f_code.co_filename != self._hidden_frames_filename
+
+        def get_info(frame, lineno):
+            filename = frame.f_code.co_filename
+            function = frame.f_code.co_name
+            source = linecache.getline(filename, lineno).strip()
+            return filename, lineno, function, source
+
+        infos = []
+
+        if is_valid(tb.tb_frame):
+            infos.append((get_info(tb.tb_frame, tb.tb_lineno), tb.tb_frame))
+
+        if self._backtrace and is_first:
+            frame = tb.tb_frame.f_back
+            while frame:
+                if is_valid(frame):
+                    infos.insert(0, (get_info(frame, frame.f_lineno), frame))
+                frame = frame.f_back
+
+            if infos:
+                (filename, lineno, function, source), frame = infos[-1]
+                function += self._catch_point_identifier
+                infos[-1] = ((filename, lineno, function, source), frame)
+
+        tb = tb.tb_next
 
         while tb:
-            frames.append(tb)
+            if is_valid(tb.tb_frame):
+                infos.append((get_info(tb.tb_frame, tb.tb_lineno), tb.tb_frame))
             tb = tb.tb_next
 
-        return frames
+        for (filename, lineno, function, source), frame in infos:
+            final_source = source
+            if source:
+                colorize = self._colorize and self._is_file_mine(filename)
+                lines = []
+                if colorize:
+                    lines.append(self._syntax_highlighter.highlight(source))
+                else:
+                    lines.append(source)
+                if self._diagnose:
+                    relevant_values = self._get_relevant_values(source, frame)
+                    values = self._format_relevant_values(list(relevant_values), colorize)
+                    lines += list(values)
+                source = "\n    ".join(lines)
+            frames.append((filename, lineno, function, source))
 
-    def _get_frame_information(self, frame):
-        lineno = frame.tb_lineno
-        filename = frame.tb_frame.f_code.co_filename
-        function = frame.tb_frame.f_code.co_name
-        source = linecache.getline(filename, lineno).strip()
-        return filename, lineno, function, source
+        return frames, final_source
 
     def _get_relevant_values(self, source, frame):
-        values = []
         value = None
         is_attribute = False
         is_valid_value = False
@@ -288,7 +248,7 @@ class ExceptionFormatter:
                             continue
                         else:
                             is_valid_value = True
-                            values.append((col, self._format_value(value)))
+                            yield (col, self._format_value(value))
                             break
                 elif is_valid_value:
                     try:
@@ -296,20 +256,14 @@ class ExceptionFormatter:
                     except AttributeError:
                         is_valid_value = False
                     else:
-                        values.append((col, self._format_value(value)))
+                        yield (col, self._format_value(value))
             elif type_ == tokenize.OP and string == ".":
                 is_attribute = True
             else:
                 is_attribute = False
                 is_valid_value = False
 
-        values.sort()
-
-        return values
-
     def _format_relevant_values(self, relevant_values, colorize):
-        lines = []
-
         for i in reversed(range(len(relevant_values))):
             col, value = relevant_values[i]
             pipe_cols = [pcol for pcol, _ in relevant_values[:i]]
@@ -333,74 +287,60 @@ class ExceptionFormatter:
                     arrows = self._theme["arrows"].format(arrows)
                     value_line = self._theme["value"].format(value_line)
 
-                lines.append(arrows + value_line)
+                yield arrows + value_line
 
-        return lines
+    def _format_value(self, v):
+        try:
+            v = repr(v)
+        except Exception:
+            v = "<unprintable %s object>" % type(v).__name__
 
-    def _format_frames(self, frames):
-        formatted_frames = []
+        max_length = self._max_length
+        if max_length is not None and len(v) > max_length:
+            v = v[: max_length - 3] + "..."
+        return v
 
-        for frame in frames:
-            filename, lineno, function, source = self._get_frame_information(frame)
-
-            if source:
-                is_mine = self._is_file_mine(filename)
-                lines = []
-
-                if self._colorize and is_mine:
-                    lines.append(self._syntax_highlighter.highlight(source))
-                else:
-                    lines.append(source)
-
-                if self._show_values:
-                    relevant_values = self._get_relevant_values(source, frame.tb_frame)
-                    colorize_values = self._colorize and is_mine
-                    values = self._format_relevant_values(relevant_values, colorize_values)
-                    lines += values
-
-                source = "\n    ".join(lines)
-
-            if self._extend and isinstance(frame, traceback) and frame.caught_here:
-                function += self._catch_point_identifier
-
-            formatted_frames.append((filename, lineno, function, source))
-
-        return formatted_frames
-
-    def _format_locations(self, formatted_frames):
-        lines = []
+    def _format_locations(self, frames_lines):
         prepend_with_new_line = False
+        regex = r'^  File "(?P<file>.*?)", line (?P<line>[^,]+)(?:, in (?P<function>.*))?\n'
 
-        for frame in formatted_frames:
-            match = re.match(self._location_regex, frame)
+        for frame in frames_lines:
+            match = re.match(regex, frame)
 
             if match:
-                group = match.groupdict()
-                file, line, function, end = (
-                    group["file"],
-                    group["line"],
-                    group["function"],
-                    group["end"],
-                )
+                file, line, function = match.group("file", "line", "function")
 
                 is_mine = self._is_file_mine(file)
 
+                if function is not None:
+                    pattern = '  File "{}", line {}, in {}\n'
+                else:
+                    pattern = '  File "{}", line {}\n'
+
+                if self._backtrace and function and function.endswith(self._catch_point_identifier):
+                    function = function[: -len(self._catch_point_identifier)]
+                    pattern = ">" + pattern[1:]
+
                 if self._colorize and is_mine:
-                    frame = self._colorize_location(file, line, function, end)
+                    dirname, basename = os.path.split(file)
+                    if dirname:
+                        dirname += os.sep
+                    dirname = self._theme["dirname"].format(dirname)
+                    basename = self._theme["basename"].format(basename)
+                    file = dirname + basename
+                    line = self._theme["line"].format(line)
+                    function = self._theme["function"].format(function)
 
-                if self._extend and function and function.endswith(self._catch_point_identifier):
-                    frame = ">" + frame[1:].replace(self._catch_point_identifier, "", 1)
+                if self._diagnose and (is_mine or prepend_with_new_line):
+                    pattern = "\n" + pattern
 
-                if self._show_values and (is_mine or prepend_with_new_line):
-                    frame = "\n" + frame
-
+                location = pattern.format(file, line, function)
+                frame = location + frame[match.end() :]
                 prepend_with_new_line = is_mine
 
-            lines.append(frame)
+            yield frame
 
-        return lines
-
-    def _format_exception(self, value, tb, seen=None):
+    def _format_exception(self, value, tb, seen=None, is_first=False):
         # Implemented from built-in traceback module: https://git.io/fhHKw
         exc_type, exc_value, exc_traceback = type(value), value, tb
 
@@ -418,7 +358,7 @@ class ExceptionFormatter:
                 cause = "The above exception was the direct cause of the following exception:"
                 if self._colorize:
                     cause = self._theme["cause"].format(cause)
-                if self._show_values:
+                if self._diagnose:
                     yield "\n\n" + cause + "\n\n\n"
                 else:
                     yield "\n" + cause + "\n\n"
@@ -435,50 +375,17 @@ class ExceptionFormatter:
                 context = "During handling of the above exception, another exception occurred:"
                 if self._colorize:
                     context = self._theme["context"].format(context)
-                if self._show_values:
+                if self._diagnose:
                     yield "\n\n" + context + "\n\n\n"
                 else:
                     yield "\n" + context + "\n\n"
 
-        if exc_traceback is not None:
-            introduction = "Traceback (most recent call last):"
-            if self._colorize:
-                introduction = self._theme["introduction"].format(introduction)
-            yield introduction + "\n"
+        frames, final_source = self._extract_frames(exc_traceback, is_first)
+        exception_only = traceback.format_exception_only(exc_type, exc_value)
 
-        frames = self._extract_frames(exc_traceback)
-        formatted_frames = self._format_frames(frames)
-
-        if (
-            self._show_values
-            and issubclass(exc_type, AssertionError)
-            and not str(exc_value)
-            and frames
-        ):
-            *_, final_source = self._get_frame_information(frames[-1])
-            if self._colorize:
-                final_source = self._syntax_highlighter.highlight(final_source)
-            exc_value.args = (final_source,)
-
-        exception_only = traceback_.format_exception_only(exc_type, exc_value)
-
-        # This relies on implementation details: https://git.io/fjJTm
-        if self._colorize and len(exception_only) >= 3 and issubclass(exc_type, SyntaxError):
-            match = re.match(self._location_regex, exception_only[0])
-            group = match.groupdict()
-            colorized_location = self._colorize_location(
-                group["file"], group["line"], group["function"], group["end"]
-            )
-            if self._show_values:
-                exception_only[0] = "\n" + colorized_location
-            else:
-                exception_only[0] = colorized_location
-            exception_only[1] = self._syntax_highlighter.highlight(exception_only[1])
-
-        error_message = exception_only[-1]
+        error_message = exception_only[-1][:-1]  # Remove last new line temporarily
 
         if self._colorize:
-            error_message = error_message[:-1]  # Avoid closing ansi tag after final newline
             if ":" in error_message:
                 exception_type, exception_value = error_message.split(":", 1)
                 exception_type = self._theme["exception_type"].format(exception_type)
@@ -486,18 +393,29 @@ class ExceptionFormatter:
                 error_message = exception_type + ":" + exception_value
             else:
                 error_message = self._theme["exception_type"].format(error_message)
-            error_message += "\n"
 
-        if self._show_values and formatted_frames:
+        if self._diagnose and frames:
+            if issubclass(exc_type, AssertionError) and not str(exc_value) and final_source:
+                if self._colorize:
+                    final_source = self._syntax_highlighter.highlight(final_source)
+                error_message += ": " + final_source
+
             error_message = "\n" + error_message
 
-        exception_only[-1] = error_message
+        exception_only[-1] = error_message + "\n"
 
-        frames_lines = traceback_.format_list(formatted_frames) + exception_only
-        lines = self._format_locations(frames_lines)
+        frames_lines = traceback.format_list(frames) + exception_only
 
-        yield "".join(lines)
+        if self._colorize or self._backtrace or self._diagnose:
+            frames_lines = self._format_locations(frames_lines)
+
+        if exc_traceback is not None:
+            introduction = "Traceback (most recent call last):"
+            if self._colorize:
+                introduction = self._theme["introduction"].format(introduction)
+            yield introduction + "\n"
+
+        yield "".join(frames_lines)
 
     def format_exception(self, type_, value, tb):
-        tb = self.improve_traceback(tb)
-        yield from self._format_exception(value, tb)
+        yield from self._format_exception(value, tb, is_first=True)
