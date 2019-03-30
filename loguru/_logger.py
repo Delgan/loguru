@@ -762,8 +762,11 @@ class Logger:
             colors = [lvl.color for lvl in self._levels.values()] + [""]
 
             exception_formatter = ExceptionFormatter(
-                colorize=colorize, encoding=encoding, show_values=diagnose, extend=backtrace,
-                skip_frame=(self.catch.__code__.co_filename, "catch_wrapper")
+                colorize=colorize,
+                encoding=encoding,
+                diagnose=diagnose,
+                backtrace=backtrace,
+                hidden_frames_filename=self.catch.__code__.co_filename,
             )
 
             handler = Handler(

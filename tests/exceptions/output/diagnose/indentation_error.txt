@@ -5,8 +5,8 @@
     [1mexec[0m[1m([0m[1mcode[0m[1m)[0m
     [36m     └ [0m[36m[1m'\nif True:\n    a = 5\n        print("foobar")  #intentional faulty indentation here.\n    b = 7\n'[0m
 
-  File "[32m[0m[32m[1m<string>[0m, line [33m4[0m
-    [1mprint[0m[1m([0m[36m"foobar"[0m[1m)[0m  [30m[1m#intentional faulty indentation here.[0m
+  File "<string>", line 4
+    print("foobar")  #intentional faulty indentation here.
     ^
 
 [31m[1mIndentationError[0m:[1m unexpected indent[0m

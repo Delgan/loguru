@@ -16,3 +16,7 @@ def execute():
 
 def syntaxerror():
     exec("foo =")
+
+
+def assertionerror(x, y):
+    assert x == y

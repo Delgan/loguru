@@ -5,8 +5,8 @@
     [1mexec[0m[1m([0m[1mcode[0m[1m)[0m
     [36m     └ [0m[36m[1m'\nif True:\n    a = 5\n    b = 7 *\n'[0m
 
-  File "[32m[0m[32m[1m<string>[0m, line [33m4[0m
-    [1mb[0m [35m[1m=[0m [34m[1m7[0m [35m[1m*[0m
+  File "<string>", line 4
+    b = 7 *
           ^
 
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
