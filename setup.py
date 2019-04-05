@@ -31,6 +31,7 @@ setup(
     license="MIT license",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
+        "Topic :: System :: Logging",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "License :: OSI Approved :: MIT License",
