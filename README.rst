@@ -375,7 +375,7 @@ Want to intercept standard `logging` messages toward your `Loguru` sinks?
             logger_opt = logger.opt(depth=6, exception=record.exc_info)
             logger_opt.log(record.levelno, record.getMessage())
 
-    logging.getLogger(None).addHandler(InterceptHandler())
+    logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
 
 Personalizable defaults through environment variables
