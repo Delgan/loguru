@@ -6,6 +6,7 @@ Unreleased
 - The ``record["exception"]`` attribute is now unpackable as a ``(type, value, traceback)`` tuple
 - Fix exception stack trace not colorizing source code lines on Windows
 - Fix possible ``AttributeError`` while formatting exceptions within a ``celery`` task (`#52 <https://github.com/Delgan/loguru/issues/52>`_)
+- Fix `logger.catch` decorator not working with coroutine functions (`#75 <https://github.com/Delgan/loguru/issues/75>`_)
 
 
 0.2.5 (2019-01-20)

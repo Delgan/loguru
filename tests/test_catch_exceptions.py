@@ -1,3 +1,4 @@
+import asyncio
 import os.path
 import platform
 import re
@@ -24,11 +25,17 @@ def normalize(exception):
     exception = re.sub(r"\b0x[0-9a-fA-F]+\b", "0xDEADBEEF", exception)
 
     if platform.python_implementation() == "PyPy":
-        exception = exception.replace(
-            "<function str.isdigit at 0xDEADBEEF>", "<method 'isdigit' of 'str' objects>"
-        ).replace(
-            "<function NoneType.__bool__ at 0xDEADBEEF>",
-            "<slot wrapper '__bool__' of 'NoneType' objects>",
+        exception = (
+            exception.replace(
+                "<function str.isdigit at 0xDEADBEEF>", "<method 'isdigit' of 'str' objects>"
+            )
+            .replace(
+                "<function coroutine.send at 0xDEADBEEF>", "<method 'send' of 'coroutine' objects>"
+            )
+            .replace(
+                "<function NoneType.__bool__ at 0xDEADBEEF>",
+                "<slot wrapper '__bool__' of 'NoneType' objects>",
+            )
         )
 
     return exception
@@ -137,6 +144,7 @@ def test_diagnose(filename):
         "callback",
         "catch_decorator",
         "catch_decorator_from_lib",
+        "decorated_callback",
         "direct",
         "indirect",
         "string_lib",
@@ -157,6 +165,7 @@ def test_exception_ownership(filename):
         "catch_as_decorator_without_parentheses",
         "catch_as_function",
         "catch_message",
+        "exception_formatting_coroutine",
         "exception_formatting_function",
         "handler_formatting_with_context_manager",
         "handler_formatting_with_decorator",
@@ -360,4 +369,17 @@ def test_decorate_function(writer):
         return 100 / x
 
     assert a(50) == 2
+    assert writer.read() == ""
+
+
+def test_decorate_coroutine(writer):
+    @logger.catch
+    async def foo(a, b):
+        return a + b
+
+    loop = asyncio.get_event_loop()
+    result = loop.run_until_complete(foo(100, 5))
+    loop.close()
+
+    assert result == 105
     assert writer.read() == ""

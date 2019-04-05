@@ -1,4 +1,5 @@
 import functools
+import inspect
 import itertools
 import logging
 import re
@@ -943,10 +944,16 @@ class Logger:
             def __call__(self_, function):
                 catcher = Catcher(True)
 
-                @functools.wraps(function)
-                def catch_wrapper(*args, **kwargs):
-                    with catcher:
-                        return function(*args, **kwargs)
+                if inspect.iscoroutinefunction(function):
+                    @functools.wraps(function)
+                    async def catch_wrapper(*args, **kwargs):
+                        with catcher:
+                            return await function(*args, **kwargs)
+                else:
+                    @functools.wraps(function)
+                    def catch_wrapper(*args, **kwargs):
+                        with catcher:
+                            return function(*args, **kwargs)
 
                 return catch_wrapper
 

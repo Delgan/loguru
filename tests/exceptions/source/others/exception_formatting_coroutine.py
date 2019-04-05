@@ -10,8 +10,13 @@ logger.add(sys.stderr, format="", diagnose=True, backtrace=True, colorize=False)
 
 
 @logger.catch
-def a(a, b):
+async def foo(a, b):
     a / b
 
 
-a(1, 0)
+f = foo(1, 0)
+
+try:
+    f.send(None)
+except StopIteration:
+    pass

@@ -1,0 +1,35 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/exception_formatting_coroutine.py", line 14, in foo
+    a / b
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/exception_formatting_coroutine.py", line 14, in foo
+    a / b
+    │   └ 0
+    └ 1
+
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+> File "tests/exceptions/source/others/exception_formatting_coroutine.py", line 20, in <module>
+    f.send(None)
+  File "tests/exceptions/source/others/exception_formatting_coroutine.py", line 14, in foo
+    a / b
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/source/others/exception_formatting_coroutine.py", line 20, in <module>
+    f.send(None)
+    │ └ <method 'send' of 'coroutine' objects>
+    └ <coroutine object foo at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/exception_formatting_coroutine.py", line 14, in foo
+    a / b
+    │   └ 0
+    └ 1
+
+ZeroDivisionError: division by zero
