@@ -1,0 +1,5 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/catch_as_context_manager.py", line 10, in <module>
+    1 / 0
+ZeroDivisionError: division by zero

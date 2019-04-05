@@ -1,0 +1,5 @@
+DEBUG | 10
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/level_name.py", line 13, in a
+    1 / 0
+ZeroDivisionError: division by zero

@@ -1,0 +1,5 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/catch_as_decorator_with_parentheses.py", line 11, in c
+    a / b
+ZeroDivisionError: division by zero

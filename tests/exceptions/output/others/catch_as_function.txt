@@ -1,0 +1,5 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/catch_as_function.py", line 10, in a
+    1 / 0
+ZeroDivisionError: division by zero

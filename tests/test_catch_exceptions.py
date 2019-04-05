@@ -152,6 +152,18 @@ def test_exception_ownership(filename):
     "filename",
     [
         "assertionerror_without_traceback",
+        "catch_as_context_manager",
+        "catch_as_decorator_with_parentheses",
+        "catch_as_decorator_without_parentheses",
+        "catch_as_function",
+        "catch_message",
+        "exception_formatting_function",
+        "handler_formatting_with_context_manager",
+        "handler_formatting_with_decorator",
+        "level_name",
+        "level_number",
+        "message_formatting_with_context_manager",
+        "message_formatting_with_decorator",
         "syntaxerror_without_traceback",
         "zerodivisionerror_without_traceback",
     ],
@@ -299,3 +311,53 @@ def test_exception_is_unpackable():
     assert type_ == ZeroDivisionError
     assert isinstance(value, ZeroDivisionError)
     assert isinstance(traceback, types.TracebackType)
+
+
+@pytest.mark.parametrize("exception", [ZeroDivisionError, (ValueError, ZeroDivisionError)])
+def test_exception_not_raising(writer, exception):
+    logger.add(writer)
+
+    @logger.catch(exception)
+    def a():
+        1 / 0
+
+    a()
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
+@pytest.mark.parametrize("exception", [ValueError, ((SyntaxError, TypeError))])
+def test_exception_raising(writer, exception):
+    logger.add(writer)
+
+    @logger.catch(exception=exception)
+    def a():
+        1 / 0
+
+    with pytest.raises(ZeroDivisionError):
+        a()
+
+    assert writer.read() == ""
+
+
+def test_reraise(writer):
+    logger.add(writer)
+
+    @logger.catch(reraise=True)
+    def a():
+        1 / 0
+
+    with pytest.raises(ZeroDivisionError):
+        a()
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
+def test_decorate_function(writer):
+    logger.add(writer, format="{message}", diagnose=False, backtrace=False, colorize=False)
+
+    @logger.catch
+    def a(x):
+        return 100 / x
+
+    assert a(50) == 2
+    assert writer.read() == ""

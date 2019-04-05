@@ -1,0 +1,5 @@
+__main__ handler_formatting_with_context_manager.py a 17
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/handler_formatting_with_context_manager.py", line 17, in a
+    1 / 0
+ZeroDivisionError: division by zero

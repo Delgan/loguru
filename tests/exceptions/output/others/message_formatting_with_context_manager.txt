@@ -1,0 +1,5 @@
+__main__ message_formatting_with_context_manager.py a 13
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/message_formatting_with_context_manager.py", line 13, in a
+    1 / 0
+ZeroDivisionError: division by zero
