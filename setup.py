@@ -46,7 +46,6 @@ setup(
     ],
     install_requires=[
         "ansimarkup>=1.4.0",
-        "better_exceptions_fork>=0.2.1.post6",
         "colorama>=0.3.4",
     ],
     extras_require={
