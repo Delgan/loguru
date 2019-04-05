@@ -1,13 +1,13 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mchained_both.py[0m", line [33m14[0m, in [35mcause[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mchained_both.py[0m", line [33m14[0m, in [35mcause[0m
     [1mdiv[0m[1m([0m[1mx[0m[1m,[0m [1my[0m[1m)[0m
     [36m│   │  └ [0m[36m[1m0[0m
     [36m│   └ [0m[36m[1m1[0m
     [36m└ [0m[36m[1m<function div at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mchained_both.py[0m", line [33m9[0m, in [35mdiv[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mchained_both.py[0m", line [33m9[0m, in [35mdiv[0m
     [1mx[0m [35m[1m/[0m [1my[0m
     [36m│   └ [0m[36m[1m0[0m
     [36m└ [0m[36m[1m1[0m
@@ -20,13 +20,13 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mchained_both.py[0m", line [33m21[0m, in [35mcontext[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mchained_both.py[0m", line [33m21[0m, in [35mcontext[0m
     [1mcause[0m[1m([0m[1mx[0m[1m,[0m [1my[0m[1m)[0m
     [36m│     │  └ [0m[36m[1m0[0m
     [36m│     └ [0m[36m[1m1[0m
     [36m└ [0m[36m[1m<function cause at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mchained_both.py[0m", line [33m16[0m, in [35mcause[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mchained_both.py[0m", line [33m16[0m, in [35mcause[0m
     [35m[1mraise[0m [1mValueError[0m[1m([0m[36m"Division error"[0m[1m)[0m
 
 [31m[1mValueError[0m:[1m Division error[0m
@@ -37,11 +37,11 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mchained_both.py[0m", line [33m27[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mchained_both.py[0m", line [33m27[0m, in [35m<module>[0m
     [1mcontext[0m[1m([0m[34m[1m1[0m[1m,[0m [34m[1m0[0m[1m)[0m
     [36m└ [0m[36m[1m<function context at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mchained_both.py[0m", line [33m23[0m, in [35mcontext[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mchained_both.py[0m", line [33m23[0m, in [35mcontext[0m
     [35m[1mraise[0m [1mValueError[0m[1m([0m[36m"Cause error"[0m[1m)[0m [35m[1mfrom[0m [1me[0m
 
 [31m[1mValueError[0m:[1m Cause error[0m

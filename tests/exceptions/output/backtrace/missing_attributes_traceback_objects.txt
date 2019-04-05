@@ -1,9 +1,9 @@
 
 Traceback (most recent call last):
-> File "tests/exceptions/backtrace/missing_attributes_traceback_objects.py", line 37, in <module>
+> File "tests/exceptions/source/backtrace/missing_attributes_traceback_objects.py", line 37, in <module>
     foo()
-  File "tests/exceptions/backtrace/missing_attributes_traceback_objects.py", line 17, in foo
+  File "tests/exceptions/source/backtrace/missing_attributes_traceback_objects.py", line 17, in foo
     div(a, b)
-  File "tests/exceptions/backtrace/missing_attributes_traceback_objects.py", line 13, in div
+  File "tests/exceptions/source/backtrace/missing_attributes_traceback_objects.py", line 13, in div
     x / y
 ZeroDivisionError: division by zero

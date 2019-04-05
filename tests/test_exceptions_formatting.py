@@ -45,7 +45,7 @@ def generate(output, outpath):
 def compare_exception(dirname, filename):
     cwd = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     python = sys.executable or "python"
-    filepath = os.path.join("tests", "exceptions", dirname, filename + ".py")
+    filepath = os.path.join("tests", "exceptions", "source", dirname, filename + ".py")
     outpath = os.path.join(cwd, "tests", "exceptions", "output", dirname, filename + ".txt")
 
     with subprocess.Popen(

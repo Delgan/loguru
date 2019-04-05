@@ -1,48 +1,48 @@
 
 Traceback (most recent call last):
-  File "tests/exceptions/backtrace/chained_expression_direct.py", line 11, in a_decorated
+  File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 11, in a_decorated
     1 / 0
 ZeroDivisionError: division by zero
 
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-  File "tests/exceptions/backtrace/chained_expression_direct.py", line 39, in <module>
+  File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 39, in <module>
     b_decorator()
-> File "tests/exceptions/backtrace/chained_expression_direct.py", line 24, in b_decorator
+> File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 24, in b_decorator
     a_decorated()
-  File "tests/exceptions/backtrace/chained_expression_direct.py", line 13, in a_decorated
+  File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 13, in a_decorated
     raise ValueError("NOK")
 ValueError: NOK
 
 Traceback (most recent call last):
-  File "tests/exceptions/backtrace/chained_expression_direct.py", line 18, in a_not_decorated
+  File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 18, in a_not_decorated
     1 / 0
 ZeroDivisionError: division by zero
 
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-  File "tests/exceptions/backtrace/chained_expression_direct.py", line 40, in <module>
+  File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 40, in <module>
     b_context_manager()
-> File "tests/exceptions/backtrace/chained_expression_direct.py", line 29, in b_context_manager
+> File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 29, in b_context_manager
     a_not_decorated()
-  File "tests/exceptions/backtrace/chained_expression_direct.py", line 20, in a_not_decorated
+  File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 20, in a_not_decorated
     raise ValueError("NOK")
 ValueError: NOK
 
 Traceback (most recent call last):
-  File "tests/exceptions/backtrace/chained_expression_direct.py", line 18, in a_not_decorated
+  File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 18, in a_not_decorated
     1 / 0
 ZeroDivisionError: division by zero
 
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-  File "tests/exceptions/backtrace/chained_expression_direct.py", line 41, in <module>
+  File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 41, in <module>
     b_explicit()
-> File "tests/exceptions/backtrace/chained_expression_direct.py", line 34, in b_explicit
+> File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 34, in b_explicit
     a_not_decorated()
-  File "tests/exceptions/backtrace/chained_expression_direct.py", line 20, in a_not_decorated
+  File "tests/exceptions/source/backtrace/chained_expression_direct.py", line 20, in a_not_decorated
     raise ValueError("NOK")
 ValueError: NOK

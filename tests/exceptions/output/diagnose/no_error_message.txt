@@ -1,15 +1,15 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mno_error_message.py[0m", line [33m17[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mno_error_message.py[0m", line [33m17[0m, in [35m<module>[0m
     [1mbar[0m[1m([0m[1m)[0m
     [36m└ [0m[36m[1m<function bar at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mno_error_message.py[0m", line [33m13[0m, in [35mbar[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mno_error_message.py[0m", line [33m13[0m, in [35mbar[0m
     [1mfoo[0m[1m([0m[1m)[0m
     [36m└ [0m[36m[1m<function foo at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mno_error_message.py[0m", line [33m9[0m, in [35mfoo[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mno_error_message.py[0m", line [33m9[0m, in [35mfoo[0m
     [35m[1mraise[0m [1mValueError[0m[1m([0m[36m""[0m[1m)[0m
 
 [31m[1mValueError[0m

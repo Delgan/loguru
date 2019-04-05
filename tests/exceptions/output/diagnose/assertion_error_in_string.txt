@@ -1,11 +1,11 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1massertion_error_in_string.py[0m", line [33m13[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1massertion_error_in_string.py[0m", line [33m13[0m, in [35m<module>[0m
     [1mfoo[0m[1m([0m[34m[1m9[0m[1m,[0m [34m[1m55[0m[1m)[0m
     [36m└ [0m[36m[1m<function foo at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1massertion_error_in_string.py[0m", line [33m9[0m, in [35mfoo[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1massertion_error_in_string.py[0m", line [33m9[0m, in [35mfoo[0m
     [1mexec[0m[1m([0m[36m"assert abc > 10 and xyz == 60"[0m[1m)[0m
 
   File "<string>", line 1, in <module>

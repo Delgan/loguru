@@ -1,11 +1,11 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mmultilines_repr.py[0m", line [33m18[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mmultilines_repr.py[0m", line [33m18[0m, in [35m<module>[0m
     [1mmultiline[0m[1m([0m[1m)[0m
     [36m└ [0m[36m[1m<function multiline at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mmultilines_repr.py[0m", line [33m15[0m, in [35mmultiline[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mmultilines_repr.py[0m", line [33m15[0m, in [35mmultiline[0m
     [1ma[0m [35m[1m+[0m [1mb[0m
     [36m│   └ [0m[36m[1m[[1, 2, 3][0m
     [36m│     [0m[36m[1m [4, 5, 6][0m

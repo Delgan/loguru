@@ -1,11 +1,11 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mtruncating.py[0m", line [33m14[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mtruncating.py[0m", line [33m14[0m, in [35m<module>[0m
     [1mdiv[0m[1m([0m[1m)[0m
     [36m└ [0m[36m[1m<function div at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/diagnose/[0m[32m[1mtruncating.py[0m", line [33m10[0m, in [35mdiv[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mtruncating.py[0m", line [33m10[0m, in [35mdiv[0m
     [35m[1mreturn[0m [34m[1m1[0m [35m[1m/[0m [1mvar[0m
     [36m           └ [0m[36m[1m'9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999...[0m
 
