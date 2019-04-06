@@ -174,10 +174,10 @@ class ExceptionFormatter:
             return False
         return not any(filepath.startswith(d.lower()) for d in self._lib_dirs)
 
-    def _extract_frames(self, tb, is_first):
+    def _extract_frames(self, tb, is_first, *, limit=None):
         frames, final_source = [], None
 
-        if tb is None:
+        if tb is None or (limit is not None and limit <= 0):
             return frames, final_source
 
         def is_valid(frame):
@@ -212,6 +212,9 @@ class ExceptionFormatter:
             if is_valid(tb.tb_frame):
                 infos.append((get_info(tb.tb_frame, tb.tb_lineno), tb.tb_frame))
             tb = tb.tb_next
+
+        if limit is not None:
+            infos = infos[-limit:]
 
         for (filename, lineno, function, source), frame in infos:
             final_source = source
@@ -380,7 +383,12 @@ class ExceptionFormatter:
                 else:
                     yield "\n" + context + "\n\n"
 
-        frames, final_source = self._extract_frames(exc_traceback, is_first)
+        try:
+            tracebacklimit = sys.tracebacklimit
+        except AttributeError:
+            tracebacklimit = None
+
+        frames, final_source = self._extract_frames(exc_traceback, is_first, limit=tracebacklimit)
         exception_only = traceback.format_exception_only(exc_type, exc_value)
 
         error_message = exception_only[-1][:-1]  # Remove last new line temporarily
@@ -409,7 +417,7 @@ class ExceptionFormatter:
         if self._colorize or self._backtrace or self._diagnose:
             frames_lines = self._format_locations(frames_lines)
 
-        if exc_traceback is not None:
+        if frames:
             introduction = "Traceback (most recent call last):"
             if self._colorize:
                 introduction = self._theme["introduction"].format(introduction)

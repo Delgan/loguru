@@ -1,0 +1,148 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 55, in <module>
+    a()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 13, in a
+    b()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 17, in b
+    c()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 21, in c
+    d()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 25, in d
+    e()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 29, in e
+    f()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 33, in f
+    g()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 37, in g
+    h()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 41, in h
+    i()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 45, in i
+    j(1, 0)
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 49, in j
+    a / b
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 55, in <module>
+    a()
+    └ <function a at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 13, in a
+    b()
+    └ <function b at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 17, in b
+    c()
+    └ <function c at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 21, in c
+    d()
+    └ <function d at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 25, in d
+    e()
+    └ <function e at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 29, in e
+    f()
+    └ <function f at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 33, in f
+    g()
+    └ <function g at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 37, in g
+    h()
+    └ <function h at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 41, in h
+    i()
+    └ <function i at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 45, in i
+    j(1, 0)
+    └ <function j at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 49, in j
+    a / b
+    │   └ 0
+    └ 1
+
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+> File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 55, in <module>
+    a()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 13, in a
+    b()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 17, in b
+    c()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 21, in c
+    d()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 25, in d
+    e()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 29, in e
+    f()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 33, in f
+    g()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 37, in g
+    h()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 41, in h
+    i()
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 45, in i
+    j(1, 0)
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 49, in j
+    a / b
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 55, in <module>
+    a()
+    └ <function a at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 13, in a
+    b()
+    └ <function b at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 17, in b
+    c()
+    └ <function c at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 21, in c
+    d()
+    └ <function d at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 25, in d
+    e()
+    └ <function e at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 29, in e
+    f()
+    └ <function f at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 33, in f
+    g()
+    └ <function g at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 37, in g
+    h()
+    └ <function h at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 41, in h
+    i()
+    └ <function i at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 45, in i
+    j(1, 0)
+    └ <function j at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/sys_tracebacklimit_none.py", line 49, in j
+    a / b
+    │   └ 0
+    └ 1
+
+ZeroDivisionError: division by zero

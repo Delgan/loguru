@@ -175,6 +175,10 @@ def test_exception_ownership(filename):
         "message_formatting_with_context_manager",
         "message_formatting_with_decorator",
         "syntaxerror_without_traceback",
+        "sys_tracebacklimit",
+        "sys_tracebacklimit_negative",
+        "sys_tracebacklimit_none",
+        "sys_tracebacklimit_unset",
         "zerodivisionerror_without_traceback",
     ],
 )
