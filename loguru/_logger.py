@@ -941,20 +941,23 @@ class Logger:
 
                 return not reraise
 
-            def __call__(self_, function):
+            def __call__(_, function):
                 catcher = Catcher(True)
 
                 if inspect.iscoroutinefunction(function):
-                    @functools.wraps(function)
                     async def catch_wrapper(*args, **kwargs):
                         with catcher:
                             return await function(*args, **kwargs)
+                elif inspect.isgeneratorfunction(function):
+                    def catch_wrapper(*args, **kwargs):
+                        with catcher:
+                            return (yield from function(*args, **kwargs))
                 else:
-                    @functools.wraps(function)
                     def catch_wrapper(*args, **kwargs):
                         with catcher:
                             return function(*args, **kwargs)
 
+                functools.update_wrapper(catch_wrapper, function)
                 return catch_wrapper
 
         return Catcher(False)

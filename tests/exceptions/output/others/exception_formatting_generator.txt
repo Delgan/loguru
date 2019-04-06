@@ -1,0 +1,34 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/exception_formatting_generator.py", line 14, in foo
+    yield a / b
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/exception_formatting_generator.py", line 14, in foo
+    yield a / b
+          │   └ 0
+          └ 1
+
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+> File "tests/exceptions/source/others/exception_formatting_generator.py", line 20, in <module>
+    next(f)
+  File "tests/exceptions/source/others/exception_formatting_generator.py", line 14, in foo
+    yield a / b
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/source/others/exception_formatting_generator.py", line 20, in <module>
+    next(f)
+         └ <generator object foo at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/exception_formatting_generator.py", line 14, in foo
+    yield a / b
+          │   └ 0
+          └ 1
+
+ZeroDivisionError: division by zero

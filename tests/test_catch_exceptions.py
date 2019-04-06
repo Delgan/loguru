@@ -167,6 +167,7 @@ def test_exception_ownership(filename):
         "catch_message",
         "exception_formatting_coroutine",
         "exception_formatting_function",
+        "exception_formatting_generator",
         "handler_formatting_with_context_manager",
         "handler_formatting_with_decorator",
         "level_name",
@@ -383,3 +384,18 @@ def test_decorate_coroutine(writer):
 
     assert result == 105
     assert writer.read() == ""
+
+
+def test_decorate_generator(writer):
+    @logger.catch
+    def foo(x, y, z):
+        yield x
+        yield y
+        return z
+
+    f = foo(1, 2, 3)
+    assert next(f) == 1
+    assert next(f) == 2
+
+    with pytest.raises(StopIteration, match=r"3"):
+        next(f)
