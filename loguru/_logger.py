@@ -743,6 +743,23 @@ class Logger:
                 "Invalid level value, it should be a positive integer, not: %d" % levelno
             )
 
+        try:
+            encoding = sink.encoding
+        except AttributeError:
+            encoding = None
+
+        if not encoding:
+            encoding = "ascii"
+
+        if exception_formatter is UNSET:
+            exception_formatter = ExceptionFormatter(
+                colorize=colorize,
+                encoding=encoding,
+                diagnose=diagnose,
+                backtrace=backtrace,
+                hidden_frames_filename=self.catch.__code__.co_filename,
+            )
+
         if isinstance(format, str):
             formatter = format + "\n{exception}"
             is_formatter_dynamic = False
@@ -755,26 +772,9 @@ class Logger:
                 % type(format).__name__
             )
 
-        try:
-            encoding = sink.encoding
-        except AttributeError:
-            encoding = None
-
-        if not encoding:
-            encoding = "ascii"
-
         with self._lock:
             handler_id = next(self._handlers_count)
             colors = [lvl.color for lvl in self._levels.values()] + [""]
-
-            if exception_formatter is UNSET:
-                exception_formatter = ExceptionFormatter(
-                    colorize=colorize,
-                    encoding=encoding,
-                    diagnose=diagnose,
-                    backtrace=backtrace,
-                    hidden_frames_filename=self.catch.__code__.co_filename,
-                )
 
             handler = Handler(
                 writer=writer,
