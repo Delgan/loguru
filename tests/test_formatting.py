@@ -121,3 +121,20 @@ def test_extra_formatting(writer):
 def test_invalid_color_markup(writer):
     with pytest.raises(AnsiMarkupError):
         logger.add(writer, format="<red>Not closed tag", colorize=True)
+
+
+def test_handler_with_no_exception_formatter():
+    class Handler:
+        def write(self, message):
+            assert message == "got_exception"
+            self.passed_write = True
+
+    handler = Handler()
+    logger.add(handler, format="{message}", catch=False, exception_formatter=None)
+    assert [x._exception_formatter for x in logger._handlers.values()] == [None]
+    try:
+        raise ValueError
+    except Exception:
+        logger.exception("got_exception")
+
+    assert handler.passed_write is True
