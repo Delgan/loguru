@@ -32,6 +32,8 @@ Level = namedtuple("Level", ["no", "color", "icon"])
 
 start_time = now()
 
+UNSET = object()
+
 
 class Logger:
     """An object to dispatch logging messages to configured handlers.
@@ -163,6 +165,7 @@ class Logger:
         diagnose=_defaults.LOGURU_DIAGNOSE,
         enqueue=_defaults.LOGURU_ENQUEUE,
         catch=_defaults.LOGURU_CATCH,
+        exception_formatter=UNSET,
         **kwargs
     ):
         r"""Add a handler sending log messages to a sink adequately configured.
@@ -201,6 +204,8 @@ class Logger:
             Whether or not errors occurring while sink handles logs messages should be caught or
             not. If ``True``, an exception message is displayed on |sys.stderr| but the exception is
             not propagated to the caller, preventing your app to crash.
+        exception_formatter : |ExceptionFormatter|, optional
+            By default ``loguru._better_exceptions.ExceptionFormatter`` is used.
         **kwargs
             Additional parameters that will be passed to the sink while creating it or while
             logging messages (the exact behavior depends on the sink type).
@@ -762,13 +767,14 @@ class Logger:
             handler_id = next(self._handlers_count)
             colors = [lvl.color for lvl in self._levels.values()] + [""]
 
-            exception_formatter = ExceptionFormatter(
-                colorize=colorize,
-                encoding=encoding,
-                diagnose=diagnose,
-                backtrace=backtrace,
-                hidden_frames_filename=self.catch.__code__.co_filename,
-            )
+            if exception_formatter is UNSET:
+                exception_formatter = ExceptionFormatter(
+                    colorize=colorize,
+                    encoding=encoding,
+                    diagnose=diagnose,
+                    backtrace=backtrace,
+                    hidden_frames_filename=self.catch.__code__.co_filename,
+                )
 
             handler = Handler(
                 writer=writer,
