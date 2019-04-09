@@ -761,7 +761,9 @@ class Logger:
             )
 
         if isinstance(format, str):
-            formatter = format + "\n{exception}"
+            formatter = format
+            if exception_formatter:
+                formatter += "\n{exception}"
             is_formatter_dynamic = False
         elif callable(format):
             formatter = format
