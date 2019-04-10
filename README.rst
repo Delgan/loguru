@@ -111,6 +111,7 @@ Take the tour
 .. _markup tags: https://loguru.readthedocs.io/en/stable/api/logger.html#color
 .. _fixes it: https://loguru.readthedocs.io/en/stable/api/logger.html#time
 .. _No problem: https://loguru.readthedocs.io/en/stable/api/logger.html#env
+.. _logging levels: https://loguru.readthedocs.io/en/latest/api/logger.html#levels
 
 .. |better_exceptions| replace:: ``better_exceptions``
 .. _better_exceptions: https://github.com/Qix-/better-exceptions
@@ -302,7 +303,7 @@ Sometime you would like to log verbose information without performance penalty i
 Customizable levels
 ^^^^^^^^^^^^^^^^^^^
 
-`Loguru` comes with all standard logging levels to which |trace|_ and |success|_ are added. Do you need more? Then, just create it by using the |level|_ function.
+`Loguru` comes with all standard `logging levels`_ to which |trace|_ and |success|_ are added. Do you need more? Then, just create it by using the |level|_ function.
 
 ::
 

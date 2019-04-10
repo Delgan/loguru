@@ -40,11 +40,16 @@ class Logger:
     a call to one of its methods. There is only one logger, so there is no need to retrieve one
     before usage.
 
-    Handlers to which the logger sends log messages are added using the |add| method. Note that you
-    can use the |Logger| right after import as it comes pre-configured. Messages can be logged with
-    different severity levels and using braces attributes like the |str.format| method do.
+    Once the ``logger`` is imported, it can be used to write messages about events happening in your
+    code. By reading the output logs of your application, you gain a better understanding of the
+    flow of your program and you more easily track and debug unexpected behaviors.
 
-    Once a message is logged, a "record" is associated with it. This record is a dict which contains
+    Handlers to which the logger sends log messages are added using the |add| method. Note that you
+    can use the |Logger| right after import as it comes pre-configured (logs are emitted to
+    |sys.stderr| by default). Messages can be logged with different severity levels and using braces
+    attributes like the |str.format| method do.
+
+    When a message is logged, a "record" is associated with it. This record is a dict which contains
     several information about the logging context: time, function, file, line, thread, level...
     It also contains the ``__name__`` of the module, this is why you don't need named loggers.
 
@@ -60,6 +65,13 @@ class Logger:
     .. |level| replace:: :meth:`~Logger.level()`
     .. |enable| replace:: :meth:`~Logger.enable()`
     .. |disable| replace:: :meth:`~Logger.disable()`
+    .. |trace| replace:: :meth:`~Logger.trace()`
+    .. |debug| replace:: :meth:`~Logger.debug()`
+    .. |info| replace:: :meth:`~Logger.info()`
+    .. |success| replace:: :meth:`~logger.success()`
+    .. |warning| replace:: :meth:`~Logger.warning()`
+    .. |error| replace:: :meth:`~Logger.error()`
+    .. |critical| replace:: :meth:`~Logger.critical()`
 
     .. |str| replace:: :class:`str`
     .. |int| replace:: :class:`int`
@@ -287,6 +299,41 @@ class Logger:
         sink and which one are ignored. A function can be used, accepting the record as an
         argument, and returning ``True`` if the message should be logged, ``False`` otherwise. If
         a string is used, only the records with the same ``name`` and its children will be allowed.
+
+        .. _levels:
+
+        .. rubric:: The severity levels
+
+        Each logged message is associated with a severity level. These levels make it possible to
+        prioritize messages and to choose the verbosity of the logs according to usages. For
+        example, it allows to display some debugging information to a developer, while hiding it to
+        the end user running the application.
+
+        The ``level`` attribute of every added sink controls the minimum threshold from which log
+        messages are allowed to be emitted. While using the ``logger``, you are in charge of
+        configuring the appropriate granularity of your logs. It is possible to add even more custom
+        levels by using the |level| method.
+
+        Here are the standard levels with their default severity value, each one is associated with
+        a logging method of the same name:
+
+        +----------------------+------------------------+------------------------+
+        | Level name           | Severity value         | Logger method          |
+        +======================+========================+========================+
+        | ``TRACE``            | 5                      | |trace|                |
+        +----------------------+------------------------+------------------------+
+        | ``DEBUG``            | 10                     | |debug|                |
+        +----------------------+------------------------+------------------------+
+        | ``INFO``             | 20                     | |info|                 |
+        +----------------------+------------------------+------------------------+
+        | ``SUCCESS``          | 25                     | |success|              |
+        +----------------------+------------------------+------------------------+
+        | ``WARNING``          | 30                     | |warning|              |
+        +----------------------+------------------------+------------------------+
+        | ``ERROR``            | 40                     | |error|                |
+        +----------------------+------------------------+------------------------+
+        | ``CRITICAL``         | 50                     | |critical|             |
+        +----------------------+------------------------+------------------------+
 
         .. _record:
 

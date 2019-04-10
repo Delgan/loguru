@@ -15,6 +15,7 @@ API Reference
 
         * :ref:`sink`
         * :ref:`message`
+        * :ref:`levels`
         * :ref:`record`
         * :ref:`time`
         * :ref:`file`
