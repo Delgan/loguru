@@ -37,6 +37,15 @@ Switching from standard ``logging`` to ``loguru``
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
 
+
+Fundamental differences between standard ``logging`` and ``loguru``
+-------------------------------------------------------------------
+
+Although ``loguru`` is written "from scratch" and does not rely on standard ``logging`` internally, both libraries serve the same purpose: provide functionalities to implement a flexible event logging system. The main difference is that standard ``logging`` requires the user to explicitly instantiate named ``Logger`` and configure them with ``Handler``, ``Formatter`` and ``Filter``, while ``loguru`` tries to narrow down the amount of configuration steps.
+
+Apart from that, usage is globally the same, once the ``logger`` object is created or imported you can start using it to log messages with the appropriate severity (``logger.debug("Dev message")``, ``logger.warning("Danger!")``, etc.), messages which are then sent to the configured handlers.
+
+
 Replacing ``getLogger()`` function
 ----------------------------------
 
@@ -206,7 +215,7 @@ logging output so that it can be tested against. For example::
     def test_some_func_logs_warning(caplog):
         assert some_func(-1, 3) == 2
         assert "Oh no!" in caplog.text
-        
+
 If you've followed all the migration guidelines thus far, you'll notice that
 this test will fail. This is because ``pytest`` links to the standard library's
 ``logging`` module.
@@ -219,17 +228,17 @@ This is done on the fixture itself by mokeypatching ``caplog``. In your
     import pytest
     from _pytest.logging import caplog as _caplog
     from loguru import logger
-    
+
     @pytest.fixture
     def caplog(_caplog):
         class PropogateHandler(logging.Handler):
             def emit(self, record):
                 logging.getLogger(record.name).handle(record)
-        
+
         handler_id = logger.add(PropogateHandler(), format="{message}")
         yield _caplog
         logger.remove(handler_id)
-        
+
 Run your tests and things should all be working as expected. Additional
 information can be found in `GH#59`_.
 
