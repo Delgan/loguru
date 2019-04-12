@@ -65,13 +65,6 @@ class Logger:
     .. |level| replace:: :meth:`~Logger.level()`
     .. |enable| replace:: :meth:`~Logger.enable()`
     .. |disable| replace:: :meth:`~Logger.disable()`
-    .. |trace| replace:: :meth:`~Logger.trace()`
-    .. |debug| replace:: :meth:`~Logger.debug()`
-    .. |info| replace:: :meth:`~Logger.info()`
-    .. |success| replace:: :meth:`~logger.success()`
-    .. |warning| replace:: :meth:`~Logger.warning()`
-    .. |error| replace:: :meth:`~Logger.error()`
-    .. |critical| replace:: :meth:`~Logger.critical()`
 
     .. |str| replace:: :class:`str`
     .. |int| replace:: :class:`int`
@@ -92,6 +85,14 @@ class Logger:
     .. |logging| replace:: :mod:`logging`
     .. |Thread.run| replace:: :meth:`threading.Thread.run()`
     .. |Exception| replace:: :class:`Exception`
+
+    .. |logger.trace| replace:: :meth:`logger.trace()<Logger.trace()>`
+    .. |logger.debug| replace:: :meth:`logger.debug()<Logger.debug()>`
+    .. |logger.info| replace:: :meth:`logger.info()<Logger.info()>`
+    .. |logger.success| replace:: :meth:`logger.success()<Logger.success()>`
+    .. |logger.warning| replace:: :meth:`logger.warning()<Logger.warning()>`
+    .. |logger.error| replace:: :meth:`logger.error()<Logger.error()>`
+    .. |logger.critical| replace:: :meth:`logger.critical()<Logger.critical()>`
 
     .. |file-like object| replace:: ``file-like object``
     .. _file-like object: https://docs.python.org/3/glossary.html#term-file-object
@@ -320,19 +321,19 @@ class Logger:
         +----------------------+------------------------+------------------------+
         | Level name           | Severity value         | Logger method          |
         +======================+========================+========================+
-        | ``TRACE``            | 5                      | |trace|                |
+        | ``TRACE``            | 5                      | |logger.trace|         |
         +----------------------+------------------------+------------------------+
-        | ``DEBUG``            | 10                     | |debug|                |
+        | ``DEBUG``            | 10                     | |logger.debug|         |
         +----------------------+------------------------+------------------------+
-        | ``INFO``             | 20                     | |info|                 |
+        | ``INFO``             | 20                     | |logger.info|          |
         +----------------------+------------------------+------------------------+
-        | ``SUCCESS``          | 25                     | |success|              |
+        | ``SUCCESS``          | 25                     | |logger.success|       |
         +----------------------+------------------------+------------------------+
-        | ``WARNING``          | 30                     | |warning|              |
+        | ``WARNING``          | 30                     | |logger.warning|       |
         +----------------------+------------------------+------------------------+
-        | ``ERROR``            | 40                     | |error|                |
+        | ``ERROR``            | 40                     | |logger.error|         |
         +----------------------+------------------------+------------------------+
-        | ``CRITICAL``         | 50                     | |critical|             |
+        | ``CRITICAL``         | 50                     | |logger.critical|      |
         +----------------------+------------------------+------------------------+
 
         .. _record:
