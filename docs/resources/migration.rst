@@ -45,6 +45,8 @@ Although ``loguru`` is written "from scratch" and does not rely on standard ``lo
 
 Apart from that, usage is globally the same, once the ``logger`` object is created or imported you can start using it to log messages with the appropriate severity (``logger.debug("Dev message")``, ``logger.warning("Danger!")``, etc.), messages which are then sent to the configured handlers.
 
+As for standard logging, default logs are sent to ``sys.stderr`` rather than ``sys.stdout``. The POSIX standard specifies that  ``stderr`` is the correct stream for "diagnostic output". The main compelling case in favor or logging to ``stderr`` is that it avoids mixing the actual output of the application with debug information. Consider for example pipe-redirection like ``python my_app.py | other_app`` which would not be possible if logs were emitted to ``stdout``.
+
 
 Replacing ``getLogger()`` function
 ----------------------------------
