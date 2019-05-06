@@ -9,7 +9,7 @@ import warnings
 from collections import namedtuple
 from inspect import isclass
 from multiprocessing import current_process
-from os.path import basename, normcase, splitext
+from os.path import basename, splitext
 from threading import current_thread
 
 from colorama import AnsiToWin32
@@ -1520,7 +1520,7 @@ class Logger:
                 return
 
             code = frame.f_code
-            file_path = normcase(code.co_filename)
+            file_path = code.co_filename
             file_name = basename(file_path)
             thread = current_thread()
             process = current_process()
