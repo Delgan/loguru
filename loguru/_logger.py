@@ -1423,7 +1423,7 @@ class Logger:
             activation_list = [(n, s) for n, s in self._activation_list if n[: len(name)] != name]
 
         parent_status = next((s for n, s in activation_list if name[: len(n)] == n), None)
-        if parent_status != status and not (name == "" and status == True):
+        if parent_status != status and not (name == "" and status is True):
             activation_list.append((name, status))
 
             def key_sort(x):
