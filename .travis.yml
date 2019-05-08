@@ -1,6 +1,7 @@
 language: python
 
 dist: xenial
+
 sudo: required
 
 python:
@@ -11,9 +12,10 @@ python:
 
 install:
   - pip install -e .[dev]
+  - pip install tox-travis
+  - pip install codecov
 
-script:
-  - pytest --cov loguru/
+script: tox
 
 after_success:
   - codecov --flags "py${TRAVIS_PYTHON_VERSION//./}"

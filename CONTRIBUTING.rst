@@ -55,7 +55,7 @@ If you are willing to enhance `Loguru` by implementing non-trivial changes, plea
 6. Implement the modifications wished. During the process of development, honor `PEP 8`_ as much as possible.
 7. Add unit tests (don't hesitate to be exhaustive!) and ensure none are failing using::
 
-    $ pytest tests
+    $ tox
 
 8. Remember to update documentation if required
 9. Update the ``changelog.rst`` file with what you improved

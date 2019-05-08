@@ -50,10 +50,7 @@ setup(
     ],
     extras_require={
         "dev": [
-            "codecov>=2.0.15",
-            "isort>=4.3.4",
-            "pytest>=3.9.0",
-            "pytest-cov>=2.5.1",
+            "tox>=3.9.0",
             "Sphinx>=1.7.4",
             "sphinx-autobuild>=0.7",
             "sphinx-rtd-theme>=0.3",
