@@ -111,6 +111,7 @@ class Logger:
     .. _@sdispater: https://github.com/sdispater
     .. _@gvalkov: https://github.com/gvalkov
     .. _@Qix-: https://github.com/Qix-
+    .. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
     """
 
     _levels = {
@@ -342,11 +343,12 @@ class Logger:
 
         The record is just a Python dict, accessible from sinks by ``message.record``. It contains
         all contextual information of the logging call (time, function, file, line, level, etc.).
+
         Each of its key can be used in the handler's ``format`` so the corresponding value is
         properly displayed in the logged message (eg. ``"{level}"`` -> ``"INFO"``). Some record's
         values are objects with two or more attributes, those can be formatted with ``"{key.attr}"``
-        (``"{key}"`` would display one by default). Formatting directives like ``"{key: >3}"`` also
-        works and is particularly useful for time (see below).
+        (``"{key}"`` would display one by default). `Formatting directives`_ like ``"{key: >3}"``
+        also works and is particularly useful for time (see below).
 
         +------------+---------------------------------+----------------------------+
         | Key        | Description                     | Attributes                 |

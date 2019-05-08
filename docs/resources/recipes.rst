@@ -17,6 +17,7 @@ Code snippets and recipes for ``loguru``
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
 
+
 Changing the level of an existing handler
 -----------------------------------------
 
@@ -124,6 +125,36 @@ Which would result in::
     2019-04-07 11:08:44.198 | DEBUG    | __main__:bar:30 - Exiting 'foo' (result=64)
 
 
+Dynamically formatting messages to properly align values with padding
+---------------------------------------------------------------------
+
+The default formatter is unable to vertically align log messages because the length of ``{name}``, ``{function}`` and ``{line}`` are not fixed.
+
+One workaround consists of using padding with some maximum value that should suffice most of the time, like this for example::
+
+    fmt = "{time} | {level: <8} | {name: ^15} | {function: ^15} | {line: >3} | {message}"
+    logger.add(sys.stderr, format=fmt)
+
+Others solutions are possible by using a formatting function or class. For example, it is possible to dynamically adjust the padding length based on previously encountered values::
+
+    class Formatter:
+
+        def __init__(self):
+            self.padding = 0
+            self.fmt = "{time} | {level: <8} | {name}:{function}:{line}{extra[padding]} | {message}\n{exception}"
+
+        def format(self, record):
+            length = len("{name}:{function}:{line}".format(**record))
+            self.padding = max(self.padding, length)
+            record["extra"]["padding"] = " " * (self.padding - length)
+            return self.fmt
+
+    formatter = Formatter()
+
+    logger.remove()
+    logger.add(sys.stderr, format=formatter.format)
+
+
 Capturing standard ``stdout``, ``stderr`` and ``warnings``
 ----------------------------------------------------------
 
@@ -163,4 +194,3 @@ You may also capture warnings emitted by your application by replacing |warnings
         showwarning_(message, *args, **kwargs)
 
     warnings.showwarning = showwarning
-
