@@ -138,7 +138,10 @@ class Handler:
                     self._writer(str_record)
 
         except Exception:
-            self._handle_error(record)
+            if self._catch:
+                self._handle_error(record)
+            else:
+                raise
 
     def stop(self):
         with self._lock:
@@ -211,10 +214,24 @@ class Handler:
         am = Handler._make_ansimarkup(color.strip())
         return am.parse(format_)
 
-    def _handle_error(self, record=None):
-        if not self._catch:
-            raise
+    def _queued_writer(self):
+        message = None
+        queue = self._queue
+        try:
+            while True:
+                message = queue.get()
+                if message is None:
+                    break
+                self._writer(message)
+        except Exception:
+            if message and hasattr(message, "record"):
+                message = message.record
+            if self._catch:
+                self._handle_error(message)
+            else:
+                raise
 
+    def _handle_error(self, record=None):
         if not sys.stderr:
             return
 
@@ -234,17 +251,3 @@ class Handler:
             pass
         finally:
             del ex_type, ex, tb
-
-    def _queued_writer(self):
-        message = None
-        queue = self._queue
-        try:
-            while True:
-                message = queue.get()
-                if message is None:
-                    break
-                self._writer(message)
-        except Exception:
-            if message and hasattr(message, "record"):
-                message = message.record
-            self._handle_error(message)

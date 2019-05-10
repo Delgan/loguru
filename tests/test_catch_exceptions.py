@@ -307,24 +307,24 @@ def test_exception_is_none():
 
 
 def test_exception_is_unpackable():
-    err = object()
+    called = False
 
     def writer(msg):
-        nonlocal err
-        err = msg.record["exception"]
+        nonlocal called
+        type_, value, traceback = msg.record["exception"]
+        assert type_ == ZeroDivisionError
+        assert isinstance(value, ZeroDivisionError)
+        assert isinstance(traceback, types.TracebackType)
+        called = True
 
-    logger.add(writer)
+    logger.add(writer, catch=False)
 
     try:
         1 / 0
     except ZeroDivisionError:
         logger.exception("Exception")
 
-    type_, value, traceback = err
-
-    assert type_ == ZeroDivisionError
-    assert isinstance(value, ZeroDivisionError)
-    assert isinstance(traceback, types.TracebackType)
+    assert called
 
 
 @pytest.mark.parametrize("exception", [ZeroDivisionError, (ValueError, ZeroDivisionError)])

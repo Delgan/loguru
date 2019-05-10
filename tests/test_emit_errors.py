@@ -1,11 +1,12 @@
 import sys
+import pytest
 from loguru import logger
 import loguru
 import time
 
 
 def broken_sink(m):
-    raise Exception
+    raise Exception("Error!")
 
 
 def test_no_sys_stderr(capsys, monkeypatch):
@@ -60,20 +61,26 @@ def test_unprintable_record(writer, capsys):
     out, err = capsys.readouterr()
     lines = err.strip().splitlines()
 
+    assert writer.read() == "a 1\nc 2\n"
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert lines[1] == "Record was: /!\\ Unprintable record /!\\"
     assert lines[-2] == "ValueError: Failed"
     assert lines[-1] == "--- End of logging error ---"
-    assert writer.read() == "a 1\nc 2\n"
 
 
-def test_enqueue_broken_sink(monkeypatch):
-    out = []
-    monkeypatch.setattr(
-        loguru._handler.Handler, "_handle_error", lambda *args: out.append("Handled")
-    )
-    logger.add(broken_sink, enqueue=True)
-    logger.debug("a")
+@pytest.mark.parametrize("enqueue", [False, True])
+def test_broken_sink(capsys, enqueue):
+    logger.add(broken_sink, catch=True, enqueue=enqueue)
+    logger.debug("Oops")
     time.sleep(0.1)
-    assert out[0] == "Handled"
+
+    out, err = capsys.readouterr()
+    lines = err.strip().splitlines()
+
+    assert out == ""
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
+    assert lines[1].startswith("Record was: {")
+    assert lines[1].endswith("}")
+    assert lines[-2].startswith("Exception: Error!")
+    assert lines[-1] == "--- End of logging error ---"
