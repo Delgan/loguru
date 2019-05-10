@@ -26,6 +26,7 @@ API Reference
     * :meth:`~loguru._logger.Logger.catch`
     * :meth:`~loguru._logger.Logger.opt`
     * :meth:`~loguru._logger.Logger.bind`
+    * :meth:`~loguru._logger.Logger.patch`
     * :meth:`~loguru._logger.Logger.level`
     * :meth:`~loguru._logger.Logger.disable`
     * :meth:`~loguru._logger.Logger.enable`

@@ -60,6 +60,7 @@ class Logger:
     .. |remove| replace:: :meth:`~Logger.remove()`
     .. |catch| replace:: :meth:`~Logger.catch()`
     .. |bind| replace:: :meth:`~Logger.bind()`
+    .. |patch| replace:: :meth:`~Logger.patch()`
     .. |opt| replace:: :meth:`~Logger.opt()`
     .. |log| replace:: :meth:`~Logger.log()`
     .. |level| replace:: :meth:`~Logger.level()`
@@ -148,6 +149,7 @@ class Logger:
     _handlers = {}
 
     _extra_class = {}
+    _patcher_class = None
 
     _min_level = float("inf")
     _enabled = {}
@@ -155,8 +157,9 @@ class Logger:
 
     _lock = threading.Lock()
 
-    def __init__(self, extra, exception, record, lazy, ansi, raw, depth):
+    def __init__(self, extra, patcher, exception, record, lazy, ansi, raw, depth):
         self._extra = extra
+        self._patcher = patcher
         self._record = record
         self._exception = exception
         self._lazy = lazy
@@ -839,8 +842,8 @@ class Logger:
             handlers = self._handlers.copy()
             handlers[handler_id] = handler
 
-            self.__class__._min_level = min(self.__class__._min_level, levelno)
-            self.__class__._handlers = handlers
+            Logger._min_level = min(Logger._min_level, levelno)
+            Logger._handlers = handlers
 
         return handler_id
 
@@ -881,8 +884,8 @@ class Logger:
                 handler.stop()
 
             levelnos = (h.levelno for h in handlers.values())
-            self.__class__._min_level = min(levelnos, default=float("inf"))
-            self.__class__._handlers = handlers
+            Logger._min_level = min(levelnos, default=float("inf"))
+            Logger._handlers = handlers
 
     def catch(
         self,
@@ -1078,7 +1081,7 @@ class Logger:
         >>> func()
         [18:11:54] DEBUG in 'func' - Get parent context
         """
-        return Logger(self._extra, exception, record, lazy, ansi, raw, depth)
+        return Logger(self._extra, self._patcher, exception, record, lazy, ansi, raw, depth)
 
     def bind(_self, **kwargs):
         """Bind attributes to the ``extra`` dict of each logged message record.
@@ -1116,12 +1119,67 @@ class Logger:
         """
         return Logger(
             {**_self._extra, **kwargs},
+            _self._patcher,
             _self._exception,
             _self._record,
             _self._lazy,
             _self._ansi,
             _self._raw,
             _self._depth,
+        )
+
+    def patch(self, patcher):
+        """Attach a function to modify the record dict created by each logging call.
+
+        The ``patcher`` may be used to update the record on-the-fly before it's propagated to the
+        handlers. This allows the "extra" dict to be populated with dynamic values and also permits
+        advanced modifications of the record emitted while logging a message. The function is called
+        once before sending the log message to the different handlers.
+
+        It is recommended to apply modification on the ``record["extra"]`` dict rather than on the
+        ``record`` dict itself, as some values are used internally by Loguru, and modify them may
+        produce unexpected results.
+
+        Parameters
+        ----------
+        patcher: |function|_
+            The function to which the record dict will be passed a the sole argument. This function
+            is in charge of updating the record in-place, the function does not need to return any
+            value, the modified record object will be re-used.
+
+        Returns
+        -------
+        :class:`~Logger`
+            A logger wrapping the core logger, but which records are passed through the ``patcher``
+            function before being send to the added handlers.
+
+        Examples
+        --------
+        >>> logger.add(sys.stderr, format="{extra[utc]} {message}")
+        >>> logger = logger.patch(lambda record: record["extra"].update(utc=datetime.utcnow())
+        >>> logger.info("That's way, you can log messages with time displayed in UTC")
+
+        >>> def wrapper(func):
+        ...     @functools.wraps(func)
+        ...     def wrapped(*args, **kwargs):
+        ...         logger.patch(lambda r: r.update(function=func.__name__)).info("Wrapped!")
+        ...         return func(*args, **kwargs)
+        ...     return wrapped
+
+        >>> def recv_record_from_network(pipe):
+        ...     record = pickle.loads(pipe.read())
+        ...     level, message = record["level"], record["message"]
+        ...     logger.patch(lambda r: r.update(record)).log(level, message)
+        """
+        return Logger(
+            self._extra,
+            patcher,
+            self._exception,
+            self._record,
+            self._lazy,
+            self._ansi,
+            self._raw,
+            self._depth,
         )
 
     def level(self, name, no=None, color=None, icon=None):
@@ -1254,7 +1312,7 @@ class Logger:
         """
         self._change_activation(name, True)
 
-    def configure(self, *, handlers=None, levels=None, extra=None, activation=None):
+    def configure(self, *, handlers=None, levels=None, extra=None, patch=None, activation=None):
         """Configure the core logger.
 
         It should be noted that ``extra`` values set using this function are available across all
@@ -1274,6 +1332,11 @@ class Logger:
             A dict containing additional parameters bound to the core logger, useful to share
             common properties if you call |bind| in several of your files modules. If not ``None``,
             this will remove previously configured ``extra`` dict.
+        patch : |function|_, optional
+            A function that will be applied to the record dict of each logged messages across all
+            modules using the logger. It should modify the dict in-place without returning anything.
+            The function is executed prior to the one possibly added by the |patch| method. If not
+            ``None``, this will replace previously configured ``patch`` function.
         activation : |list| of |tuple|, optional
             A list of ``(name, state)`` tuples which denotes which loggers should be enabled (if
             `state` is ``True``) or disabled (if `state` is ``False``). The calls to |enable|
@@ -1295,6 +1358,7 @@ class Logger:
         ...     ],
         ...     levels=[dict(name="NEW", no=13, icon="¤", color="")],
         ...     extra={"common_to_all": "default"},
+        ...     patch=lambda record: record["extra"].update(some_value=42),
         ...     activation=[("my_module.secret", False), ("another_library.module", True)],
         ... )
         [1, 2]
@@ -1316,6 +1380,10 @@ class Logger:
         if levels is not None:
             for params in levels:
                 self.level(**params)
+
+        if patch is not None:
+            with self._lock:
+                Logger._patcher_class = patch
 
         if extra is not None:
             with self._lock:
@@ -1582,6 +1650,12 @@ class Logger:
                 record["message"] = _message.format(*args, **kwargs, record=record)
             elif args or kwargs:
                 record["message"] = _message.format(*args, **kwargs)
+
+            if Logger._patcher_class:
+                Logger._patcher_class(record)
+
+            if _self._patcher:
+                _self._patcher(record)
 
             for handler in _self._handlers.values():
                 handler.emit(record, level_color, _self._ansi, _self._raw)

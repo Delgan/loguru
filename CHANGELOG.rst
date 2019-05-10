@@ -1,6 +1,7 @@
 Unreleased
 ==========
 
+- Add a new ``logger.patch()`` method which can be used to modify the record dict on-the-fly before its being sent to the handlers
 - Modify behavior of sink option ``backtrace`` so it only extends the stacktrace upward, the display of variables values is now controlled with the new ``diagnose`` argument (`#49 <https://github.com/Delgan/loguru/issues/49>`_)
 - Add coloration of exception traceback even if ``diagnose`` and ``backtrace`` options are ``False``
 - Add a way to limit the depth of formatted exceptions traceback by setting the conventional ``sys.tracebacklimit`` variable (`#77 <https://github.com/Delgan/loguru/issues/77>`_)
@@ -8,7 +9,7 @@ Unreleased
 - Fix exception stack trace not colorizing source code lines on Windows
 - Fix possible ``AttributeError`` while formatting exceptions within a ``celery`` task (`#52 <https://github.com/Delgan/loguru/issues/52>`_)
 - Fix ``logger.catch`` decorator not working with generator and coroutine functions (`#75 <https://github.com/Delgan/loguru/issues/75>`_)
-- Fix ``record.path`` case being normalized for no necessary reason (`#85 <https://github.com/Delgan/loguru/issues/85>`_)
+- Fix ``record["path"]`` case being normalized for no necessary reason (`#85 <https://github.com/Delgan/loguru/issues/85>`_)
 
 
 0.2.5 (2019-01-20)

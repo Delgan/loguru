@@ -13,6 +13,7 @@ Code snippets and recipes for ``loguru``
 .. |add| replace:: :meth:`~loguru._logger.Logger.add()`
 .. |remove| replace:: :meth:`~loguru._logger.Logger.remove()`
 .. |bind| replace:: :meth:`~loguru._logger.Logger.bind`
+.. |patch| replace:: :meth:`~loguru._logger.Logger.patch`
 .. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
@@ -75,6 +76,76 @@ Finally, more advanced control over handler's level can be achieved by using a c
 
     my_filter.level = "DEBUG"
     logger.debug("OK")
+
+
+Sending and receiving log messages accross network or processes
+---------------------------------------------------------------
+
+It is possible to transmit logs between different processes and even between different computer if needed. Once the connection is established between the two Python programs, this requires serializing the logging record in one side while re-constructing the message on the other hand.
+
+This can be achieved using a custom sink for the client and |patch| for the server.
+
+.. code::
+
+    # client.py
+    import sys
+    import socket
+    import struct
+    import time
+    import pickle
+
+    from loguru import logger
+
+
+    class SocketHandler:
+
+        def __init__(self, host, port):
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.connect((host, port))
+
+        def write(self, message):
+            record = message.record
+            data = pickle.dumps(record)
+            slen = struct.pack(">L", len(data))
+            self.sock.send(slen + data)
+
+    logger.configure(handlers=[{"sink": SocketHandler('localhost', 9999)}])
+
+    while 1:
+        time.sleep(1)
+        logger.info("Sending message from the client")
+
+
+.. code::
+
+    # server.py
+    import socketserver
+    import pickle
+    import struct
+
+    from loguru import logger
+
+
+    class LoggingStreamHandler(socketserver.StreamRequestHandler):
+
+        def handle(self):
+            while True:
+                chunk = self.connection.recv(4)
+                if len(chunk) < 4:
+                    break
+                slen = struct.unpack('>L', chunk)[0]
+                chunk = self.connection.recv(slen)
+                while len(chunk) < slen:
+                    chunk = chunk + self.connection.recv(slen - len(chunk))
+                record = pickle.loads(chunk)
+                level, message = record["level"], record["message"]
+                logger.patch(lambda record: record.update(record)).log(level, message)
+
+    server = socketserver.TCPServer(('localhost', 9999), LoggingStreamHandler)
+    server.serve_forever()
+
+
+Keep in mind though that `pickling is unsafe <https://intoli.com/blog/dangerous-pickles/>`_, use this with care.
 
 
 Logging entry and exit of functions with a decorator
