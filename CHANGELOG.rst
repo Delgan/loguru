@@ -10,6 +10,7 @@ Unreleased
 - Fix possible ``AttributeError`` while formatting exceptions within a ``celery`` task (`#52 <https://github.com/Delgan/loguru/issues/52>`_)
 - Fix ``logger.catch`` decorator not working with generator and coroutine functions (`#75 <https://github.com/Delgan/loguru/issues/75>`_)
 - Fix ``record["path"]`` case being normalized for no necessary reason (`#85 <https://github.com/Delgan/loguru/issues/85>`_)
+- Fix handler addded with ``enqueue=True`` stopping working if exception was raised in sink although ``catch=True``
 
 
 0.2.5 (2019-01-20)
