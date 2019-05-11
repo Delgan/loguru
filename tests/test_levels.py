@@ -1,8 +1,8 @@
 import pytest
-import ansimarkup
 from loguru import logger
+from loguru._ansimarkup import AnsiMarkup
 
-am = ansimarkup.AnsiMarkup(tags={"empty": ansimarkup.parse("")})
+am = AnsiMarkup(tags={"empty": ""})
 
 
 def test_log_int_level(writer):
@@ -108,7 +108,7 @@ def test_edit_level(writer):
     logger.level("info", color="<red>")
     logger.log("info", "c")
 
-    assert writer.read() == ansimarkup.parse(
+    assert writer.read() == AnsiMarkup().parse(
         "<bold>->11, info, [?], a<-</bold>\n"
         "<bold>->11, info, [!], b<-</bold>\n"
         "<red>->11, info, [!], c<-</red>\n"

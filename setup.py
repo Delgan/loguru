@@ -46,7 +46,6 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
     ],
     install_requires=[
-        "ansimarkup>=1.4.0",
         "colorama>=0.3.4",
     ],
     extras_require={
