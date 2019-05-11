@@ -8,7 +8,8 @@ def p(text):
     return AnsiMarkup.parse(text, strict=False)
 
 
-s = AnsiMarkup.strip
+def s(text):
+    return AnsiMarkup.strip(text, strict=False)
 
 
 def test_flat():
@@ -212,13 +213,19 @@ def test_strip():
     assert s("<r><tag>1</tag></r>") == "<tag>1</tag>"
     assert s("<tag><r>1</r></tag>") == "<tag>1</tag>"
     assert s("<tag><r>1</tag></r>") == "<tag>1</tag>"
-    assert s("<r><b>1</r></b>") == "1"
-    assert s("<fg red>1<fg red>") == "1"
 
     tags = {"red", "b,g,r", "fg 1,2,3"}
     assert (
         AnsiMarkup.strip("<red>1</red><b,g,r>2</b,g,r><fg 1,2,3>3</fg 1,2,3>", tags=tags) == "123"
     )
+
+
+def test_invalid_strip():
+    with pytest.raises(ValueError):
+        AnsiMarkup.strip("<r><b>1</r></b>", strict=True)
+
+    with pytest.raises(ValueError):
+        AnsiMarkup.strip("<fg red>1<fg red>", strict=True)
 
 
 def test_usertags():

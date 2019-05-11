@@ -117,36 +117,31 @@ class AnsiMarkup:
         self._user_tags = tags or {}
         self._tags = []
         self._results = []
+        self._strip = strip
 
-        if strip:
-            self._repl = self._clear_tag
-        else:
-            self._repl = self._sub_tag
-
-    def feed(self, text):
-        return self.regex_tag.sub(self._repl, text)
-
-    def raise_on_unfinished(self):
-        if self._tags:
-            faulty_tag = self._tags.pop(0)
-            raise ValueError('Opening tag "<%s>" has no corresponding closing tag' % faulty_tag)
+    def feed(self, text, strict=False):
+        if strict:
+            backup = self._tags
+            self._tags = []
+        text = self.regex_tag.sub(self._sub_tag, text)
+        if strict:
+            if self._tags:
+                faulty_tag = self._tags.pop(0)
+                raise ValueError('Opening tag "<%s>" has no corresponding closing tag' % faulty_tag)
+            self._tags = backup
+        return text
 
     @staticmethod
     def parse(text, *, tags=None, strict=True):
         ansimarkup = AnsiMarkup(tags)
-        text = ansimarkup.feed(text)
-
-        if strict:
-            ansimarkup.raise_on_unfinished()
-
-        return text
+        return ansimarkup.feed(text, strict=strict)
 
     @staticmethod
-    def strip(text, *, tags=None):
+    def strip(text, *, tags=None, strict=True):
         if tags is not None:
             tags = {tag: "" for tag in tags}
         ansimarkup = AnsiMarkup(tags, True)
-        return ansimarkup.feed(text)
+        return ansimarkup.feed(text, strict=strict)
 
     @staticmethod
     def get_ansicode(tag, *, tags={}):
@@ -216,8 +211,11 @@ class AnsiMarkup:
         # Early exit if the closing tag matches the last known opening tag.
         if closing and self._tags and self._tags[-1] == tag:
             self._tags.pop()
-            self._results.pop()
-            return Style.RESET_ALL + "".join(self._results)
+            if self._strip:
+                return ""
+            else:
+                self._results.pop()
+                return Style.RESET_ALL + "".join(self._results)
 
         res = AnsiMarkup.get_ansicode(tag, tags=self._user_tags)
 
@@ -233,23 +231,9 @@ class AnsiMarkup:
                 raise ValueError('Closing tag "%s" has no corresponding opening tag' % markup)
 
         self._tags.append(tag)
-        self._results.append(res)
 
-        return res
-
-    def _clear_tag(self, match):
-        pre_length = len(self._tags)
-        try:
-            self._sub_tag(match)
-
-            # If list did not change, the tag is unknown
-            if len(self._tags) == pre_length:
-                return match.group(0)
-
-            # Otherwise, tag matched so remove it
-            else:
-                return ""
-
-        # Tag matched but is invalid, remove it anyway
-        except ValueError:
+        if self._strip:
             return ""
+        else:
+            self._results.append(res)
+            return res
