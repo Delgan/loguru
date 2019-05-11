@@ -196,22 +196,17 @@ class Handler:
         return json.dumps(serializable, default=str) + "\n"
 
     @staticmethod
-    def _make_ansimarkup(color):
-        color = AnsiMarkup().get_ansicode(color) or ""
-        custom_markup = dict(level=color, lvl=color)
-        return AnsiMarkup(tags=custom_markup, strict=True)
-
-    @staticmethod
     @functools.lru_cache(maxsize=32)
     def _decolorize_format(format_):
-        am = Handler._make_ansimarkup("")
-        return am.strip(format_)
+        return AnsiMarkup.strip(format_, tags={"level", "lvl"})
 
     @staticmethod
     @functools.lru_cache(maxsize=32)
     def _colorize_format(format_, color):
-        am = Handler._make_ansimarkup(color.strip().strip("<>"))
-        return am.parse(format_)
+        color = color.strip().strip("<>")
+        ansi = AnsiMarkup.get_ansicode(color) or ""
+        user_tags = dict(level=ansi, lvl=ansi)
+        return AnsiMarkup.parse(format_, tags=user_tags, strict=True)
 
     def _queued_writer(self):
         message = None

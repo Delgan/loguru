@@ -111,47 +111,70 @@ class AnsiMarkup:
         "LIGHT-WHITE": Back.LIGHTWHITE_EX,
     }
 
-    def __init__(self, tags=None, strict=False):
-        self.user_tags = tags or {}
-        self.strict = strict
-        self.re_tag = re.compile(r"</?([^<>]+)>")
+    regex_tag = re.compile(r"</?([^<>]+)>")
 
-    def parse(self, text):
-        tags, results = [], []
+    def __init__(self, tags=None, strip=False):
+        self._user_tags = tags or {}
+        self._tags = []
+        self._results = []
 
-        text = self.re_tag.sub(lambda m: self._sub_tag(m, tags, results), text)
+        if strip:
+            self._repl = self._clear_tag
+        else:
+            self._repl = self._sub_tag
 
-        if self.strict and tags:
-            raise ValueError('Opening tag "<%s>" has no corresponding closing tag' % tags.pop(0))
+    def feed(self, text):
+        return self.regex_tag.sub(self._repl, text)
+
+    def raise_on_unfinished(self):
+        if self._tags:
+            faulty_tag = self._tags.pop(0)
+            raise ValueError('Opening tag "<%s>" has no corresponding closing tag' % faulty_tag)
+
+    @staticmethod
+    def parse(text, *, tags=None, strict=True):
+        ansimarkup = AnsiMarkup(tags)
+        text = ansimarkup.feed(text)
+
+        if strict:
+            ansimarkup.raise_on_unfinished()
 
         return text
 
-    def strip(self, text):
-        tags, results = [], []
-        return self.re_tag.sub(lambda m: self._clear_tag(m, tags, results), text)
+    @staticmethod
+    def strip(text, *, tags=None):
+        if tags is not None:
+            tags = {tag: "" for tag in tags}
+        ansimarkup = AnsiMarkup(tags, True)
+        return ansimarkup.feed(text)
 
-    def get_ansicode(self, tag):
+    @staticmethod
+    def get_ansicode(tag, *, tags={}):
         # User-defined tags take preference over all other.
-        if tag in self.user_tags:
-            return self.user_tags[tag]
+        style = AnsiMarkup._style
+        foreground = AnsiMarkup._foreground
+        background = AnsiMarkup._background
+
+        if tag in tags:
+            return tags[tag]
 
         # Substitute on a direct match.
-        elif tag in self._style:
-            return self._style[tag]
-        elif tag in self._foreground:
-            return self._foreground[tag]
-        elif tag in self._background:
-            return self._background[tag]
+        elif tag in style:
+            return style[tag]
+        elif tag in foreground:
+            return foreground[tag]
+        elif tag in background:
+            return background[tag]
 
         # An alternative syntax for setting the color (e.g. <fg red>, <bg red>).
         elif tag.startswith("fg ") or tag.startswith("bg "):
             st, color = tag[:2], tag[3:]
             code = "38" if st == "fg" else "48"
 
-            if st == "fg" and color in self._foreground:
-                return self._foreground[color]
-            elif st == "bg" and color.islower() and color.upper() in self._background:
-                return self._background[color.upper()]
+            if st == "fg" and color in foreground:
+                return foreground[color]
+            elif st == "bg" and color.islower() and color.upper() in background:
+                return background[color.upper()]
             elif color.isdigit() and int(color) <= 255:
                 return "\033[%s;5;%sm" % (code, color)
             elif re.match(r"#(?:[a-fA-F0-9]{3}){1,2}$", color):
@@ -171,32 +194,32 @@ class AnsiMarkup:
 
             if el_count == 1:
                 fg, bg = tag.split(",")
-                if fg in self._foreground and bg.islower() and bg.upper() in self._background:
-                    return self._foreground[fg] + self._background[bg.upper()]
+                if fg in foreground and bg.islower() and bg.upper() in background:
+                    return foreground[fg] + background[bg.upper()]
 
             elif el_count == 2:
                 st, fg, bg = tag.split(",")
-                if st in self._style and (fg != "" or bg != ""):
-                    if fg == "" or fg in self._foreground:
-                        if bg == "" or (bg.islower() and bg.upper() in self._background):
-                            st = self._style[st]
-                            fg = self._foreground.get(fg, "")
-                            bg = self._background.get(bg.upper(), "")
+                if st in style and (fg != "" or bg != ""):
+                    if fg == "" or fg in foreground:
+                        if bg == "" or (bg.islower() and bg.upper() in background):
+                            st = style[st]
+                            fg = foreground.get(fg, "")
+                            bg = background.get(bg.upper(), "")
                             return st + fg + bg
 
         return None
 
-    def _sub_tag(self, match, tag_list, res_list):
+    def _sub_tag(self, match):
         markup, tag = match.group(0), match.group(1)
         closing = markup[1] == "/"
 
         # Early exit if the closing tag matches the last known opening tag.
-        if closing and tag_list and tag_list[-1] == tag:
-            tag_list.pop()
-            res_list.pop()
-            return Style.RESET_ALL + "".join(res_list)
+        if closing and self._tags and self._tags[-1] == tag:
+            self._tags.pop()
+            self._results.pop()
+            return Style.RESET_ALL + "".join(self._results)
 
-        res = self.get_ansicode(tag)
+        res = AnsiMarkup.get_ansicode(tag, tags=self._user_tags)
 
         # If nothing matches, return the full tag (i.e. <unknown>text</...>).
         if res is None:
@@ -204,23 +227,23 @@ class AnsiMarkup:
 
         # If closing tag is known, but did not early exit, something is wrong.
         if closing:
-            if tag in tag_list:
+            if tag in self._tags:
                 raise ValueError('Closing tag "%s" violates nesting rules.' % markup)
             else:
                 raise ValueError('Closing tag "%s" has no corresponding opening tag' % markup)
 
-        tag_list.append(tag)
-        res_list.append(res)
+        self._tags.append(tag)
+        self._results.append(res)
 
         return res
 
-    def _clear_tag(self, match, tag_list, res_list):
-        pre_length = len(tag_list)
+    def _clear_tag(self, match):
+        pre_length = len(self._tags)
         try:
-            self._sub_tag(match, tag_list, res_list)
+            self._sub_tag(match)
 
             # If list did not change, the tag is unknown
-            if len(tag_list) == pre_length:
+            if len(self._tags) == pre_length:
                 return match.group(0)
 
             # Otherwise, tag matched so remove it
