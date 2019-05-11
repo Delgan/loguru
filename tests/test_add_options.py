@@ -6,7 +6,6 @@ from loguru._ansimarkup import AnsiMarkup
 import io
 import colorama
 
-parse_ansimarkup = AnsiMarkup().parse
 
 class Stream:
     def __init__(self, tty):
@@ -124,9 +123,9 @@ def test_filter(filter, should_output, writer):
     "message, format, expected, colorize",
     [
         ("a", "<red>{message}</red>", "a\n", False),
-        ("b", "<red>{message}</red>", parse_ansimarkup("<red>b</red>\n"), True),
+        ("b", "<red>{message}</red>", AnsiMarkup.parse("<red>b</red>\n"), True),
         ("c", lambda _: "<red>{message}</red>", "c", False),
-        ("d", lambda _: "<red>{message}</red>", parse_ansimarkup("<red>d</red>"), True),
+        ("d", lambda _: "<red>{message}</red>", AnsiMarkup.parse("<red>d</red>"), True),
         ("<red>nope</red>", "{message}", "<red>nope</red>\n", True),
     ],
 )
@@ -150,7 +149,7 @@ def test_colorize_stream_linux(monkeypatch, colorize, tty):
     assert not mock.called
 
     if colorize or (colorize is None and tty):
-        assert out == parse_ansimarkup("<red>Message</red>\n")
+        assert out == AnsiMarkup.parse("<red>Message</red>\n")
     else:
         assert out == "Message\n"
 
@@ -188,7 +187,7 @@ def test_auto_colorize_bugged_stream(monkeypatch, colorize, tty):
     assert not mock.called
 
     if colorize:
-        assert out == parse_ansimarkup("<green>No error</green>\n")
+        assert out == AnsiMarkup.parse("<green>No error</green>\n")
     else:
         assert out == "No error\n"
 

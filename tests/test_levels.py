@@ -2,7 +2,9 @@ import pytest
 from loguru import logger
 from loguru._ansimarkup import AnsiMarkup
 
-am = AnsiMarkup(tags={"empty": ""})
+
+def parse(text):
+        return AnsiMarkup.parse(text, tags={"empty": ""})
 
 
 def test_log_int_level(writer):
@@ -29,12 +31,12 @@ def test_add_level(writer):
     logger.add(writer, format=fmt, colorize=True)
 
     logger.log(name, "test")
-    expected = am.parse("%s <red>%s</red> -> %d -> test" % (icon, name, level))
+    expected = parse("%s <red>%s</red> -> %d -> test" % (icon, name, level))
     assert writer.read() == expected + "\n"
 
 
 @pytest.mark.parametrize(
-    "colorize, expected", [(False, "foo | 10 | a"), (True, am.parse("<red>foo | 10 | a</red>"))]
+    "colorize, expected", [(False, "foo | 10 | a"), (True, parse("<red>foo | 10 | a</red>"))]
 )
 def test_add_level_after_add(writer, colorize, expected):
     fmt = "<level>{level.name} | {level.no} | {message}</level>"
@@ -63,7 +65,7 @@ def test_add_malicious_level(writer):
     logger.log(15, " A ")
     logger.log(name, " B ")
 
-    res = am.parse("Level 15 & 15 & <empty> A </empty>\n" "Level 15 & 45 & <red> B </red>\n")
+    res = parse("Level 15 & 15 & <empty> A </empty>\n" "Level 15 & 45 & <red> B </red>\n")
     assert writer.read() == res
 
 
@@ -77,7 +79,7 @@ def test_add_existing_level(writer):
     logger.log(10, "c")
     logger.log(45, "d")
 
-    assert writer.read() == am.parse(
+    assert writer.read() == parse(
         "ℹ️ + <red>INFO</red> + 45 = a\n"
         "ℹ️ + <red>INFO</red> + 45 = b\n"
         "  + <empty>Level 10</empty> + 10 = c\n"
@@ -89,7 +91,7 @@ def test_blank_color(writer):
     logger.level("INFO", color=" ")
     logger.add(writer, level="DEBUG", format="<level>{message}</level>", colorize=True)
     logger.info("Test")
-    assert writer.read() == am.parse("<empty>Test</empty>\n")
+    assert writer.read() == parse("<empty>Test</empty>\n")
 
 
 def test_edit_level(writer):
