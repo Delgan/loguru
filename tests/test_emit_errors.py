@@ -70,7 +70,7 @@ def test_unprintable_record(writer, capsys):
 
 
 @pytest.mark.parametrize("enqueue", [False, True])
-def test_broken_sink(capsys, enqueue):
+def test_broken_sink_message(capsys, enqueue):
     logger.add(broken_sink, catch=True, enqueue=enqueue)
     logger.debug("Oops")
     time.sleep(0.1)
@@ -84,3 +84,45 @@ def test_broken_sink(capsys, enqueue):
     assert lines[1].endswith("}")
     assert lines[-2].startswith("Exception: Error!")
     assert lines[-1] == "--- End of logging error ---"
+
+
+@pytest.mark.parametrize("enqueue", [False, True])
+def test_broken_sink_caught_keep_working(enqueue):
+    output = ""
+
+    def half_broken_sink(m):
+        nonlocal output
+        if m.startswith("NOK"):
+            raise ValueError("Broken!")
+        else:
+            output += m
+
+    logger.add(half_broken_sink, format="{message}", enqueue=enqueue, catch=True)
+    logger.info("A")
+    logger.info("NOK")
+    logger.info("B")
+
+    time.sleep(0.1)
+    assert output == "A\nB\n"
+
+
+def test_broken_sink_not_caught():
+    logger.add(broken_sink, format="{message}", enqueue=False, catch=False)
+
+    with pytest.raises(Exception):
+        logger.info("A")
+
+
+def test_broken_sink_not_caught_enqueue():
+    called = 0
+    def broken_sink(m):
+        nonlocal called
+        called += 1
+        raise ValueError("Nop")
+
+    logger.add(broken_sink, format="{message}", enqueue=True, catch=False)
+
+    logger.info("A")
+    logger.info("B")
+    time.sleep(0.1)
+    assert called == 1

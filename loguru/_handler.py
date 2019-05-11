@@ -216,19 +216,19 @@ class Handler:
     def _queued_writer(self):
         message = None
         queue = self._queue
-        try:
-            while True:
+        while True:
+            try:
                 message = queue.get()
                 if message is None:
                     break
                 self._writer(message)
-        except Exception:
-            if message and hasattr(message, "record"):
-                message = message.record
-            if self._catch:
-                self._handle_error(message)
-            else:
-                raise
+            except Exception:
+                if self._catch:
+                    if message and hasattr(message, "record"):
+                        message = message.record
+                    self._handle_error(message)
+                else:
+                    raise
 
     def _handle_error(self, record=None):
         if not sys.stderr:
