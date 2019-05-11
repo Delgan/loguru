@@ -5,7 +5,7 @@ import sys
 import threading
 import traceback
 
-import ansimarkup
+from ._ansimarkup import AnsiMarkup
 
 
 class StrRecord(str):
@@ -113,7 +113,7 @@ class Handler:
             if ansi_message and self._colorize:
                 try:
                     formatted = self._colorize_format(formatted, level_color)
-                except ansimarkup.AnsiMarkupError:
+                except ValueError:
                     formatter_record["message"] = self._decolorize_format(record["message"])
 
                     if self._is_formatter_dynamic:
@@ -197,10 +197,9 @@ class Handler:
 
     @staticmethod
     def _make_ansimarkup(color):
-        color = ansimarkup.parse(color)
+        color = AnsiMarkup().get_ansicode(color) or ""
         custom_markup = dict(level=color, lvl=color)
-        am = ansimarkup.AnsiMarkup(tags=custom_markup, strict=True)
-        return am
+        return AnsiMarkup(tags=custom_markup, strict=True)
 
     @staticmethod
     @functools.lru_cache(maxsize=32)
@@ -211,7 +210,7 @@ class Handler:
     @staticmethod
     @functools.lru_cache(maxsize=32)
     def _colorize_format(format_, color):
-        am = Handler._make_ansimarkup(color.strip())
+        am = Handler._make_ansimarkup(color.strip().strip("<>"))
         return am.parse(format_)
 
     def _queued_writer(self):

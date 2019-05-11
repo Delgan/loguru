@@ -1,7 +1,6 @@
 import re
 import pytest
 from loguru import logger
-from ansimarkup import AnsiMarkupError
 
 
 @pytest.mark.parametrize(
@@ -119,5 +118,5 @@ def test_extra_formatting(writer):
 
 
 def test_invalid_color_markup(writer):
-    with pytest.raises(AnsiMarkupError):
+    with pytest.raises(ValueError):
         logger.add(writer, format="<red>Not closed tag", colorize=True)
