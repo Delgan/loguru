@@ -29,7 +29,7 @@ class Handler:
         enqueue,
         exception_formatter,
         id_,
-        colors=[]
+        ansi_colors=[]
     ):
         self._writer = writer
         self._stopper = stopper
@@ -57,15 +57,15 @@ class Handler:
             self._static_format = self._formatter
             self._decolorized_format = self._decolorize_format(self._static_format)
 
-            for color in colors:
-                self.update_format(color)
+            for ansi_code in ansi_colors:
+                self.update_format(ansi_code)
 
         if self._enqueue:
             self._queue = multiprocessing.SimpleQueue()
             self._thread = threading.Thread(target=self._queued_writer, daemon=True)
             self._thread.start()
 
-    def emit(self, record, level_color, ansi_message, raw):
+    def emit(self, record, level_ansi_code, is_ansi, is_raw):
         try:
             if self._levelno > record["level"].no:
                 return
@@ -77,18 +77,18 @@ class Handler:
             if self._is_formatter_dynamic:
                 format_ = self._formatter(record)
                 if self._colorize:
-                    if ansi_message:
+                    if is_ansi:
                         precomputed_format = format_
                     else:
-                        precomputed_format = self._colorize_format(format_, level_color)
+                        precomputed_format = self._colorize_format(format_, level_ansi_code)
                 else:
                     precomputed_format = self._decolorize_format(format_)
             else:
                 if self._colorize:
-                    if ansi_message:
+                    if is_ansi:
                         precomputed_format = self._static_format
                     else:
-                        precomputed_format = self._precolorized_formats[level_color]
+                        precomputed_format = self._precolorized_formats[level_ansi_code]
                 else:
                     precomputed_format = self._decolorized_format
 
@@ -101,19 +101,19 @@ class Handler:
                 lines = self._exception_formatter.format_exception(type_, value, tb)
                 formatter_record["exception"] = "".join(lines)
 
-            if raw:
-                if not ansi_message:
+            if is_raw:
+                if not is_ansi:
                     formatted = record["message"]
                 elif self._colorize:
-                    formatted = self._colorize_format(record["message"], level_color)
+                    formatted = self._colorize_format(record["message"], level_ansi_code)
                 else:
                     formatted = self._decolorize_format(record["message"])
             else:
-                if not ansi_message:
+                if not is_ansi:
                     formatted = precomputed_format.format_map(formatter_record)
                 elif self._colorize:
                     formatted = self._colorize_with_tags(
-                        precomputed_format, level_color, formatter_record
+                        precomputed_format, level_ansi_code, formatter_record
                     )
                 else:
                     formatter_record["message"] = self._decolorize_format(record["message"])
@@ -199,15 +199,13 @@ class Handler:
 
     @staticmethod
     @functools.lru_cache(maxsize=32)
-    def _colorize_format(format_, color_tag):
-        color_ansi = AnsiMarkup().get_ansicode(color_tag.strip().strip("<>")) or ""
-        markups = {"level": color_ansi, "lvl": color_ansi}
+    def _colorize_format(format_, ansi_code):
+        markups = {"level": ansi_code, "lvl": ansi_code}
         return AnsiMarkup(custom_markups=markups, strip=False).feed(format_, strict=True)
 
     @staticmethod
-    def _colorize_with_tags(format_, color_tag, record):
-        color_ansi = AnsiMarkup().get_ansicode(color_tag.strip().strip("<>")) or ""
-        markups = {"level": color_ansi, "lvl": color_ansi}
+    def _colorize_with_tags(format_, ansi_code, record):
+        markups = {"level": ansi_code, "lvl": ansi_code}
         ansimarkup = AnsiMarkup(custom_markups=markups, strip=False)
 
         class AnsiDict(dict):

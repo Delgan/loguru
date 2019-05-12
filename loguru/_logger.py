@@ -15,6 +15,7 @@ from threading import current_thread
 from colorama import AnsiToWin32
 
 from . import _defaults
+from ._ansimarkup import AnsiMarkup
 from ._better_exceptions import ExceptionFormatter
 from ._datetime import now
 from ._file_sink import FileSink
@@ -26,6 +27,10 @@ try:
     from os import PathLike
 except ImportError:
     from pathlib import PurePath as PathLike
+
+
+def parse_ansi(color):
+    return AnsiMarkup(strip=False).feed(color.strip(), strict=False)
 
 
 Level = namedtuple("Level", ["no", "color", "icon"])
@@ -116,32 +121,47 @@ class Logger:
     """
 
     _levels = {
-        "TRACE": Level(
-            _defaults.LOGURU_TRACE_NO, _defaults.LOGURU_TRACE_COLOR, _defaults.LOGURU_TRACE_ICON
+        "TRACE": (
+            _defaults.LOGURU_TRACE_NO,
+            _defaults.LOGURU_TRACE_COLOR,
+            _defaults.LOGURU_TRACE_ICON,
+            parse_ansi(_defaults.LOGURU_TRACE_COLOR),
         ),
-        "DEBUG": Level(
-            _defaults.LOGURU_DEBUG_NO, _defaults.LOGURU_DEBUG_COLOR, _defaults.LOGURU_DEBUG_ICON
+        "DEBUG": (
+            _defaults.LOGURU_DEBUG_NO,
+            _defaults.LOGURU_DEBUG_COLOR,
+            _defaults.LOGURU_DEBUG_ICON,
+            parse_ansi(_defaults.LOGURU_DEBUG_COLOR),
         ),
-        "INFO": Level(
-            _defaults.LOGURU_INFO_NO, _defaults.LOGURU_INFO_COLOR, _defaults.LOGURU_INFO_ICON
+        "INFO": (
+            _defaults.LOGURU_INFO_NO,
+            _defaults.LOGURU_INFO_COLOR,
+            _defaults.LOGURU_INFO_ICON,
+            parse_ansi(_defaults.LOGURU_INFO_COLOR),
         ),
-        "SUCCESS": Level(
+        "SUCCESS": (
             _defaults.LOGURU_SUCCESS_NO,
             _defaults.LOGURU_SUCCESS_COLOR,
             _defaults.LOGURU_SUCCESS_ICON,
+            parse_ansi(_defaults.LOGURU_SUCCESS_COLOR),
         ),
-        "WARNING": Level(
+        "WARNING": (
             _defaults.LOGURU_WARNING_NO,
             _defaults.LOGURU_WARNING_COLOR,
             _defaults.LOGURU_WARNING_ICON,
+            parse_ansi(_defaults.LOGURU_WARNING_COLOR),
         ),
-        "ERROR": Level(
-            _defaults.LOGURU_ERROR_NO, _defaults.LOGURU_ERROR_COLOR, _defaults.LOGURU_ERROR_ICON
+        "ERROR": (
+            _defaults.LOGURU_ERROR_NO,
+            _defaults.LOGURU_ERROR_COLOR,
+            _defaults.LOGURU_ERROR_ICON,
+            parse_ansi(_defaults.LOGURU_ERROR_COLOR),
         ),
-        "CRITICAL": Level(
+        "CRITICAL": (
             _defaults.LOGURU_CRITICAL_NO,
             _defaults.LOGURU_CRITICAL_COLOR,
             _defaults.LOGURU_CRITICAL_ICON,
+            parse_ansi(_defaults.LOGURU_CRITICAL_COLOR),
         ),
     }
 
@@ -813,7 +833,7 @@ class Logger:
 
         with self._lock:
             handler_id = next(self._handlers_count)
-            colors = [lvl.color for lvl in self._levels.values()] + [""]
+            ansi_colors = [ansi_code for *_, ansi_code in self._levels.values()] + [""]
 
             exception_formatter = ExceptionFormatter(
                 colorize=colorize,
@@ -836,7 +856,7 @@ class Logger:
                 enqueue=enqueue,
                 id_=handler_id,
                 exception_formatter=exception_formatter,
-                colors=colors,
+                ansi_colors=ansi_colors,
             )
 
             handlers = self._handlers.copy()
@@ -998,14 +1018,19 @@ class Logger:
                 catcher = Catcher(True)
 
                 if inspect.iscoroutinefunction(function):
+
                     async def catch_wrapper(*args, **kwargs):
                         with catcher:
                             return await function(*args, **kwargs)
+
                 elif inspect.isgeneratorfunction(function):
+
                     def catch_wrapper(*args, **kwargs):
                         with catcher:
                             return (yield from function(*args, **kwargs))
+
                 else:
+
                     def catch_wrapper(*args, **kwargs):
                         with catcher:
                             return function(*args, **kwargs)
@@ -1231,9 +1256,11 @@ class Logger:
 
         if no is color is icon is None:
             try:
-                return self._levels[name]
+                level_no, level_color, level_icon, _ = self._levels[name]
             except KeyError:
                 raise ValueError("Level '%s' does not exist" % name)
+            else:
+                return Level(level_no, level_color, level_icon)
 
         if name not in self._levels:
             if no is None:
@@ -1263,11 +1290,12 @@ class Logger:
         if no < 0:
             raise ValueError("Invalid level no, it should be a positive integer, not: %d" % no)
 
-        self._levels[name] = Level(no, color, icon)
+        ansi = parse_ansi(color)
+        self._levels[name] = no, color, icon, ansi
 
         with self._lock:
             for handler in self._handlers.values():
-                handler.update_format(color)
+                handler.update_format(ansi)
 
         return self.level(name)
 
@@ -1579,10 +1607,10 @@ class Logger:
             current_datetime = now()
 
             if level_id is None:
-                level_no, level_color, level_icon = level, "", " "
+                level_no, level_ansi, level_icon = level, "", " "
             else:
                 try:
-                    level_no, level_color, level_icon = _self._levels[level_name]
+                    level_no, _, level_icon, level_ansi = _self._levels[level_name]
                 except KeyError:
                     raise ValueError("Level '%s' does not exist" % level_name)
 
@@ -1658,7 +1686,7 @@ class Logger:
                 _self._patcher(record)
 
             for handler in _self._handlers.values():
-                handler.emit(record, level_color, _self._ansi, _self._raw)
+                handler.emit(record, level_ansi, _self._ansi, _self._raw)
 
         doc = r"Log ``_message.format(*args, **kwargs)`` with severity ``'%s'``." % level_name
         log_function.__doc__ = doc
