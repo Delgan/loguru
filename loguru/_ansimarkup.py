@@ -111,47 +111,35 @@ class AnsiMarkup:
         "LIGHT-WHITE": Back.LIGHTWHITE_EX,
     }
 
-    regex_tag = re.compile(r"</?([^<>]+)>")
+    _regex_tag = re.compile(r"</?([^<>]+)>")
 
-    def __init__(self, tags=None, strip=False):
-        self._user_tags = tags or {}
+    def __init__(self, custom_markups=None, strip=False):
+        self._custom = custom_markups or {}
+        self._strip = strip
         self._tags = []
         self._results = []
-        self._strip = strip
 
-    def feed(self, text, strict=False):
+    def feed(self, text, *, strict=True):
         if strict:
-            backup = self._tags
+            pre_tags = self._tags
             self._tags = []
-        text = self.regex_tag.sub(self._sub_tag, text)
+        text = self._regex_tag.sub(self._sub_tag, text)
         if strict:
             if self._tags:
                 faulty_tag = self._tags.pop(0)
                 raise ValueError('Opening tag "<%s>" has no corresponding closing tag' % faulty_tag)
-            self._tags = backup
+            self._tags = pre_tags
         return text
 
-    @staticmethod
-    def parse(text, *, tags=None, strict=True):
-        ansimarkup = AnsiMarkup(tags)
-        return ansimarkup.feed(text, strict=strict)
+    def get_ansicode(self, tag):
+        custom = self._custom
+        style = self._style
+        foreground = self._foreground
+        background = self._background
 
-    @staticmethod
-    def strip(text, *, tags=None, strict=True):
-        if tags is not None:
-            tags = {tag: "" for tag in tags}
-        ansimarkup = AnsiMarkup(tags, True)
-        return ansimarkup.feed(text, strict=strict)
-
-    @staticmethod
-    def get_ansicode(tag, *, tags={}):
         # User-defined tags take preference over all other.
-        style = AnsiMarkup._style
-        foreground = AnsiMarkup._foreground
-        background = AnsiMarkup._background
-
-        if tag in tags:
-            return tags[tag]
+        if tag in custom:
+            return custom[tag]
 
         # Substitute on a direct match.
         elif tag in style:
@@ -211,13 +199,13 @@ class AnsiMarkup:
         # Early exit if the closing tag matches the last known opening tag.
         if closing and self._tags and self._tags[-1] == tag:
             self._tags.pop()
+            self._results.pop()
             if self._strip:
                 return ""
             else:
-                self._results.pop()
                 return Style.RESET_ALL + "".join(self._results)
 
-        res = AnsiMarkup.get_ansicode(tag, tags=self._user_tags)
+        res = self.get_ansicode(tag)
 
         # If nothing matches, return the full tag (i.e. <unknown>text</...>).
         if res is None:
@@ -231,9 +219,9 @@ class AnsiMarkup:
                 raise ValueError('Closing tag "%s" has no corresponding opening tag' % markup)
 
         self._tags.append(tag)
+        self._results.append(res)
 
         if self._strip:
             return ""
         else:
-            self._results.append(res)
             return res

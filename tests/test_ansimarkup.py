@@ -4,12 +4,12 @@ from colorama import Style as S, Fore as F, Back as B
 from loguru._ansimarkup import AnsiMarkup
 
 
-def p(text):
-    return AnsiMarkup.parse(text, strict=False)
+def p(text, *, strict=False):
+    return AnsiMarkup(strip=False).feed(text, strict=strict)
 
 
-def s(text):
-    return AnsiMarkup.strip(text, strict=False)
+def s(text, *, strict=False):
+    return AnsiMarkup(strip=True).feed(text, strict=strict)
 
 
 def test_flat():
@@ -162,19 +162,19 @@ def test_unbalanced_error():
 
 def test_strict_parsing():
     with pytest.raises(ValueError):
-        AnsiMarkup.parse("<b>", strict=True)
+        p("<b>", strict=True)
 
     with pytest.raises(ValueError):
-        AnsiMarkup.parse("<Y><b></b>", strict=True)
+        p("<Y><b></b>", strict=True)
 
     with pytest.raises(ValueError):
-        AnsiMarkup.parse("<b><b></b>", strict=True)
+        p("<b><b></b>", strict=True)
 
 
 def test_permissive_parsing():
-    assert AnsiMarkup.parse("<b>", strict=False) == S.BRIGHT
-    assert AnsiMarkup.parse("<Y><b></b>", strict=False) == B.YELLOW + p("<b></b>") + B.YELLOW
-    assert AnsiMarkup.parse("<b><b></b>", strict=False) == S.BRIGHT + p("<b></b>") + S.BRIGHT
+    assert p("<b>", strict=False) == S.BRIGHT
+    assert p("<Y><b></b>", strict=False) == B.YELLOW + p("<b></b>") + B.YELLOW
+    assert p("<b><b></b>", strict=False) == S.BRIGHT + p("<b></b>") + S.BRIGHT
 
 
 def test_unknown_tags():
@@ -214,30 +214,27 @@ def test_strip():
     assert s("<tag><r>1</r></tag>") == "<tag>1</tag>"
     assert s("<tag><r>1</tag></r>") == "<tag>1</tag>"
 
-    tags = {"red", "b,g,r", "fg 1,2,3"}
-    assert (
-        AnsiMarkup.strip("<red>1</red><b,g,r>2</b,g,r><fg 1,2,3>3</fg 1,2,3>", tags=tags) == "123"
-    )
+    markups = {"red": "", "b,g,r": "", "fg 1,2,3": ""}
+    am = AnsiMarkup(custom_markups=markups, strip=True)
+    assert am.feed("<red>1</red><b,g,r>2</b,g,r><fg 1,2,3>3</fg 1,2,3>", strict=True) == "123"
 
 
 def test_invalid_strip():
     with pytest.raises(ValueError):
-        AnsiMarkup.strip("<r><b>1</r></b>", strict=True)
+        s("<r><b>1</r></b>", strict=True)
 
     with pytest.raises(ValueError):
-        AnsiMarkup.strip("<fg red>1<fg red>", strict=True)
+        s("<fg red>1<fg red>", strict=True)
 
 
 def test_usertags():
-    user_tags = {"info": F.GREEN + S.BRIGHT, "info1": AnsiMarkup.parse("<g><b>", strict=False)}
+    user_markups = {"info": F.GREEN + S.BRIGHT, "info1": p("<g><b>", strict=False)}
 
-    assert (
-        AnsiMarkup.parse("<info>1</info>", tags=user_tags) == F.GREEN + S.BRIGHT + "1" + S.RESET_ALL
-    )
-    assert AnsiMarkup.parse("<info>1</info>", tags=user_tags) == AnsiMarkup.parse(
-        "<info1>1</info1>", tags=user_tags
-    )
-    assert AnsiMarkup.strip("<info1>1</info1>", tags=user_tags) == "1"
+    am = AnsiMarkup(custom_markups=user_markups, strip=False)
+    assert am.feed("<info>1</info>", strict=True) == F.GREEN + S.BRIGHT + "1" + S.RESET_ALL
+    assert am.feed("<info>1</info>", strict=True) == am.feed("<info1>1</info1>", strict=True)
+    am = AnsiMarkup(custom_markups=user_markups, strip=True)
+    assert am.feed("<info1>1</info1>", strict=True) == "1"
 
 
 def test_tag_chars_conflicting():

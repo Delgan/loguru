@@ -1,10 +1,10 @@
 import functools
 import json
 import multiprocessing
-import string
 import sys
 import threading
 import traceback
+from string import Formatter
 
 from ._ansimarkup import AnsiMarkup
 
@@ -95,33 +95,29 @@ class Handler:
             formatter_record = record.copy()
 
             if not record["exception"]:
-                error = ""
+                formatter_record["exception"] = ""
             else:
                 type_, value, tb = record["exception"]
                 lines = self._exception_formatter.format_exception(type_, value, tb)
-                error = "".join(lines)
-
-            formatter_record["exception"] = error
+                formatter_record["exception"] = "".join(lines)
 
             if raw:
-                message = record["message"]
                 if not ansi_message:
-                    formatted = message
+                    formatted = record["message"]
                 elif self._colorize:
-                    formatted = self._colorize_format(message, level_color)
+                    formatted = self._colorize_format(record["message"], level_color)
                 else:
-                    formatted = self._decolorize_format(message)
+                    formatted = self._decolorize_format(record["message"])
             else:
                 if not ansi_message:
                     formatted = precomputed_format.format_map(formatter_record)
-                else:
-                    formatted = self._format_with_ansi(
-                        precomputed_format,
-                        level_color,
-                        not self._colorize,
-                        record["message"],
-                        formatter_record,
+                elif self._colorize:
+                    formatted = self._colorize_with_tags(
+                        precomputed_format, level_color, formatter_record
                     )
+                else:
+                    formatter_record["message"] = self._decolorize_format(record["message"])
+                    formatted = precomputed_format.format_map(formatter_record)
 
             if self._serialize:
                 formatted = self._serialize_record(formatted, record)
@@ -198,41 +194,37 @@ class Handler:
     @staticmethod
     @functools.lru_cache(maxsize=32)
     def _decolorize_format(format_):
-        return AnsiMarkup.strip(format_, tags={"level", "lvl"})
+        markups = {"level": "", "lvl": ""}
+        return AnsiMarkup(custom_markups=markups, strip=True).feed(format_, strict=True)
 
     @staticmethod
     @functools.lru_cache(maxsize=32)
-    def _colorize_format(format_, color):
-        tag = color.strip().strip("<>")
-        ansi = AnsiMarkup.get_ansicode(tag) or ""
-        user_tags = dict(level=ansi, lvl=ansi)
-        return AnsiMarkup.parse(format_, tags=user_tags, strict=True)
+    def _colorize_format(format_, color_tag):
+        color_ansi = AnsiMarkup().get_ansicode(color_tag.strip().strip("<>")) or ""
+        markups = {"level": color_ansi, "lvl": color_ansi}
+        return AnsiMarkup(custom_markups=markups, strip=False).feed(format_, strict=True)
 
     @staticmethod
-    def _format_with_ansi(format_, color, strip, message, record):
-        tag = color.strip().strip("<>")
-        ansi = AnsiMarkup.get_ansicode(tag) or ""
-        user_tags = dict(level=ansi, lvl=ansi)
-        ansimarkup = AnsiMarkup(tags=user_tags, strip=strip)
+    def _colorize_with_tags(format_, color_tag, record):
+        color_ansi = AnsiMarkup().get_ansicode(color_tag.strip().strip("<>")) or ""
+        markups = {"level": color_ansi, "lvl": color_ansi}
+        ansimarkup = AnsiMarkup(custom_markups=markups, strip=False)
 
-        class MagicDict(dict):
+        class AnsiDict(dict):
             def __getitem__(self, key):
                 if key == "message":
-                    return ansimarkup.feed(message, strict=True)
+                    return ansimarkup.feed(record["message"], strict=True)
                 return record[key]
 
-        class F(string.Formatter):
+        class AnsiFormatter(Formatter):
             def parse(self, format_string):
-                for literal_text, field_name, format_spec, conversion in super().parse(
-                    format_string
-                ):
-                    if not strip:
-                        literal_text = ansimarkup.feed(literal_text)
-                    yield (literal_text, field_name, format_spec, conversion)
+                for text, name, spec, conv in Formatter.parse(self, format_string):
+                    text = ansimarkup.feed(text, strict=False)
+                    yield (text, name, spec, conv)
 
-        formatter = F()
-        m = MagicDict()
-        return formatter.vformat(format_, (), m)
+        formatter = AnsiFormatter()
+        dct = AnsiDict()
+        return formatter.vformat(format_, (), dct)
 
     def _queued_writer(self):
         message = None

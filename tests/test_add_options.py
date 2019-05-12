@@ -7,6 +7,10 @@ import io
 import colorama
 
 
+def parse(text):
+    return AnsiMarkup(strip=False).feed(text, strict=True)
+
+
 class Stream:
     def __init__(self, tty):
         self.out = ""
@@ -123,9 +127,9 @@ def test_filter(filter, should_output, writer):
     "message, format, expected, colorize",
     [
         ("a", "<red>{message}</red>", "a\n", False),
-        ("b", "<red>{message}</red>", AnsiMarkup.parse("<red>b</red>\n"), True),
+        ("b", "<red>{message}</red>", parse("<red>b</red>\n"), True),
         ("c", lambda _: "<red>{message}</red>", "c", False),
-        ("d", lambda _: "<red>{message}</red>", AnsiMarkup.parse("<red>d</red>"), True),
+        ("d", lambda _: "<red>{message}</red>", parse("<red>d</red>"), True),
         ("<red>nope</red>", "{message}", "<red>nope</red>\n", True),
     ],
 )
@@ -149,7 +153,7 @@ def test_colorize_stream_linux(monkeypatch, colorize, tty):
     assert not mock.called
 
     if colorize or (colorize is None and tty):
-        assert out == AnsiMarkup.parse("<red>Message</red>\n")
+        assert out == parse("<red>Message</red>\n")
     else:
         assert out == "Message\n"
 
@@ -187,7 +191,7 @@ def test_auto_colorize_bugged_stream(monkeypatch, colorize, tty):
     assert not mock.called
 
     if colorize:
-        assert out == AnsiMarkup.parse("<green>No error</green>\n")
+        assert out == parse("<green>No error</green>\n")
     else:
         assert out == "No error\n"
 
@@ -212,6 +216,7 @@ def test_backtrace(writer):
 
     assert len(result_with) > len(result_without)
 
+
 def test_diagnose(writer):
     logger.add(writer, format="{message}", diagnose=True)
     try:
@@ -231,6 +236,7 @@ def test_diagnose(writer):
     result_without = writer.read().strip()
 
     assert len(result_with) > len(result_without)
+
 
 @pytest.mark.parametrize("with_exception", [False, True])
 def test_serialize(with_exception):
