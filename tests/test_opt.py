@@ -6,9 +6,9 @@ from loguru._ansimarkup import AnsiMarkup
 
 def parse(text, colorize=True):
     if colorize:
-        return AnsiMarkup.parse(text)
+        return AnsiMarkup(strip=False).feed(text, strict=True)
     else:
-        return AnsiMarkup.strip(text)
+        return AnsiMarkup(strip=True).feed(text, strict=True)
 
 
 def test_record(writer):
@@ -156,7 +156,7 @@ def test_ansi(writer):
 def test_ansi_not_colorize(writer):
     logger.add(writer, format="<red>a</red> {message}", colorize=False)
     logger.opt(ansi=True).debug("<blue>b</blue>")
-    assert writer.read() == AnsiMarkup().strip("<red>a</red> <blue>b</blue>\n")
+    assert writer.read() == parse("<red>a</red> <blue>b</blue>\n", colorize=False)
 
 
 def test_ansi_dont_color_unrelated(writer):
@@ -168,7 +168,7 @@ def test_ansi_dont_color_unrelated(writer):
 def test_ansi_dont_strip_unrelated(writer):
     logger.add(writer, format="{message} {extra[trap]}", colorize=False)
     logger.bind(trap="<red>B</red>").opt(ansi=True).debug("<red>A</red>")
-    assert writer.read() == AnsiMarkup().strip("<red>A</red>") + " <red>B</red>\n"
+    assert writer.read() == parse("<red>A</red>", colorize=False) + " <red>B</red>\n"
 
 
 def test_ansi_dont_raise_unrelated_colorize(writer):

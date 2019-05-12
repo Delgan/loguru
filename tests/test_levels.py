@@ -4,7 +4,7 @@ from loguru._ansimarkup import AnsiMarkup
 
 
 def parse(text):
-        return AnsiMarkup.parse(text, tags={"empty": ""})
+    return AnsiMarkup(custom_markups={"empty": ""}, strip=False).feed(text, strict=True)
 
 
 def test_log_int_level(writer):
@@ -110,7 +110,7 @@ def test_edit_level(writer):
     logger.level("info", color="<red>")
     logger.log("info", "c")
 
-    assert writer.read() == AnsiMarkup().parse(
+    assert writer.read() == parse(
         "<bold>->11, info, [?], a<-</bold>\n"
         "<bold>->11, info, [!], b<-</bold>\n"
         "<red>->11, info, [!], c<-</red>\n"
