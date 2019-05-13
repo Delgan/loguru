@@ -93,12 +93,12 @@ class Handler:
 
             formatter_record = record.copy()
 
-            if not record["exception"]:
-                error = ""
-            else:
+            if record["exception"] and self._exception_formatter:
                 type_, value, tb = record["exception"]
                 lines = self._exception_formatter.format_exception(type_, value, tb)
                 error = "".join(lines)
+            else:
+                error = ""
 
             formatter_record["exception"] = error
 
