@@ -1,10 +1,10 @@
 import functools
 import json
 import multiprocessing
+import string
 import sys
 import threading
 import traceback
-from string import Formatter
 
 from ._ansimarkup import AnsiMarkup
 
@@ -75,20 +75,14 @@ class Handler:
                     return
 
             if self._is_formatter_dynamic:
-                format_ = self._formatter(record)
+                dynamic_format = self._formatter(record)
                 if self._colorize:
-                    if is_ansi:
-                        precomputed_format = format_
-                    else:
-                        precomputed_format = self._colorize_format(format_, level_ansi_code)
+                    precomputed_format = self._colorize_format(dynamic_format, level_ansi_code)
                 else:
-                    precomputed_format = self._decolorize_format(format_)
+                    precomputed_format = self._decolorize_format(dynamic_format)
             else:
                 if self._colorize:
-                    if is_ansi:
-                        precomputed_format = self._static_format
-                    else:
-                        precomputed_format = self._precolorized_formats[level_ansi_code]
+                    precomputed_format = self._precolorized_formats[level_ansi_code]
                 else:
                     precomputed_format = self._decolorized_format
 
@@ -112,9 +106,14 @@ class Handler:
                 if not is_ansi:
                     formatted = precomputed_format.format_map(formatter_record)
                 elif self._colorize:
-                    formatted = self._colorize_with_tags(
-                        precomputed_format, level_ansi_code, formatter_record
+                    if self._is_formatter_dynamic:
+                        format_with_tags = dynamic_format
+                    else:
+                        format_with_tags = self._static_format
+                    AnsiDict = self._memoize_ansi_messages(
+                        format_with_tags, level_ansi_code, record["message"]
                     )
+                    formatted = precomputed_format.format_map(AnsiDict(formatter_record))
                 else:
                     formatter_record["message"] = self._decolorize_format(record["message"])
                     formatted = precomputed_format.format_map(formatter_record)
@@ -204,25 +203,32 @@ class Handler:
         return AnsiMarkup(custom_markups=markups, strip=False).feed(format_, strict=True)
 
     @staticmethod
-    def _colorize_with_tags(format_, ansi_code, record):
+    @functools.lru_cache(maxsize=32)
+    def _memoize_ansi_messages(format_, ansi_code, message):
         markups = {"level": ansi_code, "lvl": ansi_code}
         ansimarkup = AnsiMarkup(custom_markups=markups, strip=False)
 
-        class AnsiDict(dict):
+        def parse(string_, *, recursive=True):
+            for text, name, spec, _ in string.Formatter().parse(string_):
+                ansimarkup.feed(text, strict=False)
+                if spec and recursive:
+                    yield from parse(spec, recursive=False)
+                if name and name[:8] in ("message", "message.", "message["):
+                    yield ansimarkup.feed(message, strict=True)
+
+        messages = list(parse(format_))
+
+        class AnsiDict:
+            def __init__(self, record):
+                self._record = record
+                self._messages = iter(messages)
+
             def __getitem__(self, key):
                 if key == "message":
-                    return ansimarkup.feed(record["message"], strict=True)
-                return record[key]
+                    return next(self._messages)
+                return self._record[key]
 
-        class AnsiFormatter(Formatter):
-            def parse(self, format_string):
-                for text, name, spec, conv in Formatter.parse(self, format_string):
-                    text = ansimarkup.feed(text, strict=False)
-                    yield (text, name, spec, conv)
-
-        formatter = AnsiFormatter()
-        dct = AnsiDict()
-        return formatter.vformat(format_, (), dct)
+        return AnsiDict
 
     def _queued_writer(self):
         message = None
