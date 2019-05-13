@@ -262,6 +262,24 @@ def test_ansi_double_message(writer, colorize):
 
 
 @pytest.mark.parametrize("colorize", [True, False])
+def test_ansi_multiple_calls(writer, colorize):
+    logger.add(writer, format="{message}", colorize=colorize)
+    logger.opt(ansi=True).debug("a <red>foo</red> b")
+    logger.opt(ansi=True).debug("a <red>foo</red> b")
+    assert writer.read() == parse("a <red>foo</red> b\na <red>foo</red> b\n", colorize=colorize)
+
+
+@pytest.mark.parametrize("colorize", [True, False])
+def test_ansi_multiple_calls_level_color_changed(writer, colorize):
+    logger.add(writer, format="{message}", colorize=colorize)
+    logger.level("INFO", color="<blue>")
+    logger.opt(ansi=True).info("a <level>foo</level> b")
+    logger.level("INFO", color="<red>")
+    logger.opt(ansi=True).info("a <level>foo</level> b")
+    assert writer.read() == parse("a <blue>foo</blue> b\na <red>foo</red> b\n", colorize=colorize)
+
+
+@pytest.mark.parametrize("colorize", [True, False])
 def test_ansi_with_dynamic_formatter(writer, colorize):
     logger.add(writer, format=lambda r: "<red>{message}</red>", colorize=colorize)
     logger.opt(ansi=True).debug("<b>a</b> <y>b</y>")
