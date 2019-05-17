@@ -123,6 +123,14 @@ def test_flush(rep):
     assert flushed == [expected] * rep
 
 
+def test_disabled_logger_in_sink(sink_with_logger):
+    sink = sink_with_logger(logger)
+    logger.disable("tests.conftest")
+    logger.add(sink, format="{message}")
+    logger.info("Disabled test")
+    assert sink.out == "Disabled test\n"
+
+
 @pytest.mark.parametrize("sink", [123, sys, object(), int])
 def test_invalid_sink(sink):
     with pytest.raises(ValueError):
