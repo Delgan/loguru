@@ -9,9 +9,25 @@ def broken_sink(m):
     raise Exception("Error!")
 
 
+def test_catch_is_true(capsys):
+    logger.add(broken_sink, catch=True)
+    logger.debug("Fail")
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err != ""
+
+
+def test_catch_is_false(capsys):
+    logger.add(broken_sink, catch=False)
+    with pytest.raises(Exception):
+        logger.debug("Fail")
+    out, err = capsys.readouterr()
+    assert out == err == ""
+
+
 def test_no_sys_stderr(capsys, monkeypatch):
     monkeypatch.setattr(sys, "stderr", None)
-    logger.add(broken_sink)
+    logger.add(broken_sink, catch=True)
     logger.debug("a")
 
     out, err = capsys.readouterr()
@@ -23,7 +39,7 @@ def test_broken_sys_stderr(capsys, monkeypatch):
         raise OSError
 
     monkeypatch.setattr(sys.stderr, "write", broken_write)
-    logger.add(broken_sink)
+    logger.add(broken_sink, catch=True)
     logger.debug("a")
 
     out, err = capsys.readouterr()
@@ -34,7 +50,7 @@ def test_encoding_error(capsys):
     def sink(m):
         raise UnicodeEncodeError("utf8", "", 10, 11, "too bad")
 
-    logger.add(sink)
+    logger.add(sink, catch=True)
     logger.debug("test")
 
     out, err = capsys.readouterr()
@@ -53,7 +69,7 @@ def test_unprintable_record(writer, capsys):
         def __repr__(self):
             raise ValueError("Failed")
 
-    logger.add(writer, format="{message} {extra[unprintable]}")
+    logger.add(writer, format="{message} {extra[unprintable]}", catch=True)
     logger.bind(unprintable=1).debug("a")
     logger.bind(unprintable=Unprintable()).debug("b")
     logger.bind(unprintable=2).debug("c")
@@ -106,15 +122,9 @@ def test_broken_sink_caught_keep_working(enqueue):
     assert output == "A\nB\n"
 
 
-def test_broken_sink_not_caught():
-    logger.add(broken_sink, format="{message}", enqueue=False, catch=False)
-
-    with pytest.raises(Exception):
-        logger.info("A")
-
-
 def test_broken_sink_not_caught_enqueue():
     called = 0
+
     def broken_sink(m):
         nonlocal called
         called += 1
