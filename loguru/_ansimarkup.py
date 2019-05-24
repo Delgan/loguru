@@ -22,7 +22,6 @@ class AnsiMarkup:
         "b": Style.BRIGHT,
         "d": Style.DIM,
         "n": Style.NORMAL,
-        "0": Style.RESET_ALL,
         "h": ExtendedStyle.HIDE,
         "i": ExtendedStyle.ITALIC,
         "l": ExtendedStyle.BLINK,
@@ -111,7 +110,7 @@ class AnsiMarkup:
         "LIGHT-WHITE": Back.LIGHTWHITE_EX,
     }
 
-    _regex_tag = re.compile(r"</?([^<>]+)>")
+    _regex_tag = re.compile(r"\\?</?((?:[fb]g\s)?[^<>\s]*)>")
 
     def __init__(self, custom_markups=None, strip=False):
         self._custom = custom_markups or {}
@@ -154,9 +153,9 @@ class AnsiMarkup:
             st, color = tag[:2], tag[3:]
             code = "38" if st == "fg" else "48"
 
-            if st == "fg" and color in foreground:
-                return foreground[color]
-            elif st == "bg" and color.islower() and color.upper() in background:
+            if st == "fg" and color.lower() in foreground:
+                return foreground[color.lower()]
+            elif st == "bg" and color.upper() in background:
                 return background[color.upper()]
             elif color.isdigit() and int(color) <= 255:
                 return "\033[%s;5;%sm" % (code, color)
@@ -171,52 +170,34 @@ class AnsiMarkup:
                 if all(x.isdigit() and int(x) <= 255 for x in colors):
                     return "\033[%s;2;%s;%s;%sm" % ((code,) + colors)
 
-        # Shorthand formats (e.g. <red,blue>, <bold,red,blue>).
-        elif "," in tag:
-            el_count = tag.count(",")
-
-            if el_count == 1:
-                fg, bg = tag.split(",")
-                if fg in foreground and bg.islower() and bg.upper() in background:
-                    return foreground[fg] + background[bg.upper()]
-
-            elif el_count == 2:
-                st, fg, bg = tag.split(",")
-                if st in style and (fg != "" or bg != ""):
-                    if fg == "" or fg in foreground:
-                        if bg == "" or (bg.islower() and bg.upper() in background):
-                            st = style[st]
-                            fg = foreground.get(fg, "")
-                            bg = background.get(bg.upper(), "")
-                            return st + fg + bg
-
         return None
 
     def _sub_tag(self, match):
         markup, tag = match.group(0), match.group(1)
-        closing = markup[1] == "/"
 
-        # Early exit if the closing tag matches the last known opening tag.
-        if closing and self._tags and self._tags[-1] == tag:
-            self._tags.pop()
-            self._results.pop()
-            if self._strip:
-                return ""
+        if markup[0] == "\\":
+            return markup[1:]
+
+        if markup[1] == "/":
+            if self._tags and (tag == "" or tag == self._tags[-1]):
+                self._tags.pop()
+                self._results.pop()
+                if self._strip:
+                    return ""
+                else:
+                    return Style.RESET_ALL + "".join(self._results)
+            elif tag in self._tags:
+                raise ValueError('Closing tag "%s" violates nesting rules' % markup)
             else:
-                return Style.RESET_ALL + "".join(self._results)
+                raise ValueError('Closing tag "%s" has no corresponding opening tag' % markup)
 
         res = self.get_ansicode(tag)
 
-        # If nothing matches, return the full tag (i.e. <unknown>text</...>).
         if res is None:
-            return markup
-
-        # If closing tag is known, but did not early exit, something is wrong.
-        if closing:
-            if tag in self._tags:
-                raise ValueError('Closing tag "%s" violates nesting rules.' % markup)
-            else:
-                raise ValueError('Closing tag "%s" has no corresponding opening tag' % markup)
+            raise ValueError(
+                'Tag "%s" does not corespond to any known ansi directive, '
+                "make sure you did not misspelled it" % markup
+            )
 
         self._tags.append(tag)
         self._results.append(res)
