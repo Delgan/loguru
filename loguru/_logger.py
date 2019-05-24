@@ -112,10 +112,8 @@ class Logger:
     .. _re.Match: https://docs.python.org/3/library/re.html#match-objects
 
     .. _Pendulum: https://pendulum.eustace.io/docs/#tokens
-    .. _ansimarkup: https://github.com/gvalkov/python-ansimarkup
     .. _better_exceptions: https://github.com/Qix-/better-exceptions
     .. _@sdispater: https://github.com/sdispater
-    .. _@gvalkov: https://github.com/gvalkov
     .. _@Qix-: https://github.com/Qix-
     .. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
     """
@@ -554,11 +552,18 @@ class Logger:
         .. rubric:: The color markups
 
         To add colors to your logs, you just have to enclose your format string with the appropriate
-        tags. This is based on the great `ansimarkup`_ library from `@gvalkov`_. Those tags are
-        removed if the sink don't support ansi codes.
+        tags (eg. ``<tag>some message</tag>``). Those tags are automatically removed if the sink
+        doesn't support ansi codes. For convenience, you can use ``</>`` to close the last opening
+        tag without repeating its name (eg. ``<tag>another message</>``).
 
         The special tag ``<level>`` (abbreviated with ``<lvl>``) is transformed according to
         the configured color of the logged message level.
+
+        Tags which are not recognized will raise an exception during parsing, to inform you about
+        possible misuse. If you wish to display a markup tag literally, you can escape it by
+        prepending a ``\`` like for example ``\<blue>``. If, for some reason, you need to escape a
+        string programmatically, note that the regex used internally to parse markup tags is
+        ``r"\\?</?((?:[fb]g\s)?[^<>\s]*)>"``.
 
         Here are the available tags (note that compatibility may vary depending on terminal):
 
@@ -595,19 +600,13 @@ class Logger:
         +-----------------+---------------------------------+---------------------------------+
         | Light colors    | ``<light-blue>``, ``<le>``      | ``<LIGHT-CYAN>``, ``<LC>``      |
         +-----------------+---------------------------------+---------------------------------+
-        | Xterm colors    | ``<fg 86>``, ``<fg 255>``       | ``<bg 42>``, ``<bg 9>``         |
+        | 8-bit colors    | ``<fg 86>``, ``<fg 255>``       | ``<bg 42>``, ``<bg 9>``         |
         +-----------------+---------------------------------+---------------------------------+
         | Hex colors      | ``<fg #00005f>``, ``<fg #EE1>`` | ``<bg #AF5FD7>``, ``<bg #fff>`` |
         +-----------------+---------------------------------+---------------------------------+
         | RGB colors      | ``<fg 0,95,0>``                 | ``<bg 72,119,65>``              |
         +-----------------+---------------------------------+---------------------------------+
-        | Stylizing       | ``<bold>``, ``<b>`` , ``<underline>``, ``<u>``                    |
-        +-----------------+-------------------------------------------------------------------+
-        | Shorthand       | ``<red, yellow>``, ``<r, y>``                                     |
-        | (FG, BG)        |                                                                   |
-        +-----------------+-------------------------------------------------------------------+
-        | Shorthand       | ``<bold, cyan, white>``, ``<b,,w>``, ``<b,c,>``                   |
-        | (Style, FG, BG) |                                                                   |
+        | Stylizing       | ``<bold>``, ``<b>``,  ``<underline>``, ``<u>``                    |
         +-----------------+-------------------------------------------------------------------+
 
         .. _env:

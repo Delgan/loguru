@@ -2,6 +2,9 @@ Unreleased
 ==========
 
 - Add a new ``logger.patch()`` method which can be used to modify the record dict on-the-fly before its being sent to the handlers
+- Raise errors on unkowns color tags rather than silently ignoring them (`#57 <https://github.com/Delgan/loguru/issues/57>`_)
+- Add the possibility to auto-close color tags by using ``</>`` (eg. ``<yellow>message</>``)
+- Remove colors tags mixing directives (eg. ``<red,blue>``) for simplification
 - Modify behavior of sink option ``backtrace`` so it only extends the stacktrace upward, the display of variables values is now controlled with the new ``diagnose`` argument (`#49 <https://github.com/Delgan/loguru/issues/49>`_)
 - Add coloration of exception traceback even if ``diagnose`` and ``backtrace`` options are ``False``
 - Add a way to limit the depth of formatted exceptions traceback by setting the conventional ``sys.tracebacklimit`` variable (`#77 <https://github.com/Delgan/loguru/issues/77>`_)

@@ -25,17 +25,31 @@ class Stream:
 
 
 @pytest.mark.parametrize(
-    "message, format, expected, colorize",
+    "format, message, expected",
     [
-        ("a", "<red>{message}</red>", "a\n", False),
-        ("b", "<red>{message}</red>", parse("<red>b</red>\n"), True),
-        ("c", lambda _: "<red>{message}</red>", "c", False),
-        ("d", lambda _: "<red>{message}</red>", parse("<red>d</red>"), True),
-        ("<red>nope</red>", "{message}", "<red>nope</red>\n", True),
+        ("<red>{message}</red>", "Foo", parse("<red>Foo</red>\n")),
+        (lambda _: "<red>{message}</red>", "Bar", parse("<red>Bar</red>")),
+        ("{message}", "<red>Baz</red>", "<red>Baz</red>\n"),
+        ("{{<red>{message:}</red>}}", "A", parse("{<red>A</red>}\n")),
     ],
 )
-def test_colorize(message, format, expected, colorize, writer):
-    logger.add(writer, format=format, colorize=colorize)
+def test_colorized_format(format, message, expected, writer):
+    logger.add(writer, format=format, colorize=True)
+    logger.debug(message)
+    assert writer.read() == expected
+
+
+@pytest.mark.parametrize(
+    "format, message, expected",
+    [
+        ("<red>{message}</red>", "Foo", "Foo\n"),
+        (lambda _: "<red>{message}</red>", "Bar", "Bar"),
+        ("{message}", "<red>Baz</red>", "<red>Baz</red>\n"),
+        ("{{<red>{message:}</red>}}", "A", "{A}\n"),
+    ],
+)
+def test_decolorized_format(format, message, expected, writer):
+    logger.add(writer, format=format, colorize=False)
     logger.debug(message)
     assert writer.read() == expected
 
