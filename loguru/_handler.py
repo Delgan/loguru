@@ -29,7 +29,7 @@ class Handler:
         enqueue,
         exception_formatter,
         id_,
-        ansi_colors=[]
+        levels_ansi_codes
     ):
         self._writer = writer
         self._stopper = stopper
@@ -43,6 +43,7 @@ class Handler:
         self._enqueue = enqueue
         self._exception_formatter = exception_formatter
         self._id = id_
+        self._levels_ansi_codes = levels_ansi_codes
 
         self._static_format = None
         self._decolorized_format = None
@@ -57,15 +58,15 @@ class Handler:
             self._static_format = self._formatter
             self._decolorized_format = self._decolorize_format(self._static_format)
 
-            for ansi_code in ansi_colors:
-                self.update_format(ansi_code)
+            for level_name in self._levels_ansi_codes:
+                self.update_format(level_name)
 
         if self._enqueue:
             self._queue = multiprocessing.SimpleQueue()
             self._thread = threading.Thread(target=self._queued_writer, daemon=True)
             self._thread.start()
 
-    def emit(self, record, level_ansi_code, is_ansi, is_raw):
+    def emit(self, record, level_id, is_ansi, is_raw):
         try:
             if self._levelno > record["level"].no:
                 return
@@ -77,12 +78,13 @@ class Handler:
             if self._is_formatter_dynamic:
                 dynamic_format = self._formatter(record)
                 if self._colorize:
-                    precomputed_format = self._colorize_format(dynamic_format, level_ansi_code)
+                    level_ansi = self._levels_ansi_codes[level_id]
+                    precomputed_format = self._colorize_format(dynamic_format, level_ansi)
                 else:
                     precomputed_format = self._decolorize_format(dynamic_format)
             else:
                 if self._colorize:
-                    precomputed_format = self._precolorized_formats[level_ansi_code]
+                    precomputed_format = self._precolorized_formats[level_id]
                 else:
                     precomputed_format = self._decolorized_format
 
@@ -95,13 +97,16 @@ class Handler:
                 lines = self._exception_formatter.format_exception(type_, value, tb)
                 formatter_record["exception"] = "".join(lines)
 
+            message = record["message"]
+
             if is_raw:
                 if not is_ansi:
-                    formatted = record["message"]
+                    formatted = message
                 elif self._colorize:
-                    formatted = self._colorize_format(record["message"], level_ansi_code)
+                    level_ansi = self._levels_ansi_codes[level_id]
+                    formatted = self._colorize_format(message, level_ansi)
                 else:
-                    formatted = self._decolorize_format(record["message"])
+                    formatted = self._decolorize_format(message)
             else:
                 if not is_ansi:
                     formatted = precomputed_format.format_map(formatter_record)
@@ -110,12 +115,11 @@ class Handler:
                         format_with_tags = dynamic_format
                     else:
                         format_with_tags = self._static_format
-                    AnsiDict = self._memoize_ansi_messages(
-                        format_with_tags, level_ansi_code, record["message"]
-                    )
+                    ansi_code = self._levels_ansi_codes[level_id]
+                    AnsiDict = self._memoize_ansi_messages(format_with_tags, ansi_code, message)
                     formatted = precomputed_format.format_map(AnsiDict(formatter_record))
                 else:
-                    formatter_record["message"] = self._decolorize_format(record["message"])
+                    formatter_record["message"] = self._decolorize_format(message)
                     formatted = precomputed_format.format_map(formatter_record)
 
             if self._serialize:
@@ -146,10 +150,11 @@ class Handler:
                 self._thread.join()
             self._stopper()
 
-    def update_format(self, color):
-        if self._is_formatter_dynamic or not self._colorize or color in self._precolorized_formats:
+    def update_format(self, level_id):
+        if not self._colorize or self._is_formatter_dynamic:
             return
-        self._precolorized_formats[color] = self._colorize_format(self._static_format, color)
+        ansi_code = self._levels_ansi_codes[level_id]
+        self._precolorized_formats[level_id] = self._colorize_format(self._static_format, ansi_code)
 
     @property
     def levelno(self):
