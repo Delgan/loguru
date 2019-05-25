@@ -119,49 +119,36 @@ class Logger:
     """
 
     _levels = {
-        "TRACE": (
-            _defaults.LOGURU_TRACE_NO,
-            _defaults.LOGURU_TRACE_COLOR,
-            _defaults.LOGURU_TRACE_ICON,
-            parse_ansi(_defaults.LOGURU_TRACE_COLOR),
+        "TRACE": Level(
+            _defaults.LOGURU_TRACE_NO, _defaults.LOGURU_TRACE_COLOR, _defaults.LOGURU_TRACE_ICON
         ),
-        "DEBUG": (
-            _defaults.LOGURU_DEBUG_NO,
-            _defaults.LOGURU_DEBUG_COLOR,
-            _defaults.LOGURU_DEBUG_ICON,
-            parse_ansi(_defaults.LOGURU_DEBUG_COLOR),
+        "DEBUG": Level(
+            _defaults.LOGURU_DEBUG_NO, _defaults.LOGURU_DEBUG_COLOR, _defaults.LOGURU_DEBUG_ICON
         ),
-        "INFO": (
-            _defaults.LOGURU_INFO_NO,
-            _defaults.LOGURU_INFO_COLOR,
-            _defaults.LOGURU_INFO_ICON,
-            parse_ansi(_defaults.LOGURU_INFO_COLOR),
+        "INFO": Level(
+            _defaults.LOGURU_INFO_NO, _defaults.LOGURU_INFO_COLOR, _defaults.LOGURU_INFO_ICON
         ),
-        "SUCCESS": (
+        "SUCCESS": Level(
             _defaults.LOGURU_SUCCESS_NO,
             _defaults.LOGURU_SUCCESS_COLOR,
             _defaults.LOGURU_SUCCESS_ICON,
-            parse_ansi(_defaults.LOGURU_SUCCESS_COLOR),
         ),
-        "WARNING": (
+        "WARNING": Level(
             _defaults.LOGURU_WARNING_NO,
             _defaults.LOGURU_WARNING_COLOR,
             _defaults.LOGURU_WARNING_ICON,
-            parse_ansi(_defaults.LOGURU_WARNING_COLOR),
         ),
-        "ERROR": (
-            _defaults.LOGURU_ERROR_NO,
-            _defaults.LOGURU_ERROR_COLOR,
-            _defaults.LOGURU_ERROR_ICON,
-            parse_ansi(_defaults.LOGURU_ERROR_COLOR),
+        "ERROR": Level(
+            _defaults.LOGURU_ERROR_NO, _defaults.LOGURU_ERROR_COLOR, _defaults.LOGURU_ERROR_ICON
         ),
-        "CRITICAL": (
+        "CRITICAL": Level(
             _defaults.LOGURU_CRITICAL_NO,
             _defaults.LOGURU_CRITICAL_COLOR,
             _defaults.LOGURU_CRITICAL_ICON,
-            parse_ansi(_defaults.LOGURU_CRITICAL_COLOR),
         ),
     }
+    _levels_ansi_codes = {name: parse_ansi(level.color) for name, level in _levels.items()}
+    _levels_ansi_codes[None] = ""
 
     _handlers_count = itertools.count()
     _handlers = {}
@@ -832,7 +819,6 @@ class Logger:
 
         with self._lock:
             handler_id = next(self._handlers_count)
-            ansi_colors = [ansi_code for *_, ansi_code in self._levels.values()] + [""]
 
             exception_formatter = ExceptionFormatter(
                 colorize=colorize,
@@ -855,7 +841,7 @@ class Logger:
                 enqueue=enqueue,
                 id_=handler_id,
                 exception_formatter=exception_formatter,
-                ansi_colors=ansi_colors,
+                levels_ansi_codes=self._levels_ansi_codes,
             )
 
             handlers = self._handlers.copy()
@@ -1255,11 +1241,9 @@ class Logger:
 
         if no is color is icon is None:
             try:
-                level_no, level_color, level_icon, _ = self._levels[name]
+                return self._levels[name]
             except KeyError:
                 raise ValueError("Level '%s' does not exist" % name)
-            else:
-                return Level(level_no, level_color, level_icon)
 
         if name not in self._levels:
             if no is None:
@@ -1290,13 +1274,15 @@ class Logger:
             raise ValueError("Invalid level no, it should be a positive integer, not: %d" % no)
 
         ansi = parse_ansi(color)
-        self._levels[name] = no, color, icon, ansi
+        level = Level(no, color, icon)
 
         with self._lock:
+            self._levels[name] = level
+            self._levels_ansi_codes[name] = ansi
             for handler in self._handlers.values():
-                handler.update_format(ansi)
+                handler.update_format(name)
 
-        return self.level(name)
+        return level
 
     def disable(self, name):
         """Disable logging of messages coming from ``name`` module and its children.
@@ -1606,10 +1592,10 @@ class Logger:
             current_datetime = now()
 
             if level_id is None:
-                level_no, level_ansi, level_icon = level, "", " "
+                level_no, level_icon = level, " "
             else:
                 try:
-                    level_no, _, level_icon, level_ansi = _self._levels[level_name]
+                    level_no, _, level_icon = _self._levels[level_name]
                 except KeyError:
                     raise ValueError("Level '%s' does not exist" % level_name)
 
@@ -1685,7 +1671,7 @@ class Logger:
                 _self._patcher(record)
 
             for handler in _self._handlers.values():
-                handler.emit(record, level_ansi, _self._ansi, _self._raw)
+                handler.emit(record, level_id, _self._ansi, _self._raw)
 
         doc = r"Log ``_message.format(*args, **kwargs)`` with severity ``'%s'``." % level_name
         log_function.__doc__ = doc

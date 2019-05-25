@@ -7,6 +7,7 @@ import subprocess
 import time
 
 default_levels = loguru._logger.Logger._levels.copy()
+default_levels_ansi_codes = loguru._logger.Logger._levels_ansi_codes.copy()
 
 
 @pytest.fixture(autouse=True)
@@ -15,6 +16,7 @@ def reset_logger():
         loguru.logger.remove()
         loguru.logger.__init__({}, None, None, False, False, False, False, 0)
         loguru._logger.Logger._levels = default_levels.copy()
+        loguru._logger.Logger._levels_ansi_codes = default_levels_ansi_codes.copy()
         loguru._logger.Logger._min_level = float("inf")
         loguru._logger.Logger._extra_class = {}
         loguru._logger.Logger._patcher_class = None
