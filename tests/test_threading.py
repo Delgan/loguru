@@ -79,14 +79,12 @@ def test_safe_adding_while_logging(writer):
     assert sink_2.written == "ccc1ddd\n"
 
 
-def test_safe_removing_while_logging():
+def test_safe_removing_while_logging(capsys):
     barrier = Barrier(2)
     counter = itertools.count()
 
-    sink_1 = NonSafeSink(1)
-    sink_2 = NonSafeSink(1)
-    a = logger.add(sink_1, format="{message}", catch=False)
-    b = logger.add(sink_2, format="{message}", catch=False)
+    sink = NonSafeSink(1)
+    i = logger.add(sink, format="{message}", catch=False)
 
     def thread_1():
         barrier.wait()
@@ -95,7 +93,7 @@ def test_safe_removing_while_logging():
     def thread_2():
         barrier.wait()
         time.sleep(0.5)
-        logger.remove(a)
+        logger.remove(i)
         logger.info("ccc{}ddd", next(counter))
 
     threads = [Thread(target=thread_1), Thread(target=thread_2)]
@@ -106,10 +104,11 @@ def test_safe_removing_while_logging():
     for thread in threads:
         thread.join()
 
-    logger.remove()
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == ""
+    assert sink.written == "aaa0bbb\n"
 
-    assert sink_1.written == "aaa0bbb\n"
-    assert sink_2.written == "aaa0bbb\nccc1ddd\n"
 
 
 def test_safe_writing_after_removing(capsys):
