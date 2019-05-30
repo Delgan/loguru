@@ -53,19 +53,26 @@ class FileSink:
 
         if not delay:
             self._initialize_file(rename_existing=False)
+            self._initialize_write()
+        else:
+            self.write = self._write_delayed
 
-    def write(self, message):
-        if self._file is None:
-            self._initialize_file(rename_existing=False)
+    def _initialize_write(self):
+        if self._rotation_function is None:
+            self.write = self._file.write
+        else:
+            self.write = self._write_rotating
 
-        if self._rotation_function is not None and self._rotation_function(message, self._file):
+    def _write_delayed(self, message):
+        self._initialize_file(rename_existing=False)
+        self._initialize_write()
+        self.write(message)
+
+    def _write_rotating(self, message):
+        if self._rotation_function(message, self._file):
             self._terminate(teardown=True)
             self._initialize_file(rename_existing=True)
-
         self._file.write(message)
-
-    def stop(self):
-        self._terminate(teardown=self._rotation_function is None)
 
     def _initialize_file(self, *, rename_existing):
         new_path = self._path.format_map({"time": FileDateFormatter()})
@@ -302,6 +309,9 @@ class FileSink:
             raise ValueError(
                 "Cannot infer compression for objects of type: '%s'" % type(compression).__name__
             )
+
+    def stop(self):
+        self._terminate(teardown=self._rotation_function is None)
 
     def _terminate(self, *, teardown):
         if self._file is not None:
