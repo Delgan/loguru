@@ -1,7 +1,100 @@
 import pytest
 import datetime
 import os
+import time
+import tempfile
+import pathlib
+import platform
+import builtins
+from collections import namedtuple
+import loguru
 from loguru import logger
+
+
+@pytest.fixture
+def tmpdir_local():
+    # Pytest 'tmpdir' creates directories in /tmp, but /tmp does not support xattr, tests would fail
+    with tempfile.TemporaryDirectory(dir=".") as tempdir:
+        yield pathlib.Path(tempdir)
+
+
+@pytest.fixture
+def monkeypatch_filesystem(monkeypatch):
+    def monkeypatch_filesystem(raising=None, crtime=None, patch_xattr=False):
+        filesystem = {}
+        __open__ = open
+        __stat_result__ = os.stat_result
+        __stat__ = os.stat
+
+        class StatWrapper:
+            def __init__(self, wrapped, timestamp=None):
+                self._wrapped = wrapped
+                self._timestamp = timestamp
+
+            def __getattr__(self, name):
+                if name == raising:
+                    raise AttributeError
+                if name == crtime:
+                    return self._timestamp
+                return getattr(self._wrapped, name)
+
+        def patched_stat(filepath):
+            stat = __stat__(filepath)
+            wrapped = StatWrapper(stat, filesystem.get(os.path.abspath(filepath)))
+            return wrapped
+
+        def patched_open(filepath, *args, **kwargs):
+            if not os.path.exists(filepath):
+                filesystem[os.path.abspath(filepath)] = loguru._datetime.datetime.now().timestamp()
+            return __open__(filepath, *args, **kwargs)
+
+        def patched_setxattr(filepath, attr, val, *arg, **kwargs):
+            filesystem[(os.path.abspath(filepath), attr)] = val
+
+        def patched_getxattr(filepath, attr, *args, **kwargs):
+            try:
+                return filesystem[(os.path.abspath(filepath), attr)]
+            except KeyError:
+                raise OSError
+
+        monkeypatch.setattr(os, "stat_result", StatWrapper(__stat_result__))
+        monkeypatch.setattr(os, "stat", patched_stat)
+        monkeypatch.setattr(builtins, "open", patched_open)
+
+        if patch_xattr:
+            monkeypatch.setattr(os, "setxattr", patched_setxattr)
+            monkeypatch.setattr(os, "getxattr", patched_getxattr)
+
+    return monkeypatch_filesystem
+
+
+@pytest.fixture
+def windows_filesystem(monkeypatch, monkeypatch_filesystem):
+    monkeypatch.setattr(platform, "system", lambda: "Windows")
+    monkeypatch_filesystem(raising="st_birthtime", crtime="st_ctime")
+
+
+@pytest.fixture
+def darwin_filesystem(monkeypatch, monkeypatch_filesystem):
+    monkeypatch.setattr(platform, "system", lambda: "Darwin")
+    monkeypatch_filesystem(crtime="st_birthtime")
+
+
+@pytest.fixture
+def linux_filesystem(monkeypatch, monkeypatch_filesystem):
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
+    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime", patch_xattr=True)
+
+
+@pytest.fixture
+def linux_no_xattr_filesystem(monkeypatch, monkeypatch_filesystem):
+    def raising(*args, **kwargs):
+        raise OSError
+
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
+    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
+    monkeypatch.setattr(os, "setxattr", raising)
+    monkeypatch.setattr(os, "getxattr", raising)
 
 
 def test_renaming(monkeypatch_date, tmpdir):
@@ -118,7 +211,7 @@ def test_size_rotation(monkeypatch_date, tmpdir, size):
         ("Yearly ", [100, 24 * 7 * 30, 24 * 300, 24 * 100, 24 * 400]),
     ],
 )
-def test_time_rotation(monkeypatch_date, tmpdir, when, hours):
+def test_time_rotation(monkeypatch_date, darwin_filesystem, tmpdir, when, hours):
     now = datetime.datetime(2017, 6, 18, 12, 0, 0)  # Sunday
 
     monkeypatch_date(
@@ -126,7 +219,6 @@ def test_time_rotation(monkeypatch_date, tmpdir, when, hours):
     )
 
     i = logger.add(str(tmpdir.join("test_{time}.log")), format="{message}", rotation=when, mode="w")
-
 
     for h, m in zip(hours, ["a", "b", "c", "d", "e"]):
         now += datetime.timedelta(hours=h)
@@ -136,11 +228,10 @@ def test_time_rotation(monkeypatch_date, tmpdir, when, hours):
         logger.debug(m)
 
     logger.remove(i)
-    assert len(tmpdir.listdir()) == 4
     assert [f.read() for f in sorted(tmpdir.listdir())] == ["a\n", "b\nc\n", "d\n", "e\n"]
 
 
-def test_time_rotation_dst(monkeypatch_date, tmpdir):
+def test_time_rotation_dst(monkeypatch_date, darwin_filesystem, tmpdir):
     monkeypatch_date(2018, 10, 27, 5, 0, 0, 0, "CET", 3600)
     i = logger.add(str(tmpdir.join("test_{time}.log")), format="{message}", rotation="1 day")
     logger.debug("First")
@@ -156,6 +247,101 @@ def test_time_rotation_dst(monkeypatch_date, tmpdir):
     assert tmpdir.join("test_2018-10-27_05-00-00_000000.log").read() == "First\n"
     assert tmpdir.join("test_2018-10-28_05-30-00_000000.log").read() == "Second\n"
     assert tmpdir.join("test_2018-10-29_06-00-00_000000.log").read() == "Third\n"
+
+
+@pytest.mark.parametrize("delay", [False, True])
+def test_time_rotation_reopening_native(tmpdir_local, delay):
+    filepath = str(tmpdir_local / "test.log")
+    i = logger.add(filepath, format="{message}", delay=delay, rotation="1 s")
+    logger.info("1")
+    time.sleep(0.75)
+    logger.info("2")
+    logger.remove(i)
+    i = logger.add(filepath, format="{message}", delay=delay, rotation="1 s")
+    logger.info("3")
+
+    assert len(list(tmpdir_local.iterdir())) == 1
+    assert (tmpdir_local / "test.log").read_text() == "1\n2\n3\n"
+
+    time.sleep(0.5)
+    logger.info("4")
+
+    assert len(list(tmpdir_local.iterdir())) == 2
+    assert (tmpdir_local / "test.log").read_text() == "4\n"
+
+    logger.remove(i)
+    time.sleep(0.5)
+    i = logger.add(filepath, format="{message}", delay=delay, rotation="1 s")
+    logger.info("5")
+
+    assert len(list(tmpdir_local.iterdir())) == 2
+    assert (tmpdir_local / "test.log").read_text() == "4\n5\n"
+
+    time.sleep(0.75)
+    logger.info("6")
+    logger.remove(i)
+
+    assert len(list(tmpdir_local.iterdir())) == 3
+    assert (tmpdir_local / "test.log").read_text() == "6\n"
+
+
+def rotation_reopening(tmpdir, monkeypatch_date, delay):
+    monkeypatch_date(2018, 10, 27, 5, 0, 0, 0)
+    filepath = tmpdir.join("test.log")
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 h")
+    logger.info("1")
+    monkeypatch_date(2018, 10, 27, 6, 30, 0, 0)
+    logger.info("2")
+    logger.remove(i)
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 h")
+    logger.info("3")
+
+    assert len(tmpdir.listdir()) == 1
+    assert filepath.read() == "1\n2\n3\n"
+
+    monkeypatch_date(2018, 10, 27, 7, 30, 0, 0)
+    logger.info("4")
+
+    assert len(tmpdir.listdir()) == 2
+    assert filepath.read() == "4\n"
+
+    logger.remove(i)
+    monkeypatch_date(2018, 10, 27, 8, 30, 0, 0)
+
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 h")
+    logger.info("5")
+
+    assert len(tmpdir.listdir()) == 2
+    assert filepath.read() == "4\n5\n"
+
+    monkeypatch_date(2018, 10, 27, 10, 0, 0, 0)
+    logger.info("6")
+    logger.remove(i)
+
+    assert len(tmpdir.listdir()) == 3
+    assert filepath.read() == "6\n"
+
+
+@pytest.mark.parametrize("delay", [False, True])
+def test_time_rotation_reopening_windows(tmpdir, monkeypatch_date, windows_filesystem, delay):
+    rotation_reopening(tmpdir, monkeypatch_date, delay)
+
+
+@pytest.mark.parametrize("delay", [False, True])
+def test_time_rotation_reopening_darwin(tmpdir, monkeypatch_date, darwin_filesystem, delay):
+    rotation_reopening(tmpdir, monkeypatch_date, delay)
+
+
+@pytest.mark.parametrize("delay", [False, True])
+def test_time_rotation_reopening_linux(tmpdir, monkeypatch_date, linux_filesystem, delay):
+    rotation_reopening(tmpdir, monkeypatch_date, delay)
+
+
+@pytest.mark.parametrize("delay", [False, True])
+def test_time_rotation_reopening_linux_no_xattr(
+    tmpdir, monkeypatch_date, linux_no_xattr_filesystem, delay
+):
+    rotation_reopening(tmpdir, monkeypatch_date, delay)
 
 
 def test_function_rotation(monkeypatch_date, tmpdir):

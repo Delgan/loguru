@@ -4,6 +4,7 @@ import glob
 import locale
 import numbers
 import os
+import platform
 import shutil
 import string
 
@@ -43,10 +44,12 @@ class FileSink:
         self._kwargs = kwargs.copy()
         self._path = str(path)
 
-        self._rotation_function = self._make_rotation_function(rotation)
+        self._rotation_function, self._init_rotation = self._make_rotation_function(rotation)
         self._retention_function = self._make_retention_function(retention)
         self._compression_function = self._make_compression_function(compression)
         self._glob_pattern = self._make_glob_pattern(self._path)
+        self._get_creation_time = self._make_get_creation_time_function()
+        self._set_creation_time = self._make_set_creation_time_function()
 
         self._file = None
         self._file_path = None
@@ -54,6 +57,8 @@ class FileSink:
         if not delay:
             self._initialize_file(rename_existing=False)
             self._initialize_write()
+            if self._init_rotation is not None:
+                self._init_rotation(self._file_path)
         else:
             self.write = self._write_delayed
 
@@ -66,12 +71,16 @@ class FileSink:
     def _write_delayed(self, message):
         self._initialize_file(rename_existing=False)
         self._initialize_write()
+        if self._init_rotation is not None:
+            self._init_rotation(self._file_path)
         self.write(message)
 
     def _write_rotating(self, message):
         if self._rotation_function(message, self._file):
             self._terminate(teardown=True)
             self._initialize_file(rename_existing=True)
+            if self._set_creation_time is not None:
+                self._set_creation_time(self._file_path, now().replace(tzinfo=None).timestamp())
         self._file.write(message)
 
     def _initialize_file(self, *, rename_existing):
@@ -105,25 +114,65 @@ class FileSink:
             pattern = root + "*"
         return pattern
 
+    def _make_get_creation_time_function(self):
+        def get_creation_time_windows(filepath):
+            return os.stat(filepath).st_ctime
+
+        def get_creation_time_darwin(filepath):
+            return os.stat(filepath).st_birthtime
+
+        def get_creation_time_linux(filepath):
+            try:
+                return float(os.getxattr(filepath, b"user.loguru_crtime"))
+            except OSError:
+                return os.stat(filepath).st_mtime
+
+        if platform.system().lower() == "windows":
+            return get_creation_time_windows
+        elif hasattr(os.stat_result, "st_birthtime"):
+            return get_creation_time_darwin
+        else:
+            return get_creation_time_linux
+
+    def _make_set_creation_time_function(self):
+        def set_creation_time(filepath, timestamp):
+            try:
+                os.setxattr(filepath, b"user.loguru_crtime", str(timestamp).encode("ascii"))
+            except OSError:
+                pass
+
+        if platform.system().lower() == "windows" or hasattr(os.stat_result, "st_birthtime"):
+            return None
+        else:
+            return set_creation_time
+
     def _make_rotation_function(self, rotation):
         def make_from_size(size_limit):
             def rotation_function(message, file):
                 file.seek(0, 2)
                 return file.tell() + len(message) >= size_limit
 
-            return rotation_function
+            return rotation_function, None
 
         def make_from_time(step_forward, time_init=None):
-            start_time = time_limit = now().replace(tzinfo=None)
-            if time_init is not None:
-                time_limit = time_limit.replace(
-                    hour=time_init.hour,
-                    minute=time_init.minute,
-                    second=time_init.second,
-                    microsecond=time_init.microsecond,
-                )
-            if time_limit <= start_time:
-                time_limit = step_forward(time_limit)
+
+            time_limit = None
+
+            def init_time_rotation(filepath):
+                nonlocal time_limit
+                creation_time = self._get_creation_time(filepath)
+                if self._set_creation_time is not None:
+                    self._set_creation_time(filepath, creation_time)
+                start_time = time_limit = datetime.datetime.fromtimestamp(creation_time)
+                if time_init is not None:
+                    time_limit = time_limit.replace(
+                        hour=time_init.hour,
+                        minute=time_init.minute,
+                        second=time_init.second,
+                        microsecond=time_init.microsecond,
+                    )
+                if time_limit <= start_time:
+                    time_limit = step_forward(time_limit)
 
             def rotation_function(message, file):
                 nonlocal time_limit
@@ -134,10 +183,10 @@ class FileSink:
                     return True
                 return False
 
-            return rotation_function
+            return rotation_function, init_time_rotation
 
         if rotation is None:
-            return None
+            return None, None
         elif isinstance(rotation, str):
             size = string_parsers.parse_size(rotation)
             if size is not None:
@@ -179,7 +228,7 @@ class FileSink:
 
             return make_from_time(add_interval)
         elif callable(rotation):
-            return rotation
+            return rotation, None
         else:
             raise ValueError(
                 "Cannot infer rotation for objects of type: '%s'" % type(rotation).__name__
