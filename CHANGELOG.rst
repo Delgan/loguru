@@ -2,6 +2,7 @@ Unreleased
 ==========
 
 - Add a new ``logger.patch()`` method which can be used to modify the record dict on-the-fly before its being sent to the handlers
+- Change behavior of ``rotation`` option in file sinks: it is now based on the file creation time rather than the current time, note that propoer support may differ depending on your platform (`#58 <https://github.com/Delgan/loguru/issues/58>`_)
 - Raise errors on unkowns color tags rather than silently ignoring them (`#57 <https://github.com/Delgan/loguru/issues/57>`_)
 - Add the possibility to auto-close color tags by using ``</>`` (eg. ``<yellow>message</>``)
 - Remove colors tags mixing directives (eg. ``<red,blue>``) for simplification
