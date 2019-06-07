@@ -1,4 +1,4 @@
-import datetime
+import datetime as datetime_
 import decimal
 import glob
 import locale
@@ -9,12 +9,12 @@ import shutil
 import string
 
 from . import _string_parsers as string_parsers
-from ._datetime import now
+from ._datetime import aware_now, datetime
 
 
 class FileDateFormatter:
     def __init__(self):
-        self.datetime = now()
+        self.datetime = aware_now()
 
     def __format__(self, spec):
         if not spec:
@@ -80,7 +80,7 @@ class FileSink:
             self._terminate(teardown=True)
             self._initialize_file(rename_existing=True)
             if self._set_creation_time is not None:
-                self._set_creation_time(self._file_path, now().replace(tzinfo=None).timestamp())
+                self._set_creation_time(self._file_path, datetime.now().timestamp())
         self._file.write(message)
 
     def _initialize_file(self, *, rename_existing):
@@ -163,7 +163,7 @@ class FileSink:
                 creation_time = self._get_creation_time(filepath)
                 if self._set_creation_time is not None:
                     self._set_creation_time(filepath, creation_time)
-                start_time = time_limit = datetime.datetime.fromtimestamp(creation_time)
+                start_time = time_limit = datetime.fromtimestamp(creation_time)
                 if time_init is not None:
                     time_limit = time_limit.replace(
                         hour=time_init.hour,
@@ -203,11 +203,11 @@ class FileSink:
                 if day is None:
                     return self._make_rotation_function(time)
                 if time is None:
-                    time = datetime.time(0, 0, 0)
+                    time = datetime_.time(0, 0, 0)
 
                 def next_day(t):
                     while True:
-                        t += datetime.timedelta(days=1)
+                        t += datetime_.timedelta(days=1)
                         if t.weekday() == day:
                             return t
 
@@ -215,13 +215,13 @@ class FileSink:
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         elif isinstance(rotation, (numbers.Real, decimal.Decimal)):
             return make_from_size(rotation)
-        elif isinstance(rotation, datetime.time):
+        elif isinstance(rotation, datetime_.time):
 
             def next_day(t):
-                return t + datetime.timedelta(days=1)
+                return t + datetime_.timedelta(days=1)
 
             return make_from_time(next_day, time_init=rotation)
-        elif isinstance(rotation, datetime.timedelta):
+        elif isinstance(rotation, datetime_.timedelta):
 
             def add_interval(t):
                 return t + rotation
@@ -258,11 +258,11 @@ class FileSink:
                 return sorted(logs, key=key_log)[retention:]
 
             return make_from_filter(filter_logs)
-        elif isinstance(retention, datetime.timedelta):
+        elif isinstance(retention, datetime_.timedelta):
             seconds = retention.total_seconds()
 
             def filter_logs(logs):
-                t = now().timestamp()
+                t = datetime.now().timestamp()
                 return [log for log in logs if os.stat(log).st_mtime <= t - seconds]
 
             return make_from_filter(filter_logs)
