@@ -72,7 +72,7 @@ class datetime(datetime_):
         return pattern.sub(get, spec)
 
 
-def now():
+def aware_now():
     now = datetime.now()
     timestamp = now.timestamp()
     local = localtime(timestamp)

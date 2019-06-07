@@ -17,7 +17,7 @@ from colorama import AnsiToWin32
 from . import _defaults
 from ._ansimarkup import AnsiMarkup
 from ._better_exceptions import ExceptionFormatter
-from ._datetime import now
+from ._datetime import aware_now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
@@ -35,7 +35,7 @@ def parse_ansi(color):
 
 Level = namedtuple("Level", ["no", "color", "icon"])
 
-start_time = now()
+start_time = aware_now()
 
 
 class Logger:
@@ -1589,7 +1589,7 @@ class Logger:
                         return
                 _self._enabled[name] = True
 
-            current_datetime = now()
+            current_datetime = aware_now()
 
             if level_id is None:
                 level_no, level_icon = level, " "
