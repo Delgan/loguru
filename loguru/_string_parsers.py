@@ -32,12 +32,12 @@ def parse_duration(duration):
 
     units = [
         ("y|years?", 31536000),
-        ("mo|months?", 2628000),
+        ("months?", 2628000),
         ("w|weeks?", 604800),
         ("d|days?", 86400),
         ("h|hours?", 3600),
-        ("m|minutes?", 60),
-        ("s|seconds?", 1),
+        ("min(?:ute)?s?", 60),
+        ("s|sec(?:ond)s?", 1),
         ("ms|milliseconds?", 0.001),
         ("us|microseconds?", 0.000001),
     ]
