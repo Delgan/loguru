@@ -52,12 +52,12 @@ setup(
         "dev": [
             "black>=19.3b0 ; python_version>='3.6'",
             "codecov>=2.0.15",
+            "flake8>=3.7.7",
             "isort>=4.3.20",
             "tox>=3.9.0",
             "tox-travis>=0.12",
             "pytest>=4.6.2",
             "pytest-cov>=2.7.1",
-            "pytest-pep8>=1.0.6",
             "Sphinx>=1.7.4",
             "sphinx-autobuild>=0.7",
             "sphinx-rtd-theme>=0.3",
