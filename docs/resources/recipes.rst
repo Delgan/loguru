@@ -15,6 +15,7 @@ Code snippets and recipes for ``loguru``
 .. |bind| replace:: :meth:`~loguru._logger.Logger.bind`
 .. |patch| replace:: :meth:`~loguru._logger.Logger.patch`
 .. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
+.. |log| replace:: :meth:`~loguru._logger.Logger.log()`
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
 
@@ -194,6 +195,29 @@ Which would result in::
     2019-04-07 11:08:44.198 | DEBUG    | __main__:bar:30 - Entering 'foo' (args=(2, 4), kwargs={'c': 8})
     2019-04-07 11:08:44.198 | INFO     | __main__:foo:26 - Inside the function
     2019-04-07 11:08:44.198 | DEBUG    | __main__:bar:30 - Exiting 'foo' (result=64)
+
+
+Using logging function based on custom added levels
+---------------------------------------------------
+
+After adding a new level, it's habitually used with the |log| function::
+
+    logger.level("foobar", no=33, icon="🤖", color="<blue>")
+
+    logger.log("foobar", "A message")
+
+
+For convenience, one can assign a new logging function which automatically uses the custom added level:
+
+    def foobar(_, message, *args, **kwargs):
+        logger.opt(depth=1).log("foobar", message, *args, **kwargs)
+
+    logger.__class__.foobar = foobar
+
+    logger.foobar("A message")
+
+
+The new method need to be added only once and will be usable across all your files importing the `logger`. Note that the call to `opt(depth=1)` is necessary to make sure that the logged message contains contextual information of the parent stack frame (where `logger.foobar()` is called). Also, assigning the method to `logger.__class__` rather than `logger` directly ensures that it stays available even after calling `logger.bind()`, `logger.patch()` and `logger.opt()` (because these functions return a new `logger` instance).
 
 
 Dynamically formatting messages to properly align values with padding
