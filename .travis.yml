@@ -11,12 +11,9 @@ python:
   - 'pypy3.5'
 
 install:
-  - pip install -e .[dev]
-  - pip install tox-travis
-  - pip install codecov
+  - pip install tox-travis codecov
 
 script: tox
 
 after_success:
-  - codecov --flags "py${TRAVIS_PYTHON_VERSION//./}"
-  - cd docs && make html
+  - codecov --flags "py_${TRAVIS_PYTHON_VERSION//[^[:alnum:]]/}"
