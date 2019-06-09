@@ -13,7 +13,6 @@ python:
 install:
   - pip install tox-travis codecov
 
-script: tox
-
-after_success:
-  - codecov --flags "py_${TRAVIS_PYTHON_VERSION//[^[:alnum:]]/}"
+script:
+  - tox
+  - codecov --required --flags "py_${TRAVIS_PYTHON_VERSION//[^[:alnum:]]/}"
