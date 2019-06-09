@@ -17,3 +17,4 @@ script: tox
 
 after_success:
   - codecov --flags "py_${TRAVIS_PYTHON_VERSION//[^[:alnum:]]/}"
+  - sleep 10  # Github build status would not be updated by "codecov" otherwise
