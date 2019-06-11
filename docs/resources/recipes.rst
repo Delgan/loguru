@@ -19,6 +19,7 @@ Code snippets and recipes for ``loguru``
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
 
+.. _`GH#88`: https://github.com/Delgan/loguru/issues/88
 
 Changing the level of an existing handler
 -----------------------------------------
@@ -289,3 +290,20 @@ You may also capture warnings emitted by your application by replacing |warnings
         showwarning_(message, *args, **kwargs)
 
     warnings.showwarning = showwarning
+
+
+Using Loguru's ``logger`` within a Cython module
+------------------------------------------------
+
+Loguru and Cython do not interoperate very well. This is because Loguru (and logging generally) heavily relies on Python stack frames while Cython, being an alternative Python implementation, try to get ride of these frames for optimisation reasons.
+
+Calling the ``logger`` from code compiled with Cython may raise this kind of exception::
+
+    ValueError: call stack is not deep enough
+
+This error happens when Loguru tries to access a stack frame which has been suppressed by Cython. There is no way for Loguru to retrieve contextual information of the logged message, but there exists a workaround that will at least prevent your application to crash::
+
+    # Add this at the start of your file
+    logger = logger.opt(depth=-1)
+
+Note that logged messages should be displayed correctly, but function name and other information will be incorrect. This issue is discussed in `GH#88`_.
