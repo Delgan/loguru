@@ -10,6 +10,7 @@ Unreleased
 - Add coloration of exception traceback even if ``diagnose`` and ``backtrace`` options are ``False``
 - Add a way to limit the depth of formatted exceptions traceback by setting the conventional ``sys.tracebacklimit`` variable (`#77 <https://github.com/Delgan/loguru/issues/77>`_)
 - The ``record["exception"]`` attribute is now unpackable as a ``(type, value, traceback)`` tuple
+- Fix logging methods not being serializable with ``pickle`` and hence raising exception while being passed to some ``multiprocessing`` functions (`#102 <https://github.com/Delgan/loguru/issues/102>`_)
 - Fix exception stack trace not colorizing source code lines on Windows
 - Fix possible ``AttributeError`` while formatting exceptions within a ``celery`` task (`#52 <https://github.com/Delgan/loguru/issues/52>`_)
 - Fix ``logger.catch`` decorator not working with generator and coroutine functions (`#75 <https://github.com/Delgan/loguru/issues/75>`_)
