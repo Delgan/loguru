@@ -24,6 +24,7 @@ def reset_logger():
         loguru._logger.Logger._handlers_count = itertools.count()
         loguru._logger.Logger._enabled = {}
         loguru._logger.Logger._activation_list = []
+        loguru._logger.Logger._activation_none = True
         logging.Logger.manager.loggerDict.clear()
         logging.root = logging.RootLogger(logging.WARNING)
 
@@ -90,3 +91,15 @@ def make_logging_logger():
         return logging_logger
 
     yield make_logging_logger
+
+
+@pytest.fixture
+def f_globals_name_absent(monkeypatch):
+    getframe_ = loguru._get_frame.get_frame
+
+    def patched_getframe(*args, **kwargs):
+        frame = getframe_(*args, **kwargs)
+        monkeypatch.delitem(frame.f_globals, "__name__", raising=False)
+        return frame
+
+    monkeypatch.setattr(loguru._logger, "get_frame", patched_getframe)

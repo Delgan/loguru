@@ -105,13 +105,47 @@ def test_multiple_activations():
     assert n() == 0
 
 
-@pytest.mark.parametrize("name", [42, [], object(), None])
+def test_log_before_enable_f_globals_name_absent(writer, f_globals_name_absent):
+    logger.add(writer, format="{message}")
+    logger.disable(None)
+    logger.debug("nope")
+    logger.enable(None)
+    logger.debug("yes")
+    result = writer.read()
+    assert result == "yes\n"
+
+
+def test_log_before_disable_f_globals_name_absent(writer, f_globals_name_absent):
+    logger.add(writer, format="{message}")
+    logger.enable(None)
+    logger.debug("yes")
+    logger.disable(None)
+    logger.debug("nope")
+    result = writer.read()
+    assert result == "yes\n"
+
+
+def test_f_globals_name_absent_with_others(writer, f_globals_name_absent):
+    logger.add(writer, format="{message}")
+    logger.info("1")
+    logger.enable(None)
+    logger.disable("foobar")
+    logger.enable("foo.bar")
+    logger.disable(None)
+    logger.info("2")
+    logger.enable("foobar")
+    logger.enable(None)
+    logger.info("3")
+    assert writer.read() == "1\n3\n"
+
+
+@pytest.mark.parametrize("name", [42, [], object()])
 def test_invalid_enable_name(name):
     with pytest.raises(ValueError):
         logger.enable(name)
 
 
-@pytest.mark.parametrize("name", [42, [], object(), None])
+@pytest.mark.parametrize("name", [42, [], object()])
 def test_invalid_disable_name(name):
     with pytest.raises(ValueError):
         logger.disable(name)

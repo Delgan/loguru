@@ -110,6 +110,12 @@ def test_log_formatting(writer, message, args, kwargs, expected, use_log_functio
     assert writer.read() == expected + "\n"
 
 
+def test_f_globals_name_absent(writer, f_globals_name_absent):
+    logger.add(writer, format="{name} {message}", colorize=False)
+    logger.info("Foobar")
+    assert writer.read() == "None Foobar\n"
+
+
 def test_extra_formatting(writer):
     logger.configure(extra={"test": "my_test", "dict": {"a": 10}})
     logger.add(writer, format="{extra[test]} -> {extra[dict]} -> {message}")

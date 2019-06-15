@@ -159,6 +159,7 @@ class Logger:
     _min_level = float("inf")
     _enabled = {}
     _activation_list = []
+    _activation_none = True
 
     _lock = threading.Lock()
 
@@ -199,8 +200,8 @@ class Logger:
         format : |str| or |function|_, optional
             The template used to format logged messages before being sent to the sink.
         filter : |function|_ or |str|, optional
-            A directive used to optionally filter out logged messages before they are sent to the
-            sink.
+            A directive optionally used to decide for each logged message whether it should be sent
+            to the sink or not.
         colorize : |bool|, optional
             Whether or not the color markups contained in the formatted message should be converted
             to ansi codes for terminal coloration, or stripped otherwise. If ``None``, the choice
@@ -770,14 +771,19 @@ class Logger:
         else:
             raise ValueError("Cannot log to objects of type '%s'." % type(sink).__name__)
 
-        if filter is None or filter == "":
+        if filter is None:
             filter_func = None
+        elif filter == "":
+
+            def filter_func(record):
+                return record["name"] is not None
+
         elif isinstance(filter, str):
             parent = filter + "."
             length = len(parent)
 
-            def filter_func(r):
-                return (r["name"] + ".")[:length] == parent
+            def filter_func(record):
+                return (record["name"] + ".")[:length] == parent
 
         elif callable(filter):
             filter_func = filter
@@ -1295,9 +1301,13 @@ class Logger:
         Developers of library using `Loguru` should absolutely disable it to avoid disrupting
         users with unrelated logs messages.
 
+        Note that in some rare circumstances, it is not possible for `Loguru` to
+        determine the module's ``__name__`` value. In such situation, ``record["name"]`` will be
+        equals to ``None``, this is why ``None`` is also a valid argument.
+
         Parameters
         ----------
-        name : |str|
+        name : |str| or ``None``
             The name of the parent module to disable.
 
         Examples
@@ -1315,9 +1325,12 @@ class Logger:
         Logging is generally disabled by imported library using `Loguru`, hence this function
         allows users to receive these messages anyway.
 
+        To enable all logs regardless of the module they are coming from, an empty string ``""`` can
+        be passed.
+
         Parameters
         ----------
-        name : |str|
+        name : |str| or ``None``
             The name of the parent module to re-allow.
 
         Examples
@@ -1418,8 +1431,18 @@ class Logger:
         return [self.add(**params) for params in handlers]
 
     def _change_activation(self, name, status):
-        if not isinstance(name, str):
-            raise ValueError("Invalid name, it should be a string, not: '%s'" % type(name).__name__)
+        if not (name is None or isinstance(name, str)):
+            raise ValueError(
+                "Invalid name, it should be a string (or ``None``), not: '%s'" % type(name).__name__
+            )
+
+        if name is None:
+            with self._lock:
+                for n in self._enabled:
+                    if n is None:
+                        self._enabled[n] = status
+                Logger._activation_none = status
+            return
 
         if name != "":
             name += "."
@@ -1438,7 +1461,7 @@ class Logger:
 
         with self._lock:
             for n in self._enabled:
-                if (n + ".")[: len(name)] == name:
+                if n is not None and (n + ".")[: len(name)] == name:
                     self._enabled[n] = status
 
             self._activation_list[:] = activation_list
@@ -1560,20 +1583,30 @@ class Logger:
             return
 
         frame = get_frame(self._depth + 2)
-        name = frame.f_globals["__name__"]
+
+        try:
+            name = frame.f_globals["__name__"]
+        except KeyError:
+            name = None
 
         try:
             if not self._enabled[name]:
                 return
         except KeyError:
-            dotted_name = name + "."
-            for dotted_module_name, status in self._activation_list:
-                if dotted_name[: len(dotted_module_name)] == dotted_module_name:
-                    if status:
-                        break
-                    self._enabled[name] = False
+            if name is None:
+                status = Logger._activation_none
+                self._enabled[name] = status
+                if not status:
                     return
-            self._enabled[name] = True
+            else:
+                dotted_name = name + "."
+                for dotted_module_name, status in self._activation_list:
+                    if dotted_name[: len(dotted_module_name)] == dotted_module_name:
+                        if status:
+                            break
+                        self._enabled[name] = False
+                        return
+                self._enabled[name] = True
 
         current_datetime = aware_now()
 

@@ -37,6 +37,20 @@ def test_filtered_out(filter, writer):
     assert writer.read() == ""
 
 
+@pytest.mark.parametrize("filter", ["tests", "", lambda _: False])
+def test_filtered_out_f_globals_name_absent(writer, filter, f_globals_name_absent):
+    logger.add(writer, filter=filter, format="{message}")
+    logger.info("It's not ok")
+    assert writer.read() == ""
+
+
+@pytest.mark.parametrize("filter", [None, lambda _: True])
+def test_filtered_in_f_globals_name_absent(writer, filter, f_globals_name_absent):
+    logger.add(writer, filter=filter, format="{message}")
+    logger.info("It's ok")
+    assert writer.read() == "It's ok\n"
+
+
 @pytest.mark.parametrize("filter", [-1, 3.4, object()])
 def test_invalid_filter(writer, filter):
     with pytest.raises(ValueError):
