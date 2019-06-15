@@ -1555,7 +1555,7 @@ class Logger:
                 buffer = buffer[end:]
                 yield from matches[:-1]
 
-    def _log(self, level_id, static_level_no, exception, message, args, kwargs):
+    def _log(self, level_id, static_level_no, message, args, kwargs):
         if not self._handlers:
             return
 
@@ -1616,20 +1616,21 @@ class Logger:
         process_recattr = ProcessRecattr(process_ident)
         process_recattr.id, process_recattr.name = process_ident, process.name
 
-        if exception:
-            if isinstance(exception, BaseException):
-                type_, value, traceback = (type(exception), exception, exception.__traceback__)
-            elif isinstance(exception, tuple):
-                type_, value, traceback = exception
+        if self._exception:
+            exc = self._exception
+            if isinstance(exc, BaseException):
+                type_, value, traceback = (type(exc), exc, exc.__traceback__)
+            elif isinstance(exc, tuple):
+                type_, value, traceback = exc
             else:
                 type_, value, traceback = sys.exc_info()
-            exception_ = ExceptionRecattr(type_, value, traceback)
+            exception = ExceptionRecattr(type_, value, traceback)
         else:
-            exception_ = None
+            exception = None
 
         record = {
             "elapsed": elapsed,
-            "exception": exception_,
+            "exception": exception,
             "extra": {**self._extra_class, **self._extra},
             "file": file_recattr,
             "function": code.co_name,
@@ -1663,40 +1664,47 @@ class Logger:
 
     def trace(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
-        _self._log("TRACE", None, _self._exception, _message, args, kwargs)
+        _self._log("TRACE", None, _message, args, kwargs)
 
     def debug(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
-        _self._log("DEBUG", None, _self._exception, _message, args, kwargs)
+        _self._log("DEBUG", None, _message, args, kwargs)
 
     def info(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'INFO'``."""
-        _self._log("INFO", None, _self._exception, _message, args, kwargs)
+        _self._log("INFO", None, _message, args, kwargs)
 
     def success(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
-        _self._log("SUCCESS", None, _self._exception, _message, args, kwargs)
+        _self._log("SUCCESS", None, _message, args, kwargs)
 
     def warning(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
-        _self._log("WARNING", None, _self._exception, _message, args, kwargs)
+        _self._log("WARNING", None, _message, args, kwargs)
 
     def error(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
-        _self._log("ERROR", None, _self._exception, _message, args, kwargs)
+        _self._log("ERROR", None, _message, args, kwargs)
 
     def critical(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
-        _self._log("CRITICAL", None, _self._exception, _message, args, kwargs)
+        _self._log("CRITICAL", None, _message, args, kwargs)
 
     def exception(_self, _message, *args, **kwargs):
         r"""Convenience method for logging an ``'ERROR'`` with exception information."""
-        _self._log("ERROR", None, True, _message, args, kwargs)
+        _self.opt(
+            exception=True,
+            record=_self._record,
+            lazy=_self._lazy,
+            ansi=_self._ansi,
+            raw=_self._raw,
+            depth=_self._depth,
+        )._log("ERROR", None, _message, args, kwargs)
 
     def log(_self, _level, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``_level``."""
         level_id, static_level_no = _self._dynamic_level(_level)
-        _self._log(level_id, static_level_no, _self._exception, _message, args, kwargs)
+        _self._log(level_id, static_level_no, _message, args, kwargs)
 
     @staticmethod
     @functools.lru_cache(maxsize=32)
