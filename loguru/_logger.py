@@ -828,8 +828,8 @@ class Logger:
         if not encoding:
             encoding = "ascii"
 
-        with self._lock:
-            handler_id = next(self._handlers_count)
+        with Logger._lock:
+            handler_id = next(Logger._handlers_count)
 
             exception_formatter = ExceptionFormatter(
                 colorize=colorize,
@@ -853,10 +853,10 @@ class Logger:
                 enqueue=enqueue,
                 id_=handler_id,
                 exception_formatter=exception_formatter,
-                levels_ansi_codes=self._levels_ansi_codes,
+                levels_ansi_codes=Logger._levels_ansi_codes,
             )
 
-            handlers = self._handlers.copy()
+            handlers = Logger._handlers.copy()
             handlers[handler_id] = handler
 
             Logger._min_level = min(Logger._min_level, levelno)
@@ -865,7 +865,7 @@ class Logger:
         return handler_id
 
     def __repr__(self):
-        return "<loguru.logger handlers=%r>" % self._handlers
+        return "<loguru.logger handlers=%r>" % Logger._handlers
 
     def remove(self, handler_id=None):
         """Remove a previously added handler and stop sending logs to its sink.
@@ -889,8 +889,8 @@ class Logger:
         >>> logger.remove(i)
         >>> logger.info("No longer logging")
         """
-        with self._lock:
-            handlers = self._handlers.copy()
+        with Logger._lock:
+            handlers = Logger._handlers.copy()
 
             if handler_id is None:
                 for handler in handlers.values():
@@ -981,8 +981,8 @@ class Logger:
             return self.catch()(exception)
 
         class Catcher:
-            def __init__(self, as_decorator):
-                self._as_decorator = as_decorator
+            def __init__(self_, as_decorator):
+                self_._as_decorator = as_decorator
 
             def __enter__(self_):
                 return None
@@ -1252,11 +1252,11 @@ class Logger:
 
         if no is color is icon is None:
             try:
-                return self._levels[name]
+                return Logger._levels[name]
             except KeyError:
                 raise ValueError("Level '%s' does not exist" % name)
 
-        if name not in self._levels:
+        if name not in Logger._levels:
             if no is None:
                 raise ValueError(
                     "Level '%s' does not exist, you have to create it by specifying a level no"
@@ -1287,10 +1287,10 @@ class Logger:
         ansi = parse_ansi(color)
         level = Level(no, color, icon)
 
-        with self._lock:
-            self._levels[name] = level
-            self._levels_ansi_codes[name] = ansi
-            for handler in self._handlers.values():
+        with Logger._lock:
+            Logger._levels[name] = level
+            Logger._levels_ansi_codes[name] = ansi
+            for handler in Logger._handlers.values():
                 handler.update_format(name)
 
         return level
@@ -1413,13 +1413,13 @@ class Logger:
                 self.level(**params)
 
         if patch is not None:
-            with self._lock:
+            with Logger._lock:
                 Logger._patcher_class = patch
 
         if extra is not None:
-            with self._lock:
-                self._extra_class.clear()
-                self._extra_class.update(extra)
+            with Logger._lock:
+                Logger._extra_class.clear()
+                Logger._extra_class.update(extra)
 
         if activation is not None:
             for name, state in activation:
@@ -1437,18 +1437,18 @@ class Logger:
             )
 
         if name is None:
-            with self._lock:
-                for n in self._enabled:
+            with Logger._lock:
+                for n in Logger._enabled:
                     if n is None:
-                        self._enabled[n] = status
+                        Logger._enabled[n] = status
                 Logger._activation_none = status
             return
 
         if name != "":
             name += "."
 
-        with self._lock:
-            activation_list = [(n, s) for n, s in self._activation_list if n[: len(name)] != name]
+        with Logger._lock:
+            activation_list = [(n, s) for n, s in Logger._activation_list if n[: len(name)] != name]
 
         parent_status = next((s for n, s in activation_list if name[: len(n)] == n), None)
         if parent_status != status and not (name == "" and status is True):
@@ -1459,12 +1459,12 @@ class Logger:
 
             activation_list.sort(key=key_sort, reverse=True)
 
-        with self._lock:
-            for n in self._enabled:
+        with Logger._lock:
+            for n in Logger._enabled:
                 if n is not None and (n + ".")[: len(name)] == name:
-                    self._enabled[n] = status
+                    Logger._enabled[n] = status
 
-            self._activation_list[:] = activation_list
+            Logger._activation_list[:] = activation_list
 
     @staticmethod
     def parse(file, pattern, *, cast={}, chunk=2 ** 16):
@@ -1579,7 +1579,7 @@ class Logger:
                 yield from matches[:-1]
 
     def _log(self, level_id, static_level_no, message, args, kwargs):
-        if not self._handlers:
+        if not Logger._handlers:
             return
 
         frame = get_frame(self._depth + 2)
@@ -1590,23 +1590,23 @@ class Logger:
             name = None
 
         try:
-            if not self._enabled[name]:
+            if not Logger._enabled[name]:
                 return
         except KeyError:
             if name is None:
                 status = Logger._activation_none
-                self._enabled[name] = status
+                Logger._enabled[name] = status
                 if not status:
                     return
             else:
                 dotted_name = name + "."
-                for dotted_module_name, status in self._activation_list:
+                for dotted_module_name, status in Logger._activation_list:
                     if dotted_name[: len(dotted_module_name)] == dotted_module_name:
                         if status:
                             break
-                        self._enabled[name] = False
+                        Logger._enabled[name] = False
                         return
-                self._enabled[name] = True
+                Logger._enabled[name] = True
 
         current_datetime = aware_now()
 
@@ -1616,12 +1616,12 @@ class Logger:
             level_name = "Level %d" % level_no
         else:
             try:
-                level_no, _, level_icon = self._levels[level_id]
+                level_no, _, level_icon = Logger._levels[level_id]
                 level_name = level_id
             except KeyError:
                 raise ValueError("Level '%s' does not exist" % level_id)
 
-        if level_no < self._min_level:
+        if level_no < Logger._min_level:
             return
 
         code = frame.f_code
@@ -1664,7 +1664,7 @@ class Logger:
         record = {
             "elapsed": elapsed,
             "exception": exception,
-            "extra": {**self._extra_class, **self._extra},
+            "extra": {**Logger._extra_class, **self._extra},
             "file": file_recattr,
             "function": code.co_name,
             "level": level_recattr,
@@ -1692,7 +1692,7 @@ class Logger:
         if self._patcher:
             self._patcher(record)
 
-        for handler in self._handlers.values():
+        for handler in Logger._handlers.values():
             handler.emit(record, level_id, self._ansi, self._raw)
 
     def trace(_self, _message, *args, **kwargs):
