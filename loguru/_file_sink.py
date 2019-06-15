@@ -37,6 +37,7 @@ class FileSink:
         **kwargs
     ):
         self.encoding = encoding or locale.getpreferredencoding(False)
+        self.name = str(path)
 
         self._mode = mode
         self._buffering = buffering

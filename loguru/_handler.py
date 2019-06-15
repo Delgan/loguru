@@ -17,6 +17,7 @@ class Handler:
     def __init__(
         self,
         *,
+        name,
         writer,
         stopper,
         levelno,
@@ -31,6 +32,7 @@ class Handler:
         id_,
         levels_ansi_codes
     ):
+        self._name = name
         self._writer = writer
         self._stopper = stopper
         self._levelno = levelno
@@ -65,6 +67,9 @@ class Handler:
             self._queue = multiprocessing.SimpleQueue()
             self._thread = threading.Thread(target=self._queued_writer, daemon=True)
             self._thread.start()
+
+    def __repr__(self):
+        return "(level=%d, writer=%s)" % (self._levelno, self._name)
 
     def emit(self, record, level_id, is_ansi, is_raw):
         try:

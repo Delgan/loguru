@@ -677,6 +677,8 @@ class Logger:
                 catch=catch,
             )
         elif hasattr(sink, "write") and callable(sink.write):
+            name = getattr(sink, "name", repr(sink))
+
             if colorize is False:
                 stream = sink
             else:
@@ -722,6 +724,7 @@ class Logger:
                     return None
 
         elif isinstance(sink, logging.Handler):
+            name = repr(sink)
 
             def writer(m):
                 message = str(m)
@@ -749,6 +752,8 @@ class Logger:
             if colorize is None:
                 colorize = False
         elif callable(sink):
+            name = getattr(sink, "__name__", repr(sink))
+
             if kwargs:
 
                 def writer(m):
@@ -829,6 +834,7 @@ class Logger:
             )
 
             handler = Handler(
+                name=name,
                 writer=writer,
                 stopper=stopper,
                 levelno=levelno,
@@ -851,6 +857,9 @@ class Logger:
             Logger._handlers = handlers
 
         return handler_id
+
+    def __repr__(self):
+        return "<loguru.logger handlers=%r>" % self._handlers
 
     def remove(self, handler_id=None):
         """Remove a previously added handler and stop sending logs to its sink.
