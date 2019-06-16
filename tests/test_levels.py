@@ -165,6 +165,21 @@ def test_updating_min_level(writer):
     logger.debug("Early exit -> no {error}", nope=None)
 
 
+def test_assign_custom_level_method(writer):
+    logger.level("foobar", no=33, icon="🤖", color="<blue>")
+
+    def foobar(_, message, *args, **kwargs):
+        logger.opt(depth=1).log("foobar", message, *args, **kwargs)
+
+    logger.__class__.foobar = foobar
+    logger.foobar("Message not logged")
+    logger.add(
+        writer, format="<lvl>{level.name} {level.no} {level.icon} {message}</lvl>", colorize=True
+    )
+    logger.foobar("Logged message")
+    assert writer.read() == parse("<blue>foobar 33 🤖 Logged message</blue>\n")
+
+
 @pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
 def test_log_invalid_level(writer, level):
     logger.add(writer)
