@@ -1436,35 +1436,37 @@ class Logger:
                 "Invalid name, it should be a string (or ``None``), not: '%s'" % type(name).__name__
             )
 
-        if name is None:
-            with Logger._lock:
-                for n in Logger._enabled:
-                    if n is None:
-                        Logger._enabled[n] = status
-                Logger._activation_none = status
-            return
-
-        if name != "":
-            name += "."
-
         with Logger._lock:
+            enabled = Logger._enabled.copy()
+
+            if name is None:
+                for n in enabled:
+                    if n is None:
+                        enabled[n] = status
+                Logger._activation_none = status
+                Logger._enabled = enabled
+                return
+
+            if name != "":
+                name += "."
+
             activation_list = [(n, s) for n, s in Logger._activation_list if n[: len(name)] != name]
 
-        parent_status = next((s for n, s in activation_list if name[: len(n)] == n), None)
-        if parent_status != status and not (name == "" and status is True):
-            activation_list.append((name, status))
+            parent_status = next((s for n, s in activation_list if name[: len(n)] == n), None)
+            if parent_status != status and not (name == "" and status is True):
+                activation_list.append((name, status))
 
-            def key_sort(x):
-                return x[0].count(".")
+                def modules_depth(x):
+                    return x[0].count(".")
 
-            activation_list.sort(key=key_sort, reverse=True)
+                activation_list.sort(key=modules_depth, reverse=True)
 
-        with Logger._lock:
-            for n in Logger._enabled:
+            for n in enabled:
                 if n is not None and (n + ".")[: len(name)] == name:
-                    Logger._enabled[n] = status
+                    enabled[n] = status
 
-            Logger._activation_list[:] = activation_list
+            Logger._activation_list = activation_list
+            Logger._enabled = enabled
 
     @staticmethod
     def parse(file, pattern, *, cast={}, chunk=2 ** 16):
@@ -1593,9 +1595,10 @@ class Logger:
             if not Logger._enabled[name]:
                 return
         except KeyError:
+            enabled = Logger._enabled
             if name is None:
                 status = Logger._activation_none
-                Logger._enabled[name] = status
+                enabled[name] = status
                 if not status:
                     return
             else:
@@ -1604,9 +1607,9 @@ class Logger:
                     if dotted_name[: len(dotted_module_name)] == dotted_module_name:
                         if status:
                             break
-                        Logger._enabled[name] = False
+                        enabled[name] = False
                         return
-                Logger._enabled[name] = True
+                enabled[name] = True
 
         current_datetime = aware_now()
 

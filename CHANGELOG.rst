@@ -18,6 +18,7 @@ Unreleased
 - Fix ``logger.catch`` decorator not working with generator and coroutine functions (`#75 <https://github.com/Delgan/loguru/issues/75>`_).
 - Fix ``record["path"]`` case being normalized for no necessary reason (`#85 <https://github.com/Delgan/loguru/issues/85>`_).
 - Fix handler addded with ``enqueue=True`` stopping working if exception was raised in sink although ``catch=True``.
+- Fix thread-safety of ``enable()`` and ``disable()`` being called during logging
 - Tox should now be used for tests (`#41 <https://github.com/Delgan/loguru/issues/41>`_).
 
 
