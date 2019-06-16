@@ -91,6 +91,7 @@ class Logger:
     .. |logging| replace:: :mod:`logging`
     .. |Thread.run| replace:: :meth:`threading.Thread.run()`
     .. |Exception| replace:: :class:`Exception`
+    .. |locale.getpreferredencoding| replace:: :func:`locale.getpreferredencoding()`
 
     .. |logger.trace| replace:: :meth:`logger.trace()<Logger.trace()>`
     .. |logger.debug| replace:: :meth:`logger.debug()<Logger.debug()>`
@@ -252,7 +253,7 @@ class Logger:
             buffered file).
         encoding : |str|, optional
             The file encoding as for built-in |open| function. If ``None``, it defaults to
-            ``locale.getpreferredencoding()``.
+            |locale.getpreferredencoding|.
         **kwargs
             Others parameters are passed to the built-in |open| function.
 
