@@ -825,7 +825,7 @@ class Logger:
         except AttributeError:
             encoding = None
 
-        if not encoding:
+        if encoding is None:
             encoding = "ascii"
 
         with Logger._lock:
