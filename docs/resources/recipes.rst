@@ -12,6 +12,8 @@ Code snippets and recipes for ``loguru``
 
 .. |add| replace:: :meth:`~loguru._logger.Logger.add()`
 .. |remove| replace:: :meth:`~loguru._logger.Logger.remove()`
+.. |enable| replace:: :meth:`~loguru._logger.Logger.enable()`
+.. |disable| replace:: :meth:`~loguru._logger.Logger.disable()`
 .. |bind| replace:: :meth:`~loguru._logger.Logger.bind`
 .. |patch| replace:: :meth:`~loguru._logger.Logger.patch`
 .. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
@@ -290,6 +292,19 @@ You may also capture warnings emitted by your application by replacing |warnings
         showwarning_(message, *args, **kwargs)
 
     warnings.showwarning = showwarning
+
+
+Circumventing modules whose ``__name__`` value is absent
+--------------------------------------------------------
+
+Loguru makes use of the global variable ``__name__`` to determine from where the logged message is coming from. However, it may happen in very specific situation (like some Dask distributed environment) that this value is not set. In such case, Loguru will use ``None`` to make up for the lack of the value. This implies that if you want to |disable|_ messages coming from such special module, you have to explicitly call ``logger.disable(None)``.
+
+Similar considerations should be taken into account while dealing with the ``filter`` attribute. As ``__name__`` is missing, Loguru will assign the ``None`` value to the ``record["name"]`` entry. It also means that once formatted in your log messages, the ``{name}`` token will be equals to ``"None"``. This can be worked around by manually overriding the ``record["name"]`` value using |patch|_ from inside the faulty module::
+
+    # If Loguru fails to retrieve the proper "name" value, assign it manually
+    logger = logger.patch(lambda record: record.update(name="my_module"))
+
+You probably should not worry about all of this except if you noticed that your code is subject to this behavior.
 
 
 Using Loguru's ``logger`` within a Cython module
