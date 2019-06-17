@@ -11,6 +11,8 @@ from ._logger import Logger as _Logger
 
 __version__ = "0.2.5"
 
+__all__ = ["logger"]
+
 logger = _Logger({}, None, None, False, False, False, False, 0)
 
 if _defaults.LOGURU_AUTOINIT and _sys.stderr:
