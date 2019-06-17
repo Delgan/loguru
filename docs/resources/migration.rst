@@ -38,8 +38,8 @@ Switching from standard ``logging`` to ``loguru``
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
 
 
-Fundamental differences between standard ``logging`` and ``loguru``
--------------------------------------------------------------------
+Fundamental differences between ``logging`` and ``loguru``
+----------------------------------------------------------
 
 Although ``loguru`` is written "from scratch" and does not rely on standard ``logging`` internally, both libraries serve the same purpose: provide functionalities to implement a flexible event logging system. The main difference is that standard ``logging`` requires the user to explicitly instantiate named ``Logger`` and configure them with ``Handler``, ``Formatter`` and ``Filter``, while ``loguru`` tries to narrow down the amount of configuration steps.
 

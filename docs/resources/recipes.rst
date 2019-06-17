@@ -14,8 +14,8 @@ Code snippets and recipes for ``loguru``
 .. |remove| replace:: :meth:`~loguru._logger.Logger.remove()`
 .. |enable| replace:: :meth:`~loguru._logger.Logger.enable()`
 .. |disable| replace:: :meth:`~loguru._logger.Logger.disable()`
-.. |bind| replace:: :meth:`~loguru._logger.Logger.bind`
-.. |patch| replace:: :meth:`~loguru._logger.Logger.patch`
+.. |bind| replace:: :meth:`~loguru._logger.Logger.bind()`
+.. |patch| replace:: :meth:`~loguru._logger.Logger.patch()`
 .. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
 .. |log| replace:: :meth:`~loguru._logger.Logger.log()`
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
@@ -210,7 +210,7 @@ After adding a new level, it's habitually used with the |log| function::
     logger.log("foobar", "A message")
 
 
-For convenience, one can assign a new logging function which automatically uses the custom added level:
+For convenience, one can assign a new logging function which automatically uses the custom added level::
 
     def foobar(_, message, *args, **kwargs):
         logger.opt(depth=1).log("foobar", message, *args, **kwargs)
@@ -220,7 +220,7 @@ For convenience, one can assign a new logging function which automatically uses 
     logger.foobar("A message")
 
 
-The new method need to be added only once and will be usable across all your files importing the `logger`. Note that the call to `opt(depth=1)` is necessary to make sure that the logged message contains contextual information of the parent stack frame (where `logger.foobar()` is called). Also, assigning the method to `logger.__class__` rather than `logger` directly ensures that it stays available even after calling `logger.bind()`, `logger.patch()` and `logger.opt()` (because these functions return a new `logger` instance).
+The new method need to be added only once and will be usable across all your files importing the ``logger``. Note that the call to ``opt(depth=1)`` is necessary to make sure that the logged message contains contextual information of the parent stack frame (where ``logger.foobar()`` is called). Also, assigning the method to ``logger.__class__`` rather than ``logger`` directly ensures that it stays available even after calling ``logger.bind()``, ``logger.patch()`` and ``logger.opt()`` (because these functions return a new ``logger`` instance).
 
 
 Dynamically formatting messages to properly align values with padding
@@ -297,9 +297,9 @@ You may also capture warnings emitted by your application by replacing |warnings
 Circumventing modules whose ``__name__`` value is absent
 --------------------------------------------------------
 
-Loguru makes use of the global variable ``__name__`` to determine from where the logged message is coming from. However, it may happen in very specific situation (like some Dask distributed environment) that this value is not set. In such case, Loguru will use ``None`` to make up for the lack of the value. This implies that if you want to |disable|_ messages coming from such special module, you have to explicitly call ``logger.disable(None)``.
+Loguru makes use of the global variable ``__name__`` to determine from where the logged message is coming from. However, it may happen in very specific situation (like some Dask distributed environment) that this value is not set. In such case, Loguru will use ``None`` to make up for the lack of the value. This implies that if you want to |disable| messages coming from such special module, you have to explicitly call ``logger.disable(None)``.
 
-Similar considerations should be taken into account while dealing with the ``filter`` attribute. As ``__name__`` is missing, Loguru will assign the ``None`` value to the ``record["name"]`` entry. It also means that once formatted in your log messages, the ``{name}`` token will be equals to ``"None"``. This can be worked around by manually overriding the ``record["name"]`` value using |patch|_ from inside the faulty module::
+Similar considerations should be taken into account while dealing with the ``filter`` attribute. As ``__name__`` is missing, Loguru will assign the ``None`` value to the ``record["name"]`` entry. It also means that once formatted in your log messages, the ``{name}`` token will be equals to ``"None"``. This can be worked around by manually overriding the ``record["name"]`` value using |patch| from inside the faulty module::
 
     # If Loguru fails to retrieve the proper "name" value, assign it manually
     logger = logger.patch(lambda record: record.update(name="my_module"))
