@@ -5,13 +5,25 @@ import pytest
 import os
 import subprocess
 import time
+import warnings
 
-default_levels = loguru._logger.Logger._levels.copy()
-default_levels_ansi_codes = loguru._logger.Logger._levels_ansi_codes.copy()
+
+@pytest.fixture(scope="session", autouse=True)
+def check_env_variables():
+    for var in os.environ:
+        if var.startswith("LOGURU_"):
+            warnings.warn(
+                "A Loguru environment variable has been detected "
+                "and may interfere with the tests: '%s'" % var,
+                RuntimeWarning,
+            )
 
 
 @pytest.fixture(autouse=True)
 def reset_logger():
+    default_levels = loguru._logger.Logger._levels.copy()
+    default_levels_ansi_codes = loguru._logger.Logger._levels_ansi_codes.copy()
+
     def reset():
         loguru.logger.remove()
         loguru.logger.__init__({}, None, None, False, False, False, False, 0)
