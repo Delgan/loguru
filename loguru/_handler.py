@@ -265,12 +265,11 @@ class Handler:
 
         try:
             sys.stderr.write("--- Logging error in Loguru Handler #%d ---\n" % self._id)
-            sys.stderr.write("Record was: ")
             try:
-                sys.stderr.write(str(record))
+                record_repr = str(record)
             except Exception:
-                sys.stderr.write("/!\\ Unprintable record /!\\")
-            sys.stderr.write("\n")
+                record_repr = "/!\\ Unprintable record /!\\"
+            sys.stderr.write("Record was: %s\n" % record_repr)
             traceback.print_exception(ex_type, ex, tb, None, sys.stderr)
             sys.stderr.write("--- End of logging error ---\n")
         except OSError:
