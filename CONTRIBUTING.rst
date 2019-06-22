@@ -15,21 +15,21 @@ If you have any question about `Loguru`, if you are seeking for help, or if you 
 Reporting a bug
 ---------------
 
-If you encountered an unexpected behavior using `Loguru`, please `open a new issue`_ so we can fix it as soon as possible! Be as specific as possible in the description of your problem so we can fix it as quickly as possible.
+If you encountered an unexpected behavior using `Loguru`, please `open a new issue`_ and describe the problem you have spotted. Be as specific as possible in the description of the trouble so we can easily analyse it and quickly fix it.
 
 An ideal bug report includes:
 
 * The Python version you are using
 * The `Loguru` version you are using (you can find it with ``print(loguru.__version__)``)
-* Your operating system name and version
-* Your development environment and local setup (IDE, Terminal, project context, anything that could be useful)
+* Your operating system name and version (Linux, MacOS, Windows)
+* Your development environment and local setup (IDE, Terminal, project context, any relevant information that could be useful)
 * Some `minimal reproducible example`_
 
 
 Implementing changes
 --------------------
 
-If you are willing to enhance `Loguru` by implementing non-trivial changes, please `open a new issue`_ first to keep a reference about why such modifications are made (and potentially avoid unneeded work). Then, the workflow would look as follow:
+If you are willing to enhance `Loguru` by implementing non-trivial changes, please `open a new issue`_ first to keep a reference about why such modifications are made (and potentially avoid unneeded work). Then, the workflow would look as follows:
 
 1. Fork the `Loguru`_ project from GitHub
 2. Clone the repository locally::
@@ -58,7 +58,7 @@ If you are willing to enhance `Loguru` by implementing non-trivial changes, plea
     $ tox
 
 8. Remember to update documentation if required
-9. Update the ``changelog.rst`` file with what you improved
+9. Update the ``CHANGELOG.rst`` file with what you improved
 10. ``add`` and ``commit`` your changes, ``rebase`` your branch on ``master``, ``push`` your local project::
 
     $ git add .
@@ -66,4 +66,4 @@ If you are willing to enhance `Loguru` by implementing non-trivial changes, plea
     $ git rebase master
     $ git push origin fix_bug
 
-11. Finally `open a pull request`_ before getting it merged!
+11. Finally, `open a pull request`_ before getting it merged!

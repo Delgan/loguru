@@ -55,8 +55,8 @@ class Logger:
     attributes like the |str.format| method do.
 
     When a message is logged, a "record" is associated with it. This record is a dict which contains
-    several information about the logging context: time, function, file, line, thread, level...
-    It also contains the ``__name__`` of the module, this is why you don't need named loggers.
+    information about the logging context: time, function, file, line, thread, level... It also
+    contains the ``__name__`` of the module, this is why you don't need named loggers.
 
     You should not instantiate a |Logger| by yourself, use ``from loguru import logger`` instead.
 
@@ -204,27 +204,26 @@ class Logger:
             A directive optionally used to decide for each logged message whether it should be sent
             to the sink or not.
         colorize : |bool|, optional
-            Whether or not the color markups contained in the formatted message should be converted
-            to ansi codes for terminal coloration, or stripped otherwise. If ``None``, the choice
-            is automatically made based on the sink being a tty or not.
+            Whether the color markups contained in the formatted message should be converted to ansi
+            codes for terminal coloration, or stripped otherwise. If ``None``, the choice is
+            automatically made based on the sink being a tty or not.
         serialize : |bool|, optional
-            Whether or not the logged message and its records should be first converted to a JSON
-            string before being sent to the sink.
+            Whether the logged message and its records should be first converted to a JSON string
+            before being sent to the sink.
         backtrace : |bool|, optional
-            Whether or not the exception trace formatted should be extended upward, beyond the
-            catching point, to show the full stacktrace which generated the error.
+            Whether the exception trace formatted should be extended upward, beyond the catching
+            point, to show the full stacktrace which generated the error.
         diagnose : |bool|, optional
-            Whether or not the exception trace should display the variables values to eases the
-            debugging. This should be set to ``False`` in production to avoid leaking sensitive
-            data.
+            Whether the exception trace should display the variables values to eases the debugging.
+            This should be set to ``False`` in production to avoid leaking sensitive data.
         enqueue : |bool|, optional
-            Whether or not the messages to be logged should first pass through a multiprocess-safe
-            queue before reaching the sink. This is useful while logging to a file through multiple
+            Whether the messages to be logged should first pass through a multiprocess-safe queue
+            before reaching the sink. This is useful while logging to a file through multiple
             processes.
         catch : |bool|, optional
-            Whether or not errors occurring while sink handles logs messages should be caught or
-            not. If ``True``, an exception message is displayed on |sys.stderr| but the exception is
-            not propagated to the caller, preventing your app to crash.
+            Whether errors occurring while sink handles logs messages should be automatically caught.
+            If ``True``, an exception message is displayed on |sys.stderr| but the exception is not
+            propagated to the caller, preventing your app to crash.
         **kwargs
             Additional parameters that will be passed to the sink while creating it or while
             logging messages (the exact behavior depends on the sink type).
@@ -243,8 +242,8 @@ class Logger:
         compression : |str| or |function|_, optional
             A compression or archive format to which log files should be converted at closure.
         delay : |bool|, optional
-            Whether or not the file should be created as soon as the sink is configured, or delayed
-            until first logged message. It defaults to ``False``.
+            Whether the file should be created as soon as the sink is configured, or delayed until
+            first logged message. It defaults to ``False``.
         mode : |str|, optional
             The opening mode as for built-in |open| function. It defaults to ``"a"`` (open the
             file in appending mode).
@@ -285,7 +284,7 @@ class Logger:
         - A built-in |Handler| like ``logging.StreamHandler``. In such a case, the `Loguru` records
           are automatically converted to the structure expected by the |logging| module.
         - A |class|_ object that will be used to instantiate the sink using ``**kwargs`` attributes
-          passed. Hence the class should instantiate objects which are therefore valid sinks.
+          passed. Hence, the class should instantiate objects which are therefore valid sinks.
 
         Note that you should avoid using  the ``logger`` inside any of your sinks as this would
         result in infinite recursion or dead lock if the module's sink was not explicitly disabled.
@@ -355,8 +354,8 @@ class Logger:
         all contextual information of the logging call (time, function, file, line, level, etc.).
 
         Each of its key can be used in the handler's ``format`` so the corresponding value is
-        properly displayed in the logged message (eg. ``"{level}"`` -> ``"INFO"``). Some record's
-        values are objects with two or more attributes, those can be formatted with ``"{key.attr}"``
+        properly displayed in the logged message (e.g. ``"{level}"`` -> ``"INFO"``). Some record's
+        values are objects with two or more attributes, these can be formatted with ``"{key.attr}"``
         (``"{key}"`` would display one by default). `Formatting directives`_ like ``"{key: >3}"``
         also works and is particularly useful for time (see below).
 
@@ -379,7 +378,7 @@ class Logger:
         |            | logging call was made           |                            |
         +------------+---------------------------------+----------------------------+
         | level      | The severity used to log the    | ``name`` (default),        |
-        |            | the message                     | ``no``, ``icon``           |
+        |            | message                         | ``no``, ``icon``           |
         +------------+---------------------------------+----------------------------+
         | line       | The line number in the source   | None                       |
         |            | code                            |                            |
@@ -412,7 +411,7 @@ class Logger:
         Note that this datetime represents your local time, and it is also made timezone-aware,
         so you can display the UTC offset to avoid ambiguities.
 
-        The time field can be formatted using more human-friendly tokens. Those constitute a subset
+        The time field can be formatted using more human-friendly tokens. These constitute a subset
         of the one used by the `Pendulum`_ library of `@sdispater`_. To escape a token, just add
         square brackets around it, for example ``"[YY]"`` would display literally ``"YY"``.
 
@@ -541,9 +540,9 @@ class Logger:
         .. rubric:: The color markups
 
         To add colors to your logs, you just have to enclose your format string with the appropriate
-        tags (eg. ``<tag>some message</tag>``). Those tags are automatically removed if the sink
+        tags (e.g. ``<tag>some message</tag>``). These tags are automatically removed if the sink
         doesn't support ansi codes. For convenience, you can use ``</>`` to close the last opening
-        tag without repeating its name (eg. ``<tag>another message</>``).
+        tag without repeating its name (e.g. ``<tag>another message</>``).
 
         The special tag ``<level>`` (abbreviated with ``<lvl>``) is transformed according to
         the configured color of the logged message level.
@@ -927,7 +926,7 @@ class Logger:
         level : |str| or |int|, optional
             The level name or severity with which the message should be logged.
         reraise : |bool|, optional
-            Whether or not the exception should be raised again and hence propagated to the caller.
+            Whether the exception should be raised again and hence propagated to the caller.
         message : |str|, optional
             The message that will be automatically logged if an exception occurs. Note that it will
             be formatted with the ``record`` attribute.
@@ -1047,7 +1046,7 @@ class Logger:
             If ``True``, logged message will be colorized according to the markups it possibly
             contains.
         raw : |bool|, optional
-            If ``True``, the formatting of each sink will be bypassed and the message will be send
+            If ``True``, the formatting of each sink will be bypassed and the message will be sent
             as is.
         depth : |int|, optional
             Specify which stacktrace should be used to contextualize the logged message. This is
@@ -1155,7 +1154,7 @@ class Logger:
         Parameters
         ----------
         patcher: |function|_
-            The function to which the record dict will be passed a the sole argument. This function
+            The function to which the record dict will be passed as the sole argument. This function
             is in charge of updating the record in-place, the function does not need to return any
             value, the modified record object will be re-used.
 
@@ -1163,7 +1162,7 @@ class Logger:
         -------
         :class:`~Logger`
             A logger wrapping the core logger, but which records are passed through the ``patcher``
-            function before being send to the added handlers.
+            function before being sent to the added handlers.
 
         Examples
         --------
@@ -1465,24 +1464,24 @@ class Logger:
         Parse raw logs and extract each entry as a |dict|.
 
         The logging format has to be specified as the regex ``pattern``, it will then be
-        used to parse the ``file`` and retrieve each entries based on the named groups present
+        used to parse the ``file`` and retrieve each entry based on the named groups present
         in the regex.
 
         Parameters
         ----------
         file : |str|, |Path| or |file-like object|_
-            The path of the log file to be parsed, or alternatively an already opened file object.
+            The path of the log file to be parsed, or an already opened file object.
         pattern : |str| or |re.Pattern|_
             The regex to use for logs parsing, it should contain named groups which will be included
             in the returned dict.
         cast : |function|_ or |dict|, optional
             A function that should convert in-place the regex groups parsed (a dict of string
-            values) to more appropriate types. If a dict is passed, its should be a mapping between
+            values) to more appropriate types. If a dict is passed, it should be a mapping between
             keys of parsed log dict and the function that should be used to convert the associated
             value.
         chunk : |int|, optional
-            The number of bytes read while iterating through the logs, this avoid having to load the
-            whole file in memory.
+            The number of bytes read while iterating through the logs, this avoids having to load
+            the whole file in memory.
 
         Yields
         ------

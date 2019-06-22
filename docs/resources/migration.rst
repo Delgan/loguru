@@ -37,6 +37,14 @@ Switching from standard ``logging`` to ``loguru``
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
 
+.. |pytest| replace:: ``pytest``
+.. _pytest: https://docs.pytest.org/en/latest/
+.. |caplog| replace:: ``caplog``
+.. _caplog: https://docs.pytest.org/en/latest/logging.html?highlight=caplog#caplog-fixture
+
+.. _`GH#59`: https://github.com/Delgan/loguru/issues/59
+
+
 
 Fundamental differences between ``logging`` and ``loguru``
 ----------------------------------------------------------
@@ -65,7 +73,7 @@ Loguru replaces the standard |Logger| configuration by a proper :ref:`sink <sink
 
 Sometimes, more fine-grained control is required over a particular logger. In such case, Loguru provides the |bind| method which can be in particular used to generate a specifically named logger.
 
-For example, by calling ``other_logger = logger.bind(name="other")``, each :ref:`message <message>` logged using ``other_logger`` will populate the ``record["extra"]`` dict with the ``name`` value, while using ``logger`` won't. This permits to differentiate logs from ``logger`` or ``other_logger`` from within your sink or filter function.
+For example, by calling ``other_logger = logger.bind(name="other")``, each :ref:`message <message>` logged using ``other_logger`` will populate the ``record["extra"]`` dict with the ``name`` value, while using ``logger`` won't. This permits differentiating logs from ``logger`` or ``other_logger`` from within your sink or filter function.
 
 Let suppose you want a sink to log only some very specific messages::
 
@@ -118,7 +126,7 @@ In short, you can replace::
 
 With::
 
-    fmt = "{time} - {name} - {level} - {messae}"
+    fmt = "{time} - {name} - {level} - {message}"
     logger.add("spam.log", level="DEBUG", format=fmt)
     logger.add(sys.stderr, level="ERROR", format=fmt)
 
@@ -210,21 +218,17 @@ This does not accept ``config.ini`` files, though, so you have to handle that yo
 Making things work with Pytest and caplog
 -----------------------------------------
 
-`Pytest`_ is a very common testing framework. The `caplog`_ fixture captures
-logging output so that it can be tested against. For example::
+|pytest|_ is a very common testing framework. The |caplog|_ fixture captures logging output so that it can be tested against. For example::
 
     # `some_func` adds two numbers, and logs a warning if the first is < 1
     def test_some_func_logs_warning(caplog):
         assert some_func(-1, 3) == 2
         assert "Oh no!" in caplog.text
 
-If you've followed all the migration guidelines thus far, you'll notice that
-this test will fail. This is because ``pytest`` links to the standard library's
-``logging`` module.
+If you've followed all the migration guidelines thus far, you'll notice that this test will fail. This is because |pytest|_ links to the standard library's ``logging`` module.
 
 So to fix things, we need to add a sink that propogates Loguru to ``logging``.
-This is done on the fixture itself by mokeypatching ``caplog``. In your
-``conftest.py`` file, add the following::
+This is done on the fixture itself by mokeypatching |caplog|_. In your ``conftest.py`` file, add the following::
 
     import logging
     import pytest
@@ -241,9 +245,4 @@ This is done on the fixture itself by mokeypatching ``caplog``. In your
         yield _caplog
         logger.remove(handler_id)
 
-Run your tests and things should all be working as expected. Additional
-information can be found in `GH#59`_.
-
-.. _pytest: https://docs.pytest.org/en/latest/
-.. _caplog: https://docs.pytest.org/en/latest/logging.html?highlight=caplog#caplog-fixture
-.. _`GH#59`: https://github.com/Delgan/loguru/issues/59
+Run your tests and things should all be working as expected. Additional information can be found in `GH#59`_.

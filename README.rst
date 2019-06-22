@@ -138,7 +138,7 @@ The |logger|_ is just an interface which dispatches log messages to configured h
 No Handler, no Formatter, no Filter: one function to rule them all
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-How to add a handler? How to setup logs formatting? How to filter messages? How to set level?
+How to add a handler? How to set up logs formatting? How to filter messages? How to set level?
 
 One answer: the |add|_ function.
 
@@ -146,7 +146,7 @@ One answer: the |add|_ function.
 
     logger.add(sys.stderr, format="{time} {level} {message}", filter="my_module", level="INFO")
 
-This function should be used to register sinks_ which are responsible of managing `log messages`_ contextualized with a `record dict`_. A sink can take many forms: a simple function, a string path, a file-like object, a built-in Handler or a custom class.
+This function should be used to register sinks_ which are responsible for managing `log messages`_ contextualized with a `record dict`_. A sink can take many forms: a simple function, a string path, a file-like object, a built-in Handler or a custom class.
 
 
 Easier file logging with rotation / retention / compression
@@ -182,7 +182,7 @@ Modern string formatting using braces style
 Exceptions catching within threads or main
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Have you ever seen your program crashing unexpectedly without seeing anything in the logfile? Did you ever noticed that exceptions occurring in threads were not logged? This can be solved using the |catch|_ decorator / context manager which ensures that any error is correctly propagated to the |logger|_.
+Have you ever seen your program crashing unexpectedly without seeing anything in the log file? Did you ever noticed that exceptions occurring in threads were not logged? This can be solved using the |catch|_ decorator / context manager which ensures that any error is correctly propagated to the |logger|_.
 
 ::
 
@@ -394,7 +394,7 @@ Don't like the default logger formatting? Would prefer another ``DEBUG`` color? 
 Convenient parser
 ^^^^^^^^^^^^^^^^^
 
-It is often useful to extract specific information from generated logs, this is why `Loguru` provides a |parse|_ method which helps dealing with logs and regexes.
+It is often useful to extract specific information from generated logs, this is why `Loguru` provides a |parse|_ method which helps to deal with logs and regexes.
 
 ::
 

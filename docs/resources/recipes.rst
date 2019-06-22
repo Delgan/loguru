@@ -82,8 +82,8 @@ Finally, more advanced control over handler's level can be achieved by using a c
     logger.debug("OK")
 
 
-Sending and receiving log messages accross network or processes
----------------------------------------------------------------
+Sending and receiving log messages across network or processes
+--------------------------------------------------------------
 
 It is possible to transmit logs between different processes and even between different computer if needed. Once the connection is established between the two Python programs, this requires serializing the logging record in one side while re-constructing the message on the other hand.
 
@@ -310,7 +310,7 @@ You probably should not worry about all of this except if you noticed that your 
 Using Loguru's ``logger`` within a Cython module
 ------------------------------------------------
 
-Loguru and Cython do not interoperate very well. This is because Loguru (and logging generally) heavily relies on Python stack frames while Cython, being an alternative Python implementation, try to get ride of these frames for optimisation reasons.
+Loguru and Cython do not interoperate very well. This is because Loguru (and logging generally) heavily relies on Python stack frames while Cython, being an alternative Python implementation, try to get rid of these frames for optimization reasons.
 
 Calling the ``logger`` from code compiled with Cython may raise this kind of exception::
 
