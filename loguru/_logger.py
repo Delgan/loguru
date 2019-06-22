@@ -2,6 +2,7 @@ import functools
 import inspect
 import itertools
 import logging
+import os
 import re
 import sys
 import threading
@@ -12,8 +13,7 @@ from multiprocessing import current_process
 from os.path import basename, splitext
 from threading import current_thread
 
-from colorama import AnsiToWin32
-
+from . import _colorama
 from . import _defaults
 from ._ansimarkup import AnsiMarkup
 from ._better_exceptions import ExceptionFormatter
@@ -681,23 +681,13 @@ class Logger:
         elif hasattr(sink, "write") and callable(sink.write):
             name = getattr(sink, "name", repr(sink))
 
-            if colorize is False:
-                stream = sink
+            if colorize is None:
+                colorize = _colorama.is_a_tty(sink)
+
+            if colorize is True and _colorama.should_wrap(sink):
+                stream = _colorama.wrap(sink)
             else:
-                try:
-                    converter = AnsiToWin32(sink, convert=None, strip=False)
-                    isatty = converter.stream.isatty()
-                except Exception:
-                    if colorize is None:
-                        colorize = False
-                    stream = sink
-                else:
-                    if colorize is None:
-                        colorize = isatty
-                    if converter.should_wrap() and colorize:
-                        stream = converter.stream
-                    else:
-                        stream = sink
+                stream = sink
 
             stream_write = stream.write
             if kwargs:

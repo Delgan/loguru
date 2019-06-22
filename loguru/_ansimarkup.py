@@ -1,114 +1,163 @@
 import re
 
-from colorama.ansi import AnsiCodes
-from colorama import Fore, Back, Style
 
-
-class AnsiExtendedStyle(AnsiCodes):
+class Style:
+    RESET_ALL = 0
+    BOLD = 1
+    DIM = 2
     ITALIC = 3
     UNDERLINE = 4
     BLINK = 5
     REVERSE = 7
     STRIKE = 8
     HIDE = 9
+    NORMAL = 22
 
 
-ExtendedStyle = AnsiExtendedStyle()
+class Fore:
+    BLACK = 30
+    RED = 31
+    GREEN = 32
+    YELLOW = 33
+    BLUE = 34
+    MAGENTA = 35
+    CYAN = 36
+    WHITE = 37
+    RESET = 39
+
+    LIGHTBLACK_EX = 90
+    LIGHTRED_EX = 91
+    LIGHTGREEN_EX = 92
+    LIGHTYELLOW_EX = 93
+    LIGHTBLUE_EX = 94
+    LIGHTMAGENTA_EX = 95
+    LIGHTCYAN_EX = 96
+    LIGHTWHITE_EX = 97
+
+
+class Back:
+    BLACK = 40
+    RED = 41
+    GREEN = 42
+    YELLOW = 43
+    BLUE = 44
+    MAGENTA = 45
+    CYAN = 46
+    WHITE = 47
+    RESET = 49
+
+    LIGHTBLACK_EX = 100
+    LIGHTRED_EX = 101
+    LIGHTGREEN_EX = 102
+    LIGHTYELLOW_EX = 103
+    LIGHTBLUE_EX = 104
+    LIGHTMAGENTA_EX = 105
+    LIGHTCYAN_EX = 106
+    LIGHTWHITE_EX = 107
+
+
+def ansi_escape(codes):
+    return {name: "\033[%dm" % code for name, code in codes.items()}
 
 
 class AnsiMarkup:
 
-    _style = {
-        "b": Style.BRIGHT,
-        "d": Style.DIM,
-        "n": Style.NORMAL,
-        "h": ExtendedStyle.HIDE,
-        "i": ExtendedStyle.ITALIC,
-        "l": ExtendedStyle.BLINK,
-        "s": ExtendedStyle.STRIKE,
-        "u": ExtendedStyle.UNDERLINE,
-        "v": ExtendedStyle.REVERSE,
-        "bold": Style.BRIGHT,
-        "dim": Style.DIM,
-        "normal": Style.NORMAL,
-        "reset": Style.RESET_ALL,
-        "hide": ExtendedStyle.HIDE,
-        "italic": ExtendedStyle.ITALIC,
-        "blink": ExtendedStyle.BLINK,
-        "strike": ExtendedStyle.STRIKE,
-        "underline": ExtendedStyle.UNDERLINE,
-        "reverse": ExtendedStyle.REVERSE,
-    }
+    _style = ansi_escape(
+        {
+            "b": Style.BOLD,
+            "d": Style.DIM,
+            "n": Style.NORMAL,
+            "h": Style.HIDE,
+            "i": Style.ITALIC,
+            "l": Style.BLINK,
+            "s": Style.STRIKE,
+            "u": Style.UNDERLINE,
+            "v": Style.REVERSE,
+            "bold": Style.BOLD,
+            "dim": Style.DIM,
+            "normal": Style.NORMAL,
+            "hide": Style.HIDE,
+            "italic": Style.ITALIC,
+            "blink": Style.BLINK,
+            "strike": Style.STRIKE,
+            "underline": Style.UNDERLINE,
+            "reverse": Style.REVERSE,
+        }
+    )
 
-    _foreground = {
-        "k": Fore.BLACK,
-        "r": Fore.RED,
-        "g": Fore.GREEN,
-        "y": Fore.YELLOW,
-        "e": Fore.BLUE,
-        "m": Fore.MAGENTA,
-        "c": Fore.CYAN,
-        "w": Fore.WHITE,
-        "lk": Fore.LIGHTBLACK_EX,
-        "lr": Fore.LIGHTRED_EX,
-        "lg": Fore.LIGHTGREEN_EX,
-        "ly": Fore.LIGHTYELLOW_EX,
-        "le": Fore.LIGHTBLUE_EX,
-        "lm": Fore.LIGHTMAGENTA_EX,
-        "lc": Fore.LIGHTCYAN_EX,
-        "lw": Fore.LIGHTWHITE_EX,
-        "black": Fore.BLACK,
-        "red": Fore.RED,
-        "green": Fore.GREEN,
-        "yellow": Fore.YELLOW,
-        "blue": Fore.BLUE,
-        "magenta": Fore.MAGENTA,
-        "cyan": Fore.CYAN,
-        "white": Fore.WHITE,
-        "light-black": Fore.LIGHTBLACK_EX,
-        "light-red": Fore.LIGHTRED_EX,
-        "light-green": Fore.LIGHTGREEN_EX,
-        "light-yellow": Fore.LIGHTYELLOW_EX,
-        "light-blue": Fore.LIGHTBLUE_EX,
-        "light-magenta": Fore.LIGHTMAGENTA_EX,
-        "light-cyan": Fore.LIGHTCYAN_EX,
-        "light-white": Fore.LIGHTWHITE_EX,
-    }
+    _foreground = ansi_escape(
+        {
+            "k": Fore.BLACK,
+            "r": Fore.RED,
+            "g": Fore.GREEN,
+            "y": Fore.YELLOW,
+            "e": Fore.BLUE,
+            "m": Fore.MAGENTA,
+            "c": Fore.CYAN,
+            "w": Fore.WHITE,
+            "lk": Fore.LIGHTBLACK_EX,
+            "lr": Fore.LIGHTRED_EX,
+            "lg": Fore.LIGHTGREEN_EX,
+            "ly": Fore.LIGHTYELLOW_EX,
+            "le": Fore.LIGHTBLUE_EX,
+            "lm": Fore.LIGHTMAGENTA_EX,
+            "lc": Fore.LIGHTCYAN_EX,
+            "lw": Fore.LIGHTWHITE_EX,
+            "black": Fore.BLACK,
+            "red": Fore.RED,
+            "green": Fore.GREEN,
+            "yellow": Fore.YELLOW,
+            "blue": Fore.BLUE,
+            "magenta": Fore.MAGENTA,
+            "cyan": Fore.CYAN,
+            "white": Fore.WHITE,
+            "light-black": Fore.LIGHTBLACK_EX,
+            "light-red": Fore.LIGHTRED_EX,
+            "light-green": Fore.LIGHTGREEN_EX,
+            "light-yellow": Fore.LIGHTYELLOW_EX,
+            "light-blue": Fore.LIGHTBLUE_EX,
+            "light-magenta": Fore.LIGHTMAGENTA_EX,
+            "light-cyan": Fore.LIGHTCYAN_EX,
+            "light-white": Fore.LIGHTWHITE_EX,
+        }
+    )
 
-    _background = {
-        "K": Back.BLACK,
-        "R": Back.RED,
-        "G": Back.GREEN,
-        "Y": Back.YELLOW,
-        "E": Back.BLUE,
-        "M": Back.MAGENTA,
-        "C": Back.CYAN,
-        "W": Back.WHITE,
-        "LK": Back.LIGHTBLACK_EX,
-        "LR": Back.LIGHTRED_EX,
-        "LG": Back.LIGHTGREEN_EX,
-        "LY": Back.LIGHTYELLOW_EX,
-        "LE": Back.LIGHTBLUE_EX,
-        "LM": Back.LIGHTMAGENTA_EX,
-        "LC": Back.LIGHTCYAN_EX,
-        "LW": Back.LIGHTWHITE_EX,
-        "BLACK": Back.BLACK,
-        "RED": Back.RED,
-        "GREEN": Back.GREEN,
-        "YELLOW": Back.YELLOW,
-        "BLUE": Back.BLUE,
-        "MAGENTA": Back.MAGENTA,
-        "CYAN": Back.CYAN,
-        "WHITE": Back.WHITE,
-        "LIGHT-BLACK": Back.LIGHTBLACK_EX,
-        "LIGHT-RED": Back.LIGHTRED_EX,
-        "LIGHT-GREEN": Back.LIGHTGREEN_EX,
-        "LIGHT-YELLOW": Back.LIGHTYELLOW_EX,
-        "LIGHT-BLUE": Back.LIGHTBLUE_EX,
-        "LIGHT-MAGENTA": Back.LIGHTMAGENTA_EX,
-        "LIGHT-CYAN": Back.LIGHTCYAN_EX,
-        "LIGHT-WHITE": Back.LIGHTWHITE_EX,
-    }
+    _background = ansi_escape(
+        {
+            "K": Back.BLACK,
+            "R": Back.RED,
+            "G": Back.GREEN,
+            "Y": Back.YELLOW,
+            "E": Back.BLUE,
+            "M": Back.MAGENTA,
+            "C": Back.CYAN,
+            "W": Back.WHITE,
+            "LK": Back.LIGHTBLACK_EX,
+            "LR": Back.LIGHTRED_EX,
+            "LG": Back.LIGHTGREEN_EX,
+            "LY": Back.LIGHTYELLOW_EX,
+            "LE": Back.LIGHTBLUE_EX,
+            "LM": Back.LIGHTMAGENTA_EX,
+            "LC": Back.LIGHTCYAN_EX,
+            "LW": Back.LIGHTWHITE_EX,
+            "BLACK": Back.BLACK,
+            "RED": Back.RED,
+            "GREEN": Back.GREEN,
+            "YELLOW": Back.YELLOW,
+            "BLUE": Back.BLUE,
+            "MAGENTA": Back.MAGENTA,
+            "CYAN": Back.CYAN,
+            "WHITE": Back.WHITE,
+            "LIGHT-BLACK": Back.LIGHTBLACK_EX,
+            "LIGHT-RED": Back.LIGHTRED_EX,
+            "LIGHT-GREEN": Back.LIGHTGREEN_EX,
+            "LIGHT-YELLOW": Back.LIGHTYELLOW_EX,
+            "LIGHT-BLUE": Back.LIGHTBLUE_EX,
+            "LIGHT-MAGENTA": Back.LIGHTMAGENTA_EX,
+            "LIGHT-CYAN": Back.LIGHTCYAN_EX,
+            "LIGHT-WHITE": Back.LIGHTWHITE_EX,
+        }
+    )
 
     _regex_tag = re.compile(r"\\?</?((?:[fb]g\s)?[^<>\s]*)>")
 
@@ -185,7 +234,7 @@ class AnsiMarkup:
                 if self._strip:
                     return ""
                 else:
-                    return Style.RESET_ALL + "".join(self._results)
+                    return "\033[0m" + "".join(self._results)
             elif tag in self._tags:
                 raise ValueError('Closing tag "%s" violates nesting rules' % markup)
             else:

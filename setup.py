@@ -45,13 +45,12 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
-    install_requires=[
-        "colorama>=0.3.4",
-    ],
+    install_requires=["colorama>=0.3.4 ; sys_platform=='win32'"],
     extras_require={
         "dev": [
             "black>=19.3b0 ; python_version>='3.6'",
             "codecov>=2.0.15",
+            "colorama>=0.3.4",
             "flake8>=3.7.7",
             "isort>=4.3.20",
             "tox>=3.9.0",

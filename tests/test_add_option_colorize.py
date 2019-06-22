@@ -1,8 +1,10 @@
 import pytest
+import os
+import sys
+import loguru
 from unittest.mock import MagicMock
 from loguru import logger
 from loguru._ansimarkup import AnsiMarkup
-import colorama
 
 
 def parse(text):
@@ -13,12 +15,16 @@ class Stream:
     def __init__(self, tty):
         self.out = ""
         self.tty = tty
+        self.closed = False
 
     def write(self, m):
         self.out += m
 
     def isatty(self):
-        return self.tty
+        if self.tty is None:
+            raise RuntimeError
+        else:
+            return self.tty
 
     def flush(self):
         pass
@@ -54,58 +60,82 @@ def test_decolorized_format(format, message, expected, writer):
     assert writer.read() == expected
 
 
+@pytest.fixture
+def patch_colorama(monkeypatch):
+    AnsiToWin32_instance = MagicMock()
+    AnsiToWin32_class = MagicMock(return_value=AnsiToWin32_instance)
+    winapi_test = MagicMock(return_value=True)
+    win32 = MagicMock(winapi_test=winapi_test)
+    colorama = MagicMock(AnsiToWin32=AnsiToWin32_class, win32=win32)
+    monkeypatch.setitem(sys.modules, "colorama", colorama)
+    monkeypatch.setitem(sys.modules, "colorama.win32", win32)
+    yield colorama
+
+
 @pytest.mark.parametrize("colorize", [True, False, None])
 @pytest.mark.parametrize("tty", [True, False])
-def test_colorize_stream_linux(monkeypatch, colorize, tty):
-    mock = MagicMock()
-    monkeypatch.setattr(colorama.AnsiToWin32, "should_wrap", lambda _: False)
-    monkeypatch.setattr(colorama.AnsiToWin32, "write", mock)
+def test_colorize_stream_linux(patch_colorama, monkeypatch, colorize, tty):
+    monkeypatch.setattr(os, "name", "posix")
     stream = Stream(tty)
     logger.add(stream, format="<red>{message}</red>", colorize=colorize)
     logger.debug("Message")
-    out = stream.out
 
-    assert not mock.called
+    winapi_test = patch_colorama.win32.winapi_test
+    stream_write = patch_colorama.AnsiToWin32().stream.write
+
+    assert not stream_write.called
+    assert not winapi_test.called
 
     if colorize or (colorize is None and tty):
-        assert out == parse("<red>Message</red>\n")
+        assert stream.out == parse("<red>Message</red>\n")
     else:
-        assert out == "Message\n"
+        assert stream.out == "Message\n"
 
 
 @pytest.mark.parametrize("colorize", [True, False, None])
 @pytest.mark.parametrize("tty", [True, False])
-def test_auto_colorize_stream_windows(monkeypatch, colorize, tty):
-    mock = MagicMock()
-    monkeypatch.setattr(colorama.AnsiToWin32, "should_wrap", lambda _: True)
-    monkeypatch.setattr(colorama.AnsiToWin32, "write", mock)
+def test_colorize_stream_windows(patch_colorama, monkeypatch, colorize, tty):
+    monkeypatch.setattr(os, "name", "nt")
     stream = Stream(tty)
     logger.add(stream, format="<blue>{message}</blue>", colorize=colorize)
     logger.debug("Message")
+    writer = patch_colorama.AnsiToWin32().stream.write.called
+
+    winapi_test = patch_colorama.win32.winapi_test
+    stream_write = patch_colorama.AnsiToWin32().stream.write
 
     if colorize or (colorize is None and tty):
-        assert mock.called
+        assert winapi_test.called
+        assert stream_write.called
     else:
-        assert not mock.called
+        assert not winapi_test.called
+        assert not stream_write.called
 
 
 @pytest.mark.parametrize("colorize", [True, False, None])
-@pytest.mark.parametrize("tty", [True, False])
-def test_auto_colorize_bugged_stream(monkeypatch, colorize, tty):
-    def bugged(*a, **k):
-        raise RuntimeError
+def test_isatty_error(monkeypatch, colorize):
+    monkeypatch.setattr(os, "name", "posix")
+    stream = Stream(None)
+    logger.add(stream, format="<blue>{message}</blue>", colorize=colorize)
+    logger.debug("Message")
 
-    mock = MagicMock()
-    monkeypatch.setattr(colorama.AnsiToWin32, "__init__", bugged)
-    stream = Stream(tty)
-    logger.add(stream, format="<green>{message}</green>", colorize=colorize)
-    monkeypatch.setattr(colorama.AnsiToWin32, "write", mock)
-    logger.debug("No error")
-    out = stream.out
-
-    assert not mock.called
-
-    if colorize:
-        assert out == parse("<green>No error</green>\n")
+    if colorize is True:
+        assert stream.out == parse("<blue>Message</blue>\n")
     else:
-        assert out == "No error\n"
+        assert stream.out == "Message\n"
+
+
+@pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
+def test_pycharm_isatty_fixed(monkeypatch, stream):
+    monkeypatch.setitem(os.environ, "PYCHARM_HOSTED", "1")
+    monkeypatch.setattr(stream, "isatty", lambda: False)
+
+    assert not stream.isatty()
+    assert loguru._colorama.is_a_tty(stream)
+
+
+@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
+def test_pycharm_isatty_ignored(monkeypatch, stream):
+    monkeypatch.setitem(os.environ, "PYCHARM_HOSTED", "1")
+
+    assert not loguru._colorama.is_a_tty(stream)
