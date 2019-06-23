@@ -2,7 +2,6 @@ import functools
 import inspect
 import itertools
 import logging
-import os
 import re
 import sys
 import threading
@@ -221,9 +220,9 @@ class Logger:
             before reaching the sink. This is useful while logging to a file through multiple
             processes.
         catch : |bool|, optional
-            Whether errors occurring while sink handles logs messages should be automatically caught.
-            If ``True``, an exception message is displayed on |sys.stderr| but the exception is not
-            propagated to the caller, preventing your app to crash.
+            Whether errors occurring while sink handles logs messages should be automatically
+            caught. If ``True``, an exception message is displayed on |sys.stderr| but the exception
+            is not propagated to the caller, preventing your app to crash.
         **kwargs
             Additional parameters that will be passed to the sink while creating it or while
             logging messages (the exact behavior depends on the sink type).
