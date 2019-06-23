@@ -2,9 +2,14 @@ import os
 import sys
 
 
-def is_a_tty(stream):
-    if "PYCHARM_HOSTED" in os.environ:
-        if stream is not None and (stream is sys.__stdout__ or stream is sys.__stderr__):
+def should_colorize(stream):
+    if stream is None:
+        return False
+
+    if stream is sys.__stdout__ or stream is sys.__stderr__:
+        if "PYCHARM_HOSTED" in os.environ:
+            return True
+        if os.name == "nt" and "TERM" in os.environ:
             return True
 
     try:

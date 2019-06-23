@@ -126,16 +126,46 @@ def test_isatty_error(monkeypatch, colorize):
 
 
 @pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
-def test_pycharm_isatty_fixed(monkeypatch, stream):
+def test_pycharm_fixed(monkeypatch, stream):
     monkeypatch.setitem(os.environ, "PYCHARM_HOSTED", "1")
     monkeypatch.setattr(stream, "isatty", lambda: False)
-
     assert not stream.isatty()
-    assert loguru._colorama.is_a_tty(stream)
+    assert loguru._colorama.should_colorize(stream)
 
 
 @pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
-def test_pycharm_isatty_ignored(monkeypatch, stream):
+def test_pycharm_ignored(monkeypatch, stream):
     monkeypatch.setitem(os.environ, "PYCHARM_HOSTED", "1")
+    assert not loguru._colorama.should_colorize(stream)
 
-    assert not loguru._colorama.is_a_tty(stream)
+
+@pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
+def test_mintty_fixed_windows(monkeypatch, stream):
+    monkeypatch.setattr(os, "name", "nt")
+    monkeypatch.setitem(os.environ, "TERM", "xterm")
+    monkeypatch.setattr(stream, "isatty", lambda: False)
+    assert not stream.isatty()
+    assert loguru._colorama.should_colorize(stream)
+
+
+@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
+def test_mintty_ignored_windows(monkeypatch, stream):
+    monkeypatch.setattr(os, "name", "nt")
+    monkeypatch.setitem(os.environ, "TERM", "xterm")
+    assert not loguru._colorama.should_colorize(stream)
+
+
+@pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
+def test_mintty_not_fixed_linux(monkeypatch, stream):
+    monkeypatch.setattr(os, "name", "posix")
+    monkeypatch.setitem(os.environ, "TERM", "xterm")
+    monkeypatch.setattr(stream, "isatty", lambda: False)
+    assert not stream.isatty()
+    assert not loguru._colorama.should_colorize(stream)
+
+
+@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
+def test_mintty_ignored_linux(monkeypatch, stream):
+    monkeypatch.setattr(os, "name", "posix")
+    monkeypatch.setitem(os.environ, "TERM", "xterm")
+    assert not loguru._colorama.should_colorize(stream)

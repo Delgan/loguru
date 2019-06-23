@@ -680,7 +680,7 @@ class Logger:
             name = getattr(sink, "name", repr(sink))
 
             if colorize is None:
-                colorize = _colorama.is_a_tty(sink)
+                colorize = _colorama.should_colorize(sink)
 
             if colorize is True and _colorama.should_wrap(sink):
                 stream = _colorama.wrap(sink)
