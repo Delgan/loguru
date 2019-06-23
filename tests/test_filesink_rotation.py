@@ -12,10 +12,11 @@ from loguru import logger
 
 
 @pytest.fixture
-def tmpdir_local():
+def tmpdir_local(reset_logger):
     # Pytest 'tmpdir' creates directories in /tmp, but /tmp does not support xattr, tests would fail
     with tempfile.TemporaryDirectory(dir=".") as tempdir:
         yield pathlib.Path(tempdir)
+        logger.remove()  # Deleting file not possible if still in use by Loguru
 
 
 @pytest.fixture
@@ -62,8 +63,8 @@ def monkeypatch_filesystem(monkeypatch):
         monkeypatch.setattr(builtins, "open", patched_open)
 
         if patch_xattr:
-            monkeypatch.setattr(os, "setxattr", patched_setxattr)
-            monkeypatch.setattr(os, "getxattr", patched_getxattr)
+            monkeypatch.setattr(os, "setxattr", patched_setxattr, raising=False)
+            monkeypatch.setattr(os, "getxattr", patched_getxattr, raising=False)
 
     return monkeypatch_filesystem
 
@@ -77,6 +78,8 @@ def windows_filesystem(monkeypatch, monkeypatch_filesystem):
 @pytest.fixture
 def darwin_filesystem(monkeypatch, monkeypatch_filesystem):
     monkeypatch.setattr(platform, "system", lambda: "Darwin")
+    monkeypatch.delattr(os, "setxattr", raising=False)
+    monkeypatch.delattr(os, "getxattr", raising=False)
     monkeypatch_filesystem(crtime="st_birthtime")
 
 
@@ -93,8 +96,8 @@ def linux_no_xattr_filesystem(monkeypatch, monkeypatch_filesystem):
 
     monkeypatch.setattr(platform, "system", lambda: "Linux")
     monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
-    monkeypatch.setattr(os, "setxattr", raising)
-    monkeypatch.setattr(os, "getxattr", raising)
+    monkeypatch.setattr(os, "setxattr", raising, raising=False)
+    monkeypatch.setattr(os, "getxattr", raising, raising=False)
 
 
 def test_renaming(monkeypatch_date, tmpdir):
