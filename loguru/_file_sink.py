@@ -93,10 +93,7 @@ class FileSink:
             os.rename(new_path, renamed_path)
 
         self._file_path = new_path
-        self._file = open(
-            new_path,
-            **self._kwargs
-        )
+        self._file = open(new_path, **self._kwargs)
 
     @staticmethod
     def _make_glob_pattern(path):
@@ -109,7 +106,8 @@ class FileSink:
             pattern = root + "*"
         return pattern
 
-    def _make_get_creation_time_function(self):
+    @staticmethod
+    def _make_get_creation_time_function():
         def get_creation_time_windows(filepath):
             return os.stat(filepath).st_ctime
 
@@ -129,17 +127,24 @@ class FileSink:
         else:
             return get_creation_time_linux
 
-    def _make_set_creation_time_function(self):
-        def set_creation_time(filepath, timestamp):
+    @staticmethod
+    def _make_set_creation_time_function():
+        def set_creation_time_darwin(filepath, timestamp):
             try:
                 os.setxattr(filepath, b"user.loguru_crtime", str(timestamp).encode("ascii"))
             except OSError:
                 pass
 
-        if platform.system().lower() == "windows" or hasattr(os.stat_result, "st_birthtime"):
+        if platform.system().lower() == "windows":
+            import win32_setctime
+            if win32_setctime.SUPPORTED:
+                return win32_setctime.setctime
+            else:
+                return None
+        elif hasattr(os.stat_result, "st_birthtime"):
             return None
         else:
-            return set_creation_time
+            return set_creation_time_darwin
 
     def _make_rotation_function(self, rotation):
         def make_from_size(size_limit):

@@ -45,7 +45,10 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
-    install_requires=["colorama>=0.3.4 ; sys_platform=='win32'"],
+    install_requires=[
+        "colorama>=0.3.4 ; sys_platform=='win32'",
+        "win32_setctime>=1.0.0 ; sys_platform=='win32'",
+    ],
     extras_require={
         "dev": [
             "black>=19.3b0 ; python_version>='3.6'",

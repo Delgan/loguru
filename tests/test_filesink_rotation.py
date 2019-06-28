@@ -1,12 +1,14 @@
 import pytest
 import datetime
 import os
+import sys
 import time
 import tempfile
 import pathlib
 import platform
 import builtins
 from collections import namedtuple
+from unittest.mock import MagicMock
 import loguru
 from loguru import logger
 
@@ -21,7 +23,7 @@ def tmpdir_local(reset_logger):
 
 @pytest.fixture
 def monkeypatch_filesystem(monkeypatch):
-    def monkeypatch_filesystem(raising=None, crtime=None, patch_xattr=False):
+    def monkeypatch_filesystem(raising=None, crtime=None, patch_xattr=False, patch_win32=False):
         filesystem = {}
         __open__ = open
         __stat_result__ = os.stat_result
@@ -58,6 +60,9 @@ def monkeypatch_filesystem(monkeypatch):
             except KeyError:
                 raise OSError
 
+        def patched_setctime(filepath, timestamp):
+            filesystem[os.path.abspath(filepath)] = timestamp
+
         monkeypatch.setattr(os, "stat_result", StatWrapper(__stat_result__))
         monkeypatch.setattr(os, "stat", patched_stat)
         monkeypatch.setattr(builtins, "open", patched_open)
@@ -66,13 +71,17 @@ def monkeypatch_filesystem(monkeypatch):
             monkeypatch.setattr(os, "setxattr", patched_setxattr, raising=False)
             monkeypatch.setattr(os, "getxattr", patched_getxattr, raising=False)
 
+        if patch_win32:
+            win32_setctime = MagicMock(SUPPORTED=True, setctime=patched_setctime)
+            monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
+
     return monkeypatch_filesystem
 
 
 @pytest.fixture
 def windows_filesystem(monkeypatch, monkeypatch_filesystem):
     monkeypatch.setattr(platform, "system", lambda: "Windows")
-    monkeypatch_filesystem(raising="st_birthtime", crtime="st_ctime")
+    monkeypatch_filesystem(raising="st_birthtime", crtime="st_ctime", patch_win32=True)
 
 
 @pytest.fixture
@@ -345,6 +354,26 @@ def test_time_rotation_reopening_linux_no_xattr(
     tmpdir, monkeypatch_date, linux_no_xattr_filesystem, delay
 ):
     rotation_reopening(tmpdir, monkeypatch_date, delay)
+
+
+def test_time_rotation_windows_no_setctime(
+    tmpdir, windows_filesystem, monkeypatch, monkeypatch_date
+):
+    win32_setctime = MagicMock(SUPPORTED=False)
+    monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
+
+    monkeypatch_date(2018, 10, 27, 5, 0, 0, 0)
+    i = logger.add(str(tmpdir.join("test.log")), format="{message}", rotation="2 h")
+    logger.info("1")
+    monkeypatch_date(2018, 10, 27, 6, 30, 0, 0)
+    logger.info("2")
+    assert len(tmpdir.listdir()) == 1
+    monkeypatch_date(2018, 10, 27, 7, 30, 0, 0)
+    logger.info("3")
+    assert len(tmpdir.listdir()) == 2
+    assert tmpdir.join("test.2018-10-27_07-30-00_000000.log").read() == "1\n2\n"
+    assert tmpdir.join("test.log").read() == "3\n"
+    assert not win32_setctime.setctime.called
 
 
 def test_function_rotation(monkeypatch_date, tmpdir):
