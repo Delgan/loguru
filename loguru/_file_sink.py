@@ -4,7 +4,6 @@ import glob
 import locale
 import numbers
 import os
-import platform
 import shutil
 import string
 
@@ -120,7 +119,7 @@ class FileSink:
             except OSError:
                 return os.stat(filepath).st_mtime
 
-        if platform.system().lower() == "windows":
+        if os.name == "nt":
             return get_creation_time_windows
         elif hasattr(os.stat_result, "st_birthtime"):
             return get_creation_time_darwin
@@ -135,7 +134,7 @@ class FileSink:
             except OSError:
                 pass
 
-        if platform.system().lower() == "windows":
+        if os.name == "nt":
             import win32_setctime
             if win32_setctime.SUPPORTED:
                 return win32_setctime.setctime

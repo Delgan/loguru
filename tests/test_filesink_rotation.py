@@ -80,13 +80,13 @@ def monkeypatch_filesystem(monkeypatch):
 
 @pytest.fixture
 def windows_filesystem(monkeypatch, monkeypatch_filesystem):
-    monkeypatch.setattr(platform, "system", lambda: "Windows")
+    monkeypatch.setattr(os, "name", "nt")
     monkeypatch_filesystem(raising="st_birthtime", crtime="st_ctime", patch_win32=True)
 
 
 @pytest.fixture
 def darwin_filesystem(monkeypatch, monkeypatch_filesystem):
-    monkeypatch.setattr(platform, "system", lambda: "Darwin")
+    monkeypatch.setattr(os, "name", "posix")
     monkeypatch.delattr(os, "setxattr", raising=False)
     monkeypatch.delattr(os, "getxattr", raising=False)
     monkeypatch_filesystem(crtime="st_birthtime")
@@ -94,7 +94,7 @@ def darwin_filesystem(monkeypatch, monkeypatch_filesystem):
 
 @pytest.fixture
 def linux_filesystem(monkeypatch, monkeypatch_filesystem):
-    monkeypatch.setattr(platform, "system", lambda: "Linux")
+    monkeypatch.setattr(os, "name", "posix")
     monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime", patch_xattr=True)
 
 
@@ -103,7 +103,7 @@ def linux_no_xattr_filesystem(monkeypatch, monkeypatch_filesystem):
     def raising(*args, **kwargs):
         raise OSError
 
-    monkeypatch.setattr(platform, "system", lambda: "Linux")
+    monkeypatch.setattr(os, "name", "posix")
     monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
     monkeypatch.setattr(os, "setxattr", raising, raising=False)
     monkeypatch.setattr(os, "getxattr", raising, raising=False)

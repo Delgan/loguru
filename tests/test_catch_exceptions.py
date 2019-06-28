@@ -1,5 +1,5 @@
 import asyncio
-import os.path
+import os
 import platform
 import re
 import site
@@ -14,7 +14,7 @@ from loguru import logger
 
 def normalize(exception):
     """Normalize exception output for reproducible test cases"""
-    if sys.platform == "win32":
+    if os.name:
         exception = re.sub(
             r'File[^"]+"[^"]+\.py[^"]*"', lambda m: m.group().replace("\\", "/"), exception
         )
