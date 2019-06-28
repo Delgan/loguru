@@ -1,5 +1,5 @@
-Unreleased
-==========
+0.3.0 (2019-06-29)
+==================
 
 - Remove all dependencies previously needed by ``loguru`` (on Windows platform, it solely remains ``colorama`` and ``win32-setctime``).
 - Add a new ``logger.patch()`` method which can be used to modify the record dict on-the-fly before it's being sent to the handlers.
