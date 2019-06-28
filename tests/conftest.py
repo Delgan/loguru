@@ -4,6 +4,7 @@ import itertools
 import pytest
 import os
 import subprocess
+import sys
 import time
 import warnings
 
@@ -73,9 +74,29 @@ def sink_with_logger():
 
 @pytest.fixture
 def monkeypatch_date(monkeypatch):
+
+    fix_struct = os.name == "nt" and sys.version_info < (3, 6)
+
     def monkeypatch_date(year, month, day, hour, minute, second, microsecond, zone="UTC", offset=0):
         dt = loguru._datetime.datetime(year, month, day, hour, minute, second, microsecond)
-        struct = time.struct_time([*dt.timetuple()] + [zone, offset])
+
+        if fix_struct:
+
+            class StructTime:
+                def __init__(self, struct, tm_zone, tm_gmtoff):
+                    self._struct = struct
+                    self.tm_zone = tm_zone
+                    self.tm_gmtoff = tm_gmtoff
+
+                def __getattr__(self, name):
+                    return getattr(self._struct, name)
+
+                def __iter__(self):
+                    return iter(self._struct)
+
+            struct = StructTime(time.struct_time([*dt.timetuple()]), zone, offset)
+        else:
+            struct = time.struct_time([*dt.timetuple()] + [zone, offset])
 
         def patched_now(tz=None):
             return dt
