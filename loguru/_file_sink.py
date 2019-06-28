@@ -36,13 +36,10 @@ class FileSink:
         encoding=None,
         **kwargs
     ):
-        self.encoding = encoding or locale.getpreferredencoding(False)
+        self.encoding = locale.getpreferredencoding(False) if encoding is None else encoding
         self.name = str(path)
 
-        self._mode = mode
-        self._buffering = buffering
-
-        self._kwargs = kwargs.copy()
+        self._kwargs = {**kwargs, "mode": mode, "buffering": buffering, "encoding": self.encoding}
         self._path = str(path)
 
         self._rotation_function, self._init_rotation = self._make_rotation_function(rotation)
@@ -98,9 +95,6 @@ class FileSink:
         self._file_path = new_path
         self._file = open(
             new_path,
-            encoding=self.encoding,
-            mode=self._mode,
-            buffering=self._buffering,
             **self._kwargs
         )
 
