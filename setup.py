@@ -19,6 +19,7 @@ setup(
     packages=["loguru"],
     description="Python logging made (stupidly) simple",
     long_description=readme,
+    long_description_content_type="text/x-rst",
     author="Delgan",
     author_email="delgan.py@gmail.com",
     url="https://github.com/Delgan/loguru",
