@@ -80,6 +80,9 @@ Take the tour
 .. |bind| replace:: ``bind()``
 .. _bind: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.bind
 
+.. |patch| replace:: ``patch()``
+.. _patch: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.patch
+
 .. |opt| replace:: ``opt()``
 .. _opt: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.opt
 
@@ -111,7 +114,7 @@ Take the tour
 .. _markup tags: https://loguru.readthedocs.io/en/stable/api/logger.html#color
 .. _fixes it: https://loguru.readthedocs.io/en/stable/api/logger.html#time
 .. _No problem: https://loguru.readthedocs.io/en/stable/api/logger.html#env
-.. _logging levels: https://loguru.readthedocs.io/en/latest/api/logger.html#levels
+.. _logging levels: https://loguru.readthedocs.io/en/stable/api/logger.html#levels
 
 .. |better_exceptions| replace:: ``better_exceptions``
 .. _better_exceptions: https://github.com/Qix-/better-exceptions
@@ -219,7 +222,7 @@ Logging exceptions that occur in your code is important to track bugs, but it's 
 
 The code::
 
-    logger.add("output.log", backtrace=True)  # Set 'False' to not leak sensitive data in prod
+    logger.add("output.log", backtrace=True, diagnose=True)  # Set 'False' to not leak sensitive data in prod
 
     def func(a, b):
         return a / b
@@ -281,6 +284,13 @@ You can also have more fine-grained control over your logs by combining |bind|_ 
     logger.add("special.log", filter=lambda record: "special" in record["extra"])
     logger.debug("This message is not logged to the file")
     logger.bind(special=True).info("This message, though, is logged to the file!")
+
+Finally, the |patch|_ method allows dynamic values to be attached to the record dict of each new message:
+
+::
+
+    logger.add(sys.stderr, format="{extra[utc]} {message}")
+    logger = logger.patch(lambda record: record["extra"].update(utc=datetime.utcnow())
 
 
 Lazy evaluation of expensive functions
@@ -457,7 +467,7 @@ Project information
 -------------------
 
 * `Documentation <https://loguru.readthedocs.io/en/stable/api/logger.html>`_
-* `Resources <https://loguru.readthedocs.io/en/latest/resources.html>`_
+* `Resources <https://loguru.readthedocs.io/en/stable/resources.html>`_
 * `Contributing <https://github.com/Delgan/loguru/blob/master/CONTRIBUTING.rst>`_
 * `License <https://github.com/Delgan/loguru/blob/master/LICENSE>`_
 * `Changelog <https://github.com/Delgan/loguru/blob/master/CHANGELOG.rst>`_
