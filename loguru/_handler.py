@@ -69,7 +69,7 @@ class Handler:
             self._thread.start()
 
     def __repr__(self):
-        return "(level=%d, writer=%s)" % (self._levelno, self._name)
+        return "(id=%d, level=%d, writer=%s)" % (self._id, self._levelno, self._name)
 
     def emit(self, record, level_id, is_ansi, is_raw):
         try:

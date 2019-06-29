@@ -854,7 +854,7 @@ class Logger:
         return handler_id
 
     def __repr__(self):
-        return "<loguru.logger handlers=%r>" % Logger._handlers
+        return "<loguru.logger handlers=%r>" % list(Logger._handlers.values())
 
     def remove(self, handler_id=None):
         """Remove a previously added handler and stop sending logs to its sink.
