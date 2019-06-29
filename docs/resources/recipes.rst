@@ -200,6 +200,20 @@ Which would result in::
     2019-04-07 11:08:44.198 | DEBUG    | __main__:bar:30 - Exiting 'foo' (result=64)
 
 
+Here is another simple example to record timing of a function::
+
+    def timeit(func):
+
+        def wrapped(*args, **kwargs):
+            start = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+            logger.debug("Function '{}' executed in {:f} s", func.__name__, end - start)
+            return result
+
+        return wrapped
+
+
 Using logging function based on custom added levels
 ---------------------------------------------------
 
