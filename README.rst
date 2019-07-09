@@ -74,6 +74,9 @@ Take the tour
 .. |add| replace:: ``add()``
 .. _add: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.add
 
+.. |remove| replace:: ``remove()``
+.. _remove: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.remove
+
 .. |catch| replace:: ``catch()``
 .. _catch: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.catch
 
@@ -150,6 +153,8 @@ One answer: the |add|_ function.
     logger.add(sys.stderr, format="{time} {level} {message}", filter="my_module", level="INFO")
 
 This function should be used to register sinks_ which are responsible for managing `log messages`_ contextualized with a `record dict`_. A sink can take many forms: a simple function, a string path, a file-like object, a built-in Handler or a custom class.
+
+Note that you may also |remove|_ previously added handlers, this is particularly useful if you want to supersede the default one.
 
 
 Easier file logging with rotation / retention / compression
