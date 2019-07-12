@@ -1,4 +1,5 @@
 from loguru import logger
+import time
 
 
 def test_file_not_delayed(tmpdir):
@@ -71,3 +72,32 @@ def test_rotation_early_remove(monkeypatch_date, tmpdir):
     logger.remove(i)
 
     assert len(tmpdir.listdir()) == 0
+
+
+def test_rotation_and_retention(monkeypatch_date, tmpdir):
+    filepath = tmpdir.join("file.log")
+    logger.add(filepath, rotation=30, retention=2, delay=True, format="{message}")
+    for i in range(1, 10):
+        monkeypatch_date(2019, 1, i, 0, 0, 0, 0)
+        time.sleep(0.01)
+        logger.info(str(i) * 20)
+
+    assert len(tmpdir.listdir()) == 3
+    print(tmpdir.listdir())
+    assert tmpdir.join("file.log").read() == "9" * 20 + "\n"
+    assert tmpdir.join("file.2019-01-09_00-00-00_000000.log").read() == "8" * 20 + "\n"
+    assert tmpdir.join("file.2019-01-08_00-00-00_000000.log").read() == "7" * 20 + "\n"
+
+
+def test_rotation_and_retention_timed_file(monkeypatch_date, tmpdir):
+    filepath = tmpdir.join("file.{time}.log")
+    logger.add(filepath, rotation=30, retention=2, delay=True, format="{message}")
+    for i in range(1, 10):
+        monkeypatch_date(2019, 1, i, 0, 0, 0, 0)
+        time.sleep(0.01)
+        logger.info(str(i) * 20)
+
+    assert len(tmpdir.listdir()) == 3
+    assert tmpdir.join("file.2019-01-09_00-00-00_000000.log").read() == "9" * 20 + "\n"
+    assert tmpdir.join("file.2019-01-08_00-00-00_000000.log").read() == "8" * 20 + "\n"
+    assert tmpdir.join("file.2019-01-07_00-00-00_000000.log").read() == "7" * 20 + "\n"

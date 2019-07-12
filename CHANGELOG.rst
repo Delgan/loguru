@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Fix ``retention`` and ``rotation`` issues when file sink initiliazed with ``delay=True`` (`#113 <https://github.com/Delgan/loguru/issues/113>`_).
+
+
 0.3.0 (2019-06-29)
 ==================
 

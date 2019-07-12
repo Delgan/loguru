@@ -53,31 +53,21 @@ class FileSink:
 
         if not delay:
             self._initialize_file(rename_existing=False)
-            self._initialize_write()
             if self._init_rotation is not None:
                 self._init_rotation(self._file_path)
-        else:
-            self.write = self._write_delayed
 
-    def _initialize_write(self):
-        if self._rotation_function is None:
-            self.write = self._file.write
-        else:
-            self.write = self._write_rotating
+    def write(self, message):
+        if self._file is None:
+            self._initialize_file(rename_existing=False)
+            if self._init_rotation is not None:
+                self._init_rotation(self._file_path)
 
-    def _write_delayed(self, message):
-        self._initialize_file(rename_existing=False)
-        self._initialize_write()
-        if self._init_rotation is not None:
-            self._init_rotation(self._file_path)
-        self.write(message)
-
-    def _write_rotating(self, message):
-        if self._rotation_function(message, self._file):
+        if self._rotation_function is not None and self._rotation_function(message, self._file):
             self._terminate(teardown=True)
             self._initialize_file(rename_existing=True)
             if self._set_creation_time is not None:
                 self._set_creation_time(self._file_path, datetime.now().timestamp())
+
         self._file.write(message)
 
     def _initialize_file(self, *, rename_existing):
@@ -136,6 +126,7 @@ class FileSink:
 
         if os.name == "nt":
             import win32_setctime
+
             if win32_setctime.SUPPORTED:
                 return win32_setctime.setctime
             else:
