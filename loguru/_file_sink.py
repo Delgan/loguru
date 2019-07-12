@@ -12,8 +12,8 @@ from ._datetime import aware_now, datetime
 
 
 class FileDateFormatter:
-    def __init__(self):
-        self.datetime = aware_now()
+    def __init__(self, datetime=None):
+        self.datetime = datetime or aware_now()
 
     def __format__(self, spec):
         if not spec:
@@ -77,8 +77,11 @@ class FileSink:
         os.makedirs(new_dir, exist_ok=True)
 
         if rename_existing and os.path.isfile(new_path):
+            creation_time = self._get_creation_time(new_path)
+            creation_datetime = datetime.fromtimestamp(creation_time)
+            date = FileDateFormatter(creation_datetime)
             root, ext = os.path.splitext(new_path)
-            renamed_path = "{}.{}{}".format(root, FileDateFormatter(), ext)
+            renamed_path = "{}.{}{}".format(root, date, ext)
             os.rename(new_path, renamed_path)
 
         self._file_path = new_path
@@ -333,10 +336,11 @@ class FileSink:
             def compression_function(path_in):
                 path_out = "{}.{}".format(path_in, ext)
                 if os.path.isfile(path_out):
+                    creation_time = self._get_creation_time(path_out)
+                    creation_datetime = datetime.fromtimestamp(creation_time)
+                    date = FileDateFormatter(creation_datetime)
                     root, ext_before = os.path.splitext(path_in)
-                    renamed_template = "{}.{}{}.{}"
-                    date = FileDateFormatter()
-                    renamed_path = renamed_template.format(root, date, ext_before, ext)
+                    renamed_path = "{}.{}{}.{}".format(root, date, ext_before, ext)
                     os.rename(path_out, renamed_path)
                 compress(path_in, path_out)
                 os.remove(path_in)

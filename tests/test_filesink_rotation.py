@@ -1,6 +1,7 @@
 import pytest
 import datetime
 import os
+import re
 import sys
 import time
 import tempfile
@@ -109,19 +110,29 @@ def linux_no_xattr_filesystem(monkeypatch, monkeypatch_filesystem):
     monkeypatch.setattr(os, "getxattr", raising, raising=False)
 
 
-def test_renaming(monkeypatch_date, tmpdir):
+def test_renaming(tmpdir):
     i = logger.add(str(tmpdir.join("file.log")), rotation=0, format="{message}")
 
-    monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
+    time.sleep(0.1)
     logger.debug("a")
-    assert tmpdir.join("file.log").read() == "a\n"
-    assert tmpdir.join("file.2018-01-01_00-00-00_000000.log").read() == ""
 
-    monkeypatch_date(2019, 1, 1, 0, 0, 0, 0)
+    files = sorted(tmpdir.listdir())
+    assert len(files) == 2
+    assert re.match(r"file\.[0-9-_]+\.log", files[0].basename)
+    assert files[1].basename == "file.log"
+    assert files[0].read() == ""
+    assert files[1].read() == "a\n"
+
+    time.sleep(0.1)
     logger.debug("b")
-    assert tmpdir.join("file.log").read() == "b\n"
-    assert tmpdir.join("file.2019-01-01_00-00-00_000000.log").read() == "a\n"
-    assert tmpdir.join("file.2018-01-01_00-00-00_000000.log").read() == ""
+
+    files = sorted(tmpdir.listdir())
+    assert len(files) == 3
+    assert all(re.match(r"file\.[0-9-_]+\.log", f.basename) for f in files[:2])
+    assert files[2].basename == "file.log"
+    assert files[0].read() == ""
+    assert files[1].read() == "a\n"
+    assert files[2].read() == "b\n"
 
 
 def test_no_renaming(monkeypatch_date, tmpdir):
@@ -344,7 +355,7 @@ def test_time_rotation_windows_no_setctime(
     monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
 
     monkeypatch_date(2018, 10, 27, 5, 0, 0, 0)
-    i = logger.add(str(tmpdir.join("test.log")), format="{message}", rotation="2 h")
+    i = logger.add(str(tmpdir.join("test.{time}.log")), format="{message}", rotation="2 h")
     logger.info("1")
     monkeypatch_date(2018, 10, 27, 6, 30, 0, 0)
     logger.info("2")
@@ -352,8 +363,8 @@ def test_time_rotation_windows_no_setctime(
     monkeypatch_date(2018, 10, 27, 7, 30, 0, 0)
     logger.info("3")
     assert len(tmpdir.listdir()) == 2
-    assert tmpdir.join("test.2018-10-27_07-30-00_000000.log").read() == "1\n2\n"
-    assert tmpdir.join("test.log").read() == "3\n"
+    assert tmpdir.join("test.2018-10-27_05-00-00_000000.log").read() == "1\n2\n"
+    assert tmpdir.join("test.2018-10-27_07-30-00_000000.log").read() == "3\n"
     assert not win32_setctime.setctime.called
 
 
@@ -399,6 +410,25 @@ def test_no_rotation_at_remove(tmpdir, mode):
 
     assert len(tmpdir.listdir()) == 1
     assert tmpdir.join("test.log").read() == "test\n"
+
+
+def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
+    def creation_time(filepath):
+        assert os.path.isfile(filepath)
+        assert os.path.basename(filepath) == "test.log"
+        return datetime.datetime(2018, 1, 1, 0, 0, 0, 0).timestamp()
+
+    i = logger.add(str(tmpdir.join("test.log")), rotation=10, format="{message}")
+    logger.debug("X")
+
+    filesink = next(iter(logger._handlers.values()))._writer.__self__
+    monkeypatch.setattr(filesink, "_get_creation_time", creation_time)
+
+    logger.debug("Y" * 20)
+
+    assert len(tmpdir.listdir()) == 2
+    assert tmpdir.join("test.log").check(exists=1)
+    assert tmpdir.join("test.2018-01-01_00-00-00_000000.log").check(exists=1)
 
 
 @pytest.mark.parametrize(

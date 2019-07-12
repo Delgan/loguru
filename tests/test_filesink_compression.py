@@ -1,7 +1,9 @@
 import pytest
 import os
 import sys
+import loguru
 from loguru import logger
+import datetime
 
 
 @pytest.mark.parametrize(
@@ -56,14 +58,23 @@ def test_no_compression_at_remove_with_rotation(tmpdir, mode):
     assert tmpdir.join("test.log").check(exists=1)
 
 
-def test_rename_existing_before_compression(monkeypatch_date, tmpdir):
-    monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
+def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
+    def creation_time(filepath):
+        assert os.path.isfile(filepath)
+        assert os.path.basename(filepath) == "test.log.tar.gz"
+        return datetime.datetime(2018, 1, 1, 0, 0, 0, 0).timestamp()
+
     i = logger.add(str(tmpdir.join("test.log")), compression="tar.gz")
     logger.debug("test")
     logger.remove(i)
     j = logger.add(str(tmpdir.join("test.log")), compression="tar.gz")
     logger.debug("test")
+
+    filesink = next(iter(logger._handlers.values()))._writer.__self__
+    monkeypatch.setattr(filesink, "_get_creation_time", creation_time)
+
     logger.remove(j)
+
     assert len(tmpdir.listdir()) == 2
     assert tmpdir.join("test.log.tar.gz").check(exists=1)
     assert tmpdir.join("test.2018-01-01_00-00-00_000000.log.tar.gz").check(exists=1)
