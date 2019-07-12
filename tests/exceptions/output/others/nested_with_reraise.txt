@@ -1,0 +1,154 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 20, in bar
+    f = foo(x, y)
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 14, in foo
+    a / b
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 20, in bar
+    f = foo(x, y)
+        │   │  └ 0
+        │   └ 1
+        └ <function foo at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 14, in foo
+    a / b
+    │   └ 0
+    └ 1
+
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 30, in <module>
+    baz()
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 26, in baz
+    bar(1, 0)
+> File "tests/exceptions/source/others/nested_with_reraise.py", line 20, in bar
+    f = foo(x, y)
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 14, in foo
+    a / b
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 30, in <module>
+    baz()
+    └ <function baz at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 26, in baz
+    bar(1, 0)
+    └ <function bar at 0xDEADBEEF>
+
+> File "tests/exceptions/source/others/nested_with_reraise.py", line 20, in bar
+    f = foo(x, y)
+        │   │  └ 0
+        │   └ 1
+        └ <function foo at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 14, in foo
+    a / b
+    │   └ 0
+    └ 1
+
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 20, in bar
+    f = foo(x, y)
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 14, in foo
+    a / b
+ZeroDivisionError: division by zero
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 26, in baz
+    bar(1, 0)
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 22, in bar
+    raise ValueError from e
+ValueError
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 20, in bar
+    f = foo(x, y)
+        │   │  └ 0
+        │   └ 1
+        └ <function foo at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 14, in foo
+    a / b
+    │   └ 0
+    └ 1
+
+ZeroDivisionError: division by zero
+
+
+The above exception was the direct cause of the following exception:
+
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 26, in baz
+    bar(1, 0)
+    └ <function bar at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 22, in bar
+    raise ValueError from e
+
+ValueError
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 20, in bar
+    f = foo(x, y)
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 14, in foo
+    a / b
+ZeroDivisionError: division by zero
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 30, in <module>
+    baz()
+> File "tests/exceptions/source/others/nested_with_reraise.py", line 26, in baz
+    bar(1, 0)
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 22, in bar
+    raise ValueError from e
+ValueError
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 20, in bar
+    f = foo(x, y)
+        │   │  └ 0
+        │   └ 1
+        └ <function foo at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 14, in foo
+    a / b
+    │   └ 0
+    └ 1
+
+ZeroDivisionError: division by zero
+
+
+The above exception was the direct cause of the following exception:
+
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 30, in <module>
+    baz()
+    └ <function baz at 0xDEADBEEF>
+
+> File "tests/exceptions/source/others/nested_with_reraise.py", line 26, in baz
+    bar(1, 0)
+    └ <function bar at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/nested_with_reraise.py", line 22, in bar
+    raise ValueError from e
+
+ValueError

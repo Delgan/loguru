@@ -71,7 +71,7 @@ class Handler:
     def __repr__(self):
         return "(id=%d, level=%d, writer=%s)" % (self._id, self._levelno, self._name)
 
-    def emit(self, record, level_id, is_ansi, is_raw):
+    def emit(self, record, level_id, from_decorator, is_ansi, is_raw):
         try:
             if self._levelno > record["level"].no:
                 return
@@ -99,7 +99,9 @@ class Handler:
                 formatter_record["exception"] = ""
             else:
                 type_, value, tb = record["exception"]
-                lines = self._exception_formatter.format_exception(type_, value, tb)
+                lines = self._exception_formatter.format_exception(
+                    type_, value, tb, from_decorator=from_decorator
+                )
                 formatter_record["exception"] = "".join(lines)
 
             message = record["message"]

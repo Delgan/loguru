@@ -174,6 +174,7 @@ def test_exception_ownership(filename):
         "level_number",
         "message_formatting_with_context_manager",
         "message_formatting_with_decorator",
+        "nested_with_reraise",
         "syntaxerror_without_traceback",
         "sys_tracebacklimit",
         "sys_tracebacklimit_negative",

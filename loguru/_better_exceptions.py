@@ -174,7 +174,7 @@ class ExceptionFormatter:
             return False
         return not any(filepath.startswith(d.lower()) for d in self._lib_dirs)
 
-    def _extract_frames(self, tb, is_first, *, limit=None):
+    def _extract_frames(self, tb, is_first, *, limit=None, from_decorator=False):
         frames, final_source = [], None
 
         if tb is None or (limit is not None and limit <= 0):
@@ -194,14 +194,18 @@ class ExceptionFormatter:
         if is_valid(tb.tb_frame):
             infos.append((get_info(tb.tb_frame, tb.tb_lineno), tb.tb_frame))
 
-        if self._backtrace and is_first:
+        get_parent_only = from_decorator and not self._backtrace
+
+        if (self._backtrace and is_first) or get_parent_only:
             frame = tb.tb_frame.f_back
             while frame:
                 if is_valid(frame):
                     infos.insert(0, (get_info(frame, frame.f_lineno), frame))
+                    if get_parent_only:
+                        break
                 frame = frame.f_back
 
-            if infos:
+            if infos and not get_parent_only:
                 (filename, lineno, function, source), frame = infos[-1]
                 function += self._catch_point_identifier
                 infos[-1] = ((filename, lineno, function, source), frame)
@@ -343,7 +347,7 @@ class ExceptionFormatter:
 
             yield frame
 
-    def _format_exception(self, value, tb, seen=None, is_first=False):
+    def _format_exception(self, value, tb, *, seen=None, is_first=False, from_decorator=False):
         # Implemented from built-in traceback module: https://git.io/fhHKw
         exc_type, exc_value, exc_traceback = type(value), value, tb
 
@@ -388,7 +392,9 @@ class ExceptionFormatter:
         except AttributeError:
             tracebacklimit = None
 
-        frames, final_source = self._extract_frames(exc_traceback, is_first, limit=tracebacklimit)
+        frames, final_source = self._extract_frames(
+            exc_traceback, is_first, limit=tracebacklimit, from_decorator=from_decorator
+        )
         exception_only = traceback.format_exception_only(exc_type, exc_value)
 
         error_message = exception_only[-1][:-1]  # Remove last new line temporarily
@@ -425,5 +431,5 @@ class ExceptionFormatter:
 
         yield "".join(frames_lines)
 
-    def format_exception(self, type_, value, tb):
-        yield from self._format_exception(value, tb, is_first=True)
+    def format_exception(self, type_, value, tb, *, from_decorator=False):
+        yield from self._format_exception(value, tb, is_first=True, from_decorator=from_decorator)

@@ -1,5 +1,7 @@
 
 Traceback (most recent call last):
+  File "tests/exceptions/source/backtrace/nested_decorator_catch_up.py", line 19, in <module>
+    foo()
   File "tests/exceptions/source/backtrace/nested_decorator_catch_up.py", line 11, in foo
     bar()
   File "tests/exceptions/source/backtrace/nested_decorator_catch_up.py", line 16, in bar

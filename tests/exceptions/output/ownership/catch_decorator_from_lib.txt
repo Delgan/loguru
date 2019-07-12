@@ -26,6 +26,9 @@
 [31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
 [33m[1mTraceback (most recent call last):[0m
+  File "usersite/lib.py", line 10, in callme
+    callback()
+    └ <function test.<locals>.callback at 0xDEADBEEF>
 
   File "[32mtests/exceptions/source/ownership/[0m[32m[1mcatch_decorator_from_lib.py[0m", line [33m14[0m, in [35mcallback[0m
     [1mdivide[0m[1m([0m[34m[1m1[0m[1m,[0m [34m[1m0[0m[1m)[0m
@@ -52,6 +55,8 @@
 [31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
 [33m[1mTraceback (most recent call last):[0m
+  File "usersite/lib.py", line 10, in callme
+    callback()
   File "[32mtests/exceptions/source/ownership/[0m[32m[1mcatch_decorator_from_lib.py[0m", line [33m14[0m, in [35mcallback[0m
     [1mdivide[0m[1m([0m[34m[1m1[0m[1m,[0m [34m[1m0[0m[1m)[0m
   File "usersite/lib.py", line 2, in divide
@@ -59,6 +64,8 @@
 [31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
 Traceback (most recent call last):
+  File "usersite/lib.py", line 10, in callme
+    callback()
   File "tests/exceptions/source/ownership/catch_decorator_from_lib.py", line 14, in callback
     divide(1, 0)
   File "usersite/lib.py", line 2, in divide

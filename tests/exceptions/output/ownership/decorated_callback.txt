@@ -22,6 +22,9 @@
 [31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
 [33m[1mTraceback (most recent call last):[0m
+  File "usersite/lib.py", line 10, in callme
+    callback()
+    └ <function test.<locals>.callback at 0xDEADBEEF>
 
   File "[32mtests/exceptions/source/ownership/[0m[32m[1mdecorated_callback.py[0m", line [33m15[0m, in [35mcallback[0m
     [1ma[0m [35m[1m/[0m [1mb[0m
@@ -42,11 +45,15 @@
 [31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
 [33m[1mTraceback (most recent call last):[0m
+  File "usersite/lib.py", line 10, in callme
+    callback()
   File "[32mtests/exceptions/source/ownership/[0m[32m[1mdecorated_callback.py[0m", line [33m15[0m, in [35mcallback[0m
     [1ma[0m [35m[1m/[0m [1mb[0m
 [31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
 Traceback (most recent call last):
+  File "usersite/lib.py", line 10, in callme
+    callback()
   File "tests/exceptions/source/ownership/decorated_callback.py", line 15, in callback
     a / b
 ZeroDivisionError: division by zero

@@ -1,10 +1,16 @@
 
 Traceback (most recent call last):
+  File "tests/exceptions/source/others/exception_formatting_function.py", line 17, in <module>
+    a(1, 0)
   File "tests/exceptions/source/others/exception_formatting_function.py", line 14, in a
     a / b
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/exception_formatting_function.py", line 17, in <module>
+    a(1, 0)
+    └ <function a at 0xDEADBEEF>
 
   File "tests/exceptions/source/others/exception_formatting_function.py", line 14, in a
     a / b
