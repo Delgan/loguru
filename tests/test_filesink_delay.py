@@ -75,7 +75,7 @@ def test_rotation_early_remove(monkeypatch_date, tmpdir):
 
 
 def test_rotation_and_retention(monkeypatch_date, tmpdir):
-    filepath = tmpdir.join("file.log")
+    filepath = str(tmpdir.join("file.log"))
     logger.add(filepath, rotation=30, retention=2, delay=True, format="{message}")
     for i in range(1, 10):
         monkeypatch_date(2019, 1, i, 0, 0, 0, 0)
@@ -90,7 +90,7 @@ def test_rotation_and_retention(monkeypatch_date, tmpdir):
 
 
 def test_rotation_and_retention_timed_file(monkeypatch_date, tmpdir):
-    filepath = tmpdir.join("file.{time}.log")
+    filepath = str(tmpdir.join("file.{time}.log"))
     logger.add(filepath, rotation=30, retention=2, delay=True, format="{message}")
     for i in range(1, 10):
         monkeypatch_date(2019, 1, i, 0, 0, 0, 0)
