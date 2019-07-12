@@ -2,6 +2,7 @@ Unreleased
 ==========
 
 - Fix ``retention`` and ``rotation`` issues when file sink initiliazed with ``delay=True`` (`#113 <https://github.com/Delgan/loguru/issues/113>`_).
+- Fix ``"sec"`` no longer recognized as a valid duration unit for file ``rotation`` and ``retention`` argments.
 - Modify datetime used to automatically rename conflicting file when rotating (it happens if file already exists because ``"{time}"`` not presents in filename) so it's based on the file creation time rather than the current time.
 
 

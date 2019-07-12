@@ -37,7 +37,7 @@ def parse_duration(duration):
         ("d|days?", 86400),
         ("h|hours?", 3600),
         ("min(?:ute)?s?", 60),
-        ("s|sec(?:ond)s?", 1),
+        ("s|sec(?:ond)?s?", 1),
         ("ms|milliseconds?", 0.001),
         ("us|microseconds?", 0.000001),
     ]
