@@ -15,21 +15,6 @@ def test_compression_ext(tmpdir, compression):
     assert tmpdir.join("file.log.%s" % compression).check(exists=1)
 
 
-def test_delayed(tmpdir):
-    i = logger.add(str(tmpdir.join("file.log")), compression="gz", delay=True)
-    logger.debug("a")
-    logger.remove(i)
-
-    assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("file.log.gz").check(exists=1)
-
-
-def test_delayed_early_remove(tmpdir):
-    i = logger.add(str(tmpdir.join("file.log")), compression="gz", delay=True)
-    logger.remove(i)
-    assert len(tmpdir.listdir()) == 0
-
-
 def test_compression_function(tmpdir):
     def compress(file):
         os.replace(file, file + ".rar")

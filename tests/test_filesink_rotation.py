@@ -140,25 +140,6 @@ def test_no_renaming(monkeypatch_date, tmpdir):
     assert tmpdir.join("file_2020-01-01_00-00-00_000000.log").read() == "b\n"
 
 
-def test_delayed(monkeypatch_date, tmpdir):
-    monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
-    i = logger.add(str(tmpdir.join("file.log")), rotation=0, delay=True, format="{message}")
-    logger.debug("a")
-    logger.remove(i)
-
-    assert len(tmpdir.listdir()) == 2
-    assert tmpdir.join("file.log").read() == "a\n"
-    assert tmpdir.join("file.2018-01-01_00-00-00_000000.log").read() == ""
-
-
-def test_delayed_early_remove(monkeypatch_date, tmpdir):
-    monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
-    i = logger.add(str(tmpdir.join("file.log")), rotation=0, delay=True, format="{message}")
-    logger.remove(i)
-
-    assert len(tmpdir.listdir()) == 0
-
-
 @pytest.mark.parametrize("size", [8, 8.0, 7.99, "8 B", "8e-6MB", "0.008 kiB", "64b"])
 def test_size_rotation(monkeypatch_date, tmpdir, size):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)

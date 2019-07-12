@@ -45,27 +45,6 @@ def test_retention_count(tmpdir, retention):
     assert len(tmpdir.listdir()) == retention
 
 
-def test_delayed(tmpdir):
-    for i in range(5):
-        tmpdir.join("test.%d.log" % i).write("test")
-
-    i = logger.add(str(tmpdir.join("test.log")), retention=0, delay=True)
-    logger.debug("a")
-    logger.remove(i)
-
-    assert len(tmpdir.listdir()) == 0
-
-
-def test_delayed_early_remove(tmpdir):
-    for i in range(5):
-        tmpdir.join("test.%d.log" % i).write("test")
-
-    i = logger.add(str(tmpdir.join("test.log")), retention=0, delay=True)
-    logger.remove(i)
-
-    assert len(tmpdir.listdir()) == 0
-
-
 def test_retention_function(tmpdir):
     def func(logs):
         for log in logs:

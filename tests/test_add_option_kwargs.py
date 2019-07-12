@@ -68,23 +68,6 @@ def test_file_buffering(tmpdir):
     assert file.read() != ""
 
 
-def test_file_not_delayed(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="{message}", delay=False)
-    assert file.check(exists=1)
-    assert file.read() == ""
-    logger.debug("Not delayed")
-    assert file.read() == "Not delayed\n"
-
-
-def test_file_delayed(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="{message}", delay=True)
-    assert file.check(exists=0)
-    logger.debug("Delayed")
-    assert file.read() == "Delayed\n"
-
-
 def test_invalid_function_kwargs():
     def function(message, a="Y"):
         pass
