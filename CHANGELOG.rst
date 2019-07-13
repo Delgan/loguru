@@ -1,5 +1,5 @@
-Unreleased
-==========
+0.3.1 (2019-07-13)
+==================
 
 - Fix ``retention`` and ``rotation`` issues when file sink initiliazed with ``delay=True`` (`#113 <https://github.com/Delgan/loguru/issues/113>`_).
 - Fix ``"sec"`` no longer recognized as a valid duration unit for file ``rotation`` and ``retention`` arguments.
