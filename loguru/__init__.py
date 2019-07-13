@@ -13,7 +13,7 @@ __version__ = "0.3.0"
 
 __all__ = ["logger"]
 
-logger = _Logger({}, None, None, False, False, False, False, 0)
+logger = _Logger(None, 0, False, False, False, False, None, {})
 
 if _defaults.LOGURU_AUTOINIT and _sys.stderr:
     logger.add(_sys.stderr)

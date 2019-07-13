@@ -163,15 +163,8 @@ class Logger:
 
     _lock = threading.Lock()
 
-    def __init__(self, extra, patcher, exception, record, lazy, ansi, raw, depth):
-        self._extra = extra
-        self._patcher = patcher
-        self._record = record
-        self._exception = exception
-        self._lazy = lazy
-        self._ansi = ansi
-        self._raw = raw
-        self._depth = depth
+    def __init__(self, exception, depth, record, lazy, ansi, raw, patcher, extra):
+        self._options = (exception, depth, record, lazy, ansi, raw, patcher, extra)
 
     def add(
         self,
@@ -983,16 +976,15 @@ class Logger:
                 if not issubclass(type_, exception):
                     return False
 
-                if self_._from_decorator:
-                    from_decorator = True
-                else:
-                    from_decorator = False
+                from_decorator = self_._from_decorator
+                _, depth, _, *options = self._options
 
-                exception_ = (type_, value, traceback_)
+                if from_decorator:
+                    depth += 1
+
+                catch_options = [(type_, value, traceback_), depth, True] + options
                 level_id, static_level_no = self._dynamic_level(level)
-                self._log(
-                    level_id, static_level_no, from_decorator, exception_, True, message, (), {}
-                )
+                self._log(level_id, static_level_no, from_decorator, catch_options, message, (), {})
 
                 return not reraise
 
@@ -1088,7 +1080,7 @@ class Logger:
         >>> func()
         [18:11:54] DEBUG in 'func' - Get parent context
         """
-        return Logger(self._extra, self._patcher, exception, record, lazy, ansi, raw, depth)
+        return Logger(exception, depth, record, lazy, ansi, raw, *self._options[-2:])
 
     def bind(_self, **kwargs):
         """Bind attributes to the ``extra`` dict of each logged message record.
@@ -1124,16 +1116,8 @@ class Logger:
         >>> instance_2.call("Second instance")
         127.0.0.1 - Second instance
         """
-        return Logger(
-            {**_self._extra, **kwargs},
-            _self._patcher,
-            _self._exception,
-            _self._record,
-            _self._lazy,
-            _self._ansi,
-            _self._raw,
-            _self._depth,
-        )
+        *options, extra = _self._options
+        return Logger(*options, {**extra, **kwargs})
 
     def patch(self, patcher):
         """Attach a function to modify the record dict created by each logging call.
@@ -1178,16 +1162,8 @@ class Logger:
         ...     level, message = record["level"], record["message"]
         ...     logger.patch(lambda r: r.update(record)).log(level, message)
         """
-        return Logger(
-            self._extra,
-            patcher,
-            self._exception,
-            self._record,
-            self._lazy,
-            self._ansi,
-            self._raw,
-            self._depth,
-        )
+        *options, _, extra = self._options
+        return Logger(*options, patcher, extra)
 
     def level(self, name, no=None, color=None, icon=None):
         """Add, update or retrieve a logging level.
@@ -1566,16 +1542,14 @@ class Logger:
                 buffer = buffer[end:]
                 yield from matches[:-1]
 
-    def _log(
-        self, level_id, static_level_no, from_decorator, exception, record_, message, args, kwargs
-    ):
+    @staticmethod
+    def _log(level_id, static_level_no, from_decorator, options, message, args, kwargs):
         if not Logger._handlers:
             return
 
-        if from_decorator:
-            frame = get_frame(self._depth + 3)
-        else:
-            frame = get_frame(self._depth + 2)
+        (exception, depth, record, lazy, ansi, raw, patcher, extra) = options
+
+        frame = get_frame(depth + 2)
 
         try:
             name = frame.f_globals["__name__"]
@@ -1654,10 +1628,10 @@ class Logger:
         else:
             exception = None
 
-        record = {
+        log_record = {
             "elapsed": elapsed,
             "exception": exception,
-            "extra": {**Logger._extra_class, **self._extra},
+            "extra": {**Logger._extra_class, **extra},
             "file": file_recattr,
             "function": code.co_name,
             "level": level_recattr,
@@ -1670,69 +1644,61 @@ class Logger:
             "time": current_datetime,
         }
 
-        if self._lazy:
+        if lazy:
             args = [arg() for arg in args]
             kwargs = {key: value() for key, value in kwargs.items()}
 
-        if record_:
-            record["message"] = message.format(*args, **kwargs, record=record)
+        if record:
+            log_record["message"] = message.format(*args, **kwargs, record=log_record)
         elif args or kwargs:
-            record["message"] = message.format(*args, **kwargs)
+            log_record["message"] = message.format(*args, **kwargs)
 
         if Logger._patcher_class:
-            Logger._patcher_class(record)
+            Logger._patcher_class(log_record)
 
-        if self._patcher:
-            self._patcher(record)
+        if patcher:
+            patcher(log_record)
 
         for handler in Logger._handlers.values():
-            handler.emit(record, level_id, from_decorator, self._ansi, self._raw)
+            handler.emit(log_record, level_id, from_decorator, ansi, raw)
 
     def trace(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
-        _self._log("TRACE", None, False, _self._exception, _self._record, _message, args, kwargs)
+        _self._log("TRACE", None, False, _self._options, _message, args, kwargs)
 
     def debug(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
-        _self._log("DEBUG", None, False, _self._exception, _self._record, _message, args, kwargs)
+        _self._log("DEBUG", None, False, _self._options, _message, args, kwargs)
 
     def info(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'INFO'``."""
-        _self._log("INFO", None, False, _self._exception, _self._record, _message, args, kwargs)
+        _self._log("INFO", None, False, _self._options, _message, args, kwargs)
 
     def success(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
-        _self._log("SUCCESS", None, False, _self._exception, _self._record, _message, args, kwargs)
+        _self._log("SUCCESS", None, False, _self._options, _message, args, kwargs)
 
     def warning(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
-        _self._log("WARNING", None, False, _self._exception, _self._record, _message, args, kwargs)
+        _self._log("WARNING", None, False, _self._options, _message, args, kwargs)
 
     def error(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
-        _self._log("ERROR", None, False, _self._exception, _self._record, _message, args, kwargs)
+        _self._log("ERROR", None, False, _self._options, _message, args, kwargs)
 
     def critical(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
-        _self._log("CRITICAL", None, False, _self._exception, _self._record, _message, args, kwargs)
+        _self._log("CRITICAL", None, False, _self._options, _message, args, kwargs)
 
     def exception(_self, _message, *args, **kwargs):
         r"""Convenience method for logging an ``'ERROR'`` with exception information."""
-        _self._log("ERROR", None, False, True, _self._record, _message, args, kwargs)
+        options = (True,) + _self._options[1:]
+        _self._log("ERROR", None, False, options, _message, args, kwargs)
 
     def log(_self, _level, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``_level``."""
         level_id, static_level_no = _self._dynamic_level(_level)
-        _self._log(
-            level_id,
-            static_level_no,
-            False,
-            _self._exception,
-            _self._record,
-            _message,
-            args,
-            kwargs,
-        )
+        _self._log(level_id, static_level_no, False, _self._options, _message, args, kwargs)
 
     @staticmethod
     @functools.lru_cache(maxsize=32)

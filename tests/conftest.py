@@ -27,7 +27,7 @@ def reset_logger():
 
     def reset():
         loguru.logger.remove()
-        loguru.logger.__init__({}, None, None, False, False, False, False, 0)
+        loguru.logger.__init__(None, 0, False, False, False, False, None, {})
         loguru._logger.Logger._levels = default_levels.copy()
         loguru._logger.Logger._levels_ansi_codes = default_levels_ansi_codes.copy()
         loguru._logger.Logger._min_level = float("inf")
