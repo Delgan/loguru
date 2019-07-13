@@ -984,22 +984,15 @@ class Logger:
                     return False
 
                 if self_._from_decorator:
-                    back = 1
                     from_decorator = True
                 else:
-                    back = 0
                     from_decorator = False
 
+                exception_ = (type_, value, traceback_)
                 level_id, static_level_no = self._dynamic_level(level)
-
-                self.opt(
-                    exception=True,
-                    record=True,
-                    lazy=self._lazy,
-                    ansi=self._ansi,
-                    raw=self._raw,
-                    depth=self._depth + back,
-                )._log(level_id, static_level_no, from_decorator, message, (), {})
+                self._log(
+                    level_id, static_level_no, from_decorator, exception_, True, message, (), {}
+                )
 
                 return not reraise
 
@@ -1573,11 +1566,16 @@ class Logger:
                 buffer = buffer[end:]
                 yield from matches[:-1]
 
-    def _log(self, level_id, static_level_no, from_decorator, message, args, kwargs):
+    def _log(
+        self, level_id, static_level_no, from_decorator, exception, record_, message, args, kwargs
+    ):
         if not Logger._handlers:
             return
 
-        frame = get_frame(self._depth + 2)
+        if from_decorator:
+            frame = get_frame(self._depth + 3)
+        else:
+            frame = get_frame(self._depth + 2)
 
         try:
             name = frame.f_globals["__name__"]
@@ -1645,12 +1643,11 @@ class Logger:
         process_recattr = ProcessRecattr(process_ident)
         process_recattr.id, process_recattr.name = process_ident, process.name
 
-        if self._exception:
-            exc = self._exception
-            if isinstance(exc, BaseException):
-                type_, value, traceback = (type(exc), exc, exc.__traceback__)
-            elif isinstance(exc, tuple):
-                type_, value, traceback = exc
+        if exception:
+            if isinstance(exception, BaseException):
+                type_, value, traceback = (type(exception), exception, exception.__traceback__)
+            elif isinstance(exception, tuple):
+                type_, value, traceback = exception
             else:
                 type_, value, traceback = sys.exc_info()
             exception = ExceptionRecattr(type_, value, traceback)
@@ -1677,7 +1674,7 @@ class Logger:
             args = [arg() for arg in args]
             kwargs = {key: value() for key, value in kwargs.items()}
 
-        if self._record:
+        if record_:
             record["message"] = message.format(*args, **kwargs, record=record)
         elif args or kwargs:
             record["message"] = message.format(*args, **kwargs)
@@ -1693,47 +1690,49 @@ class Logger:
 
     def trace(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
-        _self._log("TRACE", None, False, _message, args, kwargs)
+        _self._log("TRACE", None, False, _self._exception, _self._record, _message, args, kwargs)
 
     def debug(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
-        _self._log("DEBUG", None, False, _message, args, kwargs)
+        _self._log("DEBUG", None, False, _self._exception, _self._record, _message, args, kwargs)
 
     def info(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'INFO'``."""
-        _self._log("INFO", None, False, _message, args, kwargs)
+        _self._log("INFO", None, False, _self._exception, _self._record, _message, args, kwargs)
 
     def success(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
-        _self._log("SUCCESS", None, False, _message, args, kwargs)
+        _self._log("SUCCESS", None, False, _self._exception, _self._record, _message, args, kwargs)
 
     def warning(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
-        _self._log("WARNING", None, False, _message, args, kwargs)
+        _self._log("WARNING", None, False, _self._exception, _self._record, _message, args, kwargs)
 
     def error(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
-        _self._log("ERROR", None, False, _message, args, kwargs)
+        _self._log("ERROR", None, False, _self._exception, _self._record, _message, args, kwargs)
 
     def critical(_self, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
-        _self._log("CRITICAL", None, False, _message, args, kwargs)
+        _self._log("CRITICAL", None, False, _self._exception, _self._record, _message, args, kwargs)
 
     def exception(_self, _message, *args, **kwargs):
         r"""Convenience method for logging an ``'ERROR'`` with exception information."""
-        _self.opt(
-            exception=True,
-            record=_self._record,
-            lazy=_self._lazy,
-            ansi=_self._ansi,
-            raw=_self._raw,
-            depth=_self._depth,
-        )._log("ERROR", None, False, _message, args, kwargs)
+        _self._log("ERROR", None, False, True, _self._record, _message, args, kwargs)
 
     def log(_self, _level, _message, *args, **kwargs):
         r"""Log ``_message.format(*args, **kwargs)`` with severity ``_level``."""
         level_id, static_level_no = _self._dynamic_level(_level)
-        _self._log(level_id, static_level_no, False, _message, args, kwargs)
+        _self._log(
+            level_id,
+            static_level_no,
+            False,
+            _self._exception,
+            _self._record,
+            _message,
+            args,
+            kwargs,
+        )
 
     @staticmethod
     @functools.lru_cache(maxsize=32)
