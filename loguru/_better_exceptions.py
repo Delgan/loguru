@@ -1,4 +1,5 @@
 import builtins
+import distutils.errors
 import distutils.sysconfig
 import inspect
 import io
@@ -139,24 +140,32 @@ class ExceptionFormatter:
     def _get_lib_dirs():
         # https://git.io/fh5wm
         # https://stackoverflow.com/q/122327/2291710
-        lib_dirs = [
-            sysconfig.get_path("stdlib"),
-            site.USER_SITE,
-            distutils.sysconfig.get_python_lib(),
-        ]
+        lib_dirs = []
+
+        stdlib_path = sysconfig.get_path("stdlib")
+
+        if stdlib_path is not None:
+            lib_dirs.append(stdlib_path)
+
+        if site.USER_SITE is not None:
+            lib_dirs.append(site.USER_SITE)
+
+        if hasattr(site, "getsitepackages"):
+            site_packages = site.getsitepackages()
+            lib_dirs.extend(site_packages)
+
+        if hasattr(sys, "real_prefix"):
+            lib_dirs.append(sys.real_prefix)
+            if stdlib_path is not None:
+                sys_prefix = stdlib_path.replace(sys.prefix, sys.real_prefix)
+                lib_dirs.append(sys_prefix)
 
         try:
-            real_prefix = sys.real_prefix
-        except AttributeError:
+            python_lib = distutils.sysconfig.get_python_lib()
+        except distutils.errors.DistutilsError:
             pass
         else:
-            lib_dirs.append(sys.prefix)
-            lib_dirs.append(sysconfig.get_path("stdlib").replace(sys.prefix, real_prefix))
-
-        try:
-            lib_dirs += site.getsitepackages()
-        except AttributeError:
-            pass
+            lib_dirs.append(python_lib)
 
         return [os.path.abspath(d) + os.sep for d in lib_dirs]
 

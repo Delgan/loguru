@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Fix exception during import when executing Python with ``-s`` and ``-S`` flags causing ``site.USER_SITE`` to be missing (`#114 <https://github.com/Delgan/loguru/issues/114>`_).
+
+
 0.3.1 (2019-07-13)
 ==================
 

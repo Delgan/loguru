@@ -1,10 +1,12 @@
 import asyncio
+import distutils
 import os
 import platform
 import re
 import site
 import subprocess
 import sys
+import sysconfig
 import types
 
 import pytest
@@ -246,18 +248,6 @@ def test_has_sys_real_prefix(writer, monkeypatch):
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
-def test_has_site_getsitepackages(writer, monkeypatch):
-    monkeypatch.setattr(site, "getsitepackages", lambda: ["foo", "bar", "baz"], raising=False)
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
-
-    try:
-        1 / 0
-    except ZeroDivisionError:
-        logger.exception("")
-
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
-
-
 def test_no_sys_real_prefix(writer, monkeypatch):
     monkeypatch.delattr(sys, "real_prefix", raising=False)
     logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
@@ -270,8 +260,95 @@ def test_no_sys_real_prefix(writer, monkeypatch):
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
+def test_has_site_getsitepackages(writer, monkeypatch):
+    monkeypatch.setattr(site, "getsitepackages", lambda: ["foo", "bar", "baz"], raising=False)
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
 def test_no_site_getsitepackages(writer, monkeypatch):
     monkeypatch.delattr(site, "getsitepackages", raising=False)
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
+def test_user_site_is_path(writer, monkeypatch):
+    monkeypatch.setattr(site, "USER_SITE", "/foo/bar/baz")
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
+def test_user_site_is_none(writer, monkeypatch):
+    monkeypatch.setattr(site, "USER_SITE", None)
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
+def test_sysconfig_get_path_return_path(writer, monkeypatch):
+    monkeypatch.setattr(sysconfig, "get_path", lambda *a, **k: "/foo/bar/baz")
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
+def test_sysconfig_get_path_return_none(writer, monkeypatch):
+    monkeypatch.setattr(sysconfig, "get_path", lambda *a, **k: None)
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
+def test_distutils_get_python_lib_return_path(writer, monkeypatch):
+    monkeypatch.setattr(distutils.sysconfig, "get_python_lib", lambda *a, **k: "/foo/bar/baz")
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
+
+def test_distutils_get_python_lib_raise_exception(writer, monkeypatch):
+    def raising(*a, **k):
+        raise distutils.sysconfig.DistutilsPlatformError()
+
+    monkeypatch.setattr(distutils.sysconfig, "get_python_lib", raising)
     logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
     try:
