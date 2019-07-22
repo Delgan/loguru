@@ -633,7 +633,7 @@ class Logger:
         ...         if random.random() > self.threshold:
         ...             print(message)
         ...
-        >>> stream_object = RandomStream(seed=12345, threhold=0.25)
+        >>> stream_object = RandomStream(seed=12345, threshold=0.25)
         >>> logger.add(stream_object, level="INFO")
         >>> logger.add(RandomStream, level="DEBUG", seed=34567, threshold=0.5)
         """
@@ -1334,7 +1334,7 @@ class Logger:
             A list of ``(name, state)`` tuples which denotes which loggers should be enabled (if
             `state` is ``True``) or disabled (if `state` is ``False``). The calls to |enable|
             and |disable| are made accordingly to the list order. This will not modify previously
-            activated loggers, so if you need a fresh start preprend your list with ``("", False)``
+            activated loggers, so if you need a fresh start prepend your list with ``("", False)``
             or ``("", True)``.
 
         Returns
@@ -1359,7 +1359,7 @@ class Logger:
         >>> # Set a default "extra" dict to logger across all modules, without "bind()"
         >>> extra = {"context": "foo"}
         >>> logger.configure(extra=extra)
-        >>> logger.start(sys.stderr, format="{extra[context]} - {message}")
+        >>> logger.add(sys.stderr, format="{extra[context]} - {message}")
         >>> logger.info("Context without bind")
         >>> # => "foo - Context without bind"
         >>> logger.bind(context="bar").info("Suppress global context")
