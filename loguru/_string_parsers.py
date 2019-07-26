@@ -15,8 +15,8 @@ def parse_size(size):
 
     try:
         s = float(s)
-    except ValueError:
-        raise ValueError("Invalid float value while parsing size: '%s'" % s)
+    except ValueError as e:
+        raise ValueError("Invalid float value while parsing size: '%s'" % s) from e
 
     u = "kmgtpezy".index(u.lower()) + 1 if u else 0
     i = 1024 if i else 1000
@@ -50,13 +50,13 @@ def parse_duration(duration):
     for value, unit in re.findall(reg, duration, flags=re.I):
         try:
             value = float(value)
-        except ValueError:
-            raise ValueError("Invalid float value while parsing duration: '%s'" % value)
+        except ValueError as e:
+            raise ValueError("Invalid float value while parsing duration: '%s'" % value) from e
 
         try:
             unit = next(u for r, u in units if re.fullmatch(r, unit, flags=re.I))
         except StopIteration:
-            raise ValueError("Invalid unit value while parsing duration: '%s'" % unit)
+            raise ValueError("Invalid unit value while parsing duration: '%s'" % unit) from None
 
         seconds += value * unit
 

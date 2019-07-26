@@ -23,7 +23,7 @@ def env(key, type_, default=None):
         except ValueError:
             raise ValueError(
                 "Invalid environment variable '%s' (expected an integer): '%s'" % (key, val)
-            )
+            ) from None
 
 
 LOGURU_AUTOINIT = env("LOGURU_AUTOINIT", bool, True)

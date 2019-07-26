@@ -888,7 +888,9 @@ class Logger:
                 try:
                     handler = handlers.pop(handler_id)
                 except KeyError:
-                    raise ValueError("There is no existing handler with id '%s'" % handler_id)
+                    raise ValueError(
+                        "There is no existing handler with id %d" % handler_id
+                    ) from None
                 handler.stop()
 
             levelnos = (h.levelno for h in handlers.values())
@@ -1222,7 +1224,7 @@ class Logger:
             try:
                 return Logger._levels[name]
             except KeyError:
-                raise ValueError("Level '%s' does not exist" % name)
+                raise ValueError("Level '%s' does not exist" % name) from None
 
         if name not in Logger._levels:
             if no is None:
@@ -1401,7 +1403,7 @@ class Logger:
     def _change_activation(self, name, status):
         if not (name is None or isinstance(name, str)):
             raise ValueError(
-                "Invalid name, it should be a string (or ``None``), not: '%s'" % type(name).__name__
+                "Invalid name, it should be a string (or None), not: '%s'" % type(name).__name__
             )
 
         with Logger._lock:
@@ -1518,7 +1520,7 @@ class Logger:
             raise ValueError(
                 "Invalid pattern, it should be a string or a compiled regex, not: '%s'"
                 % type(pattern).__name__
-            )
+            ) from None
 
         matches = Logger._find_iter(fileobj, regex, chunk)
 
@@ -1593,7 +1595,7 @@ class Logger:
                 level_no, _, level_icon = Logger._levels[level_id]
                 level_name = level_id
             except KeyError:
-                raise ValueError("Level '%s' does not exist" % level_id)
+                raise ValueError("Level '%s' does not exist" % level_id) from None
 
         if level_no < Logger._min_level:
             return
