@@ -154,7 +154,7 @@ One answer: the |add|_ function.
 
 This function should be used to register sinks_ which are responsible for managing `log messages`_ contextualized with a `record dict`_. A sink can take many forms: a simple function, a string path, a file-like object, a built-in Handler or a custom class.
 
-Note that you may also |remove|_ previously added handlers, this is particularly useful if you want to supersede the default one.
+Note that you may also |remove|_ a previously added handler by using the identifier returned while adding it. This is particularly useful if you want to supersede the default ``stderr`` handler: just call ``logger.remove()`` to make a fresh start.
 
 
 Easier file logging with rotation / retention / compression
