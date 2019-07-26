@@ -1,6 +1,4 @@
 import builtins
-import distutils.errors
-import distutils.sysconfig
 import inspect
 import io
 import keyword
@@ -161,11 +159,17 @@ class ExceptionFormatter:
                 lib_dirs.append(sys_prefix)
 
         try:
-            python_lib = distutils.sysconfig.get_python_lib()
-        except distutils.errors.DistutilsError:
+            from distutils.errors import DistutilsError
+            from distutils.sysconfig import get_python_lib
+        except ImportError:
             pass
         else:
-            lib_dirs.append(python_lib)
+            try:
+                python_lib = get_python_lib()
+            except DistutilsError:
+                pass
+            else:
+                lib_dirs.append(python_lib)
 
         return [os.path.abspath(d) + os.sep for d in lib_dirs]
 

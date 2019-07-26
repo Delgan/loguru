@@ -11,6 +11,7 @@ import types
 
 import pytest
 
+import loguru
 from loguru import logger
 
 
@@ -358,6 +359,22 @@ def test_distutils_get_python_lib_raise_exception(writer, monkeypatch):
 
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
+
+def test_distutils_not_installed(writer, monkeypatch):
+    monkeypatch.setitem(sys.modules, "distutils", None)
+    monkeypatch.setitem(sys.modules, "distutils.errors", None)
+    monkeypatch.setitem(sys.modules, "distutils.sysconfig", None)
+    monkeypatch.delattr(loguru._better_exceptions, "distutils", raising=False)
+    monkeypatch.delattr(loguru._better_exceptions, "distutils.errors", raising=False)
+    monkeypatch.delattr(loguru._better_exceptions, "distutils.syconfig", raising=False)
+    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("")
+
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 def test_no_exception(writer):
     logger.add(writer, backtrace=False, diagnose=False, colorize=False, format="{message}")

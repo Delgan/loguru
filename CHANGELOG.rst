@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Prevent hypothetical ``ImportError`` if a Python installation is missing the built-in ``distutils`` module (`#118 <https://github.com/Delgan/loguru/issues/118>`_).
+
+
 0.3.2 (2019-07-21)
 ==================
 
