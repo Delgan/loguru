@@ -57,8 +57,14 @@ def test_remove_enqueue_filesink(tmpdir):
     assert file.read() == "1\n"
 
 
-def test_remove_invalid(writer):
+def test_invalid_handler_id_value(writer):
     logger.add(writer)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"^There is no existing handler.*"):
         logger.remove(42)
+
+
+@pytest.mark.parametrize("handler_id", [sys.stderr, sys, object(), int])
+def test_invalid_handler_id_type(handler_id):
+    with pytest.raises(ValueError, match=r"^Invalid handler id.*"):
+        logger.remove(handler_id)

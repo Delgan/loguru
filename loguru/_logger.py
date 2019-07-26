@@ -871,6 +871,12 @@ class Logger:
         >>> logger.remove(i)
         >>> logger.info("No longer logging")
         """
+        if not (handler_id is None or isinstance(handler_id, int)):
+            raise ValueError(
+                "Invalid handler id, it should be an integer as returned "
+                "by the 'add()' method (or None), not: '%s'" % type(handler_id).__name__
+            )
+
         with Logger._lock:
             handlers = Logger._handlers.copy()
 
