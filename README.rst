@@ -295,7 +295,7 @@ Finally, the |patch|_ method allows dynamic values to be attached to the record 
 ::
 
     logger.add(sys.stderr, format="{extra[utc]} {message}")
-    logger = logger.patch(lambda record: record["extra"].update(utc=datetime.utcnow())
+    logger = logger.patch(lambda record: record["extra"].update(utc=datetime.utcnow()))
 
 
 Lazy evaluation of expensive functions
