@@ -108,7 +108,13 @@ class Handler:
 
             if is_raw:
                 if not is_ansi:
-                    formatted = message
+                    if self._is_formatter_dynamic:
+                        formatted = message
+                    else:
+                        if hasattr(self._writer, "read"):
+                            formatted = message
+                        else:
+                            formatted = message + '\n'
                 elif self._colorize:
                     level_ansi = self._levels_ansi_codes[level_id]
                     formatted = self._colorize_format(message, level_ansi)
