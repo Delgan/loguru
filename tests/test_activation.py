@@ -76,7 +76,7 @@ def test_log_before_disable(writer):
 
 
 def test_multiple_activations():
-    n = lambda: len(logger._activation_list)
+    n = lambda: len(logger._core.activation_list)
 
     assert n() == 0
     logger.enable("")
