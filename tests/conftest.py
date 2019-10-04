@@ -22,22 +22,9 @@ def check_env_variables():
 
 @pytest.fixture(autouse=True)
 def reset_logger():
-    default_levels = loguru._logger.Logger._levels.copy()
-    default_levels_ansi_codes = loguru._logger.Logger._levels_ansi_codes.copy()
-
     def reset():
         loguru.logger.remove()
-        loguru.logger.__init__(None, 0, False, False, False, False, None, {})
-        loguru._logger.Logger._levels = default_levels.copy()
-        loguru._logger.Logger._levels_ansi_codes = default_levels_ansi_codes.copy()
-        loguru._logger.Logger._min_level = float("inf")
-        loguru._logger.Logger._extra_class = {}
-        loguru._logger.Logger._patcher_class = None
-        loguru._logger.Logger._handlers = {}
-        loguru._logger.Logger._handlers_count = itertools.count()
-        loguru._logger.Logger._enabled = {}
-        loguru._logger.Logger._activation_list = []
-        loguru._logger.Logger._activation_none = True
+        loguru.logger.__init__(loguru._logger.Core(), None, 0, False, False, False, False, None, {})
         logging.Logger.manager.loggerDict.clear()
         logging.root = logging.RootLogger(logging.WARNING)
 

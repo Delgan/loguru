@@ -7,13 +7,13 @@ import atexit as _atexit
 import sys as _sys
 
 from . import _defaults
-from ._logger import Logger as _Logger
+from ._logger import Logger as _Logger, Core as _Core
 
 __version__ = "0.3.2"
 
 __all__ = ["logger"]
 
-logger = _Logger(None, 0, False, False, False, False, None, {})
+logger = _Logger(_Core(), None, 0, False, False, False, False, None, {})
 
 if _defaults.LOGURU_AUTOINIT and _sys.stderr:
     logger.add(_sys.stderr)
