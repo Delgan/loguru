@@ -2,6 +2,7 @@ import functools
 import inspect
 import itertools
 import logging
+import pickle
 import re
 import sys
 import threading
@@ -14,6 +15,7 @@ from threading import current_thread
 
 from . import _colorama
 from . import _defaults
+from . import _sink_wrappers
 from ._ansimarkup import AnsiMarkup
 from ._better_exceptions import ExceptionFormatter
 from ._datetime import aware_now
@@ -30,6 +32,20 @@ except ImportError:
 
 def parse_ansi(color):
     return AnsiMarkup(strip=False).feed(color.strip(), strict=False)
+
+
+class FiltererModule:
+    def __init__(self, module):
+        self._parent = module + "."
+        self._length = len(self._parent)
+
+    def filter(self, record):
+        return (record["name"] + ".")[: self._length] == self._parent
+
+
+class FiltererNull:
+    def filter(self, record):
+        return record["name"] is not None
 
 
 Level = namedtuple("Level", ["no", "color", "icon"])
@@ -84,6 +100,19 @@ class Core:
         self.activation_list = []
         self.activation_none = True
 
+        self.lock = threading.Lock()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state["lock"]
+        try:
+            return pickle.dumps(state)
+        except Exception as e:
+            raise ValueError("The logger can't be pickled") from e
+
+    def __setstate__(self, state):
+        unpickled = pickle.loads(state)
+        self.__dict__.update(unpickled)
         self.lock = threading.Lock()
 
 
@@ -646,6 +675,18 @@ class Logger:
         if colorize is None and serialize:
             colorize = False
 
+        if isinstance(format, str):
+            formatter = format + "\n{exception}"
+            is_formatter_dynamic = False
+        elif callable(format):
+            formatter = format
+            is_formatter_dynamic = True
+        else:
+            raise ValueError(
+                "Invalid format, it should be a string or a function, not: '%s'"
+                % type(format).__name__
+            )
+
         if isclass(sink):
             sink = sink(**kwargs)
             return self.add(
@@ -686,93 +727,30 @@ class Logger:
             else:
                 stream = sink
 
-            stream_write = stream.write
-            if kwargs:
-
-                def write(m):
-                    return stream_write(m, **kwargs)
-
-            else:
-                write = stream_write
-
-            if hasattr(stream, "flush") and callable(stream.flush):
-                stream_flush = stream.flush
-
-                def writer(m):
-                    write(m)
-                    stream_flush()
-
-            else:
-                writer = write
-
-            if hasattr(stream, "stop") and callable(stream.stop):
-                stopper = stream.stop
-            else:
-
-                def stopper():
-                    return None
-
+            sink_wrapper = _sink_wrappers.StreamSinkWrapper(stream, kwargs)
         elif isinstance(sink, logging.Handler):
             name = repr(sink)
 
-            def writer(m):
-                message = str(m)
-                r = m.record
-                exc = r["exception"]
-                if not is_formatter_dynamic:
-                    message = message[:-1]
-                record = logging.root.makeRecord(
-                    r["name"],
-                    r["level"].no,
-                    r["file"].path,
-                    r["line"],
-                    message,
-                    (),
-                    (exc.type, exc.value, exc.traceback) if exc else None,
-                    r["function"],
-                    r["extra"],
-                    **kwargs
-                )
-                if exc:
-                    record.exc_text = "\n"
-                sink.handle(record)
-
-            stopper = sink.close
             if colorize is None:
                 colorize = False
+
+            sink_wrapper = _sink_wrappers.StandardSinkWrapper(sink, kwargs, is_formatter_dynamic)
         elif callable(sink):
             name = getattr(sink, "__name__", repr(sink))
 
-            if kwargs:
-
-                def writer(m):
-                    return sink(m, **kwargs)
-
-            else:
-                writer = sink
-
-            def stopper():
-                return None
-
             if colorize is None:
                 colorize = False
+
+            sink_wrapper = _sink_wrappers.CallableSinkWrapper(sink, kwargs)
         else:
             raise ValueError("Cannot log to objects of type '%s'." % type(sink).__name__)
 
         if filter is None:
             filter_func = None
         elif filter == "":
-
-            def filter_func(record):
-                return record["name"] is not None
-
+            filter_func = FiltererNull().filter
         elif isinstance(filter, str):
-            parent = filter + "."
-            length = len(parent)
-
-            def filter_func(record):
-                return (record["name"] + ".")[:length] == parent
-
+            filter_func = FiltererModule(filter).filter
         elif callable(filter):
             filter_func = filter
         else:
@@ -796,18 +774,6 @@ class Logger:
                 "Invalid level value, it should be a positive integer, not: %d" % levelno
             )
 
-        if isinstance(format, str):
-            formatter = format + "\n{exception}"
-            is_formatter_dynamic = False
-        elif callable(format):
-            formatter = format
-            is_formatter_dynamic = True
-        else:
-            raise ValueError(
-                "Invalid format, it should be a string or a function, not: '%s'"
-                % type(format).__name__
-            )
-
         try:
             encoding = sink.encoding
         except AttributeError:
@@ -829,8 +795,7 @@ class Logger:
 
             handler = Handler(
                 name=name,
-                writer=writer,
-                stopper=stopper,
+                sink_wrapper=sink_wrapper,
                 levelno=levelno,
                 formatter=formatter,
                 is_formatter_dynamic=is_formatter_dynamic,

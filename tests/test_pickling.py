@@ -1,12 +1,205 @@
-from loguru import logger
+import logging
 import pickle
 import sys
+
 import pytest
 
+from loguru import logger
 
-@pytest.mark.xfail(reason="Not yet implemented")
+
+class StreamHandler:
+    def __init__(self, flushable=False, stoppable=False):
+        if flushable:
+            self.flush = self._flush
+        if stoppable:
+            self.stop = self._stop
+
+        self.wrote = ""
+        self.flushed = False
+        self.stopped = False
+
+    def write(self, message):
+        self.wrote += message
+
+    def _flush(self):
+        self.flushed = True
+
+    def _stop(self):
+        self.stopped = True
+
+
+class StandardHandler(logging.Handler):
+    def __init__(self, level):
+        super().__init__(level)
+        self.written = ""
+        self.lock = None
+
+    def emit(self, record):
+        self.written += record.getMessage()
+
+    def acquire(self):
+        pass
+
+    def createLock(self):
+        return None
+
+
+def format_function(record):
+    return "-> {message}"
+
+
+def filter_function(record):
+    return "[PASS]" in record["message"]
+
+
+def patch_function(record):
+    record["extra"]["foo"] = "bar"
+
+
+def test_pickling_function_handler(capsys):
+    logger.add(print, format="{level} - {function} - {message}", end="")
+    pickled = pickle.dumps(logger)
+    unpikcled = pickle.loads(pickled)
+    unpikcled.debug("A message")
+    out, err = capsys.readouterr()
+    assert out == "DEBUG - test_pickling_function_handler - A message\n"
+    assert err == ""
+
+
+@pytest.mark.parametrize("flushable", [True, False])
+@pytest.mark.parametrize("stoppable", [True, False])
+def test_pickling_stream_handler(flushable, stoppable):
+    stream = StreamHandler(flushable, stoppable)
+    i = logger.add(stream, format="{level} - {function} - {message}")
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.debug("A message")
+    stream = next(iter(unpickled._core.handlers.values()))._sink_wrapper._stream
+    unpickled.remove(i)
+    assert stream.wrote == "DEBUG - test_pickling_stream_handler - A message\n"
+    assert stream.flushed == flushable
+    assert stream.stopped == stoppable
+
+
+def test_pickling_standard_handler():
+    handler = StandardHandler(logging.NOTSET)
+    logger.add(handler, format="{level} - {function} - {message}")
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.debug("A message")
+    handler = next(iter(unpickled._core.handlers.values()))._sink_wrapper._handler
+    assert handler.written == "DEBUG - test_pickling_standard_handler - A message"
+
+
+def test_pickling_class_handler():
+    logger.add(StreamHandler, format="{level} - {function} - {message}")
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.debug("A message")
+    stream = next(iter(unpickled._core.handlers.values()))._sink_wrapper._stream
+    assert stream.wrote == "DEBUG - test_pickling_class_handler - A message\n"
+
+
+@pytest.mark.xfail("Not yet implemented")
+def test_pickling_file_handler(tmpdir):
+    file = tmpdir.join("test.log")
+    logger.add(str(file), format="{level} - {function} - {message}")
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.debug("A message")
+    assert file.read() == "DEBUG - test_pickling_file_handler - A message\n"
+
+
+def test_pickling_no_handler(writer):
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.add(writer, format="{level} - {function} - {message}")
+    unpickled.debug("A message")
+    assert writer.read() == "DEBUG - test_pickling_no_handler - A message\n"
+
+
+def test_pickling_handler_not_serializable():
+    logger.add(lambda m: None)
+    with pytest.raises(ValueError, match="The logger can't be pickled"):
+        pickle.dumps(logger)
+
+
+def test_pickling_filter_function(capsys):
+    logger.add(print, format="{message}", filter=filter_function, end="")
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.info("Nope")
+    unpickled.info("[PASS] Yes")
+    out, err = capsys.readouterr()
+    assert out == "[PASS] Yes\n"
+    assert err == ""
+
+
+@pytest.mark.parametrize("filter", ["", "tests"])
+def test_pickling_filter_name(capsys, filter):
+    logger.add(print, format="{message}", filter=filter, end="")
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.info("A message")
+    out, err = capsys.readouterr()
+    assert out == "A message\n"
+    assert err == ""
+
+
+def test_pickling_format_function(capsys):
+    logger.add(print, format=format_function, end="")
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.info("The message")
+    out, err = capsys.readouterr()
+    assert out == "-> The message"
+    assert err == ""
+
+
+def test_pickling_filter_function_not_serializable():
+    logger.add(print, filter=lambda r: True)
+    with pytest.raises(ValueError, match="The logger can't be pickled"):
+        pickle.dumps(logger)
+
+
+def test_pickling_format_function_not_serializable():
+    logger.add(print, format=lambda r: "{message}")
+    with pytest.raises(ValueError, match="The logger can't be pickled"):
+        pickle.dumps(logger)
+
+
+def test_pickling_bound_logger(writer):
+    bound_logger = logger.bind(foo="bar")
+    pickled = pickle.dumps(bound_logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.add(writer, format="{extra[foo]}")
+    unpickled.info("Test")
+    assert writer.read() == "bar\n"
+
+
+def test_pickling_patched_logger(writer):
+    patched_logger = logger.patch(patch_function)
+    pickled = pickle.dumps(patched_logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.add(writer, format="{extra[foo]}")
+    unpickled.info("Test")
+    assert writer.read() == "bar\n"
+
+
+def test_remove_after_pickling(capsys):
+    i = logger.add(print, end="", format="{message}")
+    logger.info("A")
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.remove(i)
+    unpickled.info("B")
+    out, err = capsys.readouterr()
+    assert out == "A\n"
+    assert err == ""
+
+
 def test_pickling_logging_method(capsys):
-    logger.add(print, format="{level} - {function} - {message}")
+    logger.add(print, format="{level} - {function} - {message}", end="")
     pickled = pickle.dumps(logger.critical)
     func = pickle.loads(pickled)
     func("A message")
@@ -15,9 +208,8 @@ def test_pickling_logging_method(capsys):
     assert err == ""
 
 
-@pytest.mark.xfail(reason="Not yet implemented")
 def test_pickling_log_method(capsys):
-    logger.add(print, format="{level} - {function} - {message}")
+    logger.add(print, format="{level} - {function} - {message}", end="")
     pickled = pickle.dumps(logger.log)
     func = pickle.loads(pickled)
     func(19, "A message")
@@ -26,34 +218,6 @@ def test_pickling_log_method(capsys):
     assert err == ""
 
 
-@pytest.mark.xfail(reason="Not yet implemented")
-def test_pickling_logger_no_handler(writer):
-    pickled = pickle.dumps(logger)
-    inst = pickle.loads(pickled)
-    inst.add(writer, format="{level} - {function} - {message}")
-    inst.debug("A message")
-    assert writer.read() == "DEBUG - test_pickling_logger - A message\n"
-
-
-@pytest.mark.xfail(reason="Not yet implemented")
-def test_pickling_logger_handler_serializable(capsys):
-    logger.add(print)
-    pickled = pickle.dumps(logger)
-    inst = pickle.loads(pickled)
-    inst.debug("A message")
-    out, err = capsys.readouterr()
-    assert out == "DEBUG - test_pickling_logger - A message\n"
-    assert err == ""
-
-
-@pytest.mark.xfail(reason="Not yet implemented")
-def test_pickling_logger_handler_not_serializable():
-    logger.add(lambda m: None)
-    with pytest.raises(ValueError, match="The logger can't be pickled"):
-        pickle.dumps(logger)
-
-
-@pytest.mark.xfail(reason="Not yet implemented")
 @pytest.mark.parametrize(
     "method",
     [

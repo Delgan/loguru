@@ -17,9 +17,8 @@ class Handler:
     def __init__(
         self,
         *,
+        sink_wrapper,
         name,
-        writer,
-        stopper,
         levelno,
         formatter,
         is_formatter_dynamic,
@@ -33,8 +32,9 @@ class Handler:
         levels_ansi_codes
     ):
         self._name = name
-        self._writer = writer
-        self._stopper = stopper
+        self._sink_wrapper = sink_wrapper
+        self._writer = sink_wrapper.write
+        self._stopper = sink_wrapper.stop
         self._levelno = levelno
         self._formatter = formatter
         self._is_formatter_dynamic = is_formatter_dynamic
@@ -45,7 +45,7 @@ class Handler:
         self._enqueue = enqueue
         self._exception_formatter = exception_formatter
         self._id = id_
-        self._levels_ansi_codes = levels_ansi_codes
+        self._levels_ansi_codes = levels_ansi_codes  # Warning, reference shared among handlers
 
         self._static_format = None
         self._decolorized_format = None
@@ -278,3 +278,12 @@ class Handler:
             pass
         finally:
             del ex_type, ex, tb
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state["_lock"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._lock = threading.Lock()
