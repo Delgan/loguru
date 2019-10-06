@@ -33,8 +33,13 @@ except ImportError:
 def parse_ansi(color):
     return AnsiMarkup(strip=False).feed(color.strip(), strict=False)
 
-def filter_module(self, record):
-    return (record["name"] + ".")[: self._length] == self._parent
+
+def filter_module(record, parent, length):
+    name = record["name"]
+    if name is None:
+        return False
+    return (name + ".")[: length] == parent
+
 
 def filter_none(record):
     return record["name"] is not None
