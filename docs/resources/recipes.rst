@@ -321,6 +321,26 @@ Similar considerations should be taken into account while dealing with the ``fil
 You probably should not worry about all of this except if you noticed that your code is subject to this behavior.
 
 
+Interopatibility with ``tqdm`` iterations
+-----------------------------------------
+
+Trying to use the Loguru's ``logger`` during an iteration wrapped by the ``tqdm`` library may disturb the displayed progress bar. As a workaround, one can use the ``tqdm.write()`` function instead of writings logs directly to ``sys.stderr``::
+
+    import time
+
+    from loguru import logger
+    from tqdm import tqdm
+
+    logger.remove()
+    logger.add(tqdm.write, end="")
+
+    logger.info("Initializing")
+
+    for x in tqdm(list(range(100))):
+        logger.info("Iterating #{}", x)
+        time.sleep(0.1)
+
+
 Using Loguru's ``logger`` within a Cython module
 ------------------------------------------------
 
