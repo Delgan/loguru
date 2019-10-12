@@ -33,19 +33,11 @@ except ImportError:
 def parse_ansi(color):
     return AnsiMarkup(strip=False).feed(color.strip(), strict=False)
 
+def filter_module(self, record):
+    return (record["name"] + ".")[: self._length] == self._parent
 
-class FiltererModule:
-    def __init__(self, module):
-        self._parent = module + "."
-        self._length = len(self._parent)
-
-    def filter(self, record):
-        return (record["name"] + ".")[: self._length] == self._parent
-
-
-class FiltererNull:
-    def filter(self, record):
-        return record["name"] is not None
+def filter_none(record):
+    return record["name"] is not None
 
 
 Level = namedtuple("Level", ["no", "color", "icon"])
@@ -748,9 +740,11 @@ class Logger:
         if filter is None:
             filter_func = None
         elif filter == "":
-            filter_func = FiltererNull().filter
+            filter_func = filter_none
         elif isinstance(filter, str):
-            filter_func = FiltererModule(filter).filter
+            parent = filter + "."
+            length = len(parent)
+            filter_func = functools.partial(filter_module, parent=parent, length=length)
         elif callable(filter):
             filter_func = filter
         else:
