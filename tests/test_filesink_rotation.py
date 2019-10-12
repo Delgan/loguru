@@ -1,5 +1,6 @@
 import pytest
 import datetime
+import importlib
 import os
 import re
 import sys
@@ -75,6 +76,10 @@ def monkeypatch_filesystem(monkeypatch):
         if patch_win32:
             win32_setctime = MagicMock(SUPPORTED=True, setctime=patched_setctime)
             monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
+
+        ctime_functions = importlib.reload(loguru._ctime_functions)
+        monkeypatch.setattr(loguru._file_sink, "get_ctime", ctime_functions.get_ctime)
+        monkeypatch.setattr(loguru._file_sink, "set_ctime", ctime_functions.set_ctime)
 
     return monkeypatch_filesystem
 
@@ -422,7 +427,7 @@ def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
     logger.debug("X")
 
     filesink = next(iter(logger._core.handlers.values()))._sink_wrapper._stream
-    monkeypatch.setattr(filesink, "_get_creation_time", creation_time)
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", creation_time)
 
     logger.debug("Y" * 20)
 

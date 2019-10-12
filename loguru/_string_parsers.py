@@ -2,6 +2,36 @@ import datetime
 import re
 
 
+class Frequencies:
+    @staticmethod
+    def hourly(t):
+        dt = t + datetime.timedelta(hours=1)
+        return dt.replace(minute=0, second=0, microsecond=0)
+
+    @staticmethod
+    def daily(t):
+        dt = t + datetime.timedelta(days=1)
+        return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    @staticmethod
+    def weekly(t):
+        dt = t + datetime.timedelta(days=7 - t.weekday())
+        return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    @staticmethod
+    def monthly(t):
+        if t.month == 12:
+            y, m = t.year + 1, 1
+        else:
+            y, m = t.year, t.month + 1
+        return t.replace(year=y, month=m, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    @staticmethod
+    def yearly(t):
+        y = t.year + 1
+        return t.replace(year=y, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
 def parse_size(size):
     size = size.strip()
     reg = re.compile(r"([e\+\-\.\d]+)\s*([kmgtpezy])?(i)?(b)", flags=re.I)
@@ -68,42 +98,19 @@ def parse_frequency(frequency):
 
     if frequency == "hourly":
 
-        def hourly(t):
-            dt = t + datetime.timedelta(hours=1)
-            return dt.replace(minute=0, second=0, microsecond=0)
-
-        return hourly
+        return Frequencies.hourly
     elif frequency == "daily":
 
-        def daily(t):
-            dt = t + datetime.timedelta(days=1)
-            return dt.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        return daily
+        return Frequencies.daily
     elif frequency == "weekly":
 
-        def weekly(t):
-            dt = t + datetime.timedelta(days=7 - t.weekday())
-            return dt.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        return weekly
+        return Frequencies.weekly
     elif frequency == "monthly":
 
-        def monthly(t):
-            if t.month == 12:
-                y, m = t.year + 1, 1
-            else:
-                y, m = t.year, t.month + 1
-            return t.replace(year=y, month=m, day=1, hour=0, minute=0, second=0, microsecond=0)
-
-        return monthly
+        return Frequencies.monthly
     elif frequency == "yearly":
 
-        def yearly(t):
-            y = t.year + 1
-            return t.replace(year=y, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-
-        return yearly
+        return Frequencies.yearly
 
     return None
 
