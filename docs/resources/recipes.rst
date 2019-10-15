@@ -22,6 +22,7 @@ Code snippets and recipes for ``loguru``
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
 
 .. _`GH#88`: https://github.com/Delgan/loguru/issues/88
+.. _`GH#132`: https://github.com/Delgan/loguru/issues/132
 
 Changing the level of an existing handler
 -----------------------------------------
@@ -339,6 +340,9 @@ Trying to use the Loguru's ``logger`` during an iteration wrapped by the ``tqdm`
     for x in tqdm(range(100)):
         logger.info("Iterating #{}", x)
         time.sleep(0.1)
+
+
+You may encounter problems with colorization of your logs after importing ``tqdm`` using Spyder on Windows. This issue is discussed in `GH#132`_. You can easily circunvent the problem by calling ``colorama.deinit()`` right after your import.
 
 
 Using Loguru's ``logger`` within a Cython module
