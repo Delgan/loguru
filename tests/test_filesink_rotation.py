@@ -426,7 +426,7 @@ def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
     i = logger.add(str(tmpdir.join("test.log")), rotation=10, format="{message}")
     logger.debug("X")
 
-    filesink = next(iter(logger._core.handlers.values()))._sink_wrapper._stream
+    filesink = next(iter(logger._core.handlers.values()))._sink
     monkeypatch.setattr(loguru._file_sink, "get_ctime", creation_time)
 
     logger.debug("Y" * 20)

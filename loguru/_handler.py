@@ -17,7 +17,7 @@ class Handler:
     def __init__(
         self,
         *,
-        sink_wrapper,
+        sink,
         name,
         levelno,
         formatter,
@@ -32,9 +32,7 @@ class Handler:
         levels_ansi_codes
     ):
         self._name = name
-        self._sink_wrapper = sink_wrapper
-        self._writer = sink_wrapper.write
-        self._stopper = sink_wrapper.stop
+        self._sink = sink
         self._levelno = levelno
         self._formatter = formatter
         self._is_formatter_dynamic = is_formatter_dynamic
@@ -141,7 +139,7 @@ class Handler:
                 if self._enqueue:
                     self._queue.put(str_record)
                 else:
-                    self._writer(str_record)
+                    self._sink.write(str_record)
 
         except Exception:
             if self._catch:
@@ -155,7 +153,7 @@ class Handler:
             if self._enqueue:
                 self._queue.put(None)
                 self._thread.join()
-            self._stopper()
+            self._sink.stop()
 
     def update_format(self, level_id):
         if not self._colorize or self._is_formatter_dynamic:
@@ -250,7 +248,7 @@ class Handler:
                 message = queue.get()
                 if message is None:
                     break
-                self._writer(message)
+                self._sink.write(message)
             except Exception:
                 if self._catch:
                     if message and hasattr(message, "record"):

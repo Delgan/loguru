@@ -123,6 +123,24 @@ def test_flush(rep):
     assert flushed == [expected] * rep
 
 
+def test_file_sink_ascii_encoding(tmpdir):
+    file = tmpdir.join("test.log")
+    logger.add(
+        str(file), encoding="ascii", format="{message}", errors="backslashreplace", catch=False
+    )
+    logger.info("天")
+    logger.remove()
+    assert file.read() == "\\u5929\n"
+
+
+def test_file_sink_utf8_encoding(tmpdir):
+    file = tmpdir.join("test.log")
+    logger.add(str(file), encoding="utf8", format="{message}", errors="strict", catch=False)
+    logger.info("天")
+    logger.remove()
+    assert file.read() == "天\n"
+
+
 def test_disabled_logger_in_sink(sink_with_logger):
     sink = sink_with_logger(logger)
     logger.disable("tests.conftest")

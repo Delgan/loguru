@@ -15,7 +15,6 @@ from threading import current_thread
 
 from . import _colorama
 from . import _defaults
-from . import _sink_wrappers
 from ._ansimarkup import AnsiMarkup
 from ._better_exceptions import ExceptionFormatter
 from ._datetime import aware_now
@@ -23,6 +22,7 @@ from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
 from ._recattrs import ExceptionRecattr, FileRecattr, LevelRecattr, ProcessRecattr, ThreadRecattr
+from ._simple_sinks import StreamSink, StandardSink, CallableSink
 
 try:
     from os import PathLike
@@ -38,7 +38,7 @@ def filter_module(record, parent, length):
     name = record["name"]
     if name is None:
         return False
-    return (name + ".")[: length] == parent
+    return (name + ".")[:length] == parent
 
 
 def filter_none(record):
@@ -700,19 +700,13 @@ class Logger:
             )
         elif isinstance(sink, (str, PathLike)):
             path = sink
-            sink = FileSink(path, **kwargs)
-            return self.add(
-                sink,
-                level=level,
-                format=format,
-                filter=filter,
-                colorize=colorize,
-                serialize=serialize,
-                backtrace=backtrace,
-                diagnose=diagnose,
-                enqueue=enqueue,
-                catch=catch,
-            )
+            name = str(path)
+
+            if colorize is None:
+                colorize = False
+
+            wrapped_sink = FileSink(path, **kwargs)
+            encoding = wrapped_sink.encoding
         elif hasattr(sink, "write") and callable(sink.write):
             name = getattr(sink, "name", repr(sink))
 
@@ -724,21 +718,24 @@ class Logger:
             else:
                 stream = sink
 
-            sink_wrapper = _sink_wrappers.StreamSinkWrapper(stream, kwargs)
+            wrapped_sink = StreamSink(stream, kwargs)
+            encoding = getattr(sink, "encoding", None)
         elif isinstance(sink, logging.Handler):
             name = repr(sink)
 
             if colorize is None:
                 colorize = False
 
-            sink_wrapper = _sink_wrappers.StandardSinkWrapper(sink, kwargs, is_formatter_dynamic)
+            wrapped_sink = StandardSink(sink, kwargs, is_formatter_dynamic)
+            encoding = getattr(sink, "encoding", None)
         elif callable(sink):
             name = getattr(sink, "__name__", repr(sink))
 
             if colorize is None:
                 colorize = False
 
-            sink_wrapper = _sink_wrappers.CallableSinkWrapper(sink, kwargs)
+            wrapped_sink = CallableSink(sink, kwargs)
+            encoding = "utf8"
         else:
             raise ValueError("Cannot log to objects of type '%s'." % type(sink).__name__)
 
@@ -773,11 +770,6 @@ class Logger:
                 "Invalid level value, it should be a positive integer, not: %d" % levelno
             )
 
-        try:
-            encoding = sink.encoding
-        except AttributeError:
-            encoding = None
-
         if encoding is None:
             encoding = "ascii"
 
@@ -794,7 +786,7 @@ class Logger:
 
             handler = Handler(
                 name=name,
-                sink_wrapper=sink_wrapper,
+                sink=wrapped_sink,
                 levelno=levelno,
                 formatter=formatter,
                 is_formatter_dynamic=is_formatter_dynamic,

@@ -87,7 +87,7 @@ def test_pickling_stream_handler(flushable, stoppable):
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.debug("A message")
-    stream = next(iter(unpickled._core.handlers.values()))._sink_wrapper._stream
+    stream = next(iter(unpickled._core.handlers.values()))._sink._stream
     unpickled.remove(i)
     assert stream.wrote == "DEBUG - test_pickling_stream_handler - A message\n"
     assert stream.flushed == flushable
@@ -100,7 +100,7 @@ def test_pickling_standard_handler():
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.debug("A message")
-    handler = next(iter(unpickled._core.handlers.values()))._sink_wrapper._handler
+    handler = next(iter(unpickled._core.handlers.values()))._sink._handler
     assert handler.written == "DEBUG - test_pickling_standard_handler - A message"
 
 
@@ -109,7 +109,7 @@ def test_pickling_class_handler():
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.debug("A message")
-    stream = next(iter(unpickled._core.handlers.values()))._sink_wrapper._stream
+    stream = next(iter(unpickled._core.handlers.values()))._sink._stream
     assert stream.wrote == "DEBUG - test_pickling_class_handler - A message\n"
 
 
