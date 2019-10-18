@@ -1,7 +1,7 @@
 import logging
 
 
-class StreamSinkWrapper:
+class StreamSink:
     def __init__(self, stream, kwargs):
         self._stream = stream
         self._kwargs = kwargs
@@ -18,7 +18,7 @@ class StreamSinkWrapper:
             self._stream.stop()
 
 
-class StandardSinkWrapper:
+class StandardSink:
     def __init__(self, handler, kwargs, is_formatter_dynamic):
         self._handler = handler
         self._kwargs = kwargs
@@ -50,7 +50,7 @@ class StandardSinkWrapper:
         self._handler.close()
 
 
-class CallableSinkWrapper:
+class CallableSink:
     def __init__(self, function, kwargs):
         self._function = function
         self._kwargs = kwargs

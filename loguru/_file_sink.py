@@ -139,7 +139,6 @@ class FileSink:
         **kwargs
     ):
         self.encoding = locale.getpreferredencoding(False) if encoding is None else encoding
-        self.name = str(path)
 
         self._kwargs = {**kwargs, "mode": mode, "buffering": buffering, "encoding": self.encoding}
         self._path = str(path)

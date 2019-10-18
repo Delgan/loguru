@@ -237,6 +237,38 @@ def test_sink_encoding(writer, encoding):
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
+def test_file_sink_ascii_encoding(tmpdir):
+    file = tmpdir.join("test.log")
+    logger.add(str(file), format="", encoding="ascii", errors="backslashreplace", catch=False)
+    a = "天"
+
+    try:
+        "天" * a
+    except Exception:
+        logger.exception("")
+
+    logger.remove()
+    result = file.read()
+    assert result.count('"\\u5929" * a') == 1
+    assert result.count("-> '\\u5929'") == 1
+
+
+def test_file_sink_utf8_encoding(tmpdir):
+    file = tmpdir.join("test.log")
+    logger.add(str(file), format="", encoding="utf8", errors="strict", catch=False)
+    a = "天"
+
+    try:
+        "天" * a
+    except Exception:
+        logger.exception("")
+
+    logger.remove()
+    result = file.read()
+    assert result.count('"天" * a') == 1
+    assert result.count("└ '天'") == 1
+
+
 def test_has_sys_real_prefix(writer, monkeypatch):
     monkeypatch.setattr(sys, "real_prefix", "/foo/bar/baz", raising=False)
     logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
@@ -375,6 +407,7 @@ def test_distutils_not_installed(writer, monkeypatch):
         logger.exception("")
 
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+
 
 def test_no_exception(writer):
     logger.add(writer, backtrace=False, diagnose=False, colorize=False, format="{message}")
