@@ -101,15 +101,11 @@ class Core:
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        del state["lock"]
-        try:
-            return pickle.dumps(state)
-        except Exception as e:
-            raise ValueError("The logger can't be pickled") from e
+        state["lock"] = None
+        return state
 
     def __setstate__(self, state):
-        unpickled = pickle.loads(state)
-        self.__dict__.update(unpickled)
+        self.__dict__.update(state)
         self.lock = threading.Lock()
 
 
