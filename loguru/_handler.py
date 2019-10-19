@@ -53,6 +53,7 @@ class Handler:
         self._queue = None
         self._thread = None
         self._stopped = False
+        self._owner_process = None
 
         if not self._is_formatter_dynamic:
             self._static_format = self._formatter
@@ -62,6 +63,7 @@ class Handler:
                 self.update_format(level_name)
 
         if self._enqueue:
+            self._owner_process = multiprocessing.current_process()
             self._queue = multiprocessing.SimpleQueue()
             self._thread = threading.Thread(target=self._queued_writer, daemon=True)
             self._thread.start()
@@ -150,7 +152,7 @@ class Handler:
     def stop(self):
         with self._lock:
             self._stopped = True
-            if self._enqueue:
+            if self._enqueue and self._owner_process == multiprocessing.current_process():
                 self._queue.put(None)
                 self._thread.join()
             self._sink.stop()
@@ -279,7 +281,11 @@ class Handler:
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        del state["_lock"]
+        state["_lock"] = None
+        if self._enqueue:
+            state["_sink"] = None
+            state["_thread"] = None
+            state["_owner_process"] = None
         return state
 
     def __setstate__(self, state):
