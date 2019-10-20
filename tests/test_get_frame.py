@@ -1,14 +1,20 @@
+import importlib
 import sys
 import loguru
 
+
 def test_with_sys_getframe(monkeypatch):
     patched = lambda: None
-    monkeypatch.setattr(sys, '_getframe', patched)
-    assert loguru._get_frame.get_get_frame_function() == patched
+    monkeypatch.setattr(sys, "_getframe", patched)
+    get_frame_module = importlib.reload(loguru._get_frame)
+    assert get_frame_module.get_frame == patched
+
 
 def test_without_sys_getframe(monkeypatch):
-    monkeypatch.delattr(sys, '_getframe')
-    assert loguru._get_frame.get_get_frame_function() == loguru._get_frame.get_frame_fallback
+    monkeypatch.delattr(sys, "_getframe")
+    get_frame_module = importlib.reload(loguru._get_frame)
+    assert get_frame_module.get_frame == loguru._get_frame.get_frame_fallback
+
 
 def test_get_frame_fallback():
     frame_root = frame_a = frame_b = None
@@ -26,4 +32,3 @@ def test_get_frame_fallback():
     a()
 
     assert frame_a == frame_b == frame_root
-

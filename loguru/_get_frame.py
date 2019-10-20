@@ -12,12 +12,7 @@ def get_frame_fallback(n):
         return frame
 
 
-def get_get_frame_function():
-    if hasattr(sys, "_getframe"):
-        get_frame = sys._getframe
-    else:
-        get_frame = get_frame_fallback
-    return get_frame
-
-
-get_frame = get_get_frame_function()
+if hasattr(sys, "_getframe"):
+    get_frame = sys._getframe
+else:
+    get_frame = get_frame_fallback
