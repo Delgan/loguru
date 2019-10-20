@@ -9,6 +9,7 @@ Code snippets and recipes for ``loguru``
 .. |sys.stderr| replace:: :data:`sys.stderr`
 .. |warnings| replace:: :mod:`warnings`
 .. |warnings.showwarning| replace:: :func:`warnings.showwarning`
+.. |copy.deepcopy| replace:: :func:`copy.deepcopy`
 
 .. |add| replace:: :meth:`~loguru._logger.Logger.add()`
 .. |remove| replace:: :meth:`~loguru._logger.Logger.remove()`
@@ -360,3 +361,52 @@ This error happens when Loguru tries to access a stack frame which has been supp
     logger = logger.opt(depth=-1)
 
 Note that logged messages should be displayed correctly, but function name and other information will be incorrect. This issue is discussed in `GH#88`_.
+
+
+Creating independent loggers with separate set of handlers
+----------------------------------------------------------
+
+Loguru is fundamentally designed to be usable with exactly one global ``logger`` object dispatching logging messages to the configured handlers. In some circumstances, it may be useful to have specific messages logged to specific handlers.
+
+For example, supposing you want to split your logs in two files based on an arbitrary identifier, you can achieve that by combining |bind| and ``filter``::
+
+    from loguru import logger
+
+    def task_A():
+        logger_a = logger.bind(task="A")
+        logger_a.info("Starting task A")
+        do_something()
+        logger_a.success("End of task A")
+
+    def task_B():
+        logger_b = logger.bind(task="B")
+        logger_b.info("Starting task B")
+        do_something_else()
+        logger_b.success("End of task B")
+
+    logger.add("file_A.log", filter=lambda record: record["extra"]["task"] == "A")
+    logger.add("file_B.log", filter=lambda record: record["extra"]["task"] == "B")
+
+    task_A()
+    task_B()
+
+That way, ``"file_A.log"`` and ``"file_B.log"`` will only contains logs from respectively the ``task_A()`` and ``task_B()`` function.
+
+Now, supposing that you have a lot of these tasks. It may be a little bit cumbersome to configure every handlers like this. Most importantly, it may unceserratily slow down your application as each logs will need to be checked by the ``filter`` function of each handler. In such case, it is recommanded to rely on the |copy.deepcopy| built-in method that will create an independant ``logger`` object. If you add a handler to a deepcopied ``logger``, it will not be shared with others functions using the original ``logger``::
+
+    import copy
+    from loguru import logger
+
+    def task(task_id, logger):
+        logger.info("Starting task {}", task_id)
+        do_something(task_id)
+        logger.success("End of task {}", task_id)
+
+    logger.remove()
+
+    for task_id in ["A", "B", "C", "D", "E"]:
+        logger_ = copy.deepcopy(logger)
+        logger_.add("file_%s.log" % task_id)
+        task(task_id, logger_)
+
+Note that you may encounter errors if you try to copy a ``logger`` to which non-picklable handlers have been added. For this reason, it is generally advised to remove all handlers before calling ``copy.deepcopy(logger)``.
