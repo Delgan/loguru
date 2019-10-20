@@ -202,7 +202,7 @@ To add a new custom level, you can replace |addLevelName| with the |level| funct
 The same function can be used to replace |getLevelName|::
 
     logger.getLevelName(33)  # => "CUSTOM"
-    logger.level("CUSTOM")   # => (no=33, color="<red>", icon="🚨")
+    logger.level("CUSTOM")   # => (name='CUSTOM', no=33, color="<red>", icon="🚨")
 
 Note that contrary to standard logging, Loguru doesn't associate severity number to any level, levels are only identified by their name.
 

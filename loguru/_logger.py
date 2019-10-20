@@ -45,42 +45,58 @@ def filter_none(record):
     return record["name"] is not None
 
 
-Level = namedtuple("Level", ["no", "color", "icon"])
+Level = namedtuple("Level", ["name", "no", "color", "icon"])
 
 start_time = aware_now()
 
 
 class Core:
     def __init__(self):
-        self.levels = {
-            "TRACE": Level(
-                _defaults.LOGURU_TRACE_NO, _defaults.LOGURU_TRACE_COLOR, _defaults.LOGURU_TRACE_ICON
+        levels = [
+            Level(
+                "TRACE",
+                _defaults.LOGURU_TRACE_NO,
+                _defaults.LOGURU_TRACE_COLOR,
+                _defaults.LOGURU_TRACE_ICON,
             ),
-            "DEBUG": Level(
-                _defaults.LOGURU_DEBUG_NO, _defaults.LOGURU_DEBUG_COLOR, _defaults.LOGURU_DEBUG_ICON
+            Level(
+                "DEBUG",
+                _defaults.LOGURU_DEBUG_NO,
+                _defaults.LOGURU_DEBUG_COLOR,
+                _defaults.LOGURU_DEBUG_ICON,
             ),
-            "INFO": Level(
-                _defaults.LOGURU_INFO_NO, _defaults.LOGURU_INFO_COLOR, _defaults.LOGURU_INFO_ICON
+            Level(
+                "INFO",
+                _defaults.LOGURU_INFO_NO,
+                _defaults.LOGURU_INFO_COLOR,
+                _defaults.LOGURU_INFO_ICON,
             ),
-            "SUCCESS": Level(
+            Level(
+                "SUCCESS",
                 _defaults.LOGURU_SUCCESS_NO,
                 _defaults.LOGURU_SUCCESS_COLOR,
                 _defaults.LOGURU_SUCCESS_ICON,
             ),
-            "WARNING": Level(
+            Level(
+                "WARNING",
                 _defaults.LOGURU_WARNING_NO,
                 _defaults.LOGURU_WARNING_COLOR,
                 _defaults.LOGURU_WARNING_ICON,
             ),
-            "ERROR": Level(
-                _defaults.LOGURU_ERROR_NO, _defaults.LOGURU_ERROR_COLOR, _defaults.LOGURU_ERROR_ICON
+            Level(
+                "ERROR",
+                _defaults.LOGURU_ERROR_NO,
+                _defaults.LOGURU_ERROR_COLOR,
+                _defaults.LOGURU_ERROR_ICON,
             ),
-            "CRITICAL": Level(
+            Level(
+                "CRITICAL",
                 _defaults.LOGURU_CRITICAL_NO,
                 _defaults.LOGURU_CRITICAL_COLOR,
                 _defaults.LOGURU_CRITICAL_ICON,
             ),
-        }
+        ]
+        self.levels = {level.name: level for level in levels}
         self.levels_ansi_codes = {
             name: parse_ansi(level.color) for name, level in self.levels.items()
         }
@@ -1164,12 +1180,16 @@ class Logger:
         Examples
         --------
         >>> level = logger.level("ERROR")
-        Level(no=40, color='<red><bold>', icon='❌')
-        >>> logger.add(sys.stderr, format="{level.no} {icon} {message}")
+        >>> print(level)
+        Level(name='ERROR', no=40, color='<red><bold>', icon='❌')
+        >>> logger.add(sys.stderr, format="{level.no} {level.icon} {message}")
+        1
         >>> logger.level("CUSTOM", no=15, color="<blue>", icon="@")
+        Level(name='CUSTOM', no=15, color='<blue>', icon='@')
         >>> logger.log("CUSTOM", "Logging...")
         15 @ Logging...
         >>> logger.level("WARNING", icon=r"/!\\")
+        Level(name='WARNING', no=30, color='<yellow><bold>', icon='/!\\\\')
         >>> logger.warning("Updated!")
         30 /!\\ Updated!
         """
@@ -1193,7 +1213,7 @@ class Logger:
             else:
                 old_no, old_color, old_icon = None, "", " "
         else:
-            old_no, old_color, old_icon = self.level(name)
+            _, old_no, old_color, old_icon = self.level(name)
 
         if no is None:
             no = old_no
@@ -1213,7 +1233,7 @@ class Logger:
             raise ValueError("Invalid level no, it should be a positive integer, not: %d" % no)
 
         ansi = parse_ansi(color)
-        level = Level(no, color, icon)
+        level = Level(name, no, color, icon)
 
         with self._core.lock:
             self._core.levels[name] = level
@@ -1553,8 +1573,7 @@ class Logger:
             level_name = "Level %d" % level_no
         else:
             try:
-                level_no, _, level_icon = core.levels[level_id]
-                level_name = level_id
+                level_name, level_no, _, level_icon = core.levels[level_id]
             except KeyError:
                 raise ValueError("Level '%s' does not exist" % level_id) from None
 

@@ -125,13 +125,13 @@ def test_edit_existing_level(writer):
 
 
 def test_get_level():
-    level = (11, "<red>", "[!]")
-    logger.level("lvl", *level)
+    level = ("lvl", 11, "<red>", "[!]")
+    logger.level(*level)
     assert logger.level("lvl") == level
 
 
 def test_get_existing_level():
-    assert logger.level("DEBUG") == (10, "<blue><bold>", "🐞")
+    assert logger.level("DEBUG") == ("DEBUG", 10, "<blue><bold>", "🐞")
 
 
 def test_add_custom_level(writer):
