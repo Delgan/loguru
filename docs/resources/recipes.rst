@@ -10,6 +10,11 @@ Code snippets and recipes for ``loguru``
 .. |warnings| replace:: :mod:`warnings`
 .. |warnings.showwarning| replace:: :func:`warnings.showwarning`
 .. |copy.deepcopy| replace:: :func:`copy.deepcopy`
+.. |os.fork| replace:: :func:`os.fork`
+.. |multiprocessing| replace:: :mod:`multiprocessing`
+.. |Pool| replace:: :class:`~multiprocessing.pool.Pool`
+.. |Pool.map| replace:: :meth:`~multiprocessing.pool.Pool.map`
+.. |Pool.apply| replace:: :meth:`~multiprocessing.pool.Pool.apply`
 
 .. |add| replace:: :meth:`~loguru._logger.Logger.add()`
 .. |remove| replace:: :meth:`~loguru._logger.Logger.remove()`
@@ -343,7 +348,7 @@ Trying to use the Loguru's ``logger`` during an iteration wrapped by the ``tqdm`
         time.sleep(0.1)
 
 
-You may encounter problems with colorization of your logs after importing ``tqdm`` using Spyder on Windows. This issue is discussed in `GH#132`_. You can easily circunvent the problem by calling ``colorama.deinit()`` right after your import.
+You may encounter problems with colorization of your logs after importing ``tqdm`` using Spyder on Windows. This issue is discussed in `GH#132`_. You can easily circumvent the problem by calling ``colorama.deinit()`` right after your import.
 
 
 Using Loguru's ``logger`` within a Cython module
@@ -392,7 +397,7 @@ For example, supposing you want to split your logs in two files based on an arbi
 
 That way, ``"file_A.log"`` and ``"file_B.log"`` will only contains logs from respectively the ``task_A()`` and ``task_B()`` function.
 
-Now, supposing that you have a lot of these tasks. It may be a little bit cumbersome to configure every handlers like this. Most importantly, it may unceserratily slow down your application as each logs will need to be checked by the ``filter`` function of each handler. In such case, it is recommanded to rely on the |copy.deepcopy| built-in method that will create an independant ``logger`` object. If you add a handler to a deepcopied ``logger``, it will not be shared with others functions using the original ``logger``::
+Now, supposing that you have a lot of these tasks. It may be a bit cumbersome to configure every handlers like this. Most importantly, it may unnecessarily slow down your application as each log will need to be checked by the ``filter`` function of each handler. In such case, it is recommended to rely on the |copy.deepcopy| built-in method that will create an independent ``logger`` object. If you add a handler to a deep copied ``logger``, it will not be shared with others functions using the original ``logger``::
 
     import copy
     from loguru import logger
@@ -410,3 +415,101 @@ Now, supposing that you have a lot of these tasks. It may be a little bit cumber
         task(task_id, logger_)
 
 Note that you may encounter errors if you try to copy a ``logger`` to which non-picklable handlers have been added. For this reason, it is generally advised to remove all handlers before calling ``copy.deepcopy(logger)``.
+
+
+Compatibility with ``multiprocessing`` using ``enqueue`` argument
+-----------------------------------------------------------------
+
+On Linux, thanks to |os.fork| there is no pitfall while using the ``logger`` inside another process started by the |multiprocessing| module. The child process will automatically inherit added handlers, the ``enqueue=True`` parameter is optional but is recommended as it would avoid concurrent access of your sink::
+
+    # Linux implementation
+    import multiprocessing
+    from loguru import logger
+
+    def my_process():
+        logger.info("Executing function in child process")
+
+    if __name__ == "__main__":
+        logger.add("file.log", enqueue=True)
+
+        process = multiprocessing.Process(target=my_process)
+        process.start()
+        process.join()
+
+        logger.info("Done")
+
+Things get a little more complicated on Windows. Indeed, this operating system does not support forking, so Python has to use an alternative method to create sub-processes called "spawning". This procedure requires the whole file where the child process is created to be reloaded from scratch. This does not interoperate very well with Loguru, causing handlers to be added twice without any synchronization or, on the contrary, not being added at all (depending on ``add()`` and ``remove()`` being called inside or outside the ``__main__`` branch). For this reason, the ``logger`` object need to be explicitly passed as an initializer argument of your child process::
+
+    # Windows implementation
+    import multiprocessing
+    from loguru import logger
+
+    def my_process(logger_):
+        logger_.info("Executing function in child process")
+
+    if __name__ == "__main__":
+        logger.remove()  # Default "sys.stderr" sink is not picklable
+        logger.add("file.log", enqueue=True)
+
+        process = multiprocessing.Process(target=my_process, args=(logger, ))
+        process.start()
+        process.join()
+
+        logger.info("Done")
+
+Windows requires the added sinks to be picklable or otherwise will raise an error while creating the child process. Many stream objects like standard output and file descriptors are not picklable. In such case, the ``enqueue=True`` argument is required as it will allow the child process to only inherit the ``Queue`` where logs are sent.
+
+The |multiprocessing| library is also commonly used to start a pool of workers using for example |Pool.map| or |Pool.apply|. Again, it will work flawlessly on Linux, but it will require some tinkering on Windows. You will probably not be able to pass the ``logger`` as an argument for your worker functions because it needs to be picklable, but altough handlers added using ``enqueue=True`` are "inheritable", they are not "picklable". Instead, you will need to make use of the ``initializer`` and ``initargs`` parameters while creating the |Pool| object in a way allowing your workers to access the shared ``logger``. You can either assign it to a class attribute or override the global logger of your child processes:
+
+.. code::
+
+    # workers_a.py
+    class Worker:
+
+        _logger = None
+
+        @staticmethod
+        def set_logger(logger_):
+            Worker._logger = logger_
+
+        def work(self, x):
+            self._logger.info("Square rooting {}", x)
+            return x**0.5
+
+
+.. code::
+
+    # workers_b.py
+    from loguru import logger
+
+    def set_logger(logger_):
+        global logger
+        logger = logger_
+
+    def work(x):
+        logger.info("Square rooting {}", x)
+        return x**0.5
+
+
+.. code::
+
+    # main.py
+    from multiprocessing import Pool
+    from loguru import logger
+    import workers_a
+    import workers_b
+
+    if __name__ == "__main__":
+        logger.remove()
+        logger.add("file.log", enqueue=True)
+
+        worker = workers_a.Worker()
+        with Pool(4, initializer=worker.set_logger, initargs=(logger, )) as pool:
+            resuts = pool.map(worker.work, [1, 10, 100])
+
+        with Pool(4, initializer=workers_b.set_logger, initargs=(logger, )) as pool:
+            results = pool.map(workers_b.work, [1, 10, 100])
+
+        logger.info("Done")
+
+Independently of the operating system, note that the process in which a handler is added with ``enqueue=True`` is in charge of the ``Queue`` internally used. This means that you should avoid to ``.remove()`` such handler from the parent process is any child is likely to continue using it.
