@@ -1,5 +1,5 @@
-Unreleased
-==========
+`Unreleased`_
+=============
 
 - Fix incompatibility with ``multiprocessing`` on Windows by entirely refactoring the internal structure of the ``logger`` so it can be inherited by child processes along with added handlers (`#108 <https://github.com/Delgan/loguru/issues/108>`_).
 - Add support for ``copy.deepcopy()`` of the ``logger`` allowing multiple independent loggers with separate set of handlers (`#72 <https://github.com/Delgan/loguru/issues/72>`_).
@@ -7,14 +7,14 @@ Unreleased
 - Fix an error using a ``filter`` function "by name" while receiving a log with ``record["name"]`` equals to ``None``.
 
 
-0.3.2 (2019-07-21)
-==================
+`0.3.2`_ (2019-07-21)
+=====================
 
 - Fix exception during import when executing Python with ``-s`` and ``-S`` flags causing ``site.USER_SITE`` to be missing (`#114 <https://github.com/Delgan/loguru/issues/114>`_).
 
 
-0.3.1 (2019-07-13)
-==================
+`0.3.1`_ (2019-07-13)
+=====================
 
 - Fix ``retention`` and ``rotation`` issues when file sink initiliazed with ``delay=True`` (`#113 <https://github.com/Delgan/loguru/issues/113>`_).
 - Fix ``"sec"`` no longer recognized as a valid duration unit for file ``rotation`` and ``retention`` arguments.
@@ -22,8 +22,8 @@ Unreleased
 - Modify datetime used to automatically rename conflicting file when rotating (it happens if file already exists because ``"{time}"`` not presents in filename) so it's based on the file creation time rather than the current time.
 
 
-0.3.0 (2019-06-29)
-==================
+`0.3.0`_ (2019-06-29)
+=====================
 
 - Remove all dependencies previously needed by ``loguru`` (on Windows platform, it solely remains ``colorama`` and ``win32-setctime``).
 - Add a new ``logger.patch()`` method which can be used to modify the record dict on-the-fly before it's being sent to the handlers.
@@ -48,8 +48,8 @@ Unreleased
 - Use Tox to run tests (`#41 <https://github.com/Delgan/loguru/issues/41>`_).
 
 
-0.2.5 (2019-01-20)
-==================
+`0.2.5`_ (2019-01-20)
+=====================
 
 - Modify behavior of sink option ``backtrace=False`` so it doesn't extend traceback upward automatically (`#30 <https://github.com/Delgan/loguru/issues/30>`_).
 - Fix import error on some platforms using Python 3.5 with limited ``localtime()`` support (`#33 <https://github.com/Delgan/loguru/issues/33>`_).
@@ -57,50 +57,64 @@ Unreleased
 - Fix race condition permitting writing on a stopped handler.
 
 
-0.2.4 (2018-12-26)
-==================
+`0.2.4`_ (2018-12-26)
+=====================
 
 - Fix adding handler while logging which was not thread-safe (`#22 <https://github.com/Delgan/loguru/issues/22>`_).
 
 
-0.2.3 (2018-12-16)
-==================
+`0.2.3`_ (2018-12-16)
+=====================
 
 - Add support for PyPy.
 - Add support for Python 3.5.
 - Fix incompatibility with ``awscli`` by downgrading required ``colorama`` dependency version (`#12 <https://github.com/Delgan/loguru/issues/12>`_).
 
 
-0.2.2 (2018-12-12)
-==================
+`0.2.2`_ (2018-12-12)
+=====================
 
 - Deprecate ``logger.start()`` and ``logger.stop()`` methods in favor of ``logger.add()`` and ``logger.remove()`` (`#3 <https://github.com/Delgan/loguru/issues/3>`_).
 - Fix ignored formatting while using ``logging.Handler`` sinks (`#4 <https://github.com/Delgan/loguru/issues/4>`_).
 - Fix impossibility to set empty environment variable color on Windows (`#7 <https://github.com/Delgan/loguru/issues/7>`_).
 
 
-0.2.1 (2018-12-08)
-==================
+`0.2.1`_ (2018-12-08)
+=====================
 
 - Fix typo preventing README to be correctly displayed on PyPI.
 
 
-0.2.0 (2018-12-08)
-==================
+`0.2.0`_ (2018-12-08)
+=====================
 
 - Remove the ``parser`` and refactor it into the ``logger.parse()`` method.
 - Remove the ``notifier`` and its dependencies (``pip install notifiers`` should be used instead).
 
 
-0.1.0 (2018-12-07)
-==================
+`0.1.0`_ (2018-12-07)
+=====================
 
 - Add logger.
 - Add notifier.
 - Add parser.
 
 
-0.0.1 (2017-09-04)
-==================
+`0.0.1`_ (2017-09-04)
+=====================
 
 Initial release.
+
+
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.3.2...master
+.. _0.3.2: https://github.com/delgan/loguru/releases/tag/0.3.2
+.. _0.3.1: https://github.com/delgan/loguru/releases/tag/0.3.1
+.. _0.3.0: https://github.com/delgan/loguru/releases/tag/0.3.0
+.. _0.2.5: https://github.com/delgan/loguru/releases/tag/0.2.5
+.. _0.2.4: https://github.com/delgan/loguru/releases/tag/0.2.4
+.. _0.2.3: https://github.com/delgan/loguru/releases/tag/0.2.3
+.. _0.2.2: https://github.com/delgan/loguru/releases/tag/0.2.2
+.. _0.2.1: https://github.com/delgan/loguru/releases/tag/0.2.1
+.. _0.2.0: https://github.com/delgan/loguru/releases/tag/0.2.0
+.. _0.1.0: https://github.com/delgan/loguru/releases/tag/0.1.0
+.. _0.0.1: https://github.com/delgan/loguru/releases/tag/0.0.1
