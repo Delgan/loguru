@@ -26,6 +26,6 @@
     [36m└ [0m[36m[1m<function a at 0xDEADBEEF>[0m
 
   File "[32mtests/exceptions/source/diagnose/[0m[32m[1msyntax_highlighting.py[0m", line [33m9[0m, in [35ma[0m
-    [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m [35m[1m+[0m [34m[1m1[0m [35m[1m*[0m [34m[1m0[0m [35m[1m-[0m [34m[1m1[0m [35m[1m%[0m [34m[1m0[0m [35m[1mis[0m [34m[1m1[0m[35m[1m**[0m[34m[1m0[0m  [30m[1m# Error[0m
+    [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m [35m[1m+[0m [34m[1m1[0m [35m[1m*[0m [34m[1m0[0m [35m[1m-[0m [34m[1m1[0m [35m[1m%[0m [34m[1m0[0m [35m[1m//[0m [34m[1m1[0m[35m[1m**[0m[34m[1m0[0m [35m[1m@[0m [34m[1m1[0m  [30m[1m# Error[0m
 
 [31m[1mZeroDivisionError[0m:[1m division by zero[0m
