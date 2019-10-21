@@ -171,6 +171,7 @@ def test_exception_ownership(filename):
         "exception_formatting_coroutine",
         "exception_formatting_function",
         "exception_formatting_generator",
+        "exception_in_property",
         "handler_formatting_with_context_manager",
         "handler_formatting_with_decorator",
         "level_name",
