@@ -468,11 +468,11 @@ Although logging impact on performances is in most cases negligible, a zero-cost
 .. end-of-readme-usage
 
 
-Project information
--------------------
+Documentation
+-------------
 
-* `Documentation <https://loguru.readthedocs.io/en/stable/api/logger.html>`_
-* `Resources <https://loguru.readthedocs.io/en/stable/resources.html>`_
-* `Contributing <https://github.com/Delgan/loguru/blob/master/CONTRIBUTING.rst>`_
-* `License <https://github.com/Delgan/loguru/blob/master/LICENSE>`_
-* `Changelog <https://github.com/Delgan/loguru/blob/master/CHANGELOG.rst>`_
+* `API Reference <https://loguru.readthedocs.io/en/stable/api/logger.html>`_
+* `Help & Guides <https://loguru.readthedocs.io/en/stable/resources.html>`_
+* `Contributing <https://loguru.readthedocs.io/en/stable/project/contributing.html>`_
+* `License <https://loguru.readthedocs.io/en/stable/project/license.html>`_
+* `Changelog <https://loguru.readthedocs.io/en/stable/project/changelog.html>`_

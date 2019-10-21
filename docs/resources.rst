@@ -1,5 +1,5 @@
-Resources
-=========
+Help & Guides
+=============
 
 .. toctree::
 
