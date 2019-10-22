@@ -451,6 +451,10 @@ class Logger:
         of the one used by the `Pendulum`_ library of `@sdispater`_. To escape a token, just add
         square brackets around it, for example ``"[YY]"`` would display literally ``"YY"``.
 
+        If you prefer to display UTC rather than local time, you can add ``"!UTC"`` at the very end
+        of the time format, like ``{time:HH:mm:ss!UTC}``. Doing so will convert the ``datetime``
+        to UTC before formatting.
+
         If no time formatter specifier is used, like for example if ``format="{time} {message}"``,
         the default one will use ISO 8601.
 

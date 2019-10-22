@@ -6,18 +6,54 @@ from loguru import logger
 import sys
 import re
 
+if sys.version_info < (3, 6):
+    UTC_NAME = "UTC+00:00"
+else:
+    UTC_NAME = "UTC"
+
+
 @pytest.mark.parametrize(
     "time_format, date, expected",
     [
         (
-            "%Y-%m-%d %H-%M-%S %f %Z",
+            "%Y-%m-%d %H-%M-%S %f %Z %z",
             (2018, 6, 9, 1, 2, 3, 45, "UTC", 0),
-            "2018-06-09 01-02-03 000045 UTC",
+            "2018-06-09 01-02-03 000045 UTC +0000",
         ),
         (
-            "YYYY-MM-DD HH-mm-ss SSSSSS zz",
+            "YYYY-MM-DD HH-mm-ss SSSSSS zz ZZ",
             (2018, 6, 9, 1, 2, 3, 45, "UTC", 0),
-            "2018-06-09 01-02-03 000045 UTC",
+            "2018-06-09 01-02-03 000045 UTC +0000",
+        ),
+        (
+            "%Y-%m-%d %H-%M-%S %f %Z %z",
+            (2018, 6, 9, 1, 2, 3, 45, "EST", -18000),
+            "2018-06-09 01-02-03 000045 EST -0500",
+        ),
+        (
+            "YYYY-MM-DD HH-mm-ss SSSSSS zz ZZ",
+            (2018, 6, 9, 1, 2, 3, 45, "EST", -18000),
+            "2018-06-09 01-02-03 000045 EST -0500",
+        ),
+        (
+            "%Y-%m-%d %H-%M-%S %f %Z!UTC",
+            (2018, 6, 9, 1, 2, 3, 45, "UTC", 0),
+            "2018-06-09 01-02-03 000045 %s" % UTC_NAME,
+        ),
+        (
+            "YYYY-MM-DD HH-mm-ss SSSSSS zz!UTC",
+            (2018, 6, 9, 1, 2, 3, 45, "UTC", 0),
+            "2018-06-09 01-02-03 000045 %s" % UTC_NAME,
+        ),
+        (
+            "%Y-%m-%d %H-%M-%S %f %Z %z!UTC",
+            (2018, 6, 9, 1, 2, 3, 45, "EST", -18000),
+            "2018-06-09 06-02-03 000045 %s +0000" % UTC_NAME,
+        ),
+        (
+            "YYYY-MM-DD HH-mm-ss SSSSSS zz ZZ!UTC",
+            (2018, 6, 9, 1, 2, 3, 45, "UTC", -18000),
+            "2018-06-09 06-02-03 000045 %s +0000" % UTC_NAME,
         ),
         ("YY-M-D H-m-s SSS Z", (2005, 4, 7, 9, 3, 8, 2320, "A", 3600), "05-4-7 9-3-8 002 +01:00"),
         (
@@ -31,6 +67,25 @@ import re
         ("[YYYY] MM [DD]", (2018, 2, 3, 11, 9, 0, 2), "YYYY 02 DD"),
         ("[YYYY MM DD]", (2018, 1, 3, 11, 3, 4, 2), "[2018 01 03]"),
         ("[[YY]]", (2018, 1, 3, 11, 3, 4, 2), "[YY]"),
+        ("[]", (2018, 1, 3, 11, 3, 4, 2), "[]"),
+        #        ("[HHmmss", (2018, 1, 3, 11, 3, 4, 2), "[110304"),  # Fail PyPy
+        ("HHmmss]", (2018, 1, 3, 11, 3, 4, 2), "110304]"),
+        ("HH:mm:ss!UTC", (2018, 1, 1, 11, 30, 0, 0, "A", 7200), "09:30:00"),
+        ("UTC! HH:mm:ss", (2018, 1, 1, 11, 30, 0, 0, "A", 7200), "UTC! 11:30:00"),
+        ("!UTC HH:mm:ss", (2018, 1, 1, 11, 30, 0, 0, "A", 7200), "!UTC 11:30:00"),
+        (
+            "hh:mm:ss A - Z ZZ !UTC",
+            (2018, 1, 1, 12, 30, 0, 0, "A", 5400),
+            "11:00:00 AM - +00:00 +0000 ",
+        ),
+        (
+            "YYYY-MM-DD HH:mm:ss[Z]!UTC",
+            (2018, 1, 3, 11, 3, 4, 2, "XYZ", -7200),
+            "2018-01-03 13:03:04Z",
+        ),
+        ("HH:mm:ss[!UTC]", (2018, 1, 1, 11, 30, 0, 0, "A", 7200), "11:30:00!UTC"),
+        ("", (2018, 2, 3, 11, 9, 0, 2, "Z", 1800), "2018-02-03T11:09:00.000002+0030"),
+        ("!UTC", (2018, 2, 3, 11, 9, 0, 2, "Z", 1800), "2018-02-03T10:39:00.000002+0000"),
     ],
 )
 def test_formatting(writer, monkeypatch_date, time_format, date, expected):
@@ -69,9 +124,7 @@ def test_file_formatting(monkeypatch_date, tmpdir):
 
 
 def test_missing_struct_time_fields(writer, monkeypatch, monkeypatch_date):
-
     class struct_time:
-
         def __init__(self, struct):
             self._struct = struct
 
@@ -79,7 +132,6 @@ def test_missing_struct_time_fields(writer, monkeypatch, monkeypatch_date):
             if attr in {"tm_gmtoff", "tm_zone"}:
                 raise AttributeError
             return getattr(self._struct, attr)
-
 
     def localtime(*args, **kwargs):
         local = time.localtime(*args, **kwargs)

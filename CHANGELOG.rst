@@ -3,9 +3,10 @@
 
 - Fix incompatibility with ``multiprocessing`` on Windows by entirely refactoring the internal structure of the ``logger`` so it can be inherited by child processes along with added handlers (`#108 <https://github.com/Delgan/loguru/issues/108>`_).
 - Fix an error using a ``filter`` function "by name" while receiving a log with ``record["name"]`` equals to ``None``.
-- Fix ``AttributeError`` while using a file sink on some distributions (like Alpine Linux) missing the ``os.getxattr`` and ``os.setxattr`` functions (`#34 <https://github.com/Delgan/loguru/pull/158>`_, thanks `@joshgordon <https://github.com/joshgordon>`_).
+- Fix ``AttributeError`` while using a file sink on some distributions (like Alpine Linux) missing the ``os.getxattr`` and ``os.setxattr`` functions (`#158 <https://github.com/Delgan/loguru/pull/158>`_, thanks `@joshgordon <https://github.com/joshgordon>`_).
 - Add support for ``copy.deepcopy()`` of the ``logger`` allowing multiple independent loggers with separate set of handlers (`#72 <https://github.com/Delgan/loguru/issues/72>`_).
 - Prevent hypothetical ``ImportError`` if a Python installation is missing the built-in ``distutils`` module (`#118 <https://github.com/Delgan/loguru/issues/118>`_).
+- Add the possibility to convert ``datetime`` to UTC before formatting (in logs and filenames) by adding ``"!UTC"`` at the end of the time format specifier (`#128 <https://github.com/Delgan/loguru/issues/128>`_).
 - Add the level ``name`` as the first argument of namedtuple returned by the ``.level()`` method.
 
 

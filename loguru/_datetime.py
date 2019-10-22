@@ -4,24 +4,31 @@ from datetime import datetime as datetime_
 from datetime import timedelta, timezone
 from time import localtime, strftime
 
+
 tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S{1,6}|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|X|x|E|Q|dddd|ddd|d"
 
-pattern = re.compile(r"(?:{0})|\[(?:{0})\]".format(tokens))
+pattern = re.compile(r"(?:{0})|\[(?:{0}|!UTC)\]".format(tokens))
 
 
 class datetime(datetime_):
     def __format__(self, spec):
+        if spec.endswith("!UTC"):
+            dt = self.astimezone(timezone.utc)
+            spec = spec[:-4]
+        else:
+            dt = self
+
         if not spec:
             spec = "%Y-%m-%dT%H:%M:%S.%f%z"
 
         if "%" in spec:
-            return super().__format__(spec)
+            return datetime_.__format__(dt, spec)
 
-        year, month, day, hour, minute, second, weekday, yearday, _ = self.timetuple()
-        microsecond = self.microsecond
-        timestamp = self.timestamp()
-        tzinfo = self.tzinfo or timezone(timedelta(seconds=0))
-        offset = tzinfo.utcoffset(self).total_seconds()
+        year, month, day, hour, minute, second, weekday, yearday, _ = dt.timetuple()
+        microsecond = dt.microsecond
+        timestamp = dt.timestamp()
+        tzinfo = dt.tzinfo or timezone(timedelta(seconds=0))
+        offset = tzinfo.utcoffset(dt).total_seconds()
         sign = ("-", "+")[offset >= 0]
         h, m = divmod(abs(offset // 60), 60)
 
@@ -58,7 +65,7 @@ class datetime(datetime_):
             "A": ("AM", "PM")[hour // 12],
             "Z": "%s%02d:%02d" % (sign, h, m),
             "ZZ": "%s%02d%02d" % (sign, h, m),
-            "zz": tzinfo.tzname(self) or "",
+            "zz": tzinfo.tzname(dt) or "",
             "X": "%d" % timestamp,
             "x": "%d" % (int(timestamp) * 1000000 + microsecond),
         }
