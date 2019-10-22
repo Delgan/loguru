@@ -59,3 +59,9 @@ def test_function_format_with_exception(writer):
 def test_invalid_format(writer, format):
     with pytest.raises(ValueError):
         logger.add(writer, format=format)
+
+
+@pytest.mark.parametrize("format", ["<red>", "</red>", "</level><level>", "</>", "<foobar>"])
+def test_invalid_markups(writer, format):
+    with pytest.raises(ValueError, match=r"Invalid format"):
+        logger.add(writer, format=format)

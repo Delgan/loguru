@@ -245,7 +245,7 @@ class AnsiMarkup:
         if res is None:
             raise ValueError(
                 'Tag "%s" does not corespond to any known ansi directive, '
-                "make sure you did not misspelled it" % markup
+                "make sure you did not misspelled it (or prepend '\\' to escape it)" % markup
             )
 
         self._tags.append(tag)

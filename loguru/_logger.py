@@ -685,6 +685,13 @@ class Logger:
             colorize = False
 
         if isinstance(format, str):
+            try:
+                markups = {"level": "", "lvl": ""}
+                AnsiMarkup(custom_markups=markups, strip=True).feed(format, strict=True)
+            except ValueError as e:
+                raise ValueError(
+                    "Invalid format, color markups could not be parsed correctly"
+                ) from e
             formatter = format + "\n{exception}"
             is_formatter_dynamic = False
         elif callable(format):
