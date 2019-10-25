@@ -25,11 +25,11 @@ else:
     def get_ctime(filepath):
         try:
             return float(os.getxattr(filepath, b"user.loguru_crtime"))
-        except OSError:
+        except (OSError, AttributeError):
             return os.stat(filepath).st_mtime
 
     def set_ctime(filepath, timestamp):
         try:
             os.setxattr(filepath, b"user.loguru_crtime", str(timestamp).encode("ascii"))
-        except OSError:
+        except (OSError, AttributeError):
             pass
