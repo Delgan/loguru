@@ -105,7 +105,7 @@ def linux_filesystem(monkeypatch, monkeypatch_filesystem):
 
 
 @pytest.fixture
-def linux_no_xattr_filesystem(monkeypatch, monkeypatch_filesystem):
+def linux_xattr_oserror_filesystem(monkeypatch, monkeypatch_filesystem):
     def raising(*args, **kwargs):
         raise OSError
 
@@ -113,6 +113,17 @@ def linux_no_xattr_filesystem(monkeypatch, monkeypatch_filesystem):
     monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
     monkeypatch.setattr(os, "setxattr", raising, raising=False)
     monkeypatch.setattr(os, "getxattr", raising, raising=False)
+
+
+@pytest.fixture
+def linux_xattr_attributeerror_filesystem(monkeypatch, monkeypatch_filesystem):
+    def raising(*args, **kwargs):
+        raise OSError
+
+    monkeypatch.setattr(os, "name", "posix")
+    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
+    monkeypatch.delattr(os, "setxattr", raising=False)
+    monkeypatch.delattr(os, "getxattr", raising=False)
 
 
 def test_renaming(tmpdir):
@@ -347,8 +358,15 @@ def test_time_rotation_reopening_linux(tmpdir, monkeypatch_date, linux_filesyste
 
 
 @pytest.mark.parametrize("delay", [False, True])
-def test_time_rotation_reopening_linux_no_xattr(
-    tmpdir, monkeypatch_date, linux_no_xattr_filesystem, delay
+def test_time_rotation_reopening_linux_xattr_oserror(
+    tmpdir, monkeypatch_date, linux_xattr_oserror_filesystem, delay
+):
+    rotation_reopening(tmpdir, monkeypatch_date, delay)
+
+
+@pytest.mark.parametrize("delay", [False, True])
+def test_time_rotation_reopening_linux_xattr_attributeerror(
+    tmpdir, monkeypatch_date, linux_xattr_attributeerror_filesystem, delay
 ):
     rotation_reopening(tmpdir, monkeypatch_date, delay)
 
