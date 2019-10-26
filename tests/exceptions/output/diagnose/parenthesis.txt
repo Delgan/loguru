@@ -1,0 +1,45 @@
+
+[33m[1mTraceback (most recent call last):[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mparenthesis.py[0m", line [33m45[0m, in [35m<module>[0m
+    [1me[0m[1m([0m[1m)[0m
+    [36m└ [0m[36m[1m<function e at 0xDEADBEEF>[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mparenthesis.py[0m", line [33m41[0m, in [35me[0m
+    [1m)[0m [35m[1m+[0m [1md[0m[1m([0m[1m([0m[1m)[0m[1m)[0m [35m[1m+[0m [1ma[0m
+    [36m    │       └ [0m[36m[1m1[0m
+    [36m    └ [0m[36m[1m<function d at 0xDEADBEEF>[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mparenthesis.py[0m", line [33m34[0m, in [35md[0m
+    [1m;[0m [1mz[0m [35m[1m=[0m [1m([0m[1mx[0m [35m[1m*[0m [1my[0m[1m)[0m[1m;[0m [1my[0m [35m[1m=[0m [1m([0m[1mj[0m [35m[1mor[0m [1mxyz[0m[35m[1m.[0m[1mval[0m [35m[1m*[0m [1mc[0m[1m([0m[1m)[0m \
+    [36m  │    │   │   │    │    │   │     └ [0m[36m[1m<function c at 0xDEADBEEF>[0m
+    [36m  │    │   │   │    │    │   └ [0m[36m[1m123[0m
+    [36m  │    │   │   │    │    └ [0m[36m[1m<__main__.XYZ object at 0xDEADBEEF>[0m
+    [36m  │    │   │   │    └ [0m[36m[1m()[0m
+    [36m  │    │   │   └ [0m[36m[1m5[0m
+    [36m  │    │   └ [0m[36m[1m5[0m
+    [36m  │    └ [0m[36m[1m2[0m
+    [36m  └ [0m[36m[1m10[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mparenthesis.py[0m", line [33m26[0m, in [35mc[0m
+    [1mx[0m[35m[1m.[0m[1mval[0m [35m[1m+=[0m [34m[1m456[0m [35m[1mand[0m [1mb[0m[1m([0m[1m)[0m
+    [36m│ │              └ [0m[36m[1m<function b at 0xDEADBEEF>[0m
+    [36m│ └ [0m[36m[1m123[0m
+    [36m└ [0m[36m[1m<__main__.XYZ object at 0xDEADBEEF>[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mparenthesis.py[0m", line [33m20[0m, in [35mb[0m
+    [1mfoo[0m[1m[[0m[1m([0m[36m"baz"[0m[1m)[0m[1m][0m [35m[1m=[0m [1mbar[0m[1m([0m[1m)[0m [35m[1m+[0m [1m([0m[1ma[0m[1m([0m[34m[1m5[0m[1m,[0m [1mbaz[0m[1m)[0m[1m)[0m
+    [36m│              │        │    └ [0m[36m[1m0[0m
+    [36m│              │        └ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+    [36m│              └ [0m[36m[1m<class '__main__.XYZ'>[0m
+    [36m└ [0m[36m[1m{}[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mparenthesis.py[0m", line [33m15[0m, in [35ma[0m
+    [1m([0m[1ma[0m[1m,[0m [1mb[0m[1m,[0m [1mx[0m[35m[1m.[0m[1mval[0m[1m,[0m [1m)[0m [35m[1m=[0m [34m[1m12[0m[1m,[0m [34m[1m15[0m [35m[1m/[0m [1mc[0m[1m,[0m [34m[1m17[0m
+    [36m │  │  │ │                 └ [0m[36m[1m0[0m
+    [36m │  │  │ └ [0m[36m[1m9[0m
+    [36m │  │  └ [0m[36m[1m<__main__.XYZ object at 0xDEADBEEF>[0m
+    [36m │  └ [0m[36m[1m5[0m
+    [36m └ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m

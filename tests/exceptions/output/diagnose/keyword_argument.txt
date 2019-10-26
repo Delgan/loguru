@@ -1,0 +1,26 @@
+
+[33m[1mTraceback (most recent call last):[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mkeyword_argument.py[0m", line [33m15[0m, in [35m<module>[0m
+    [1mf[0m[1m([0m[1mx[0m[35m[1m=[0m[1my[0m[1m)[0m
+    [36m│   └ [0m[36m[1m0[0m
+    [36m└ [0m[36m[1m<function f at 0xDEADBEEF>[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mkeyword_argument.py[0m", line [33m9[0m, in [35mf[0m
+    [35m[1mreturn[0m [34m[1m1[0m [35m[1m/[0m [1mx[0m
+    [36m           └ [0m[36m[1m0[0m
+
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
+
+[33m[1mTraceback (most recent call last):[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mkeyword_argument.py[0m", line [33m20[0m, in [35m<module>[0m
+    [1mf[0m[1m([0m[1mx[0m[35m[1m=[0m[1mx[0m[1m)[0m
+    [36m│   └ [0m[36m[1m0[0m
+    [36m└ [0m[36m[1m<function f at 0xDEADBEEF>[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mkeyword_argument.py[0m", line [33m9[0m, in [35mf[0m
+    [35m[1mreturn[0m [34m[1m1[0m [35m[1m/[0m [1mx[0m
+    [36m           └ [0m[36m[1m0[0m
+
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m

@@ -253,11 +253,19 @@ class ExceptionFormatter:
 
     def _get_relevant_values(self, source, frame):
         value = None
+        pending = None
         is_attribute = False
         is_valid_value = False
+        is_assignment = True
 
         for token in self._syntax_highlighter.tokenize(source):
             type_, string, (_, col), *_ = token
+
+            if pending is not None:
+                # Keyword arguments are ignored
+                if type_ != tokenize.OP or string != "=" or is_assignment:
+                    yield pending
+                pending = None
 
             if type_ == tokenize.NAME and not keyword.iskeyword(string):
                 if not is_attribute:
@@ -268,7 +276,7 @@ class ExceptionFormatter:
                             continue
                         else:
                             is_valid_value = True
-                            yield (col, self._format_value(value))
+                            pending = (col, self._format_value(value))
                             break
                 elif is_valid_value:
                     try:
@@ -279,9 +287,18 @@ class ExceptionFormatter:
                         yield (col, self._format_value(value))
             elif type_ == tokenize.OP and string == ".":
                 is_attribute = True
+                is_assignment = False
+            elif type_ == tokenize.OP and string == ";":
+                is_assignment = True
+                is_attribute = False
+                is_valid_value = False
             else:
                 is_attribute = False
                 is_valid_value = False
+                is_assignment = False
+
+        if pending is not None:
+            yield pending
 
     def _format_relevant_values(self, relevant_values, colorize):
         for i in reversed(range(len(relevant_values))):
