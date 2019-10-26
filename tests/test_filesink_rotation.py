@@ -110,20 +110,17 @@ def linux_xattr_oserror_filesystem(monkeypatch, monkeypatch_filesystem):
         raise OSError
 
     monkeypatch.setattr(os, "name", "posix")
-    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
     monkeypatch.setattr(os, "setxattr", raising, raising=False)
     monkeypatch.setattr(os, "getxattr", raising, raising=False)
+    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
 
 
 @pytest.fixture
 def linux_xattr_attributeerror_filesystem(monkeypatch, monkeypatch_filesystem):
-    def raising(*args, **kwargs):
-        raise OSError
-
     monkeypatch.setattr(os, "name", "posix")
-    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
     monkeypatch.delattr(os, "setxattr", raising=False)
     monkeypatch.delattr(os, "getxattr", raising=False)
+    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
 
 
 def test_renaming(tmpdir):

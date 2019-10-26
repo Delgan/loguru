@@ -20,16 +20,25 @@ elif hasattr(os.stat_result, "st_birthtime"):
         pass
 
 
-else:
+elif hasattr(os, "getxattr") and hasattr(os, "setxattr"):
 
     def get_ctime(filepath):
         try:
             return float(os.getxattr(filepath, b"user.loguru_crtime"))
-        except (OSError, AttributeError):
+        except OSError:
             return os.stat(filepath).st_mtime
 
     def set_ctime(filepath, timestamp):
         try:
             os.setxattr(filepath, b"user.loguru_crtime", str(timestamp).encode("ascii"))
-        except (OSError, AttributeError):
+        except OSError:
             pass
+
+
+else:
+
+    def get_ctime(filepath):
+        return os.stat(filepath).st_mtime
+
+    def set_ctime(filepath, timestamp):
+        pass
