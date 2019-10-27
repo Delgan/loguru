@@ -96,7 +96,7 @@ def test_exception_formatting(tmpdir):
 def test_standard_formatter(capsys, dynamic_format):
     fmt = "{level.no} {message} [Not Chopped]"
     if dynamic_format:
-        format_ = lambda x: fmt
+        def format_(x): return fmt
     else:
         format_ = fmt
     handler = StreamHandler(sys.stdout)
@@ -113,7 +113,7 @@ def test_standard_formatter(capsys, dynamic_format):
 def test_standard_formatter_with_new_line(capsys, dynamic_format):
     fmt = "{level.no} {message}\n"
     if dynamic_format:
-        format_ = lambda x: fmt
+        def format_(x): return fmt
     else:
         format_ = fmt
     handler = StreamHandler(sys.stdout)
@@ -123,4 +123,38 @@ def test_standard_formatter_with_new_line(capsys, dynamic_format):
     logger.info("Test")
     out, err = capsys.readouterr()
     assert out == "20 Test\n INFO\n"
+    assert err == ""
+
+
+@pytest.mark.parametrize("dynamic_format", [False, True])
+def test_raw_standard_formatter(capsys, dynamic_format):
+    fmt = "{level.no} {message} [Not Chopped]"
+    if dynamic_format:
+        def format_(x): return fmt
+    else:
+        format_ = fmt
+    handler = StreamHandler(sys.stdout)
+    formatter = Formatter("%(message)s %(levelname)s")
+    handler.setFormatter(formatter)
+    logger.add(handler, format=format_)
+    logger.opt(raw=True).info("Test")
+    out, err = capsys.readouterr()
+    assert out == "Test INFO\n"
+    assert err == ""
+
+
+@pytest.mark.parametrize("dynamic_format", [False, True])
+def test_raw_standard_formatter_with_new_line(capsys, dynamic_format):
+    fmt = "{level.no} {message}\n"
+    if dynamic_format:
+        def format_(x): return fmt
+    else:
+        format_ = fmt
+    handler = StreamHandler(sys.stdout)
+    formatter = Formatter("%(message)s %(levelname)s")
+    handler.setFormatter(formatter)
+    logger.add(handler, format=format_)
+    logger.opt(raw=True).info("Test")
+    out, err = capsys.readouterr()
+    assert out == "Test INFO\n"
     assert err == ""
