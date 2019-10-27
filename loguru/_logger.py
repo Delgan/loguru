@@ -688,25 +688,6 @@ class Logger:
         if colorize is None and serialize:
             colorize = False
 
-        if isinstance(format, str):
-            try:
-                markups = {"level": "", "lvl": ""}
-                AnsiMarkup(custom_markups=markups, strip=True).feed(format, strict=True)
-            except ValueError as e:
-                raise ValueError(
-                    "Invalid format, color markups could not be parsed correctly"
-                ) from e
-            formatter = format + "\n{exception}"
-            is_formatter_dynamic = False
-        elif callable(format):
-            formatter = format
-            is_formatter_dynamic = True
-        else:
-            raise ValueError(
-                "Invalid format, it should be a string or a function, not: '%s'"
-                % type(format).__name__
-            )
-
         if isclass(sink):
             sink = sink(**kwargs)
             return self.add(
@@ -730,6 +711,8 @@ class Logger:
 
             wrapped_sink = FileSink(path, **kwargs)
             encoding = wrapped_sink.encoding
+            terminator = "\n"
+            exception_prefix = ""
         elif hasattr(sink, "write") and callable(sink.write):
             name = getattr(sink, "name", repr(sink))
 
@@ -743,14 +726,18 @@ class Logger:
 
             wrapped_sink = StreamSink(stream, kwargs)
             encoding = getattr(sink, "encoding", None)
+            terminator = "\n"
+            exception_prefix = ""
         elif isinstance(sink, logging.Handler):
             name = repr(sink)
 
             if colorize is None:
                 colorize = False
 
-            wrapped_sink = StandardSink(sink, kwargs, is_formatter_dynamic)
+            wrapped_sink = StandardSink(sink, kwargs)
             encoding = getattr(sink, "encoding", None)
+            terminator = ""
+            exception_prefix = "\n"
         elif callable(sink):
             name = getattr(sink, "__name__", repr(sink))
 
@@ -759,6 +746,8 @@ class Logger:
 
             wrapped_sink = CallableSink(sink, kwargs)
             encoding = "utf8"
+            terminator = "\n"
+            exception_prefix = ""
         else:
             raise ValueError("Cannot log to objects of type '%s'." % type(sink).__name__)
 
@@ -793,6 +782,25 @@ class Logger:
                 "Invalid level value, it should be a positive integer, not: %d" % levelno
             )
 
+        if isinstance(format, str):
+            try:
+                markups = {"level": "", "lvl": ""}
+                AnsiMarkup(custom_markups=markups, strip=True).feed(format, strict=True)
+            except ValueError as e:
+                raise ValueError(
+                    "Invalid format, color markups could not be parsed correctly"
+                ) from e
+            formatter = format + terminator + "{exception}"
+            is_formatter_dynamic = False
+        elif callable(format):
+            formatter = format
+            is_formatter_dynamic = True
+        else:
+            raise ValueError(
+                "Invalid format, it should be a string or a function, not: '%s'"
+                % type(format).__name__
+            )
+
         if encoding is None:
             encoding = "ascii"
 
@@ -805,6 +813,7 @@ class Logger:
                 diagnose=diagnose,
                 backtrace=backtrace,
                 hidden_frames_filename=self.catch.__code__.co_filename,
+                prefix=exception_prefix,
             )
 
             handler = Handler(

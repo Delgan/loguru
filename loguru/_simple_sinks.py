@@ -19,17 +19,14 @@ class StreamSink:
 
 
 class StandardSink:
-    def __init__(self, handler, kwargs, is_formatter_dynamic):
+    def __init__(self, handler, kwargs):
         self._handler = handler
         self._kwargs = kwargs
-        self._is_formatter_dynamic = is_formatter_dynamic
 
     def write(self, message):
         record = message.record
         message = str(message)
         exc = record["exception"]
-        if not self._is_formatter_dynamic:
-            message = message[:-1]
         record = logging.root.makeRecord(
             record["name"],
             record["level"].no,

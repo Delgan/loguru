@@ -120,6 +120,7 @@ class ExceptionFormatter:
         max_length=128,
         encoding="ascii",
         hidden_frames_filename=None,
+        prefix="",
     ):
         self._colorize = colorize
         self._diagnose = diagnose
@@ -129,6 +130,7 @@ class ExceptionFormatter:
         self._max_length = max_length
         self._encoding = encoding
         self._hidden_frames_filename = hidden_frames_filename
+        self._prefix = prefix
         self._lib_dirs = self._get_lib_dirs()
         self._pipe_char = self._get_char("\u2502", "|")
         self._cap_char = self._get_char("\u2514", "->")
@@ -452,6 +454,9 @@ class ExceptionFormatter:
 
         if self._colorize or self._backtrace or self._diagnose:
             frames_lines = self._format_locations(frames_lines)
+
+        if is_first:
+            yield self._prefix
 
         if frames:
             introduction = "Traceback (most recent call last):"
