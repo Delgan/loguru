@@ -5,6 +5,7 @@ dist: xenial
 sudo: required
 
 python:
+  - '3.5.2'
   - '3.5'
   - '3.6'
   - '3.7'
@@ -18,4 +19,3 @@ script: tox
 
 after_success:
   - codecov --flags "python_${TRAVIS_PYTHON_VERSION//[^[:alnum:]]/}"
-  - sleep 10  # Github build status would not be updated by "codecov" otherwise

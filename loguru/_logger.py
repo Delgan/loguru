@@ -1,3 +1,4 @@
+import contextlib
 import functools
 import inspect
 import itertools
@@ -29,6 +30,16 @@ try:
 except ImportError:
     from pathlib import PurePath as PathLike
 
+if sys.version_info < (3, 7):
+    import asyncio
+
+    if hasattr(asyncio, "_get_running_loop"):
+        from aiocontextvars import ContextVar
+    else:
+        from contextvars import ContextVar
+else:
+    from contextvars import ContextVar
+
 
 def parse_ansi(color):
     return AnsiMarkup(strip=False).feed(color.strip(), strict=False)
@@ -48,6 +59,8 @@ def filter_none(record):
 Level = namedtuple("Level", ["name", "no", "color", "icon"])
 
 start_time = aware_now()
+
+context = ContextVar("loguru_context", default={})
 
 
 class Core:
@@ -152,6 +165,7 @@ class Logger:
     .. |remove| replace:: :meth:`~Logger.remove()`
     .. |catch| replace:: :meth:`~Logger.catch()`
     .. |bind| replace:: :meth:`~Logger.bind()`
+    .. |contextualize| replace:: :meth:`~Logger.contextualize()`
     .. |patch| replace:: :meth:`~Logger.patch()`
     .. |opt| replace:: :meth:`~Logger.opt()`
     .. |log| replace:: :meth:`~Logger.log()`
@@ -176,6 +190,7 @@ class Logger:
     .. |timedelta| replace:: :class:`datetime.timedelta`
     .. |open| replace:: :func:`open()`
     .. |logging| replace:: :mod:`logging`
+    .. |contextvars| replace:: :mod:`contextvars`
     .. |Thread.run| replace:: :meth:`threading.Thread.run()`
     .. |Exception| replace:: :class:`Exception`
     .. |locale.getpreferredencoding| replace:: :func:`locale.getpreferredencoding()`
@@ -1103,7 +1118,6 @@ class Logger:
         Examples
         --------
         >>> logger.add(sys.stderr, format="{extra[ip]} - {message}")
-        1
         >>> class Server:
         ...     def __init__(self, ip):
         ...         self.ip = ip
@@ -1120,6 +1134,50 @@ class Logger:
         """
         *options, extra = _self._options
         return Logger(_self._core, *options, {**extra, **kwargs})
+
+    @contextlib.contextmanager
+    def contextualize(_self, **kwargs):
+        """Bind attributes to the context-local ``extra`` dict while inside the ``with`` block.
+
+        Contrary to |bind| there is no ``logger`` returned, the ``extra`` dict is modified in-place
+        and updated globally. Most importantly, it uses |contextvars| which means that
+        contextualized values are unique to each threads and asynchronous tasks.
+
+        The ``extra`` dict will retrieve its initial state once the context manager is exited.
+
+        Parameters
+        ----------
+        **kwargs
+            Mapping between keys and values that will be added to the context-local ``extra`` dict.
+
+        Returns
+        -------
+        context manager
+            A context manager that will bind the attributes once entered and restore the initial
+            state of the ``extra`` dict while exited.
+
+        Examples
+        --------
+        >>> logger.add(sys.stderr, format="{message} | {extra}")
+        1
+        >>> def task():
+        ...     logger.info("Processing!")
+        ...
+        >>> with logger.contextualize(task_id=123):
+        ...     task()
+        ...
+        Processing! | {'task_id': 123}
+        >>> logger.info("Done.")
+        Done. | {}
+        """
+        with _self._core.lock:
+            new_context = {**context.get(), **kwargs}
+            token = context.set(new_context)
+
+        yield
+
+        with _self._core.lock:
+            context.reset(token)
 
     def patch(self, patcher):
         """Attach a function to modify the record dict created by each logging call.
@@ -1440,8 +1498,7 @@ class Logger:
 
     @staticmethod
     def parse(file, pattern, *, cast={}, chunk=2 ** 16):
-        """
-        Parse raw logs and extract each entry as a |dict|.
+        """Parse raw logs and extract each entry as a |dict|.
 
         The logging format has to be specified as the regex ``pattern``, it will then be
         used to parse the ``file`` and retrieve each entry based on the named groups present
@@ -1639,7 +1696,7 @@ class Logger:
         log_record = {
             "elapsed": elapsed,
             "exception": exception,
-            "extra": {**core.extra, **extra},
+            "extra": {**core.extra, **context.get(), **extra},
             "file": file_recattr,
             "function": code.co_name,
             "level": level_recattr,

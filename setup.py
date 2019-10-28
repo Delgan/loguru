@@ -49,6 +49,7 @@ setup(
     ],
     install_requires=[
         "colorama>=0.3.4 ; sys_platform=='win32'",
+        "aiocontextvars>=0.2.0 ; python_version<'3.7'",
         "win32-setctime>=1.0.0 ; sys_platform=='win32'",
     ],
     extras_require={
