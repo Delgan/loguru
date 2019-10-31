@@ -1255,6 +1255,11 @@ class Logger:
         ``Level``
             A namedtuple containing information about the level.
 
+        Raises
+        ------
+        ValueError
+            If there is no level registered with such ``name``.
+
         Examples
         --------
         >>> level = logger.level("ERROR")
