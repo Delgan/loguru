@@ -66,5 +66,5 @@ def test_invalid_handler_id_value(writer):
 
 @pytest.mark.parametrize("handler_id", [sys.stderr, sys, object(), int])
 def test_invalid_handler_id_type(handler_id):
-    with pytest.raises(ValueError, match=r"^Invalid handler id.*"):
+    with pytest.raises(TypeError, match=r"^Invalid handler id.*"):
         logger.remove(handler_id)

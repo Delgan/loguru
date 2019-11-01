@@ -16,7 +16,13 @@ def test_level_too_high(writer, level):
     assert writer.read() == ""
 
 
-@pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
+@pytest.mark.parametrize("level", [3.4, object()])
 def test_invalid_level(writer, level):
+    with pytest.raises(TypeError):
+        logger.add(writer, level=level)
+
+
+@pytest.mark.parametrize("level", ["foo", -1])
+def test_unknown_level(writer, level):
     with pytest.raises(ValueError):
         logger.add(writer, level=level)

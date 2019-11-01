@@ -176,22 +176,15 @@ def test_no_renaming(tmpdir):
     assert tmpdir.join("test.log").read() == "test\n"
 
 
-@pytest.mark.parametrize(
-    "retention",
-    [
-        "W5",
-        "monday at 14:00",
-        "sunday",
-        "nope",
-        "5 MB",
-        "3 hours 2 dayz",
-        "d",
-        "H",
-        datetime.time(12, 12, 12),
-        os,
-        object(),
-    ],
-)
+@pytest.mark.parametrize("retention", [datetime.time(12, 12, 12), os, object()])
 def test_invalid_retention(retention):
+    with pytest.raises(TypeError):
+        logger.add("test.log", retention=retention)
+
+
+@pytest.mark.parametrize(
+    "retention", ["W5", "monday at 14:00", "sunday", "nope", "5 MB", "3 hours 2 dayz", "d", "H"]
+)
+def test_unkown_retention(retention):
     with pytest.raises(ValueError):
         logger.add("test.log", retention=retention)

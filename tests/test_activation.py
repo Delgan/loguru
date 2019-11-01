@@ -141,11 +141,11 @@ def test_f_globals_name_absent_with_others(writer, f_globals_name_absent):
 
 @pytest.mark.parametrize("name", [42, [], object()])
 def test_invalid_enable_name(name):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         logger.enable(name)
 
 
 @pytest.mark.parametrize("name", [42, [], object()])
 def test_invalid_disable_name(name):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         logger.disable(name)

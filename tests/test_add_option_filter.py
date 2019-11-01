@@ -53,5 +53,5 @@ def test_filtered_in_f_globals_name_absent(writer, filter, f_globals_name_absent
 
 @pytest.mark.parametrize("filter", [-1, 3.4, object()])
 def test_invalid_filter(writer, filter):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         logger.add(writer, filter=filter)

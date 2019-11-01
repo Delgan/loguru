@@ -57,7 +57,7 @@ def test_function_format_with_exception(writer):
 
 @pytest.mark.parametrize("format", [-1, 3.4, object()])
 def test_invalid_format(writer, format):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         logger.add(writer, format=format)
 
 

@@ -128,17 +128,17 @@ def test_cast_with_irrelevant_value(tmpdir):
 
 @pytest.mark.parametrize("file", [object(), 123, dict])
 def test_invalid_file(file):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         next(logger.parse(file, r"pattern"))
 
 
 @pytest.mark.parametrize("pattern", [object(), 123, dict])
 def test_invalid_pattern(fileobj, pattern):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         next(logger.parse(fileobj, pattern))
 
 
 @pytest.mark.parametrize("cast", [object(), 123])
 def test_invalid_cast(fileobj, cast):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         next(logger.parse(fileobj, r"pattern", cast=cast))

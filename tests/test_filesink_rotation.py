@@ -452,6 +452,14 @@ def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
 
 
 @pytest.mark.parametrize(
+    "rotation", [object(), os, datetime.date(2017, 11, 11), datetime.datetime.now(), 1j]
+)
+def test_invalid_rotation(rotation):
+    with pytest.raises(TypeError):
+        logger.add("test.log", rotation=rotation)
+
+
+@pytest.mark.parametrize(
     "rotation",
     [
         "w7",
@@ -475,13 +483,8 @@ def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
         "foobar",
         "w5 at [not|a|time]",
         "[not|a|day] at 12:00",
-        object(),
-        os,
-        datetime.date(2017, 11, 11),
-        datetime.datetime.now(),
-        1j,
     ],
 )
-def test_invalid_rotation(rotation):
+def test_unknown_rotation(rotation):
     with pytest.raises(ValueError):
         logger.add("test.log", rotation=rotation)

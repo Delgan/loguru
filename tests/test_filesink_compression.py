@@ -80,8 +80,14 @@ def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
     assert tmpdir.join("test.2018-01-01_00-00-00_000000.log.tar.gz").check(exists=1)
 
 
-@pytest.mark.parametrize("compression", [0, True, os, object(), {"zip"}, "rar", ".7z", "tar.zip"])
+@pytest.mark.parametrize("compression", [0, True, os, object(), {"zip"}])
 def test_invalid_compression(compression):
+    with pytest.raises(TypeError):
+        logger.add("test.log", compression=compression)
+
+
+@pytest.mark.parametrize("compression", ["rar", ".7z", "tar.zip"])
+def test_unknown_compression(compression):
     with pytest.raises(ValueError):
         logger.add("test.log", compression=compression)
 

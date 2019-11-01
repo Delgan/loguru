@@ -10,6 +10,7 @@
 - Prevent hypothetical ``ImportError`` if a Python installation is missing the built-in ``distutils`` module (`#118 <https://github.com/Delgan/loguru/issues/118>`_).
 - Add the possibility to convert ``datetime`` to UTC before formatting (in logs and filenames) by adding ``"!UTC"`` at the end of the time format specifier (`#128 <https://github.com/Delgan/loguru/issues/128>`_).
 - Add the level ``name`` as the first argument of namedtuple returned by the ``.level()`` method.
+- Replace ``ValueError`` with ``TypeError`` for exceptions raised when a ``logger`` method was called with argument of invalid type.
 
 
 `0.3.2`_ (2019-07-21)

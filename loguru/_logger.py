@@ -764,7 +764,7 @@ class Logger:
             terminator = "\n"
             exception_prefix = ""
         else:
-            raise ValueError("Cannot log to objects of type '%s'." % type(sink).__name__)
+            raise TypeError("Cannot log to objects of type '%s'." % type(sink).__name__)
 
         if filter is None:
             filter_func = None
@@ -777,7 +777,7 @@ class Logger:
         elif callable(filter):
             filter_func = filter
         else:
-            raise ValueError(
+            raise TypeError(
                 "Invalid filter, it should be a function or a string, not: '%s'"
                 % type(filter).__name__
             )
@@ -787,7 +787,7 @@ class Logger:
         elif isinstance(level, int):
             levelno = level
         else:
-            raise ValueError(
+            raise TypeError(
                 "Invalid level, it should be an integer or a string, not: '%s'"
                 % type(level).__name__
             )
@@ -811,7 +811,7 @@ class Logger:
             formatter = format
             is_formatter_dynamic = True
         else:
-            raise ValueError(
+            raise TypeError(
                 "Invalid format, it should be a string or a function, not: '%s'"
                 % type(format).__name__
             )
@@ -881,7 +881,7 @@ class Logger:
         >>> logger.info("No longer logging")
         """
         if not (handler_id is None or isinstance(handler_id, int)):
-            raise ValueError(
+            raise TypeError(
                 "Invalid handler id, it should be an integer as returned "
                 "by the 'add()' method (or None), not: '%s'" % type(handler_id).__name__
             )
@@ -1277,7 +1277,7 @@ class Logger:
         30 /!\\ Updated!
         """
         if not isinstance(name, str):
-            raise ValueError(
+            raise TypeError(
                 "Invalid level name, it should be a string, not: '%s'" % type(name).__name__
             )
 
@@ -1308,7 +1308,7 @@ class Logger:
             icon = old_icon
 
         if not isinstance(no, int):
-            raise ValueError(
+            raise TypeError(
                 "Invalid level no, it should be an integer, not: '%s'" % type(no).__name__
             )
 
@@ -1463,7 +1463,7 @@ class Logger:
 
     def _change_activation(self, name, status):
         if not (name is None or isinstance(name, str)):
-            raise ValueError(
+            raise TypeError(
                 "Invalid name, it should be a string (or None), not: '%s'" % type(name).__name__
             )
 
@@ -1557,7 +1557,7 @@ class Logger:
             should_close = False
             fileobj = file
         else:
-            raise ValueError(
+            raise TypeError(
                 "Invalid file, it should be a string path or a file object, not: '%s'"
                 % type(file).__name__
             )
@@ -1572,14 +1572,14 @@ class Logger:
         elif callable(cast):
             cast_function = cast
         else:
-            raise ValueError(
+            raise TypeError(
                 "Invalid cast, it should be a function or a dict, not: '%s'" % type(cast).__name__
             )
 
         try:
             regex = re.compile(pattern)
         except TypeError:
-            raise ValueError(
+            raise TypeError(
                 "Invalid pattern, it should be a string or a compiled regex, not: '%s'"
                 % type(pattern).__name__
             ) from None
@@ -1784,7 +1784,7 @@ class Logger:
                 )
             return (None, level)
 
-        raise ValueError(
+        raise TypeError(
             "Invalid level, it should be an integer or a string, not: '%s'" % type(level).__name__
         )
 

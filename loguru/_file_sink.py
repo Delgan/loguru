@@ -227,7 +227,7 @@ class FileSink:
         elif callable(rotation):
             return rotation
         else:
-            raise ValueError(
+            raise TypeError(
                 "Cannot infer rotation for objects of type: '%s'" % type(rotation).__name__
             )
 
@@ -247,7 +247,7 @@ class FileSink:
         elif callable(retention):
             return retention
         else:
-            raise ValueError(
+            raise TypeError(
                 "Cannot infer retention for objects of type: '%s'" % type(retention).__name__
             )
 
@@ -313,7 +313,7 @@ class FileSink:
         elif callable(compression):
             return compression
         else:
-            raise ValueError(
+            raise TypeError(
                 "Cannot infer compression for objects of type: '%s'" % type(compression).__name__
             )
 

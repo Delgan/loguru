@@ -151,7 +151,7 @@ def test_disabled_logger_in_sink(sink_with_logger):
 
 @pytest.mark.parametrize("sink", [123, sys, object(), int])
 def test_invalid_sink(sink):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         log(sink, "")
 
 

@@ -180,8 +180,15 @@ def test_assign_custom_level_method(writer):
     assert writer.read() == parse("<blue>foobar 33 🤖 Logged message</blue>\n")
 
 
-@pytest.mark.parametrize("level", ["foo", -1, 3.4, object()])
+@pytest.mark.parametrize("level", [3.4, object()])
 def test_log_invalid_level(writer, level):
+    logger.add(writer)
+    with pytest.raises(TypeError):
+        logger.log(level, "test")
+
+
+@pytest.mark.parametrize("level", ["foo", "debug", -1])
+def test_log_unknown_level(writer, level):
     logger.add(writer)
     with pytest.raises(ValueError):
         logger.log(level, "test")
@@ -189,26 +196,41 @@ def test_log_invalid_level(writer, level):
 
 @pytest.mark.parametrize("level_name", [10, object()])
 def test_add_invalid_level_name(level_name):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         logger.level(level_name, 11)
 
 
-@pytest.mark.parametrize("level_value", ["1", -1, 3.4, object()])
-def test_add_invalid_level_value(level_value):
-    with pytest.raises(ValueError):
+@pytest.mark.parametrize("level_value", ["1", object(), 3.4])
+def test_add_invalid_level_type(level_value):
+    with pytest.raises(TypeError):
         logger.level("test", level_value)
 
 
-@pytest.mark.parametrize("level", ["foo", 10, object()])
-def test_get_invalid_level(level):
+def test_add_invalid_level_value():
     with pytest.raises(ValueError):
+        logger.level("test", -1)
+
+
+@pytest.mark.parametrize("level", [10, object()])
+def test_get_invalid_level(level):
+    with pytest.raises(TypeError):
         logger.level(level)
 
 
-@pytest.mark.parametrize("level", ["foo", 10, object()])
-def test_edit_invalid_level(level):
+def test_get_unknown_level():
     with pytest.raises(ValueError):
+        logger.level("foo")
+
+
+@pytest.mark.parametrize("level", [10, object()])
+def test_edit_invalid_level(level):
+    with pytest.raises(TypeError):
         logger.level(level, icon="?")
+
+
+def test_edit_unknown_level():
+    with pytest.raises(ValueError):
+        logger.level("foo", icon="?")
 
 
 @pytest.mark.parametrize("color", ["<foo>", "</red>"])
