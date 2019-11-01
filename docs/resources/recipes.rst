@@ -9,6 +9,7 @@ Code snippets and recipes for ``loguru``
 .. |sys.stderr| replace:: :data:`sys.stderr`
 .. |warnings| replace:: :mod:`warnings`
 .. |warnings.showwarning| replace:: :func:`warnings.showwarning`
+.. |contextlib.redirect_stdout| replace:: :func:`contextlib.redirect_stdout`
 .. |copy.deepcopy| replace:: :func:`copy.deepcopy`
 .. |os.fork| replace:: :func:`os.fork`
 .. |multiprocessing| replace:: :mod:`multiprocessing`
@@ -277,11 +278,11 @@ Others solutions are possible by using a formatting function or class. For examp
 Capturing standard ``stdout``, ``stderr`` and ``warnings``
 ----------------------------------------------------------
 
-The use of logging should be privileged over |print|, yet, it may happen that you don't have plain control over code executed in your application. If you wish to capture standard output, you can suppress |sys.stdout| (and |sys.stderr|) with a custom stream object. You have to take care of first removing the default handler, and not adding a new stdout sink once redirected or that would cause dead lock (you may use |sys.__stdout__| instead)::
+The use of logging should be privileged over |print|, yet, it may happen that you don't have plain control over code executed in your application. If you wish to capture standard output, you can suppress |sys.stdout| (and |sys.stderr|) with a custom stream object using |contextlib.redirect_stdout|. You have to take care of first removing the default handler, and not adding a new stdout sink once redirected or that would cause dead lock (you may use |sys.__stdout__| instead)::
 
+    import contextlib
     import sys
     from loguru import logger
-
 
     class StreamToLogger:
 
@@ -290,7 +291,7 @@ The use of logging should be privileged over |print|, yet, it may happen that yo
 
         def write(self, buffer):
             for line in buffer.rstrip().splitlines():
-                logger.log(self._level, line.rstrip())
+                logger.opt(depth=1).log(self._level, line.rstrip())
 
         def flush(self):
             pass
@@ -298,7 +299,9 @@ The use of logging should be privileged over |print|, yet, it may happen that yo
     logger.remove()
     logger.add(sys.__stdout__)
 
-    sys.stdout = StreamToLogger()
+    stream = StreamToLogger()
+    with contextlib.redirect_stdout(stream):
+        print("Standard output is sent to added handlers.")
 
 
 You may also capture warnings emitted by your application by replacing |warnings.showwarning|::
