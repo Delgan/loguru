@@ -10,7 +10,7 @@ from loguru import logger
         "tests",
         "tests.test_add_option_filter",
         (lambda r: True),
-        (lambda r: r["level"] == "DEBUG"),
+        (lambda r: r["level"].name == "DEBUG"),
     ],
 )
 def test_filterd_in(filter, writer):

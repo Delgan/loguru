@@ -438,15 +438,11 @@ def test_exception_is_none():
 
 
 def test_exception_is_unpackable():
-    called = False
+    exception = None
 
     def writer(msg):
-        nonlocal called
-        type_, value, traceback = msg.record["exception"]
-        assert type_ == ZeroDivisionError
-        assert isinstance(value, ZeroDivisionError)
-        assert isinstance(traceback, types.TracebackType)
-        called = True
+        nonlocal exception
+        exception = msg.record["exception"]
 
     logger.add(writer, catch=False)
 
@@ -455,7 +451,50 @@ def test_exception_is_unpackable():
     except ZeroDivisionError:
         logger.exception("Exception")
 
-    assert called
+    type_, value, traceback = exception
+    assert type_ == ZeroDivisionError
+    assert isinstance(value, ZeroDivisionError)
+    assert isinstance(traceback, types.TracebackType)
+
+
+def test_exception_is_subscriptable():
+    exception = None
+
+    def writer(msg):
+        nonlocal exception
+        exception = msg.record["exception"]
+
+    logger.add(writer, catch=False)
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("Exception")
+
+    type_, value, traceback = exception[0], exception[1], exception[2]
+    assert type_ == ZeroDivisionError
+    assert isinstance(value, ZeroDivisionError)
+    assert isinstance(traceback, types.TracebackType)
+
+
+def test_exception_has_attributes():
+    exception = None
+
+    def writer(msg):
+        nonlocal exception
+        exception = msg.record["exception"]
+
+    logger.add(writer, catch=False)
+
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.exception("Exception")
+
+    type_, value, traceback = exception.type, exception.value, exception.traceback
+    assert type_ == ZeroDivisionError
+    assert isinstance(value, ZeroDivisionError)
+    assert isinstance(traceback, types.TracebackType)
 
 
 @pytest.mark.parametrize("exception", [ZeroDivisionError, (ValueError, ZeroDivisionError)])

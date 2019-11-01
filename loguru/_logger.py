@@ -1669,24 +1669,6 @@ class Logger:
         process = current_process()
         elapsed = current_datetime - start_time
 
-        level_recattr = LevelRecattr(level_name)
-        level_recattr.no, level_recattr.name, level_recattr.icon = (
-            level_no,
-            level_name,
-            level_icon,
-        )
-
-        file_recattr = FileRecattr(file_name)
-        file_recattr.name, file_recattr.path = file_name, file_path
-
-        thread_ident = thread.ident
-        thread_recattr = ThreadRecattr(thread_ident)
-        thread_recattr.id, thread_recattr.name = thread_ident, thread.name
-
-        process_ident = process.ident
-        process_recattr = ProcessRecattr(process_ident)
-        process_recattr.id, process_recattr.name = process_ident, process.name
-
         if exception:
             if isinstance(exception, BaseException):
                 type_, value, traceback = (type(exception), exception, exception.__traceback__)
@@ -1702,15 +1684,15 @@ class Logger:
             "elapsed": elapsed,
             "exception": exception,
             "extra": {**core.extra, **context.get(), **extra},
-            "file": file_recattr,
+            "file": FileRecattr(file_name, file_path),
             "function": code.co_name,
-            "level": level_recattr,
+            "level": LevelRecattr(level_name, level_no, level_icon),
             "line": frame.f_lineno,
             "message": message,
             "module": splitext(file_name)[0],
             "name": name,
-            "process": process_recattr,
-            "thread": thread_recattr,
+            "process": ProcessRecattr(process.ident, process.name),
+            "thread": ThreadRecattr(thread.ident, thread.name),
             "time": current_datetime,
         }
 
