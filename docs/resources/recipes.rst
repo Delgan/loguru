@@ -4,6 +4,7 @@ Code snippets and recipes for ``loguru``
 .. highlight:: python3
 
 .. |print| replace:: :func:`print()`
+.. |open| replace:: :func:`open()`
 .. |sys.__stdout__| replace:: :data:`sys.__stdout__`
 .. |sys.stdout| replace:: :data:`sys.stdout`
 .. |sys.stderr| replace:: :data:`sys.stderr`
@@ -16,6 +17,8 @@ Code snippets and recipes for ``loguru``
 .. |Pool| replace:: :class:`~multiprocessing.pool.Pool`
 .. |Pool.map| replace:: :meth:`~multiprocessing.pool.Pool.map`
 .. |Pool.apply| replace:: :meth:`~multiprocessing.pool.Pool.apply`
+.. |sys.stdout.reconfigure| replace:: :meth:`sys.stdout.reconfigure() <io.TextIOWrapper.reconfigure>`
+.. |UnicodeEncodeError| replace:: :exc:`UnicodeEncodeError`
 
 .. |add| replace:: :meth:`~loguru._logger.Logger.add()`
 .. |remove| replace:: :meth:`~loguru._logger.Logger.remove()`
@@ -27,6 +30,8 @@ Code snippets and recipes for ``loguru``
 .. |log| replace:: :meth:`~loguru._logger.Logger.log()`
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
+
+.. _`unicode`: https://docs.python.org/3/howto/unicode.html
 
 .. _`GH#88`: https://github.com/Delgan/loguru/issues/88
 .. _`GH#132`: https://github.com/Delgan/loguru/issues/132
@@ -158,6 +163,29 @@ This can be achieved using a custom sink for the client and |patch| for the serv
 
 
 Keep in mind though that `pickling is unsafe <https://intoli.com/blog/dangerous-pickles/>`_, use this with care.
+
+
+Resolving ``UnicodeEncodeError`` and other encoding issues
+----------------------------------------------------------
+
+When you write a log message, the handler may need to encode the received `unicode`_ string to a specific sequence of bytes. The ``encoding`` used to perform this operation varies depending on the sink type and your environment. Problem may occur if you try to write a character which is not supported by the handler ``encoding``. In such case, it's likely that Python will raise an |UnicodeEncodeError|.
+
+For example, this may happen while printing to the terminal::
+
+    print("天")
+    # UnicodeEncodeError: 'charmap' codec can't encode character '\u5929' in position 0: character maps to <undefined>
+
+A similar error may occur while writing to a file which has not been opened using an appropriate encoding. Most common problem happen while logging to standard output or to a file on Windows. So, how to avoid such error? Simply by properly configuring your handler so that it can process any kind of unicode string.
+
+If you are encountering this error while logging to ``stdout``, you have several options:
+
+* Use |sys.stderr| instead of |sys.stdout| (the former will escape faulty characters rather than raising exception)
+* Set the :envvar:`PYTHONIOENCODING` environment variable to ``utf-8``
+* Call |sys.stdout.reconfigure| with ``encoding='utf-8'`` and / or ``errors='backslashreplace'``
+
+If you are using a file sink, you can configure the ``errors`` or ``encoding`` parameter while adding the handler like ``logger.add("file.log", encoding="utf8")`` for example.  All additional ``**kwargs`` argument are passed to the built-in |open| function.
+
+For other types of handlers, you have to check if there is a way to parametrize encoding or fallback policy.
 
 
 Logging entry and exit of functions with a decorator
