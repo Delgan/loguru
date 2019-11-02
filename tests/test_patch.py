@@ -68,36 +68,3 @@ def test_override_configured(writer):
     logger2.debug("!")
 
     assert writer.read() == "456 678 !\n"
-
-
-def test_patch_record_file(writer):
-    def patch(record):
-        record["file"].name = "456"
-        record["file"].path = "123/456"
-
-    logger.add(writer, format="{file} {file.name} {file.path}")
-    logger.patch(patch).info("Test")
-
-    assert writer.read() == "456 456 123/456\n"
-
-
-def test_patch_record_thread(writer):
-    def patch(record):
-        record["thread"].id = 111
-        record["thread"].name = "Thread-111"
-
-    logger.add(writer, format="{thread} {thread.name} {thread.id}")
-    logger.patch(patch).info("Test")
-
-    assert writer.read() == "111 Thread-111 111\n"
-
-
-def test_patch_record_process(writer):
-    def patch(record):
-        record["process"].id = 123
-        record["process"].name = "Process-123"
-
-    logger.add(writer, format="{process} {process.name} {process.id}")
-    logger.patch(patch).info("Test")
-
-    assert writer.read() == "123 Process-123 123\n"
