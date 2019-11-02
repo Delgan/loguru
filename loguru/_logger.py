@@ -1,3 +1,65 @@
+"""
+.. References and links rendered by Sphinx are kept here as "module documentation" so that they can
+   be used in the ``Logger`` docstrings but do not pollute ``help(logger)`` output.
+
+.. |Logger| replace:: :class:`~Logger`
+.. |add| replace:: :meth:`~Logger.add()`
+.. |remove| replace:: :meth:`~Logger.remove()`
+.. |catch| replace:: :meth:`~Logger.catch()`
+.. |bind| replace:: :meth:`~Logger.bind()`
+.. |contextualize| replace:: :meth:`~Logger.contextualize()`
+.. |patch| replace:: :meth:`~Logger.patch()`
+.. |opt| replace:: :meth:`~Logger.opt()`
+.. |log| replace:: :meth:`~Logger.log()`
+.. |level| replace:: :meth:`~Logger.level()`
+.. |enable| replace:: :meth:`~Logger.enable()`
+.. |disable| replace:: :meth:`~Logger.disable()`
+
+.. |str| replace:: :class:`str`
+.. |int| replace:: :class:`int`
+.. |bool| replace:: :class:`bool`
+.. |tuple| replace:: :class:`tuple`
+.. |list| replace:: :class:`list`
+.. |dict| replace:: :class:`dict`
+.. |str.format| replace:: :meth:`str.format()`
+.. |Path| replace:: :class:`pathlib.Path`
+.. |match.groupdict| replace:: :meth:`re.Match.groupdict()`
+.. |Handler| replace:: :class:`logging.Handler`
+.. |sys.stderr| replace:: :data:`sys.stderr`
+.. |sys.exc_info| replace:: :func:`sys.exc_info()`
+.. |time| replace:: :class:`datetime.time`
+.. |datetime| replace:: :class:`datetime.datetime`
+.. |timedelta| replace:: :class:`datetime.timedelta`
+.. |open| replace:: :func:`open()`
+.. |logging| replace:: :mod:`logging`
+.. |contextvars| replace:: :mod:`contextvars`
+.. |Thread.run| replace:: :meth:`Thread.run()<threading.Thread.run()>`
+.. |Exception| replace:: :class:`Exception`
+.. |locale.getpreferredencoding| replace:: :func:`locale.getpreferredencoding()`
+
+.. |logger.trace| replace:: :meth:`logger.trace()<Logger.trace()>`
+.. |logger.debug| replace:: :meth:`logger.debug()<Logger.debug()>`
+.. |logger.info| replace:: :meth:`logger.info()<Logger.info()>`
+.. |logger.success| replace:: :meth:`logger.success()<Logger.success()>`
+.. |logger.warning| replace:: :meth:`logger.warning()<Logger.warning()>`
+.. |logger.error| replace:: :meth:`logger.error()<Logger.error()>`
+.. |logger.critical| replace:: :meth:`logger.critical()<Logger.critical()>`
+
+.. |file-like object| replace:: ``file-like object``
+.. _file-like object: https://docs.python.org/3/glossary.html#term-file-object
+.. |function| replace:: ``function``
+.. _function: https://docs.python.org/3/glossary.html#function
+.. |re.Pattern| replace:: ``re.Pattern``
+.. _re.Pattern: https://docs.python.org/3/library/re.html#re-objects
+.. |re.Match| replace:: ``re.Match``
+.. _re.Match: https://docs.python.org/3/library/re.html#match-objects
+
+.. _Pendulum: https://pendulum.eustace.io/docs/#tokens
+.. _better-exceptions: https://github.com/Qix-/better-exceptions
+.. _@sdispater: https://github.com/sdispater
+.. _@Qix-: https://github.com/Qix-
+.. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
+"""
 import contextlib
 import functools
 import inspect
@@ -141,9 +203,9 @@ class Core:
 class Logger:
     """An object to dispatch logging messages to configured handlers.
 
-    The |Logger| is the core object of `loguru`, every logging configuration and usage pass through
-    a call to one of its methods. There is only one logger, so there is no need to retrieve one
-    before usage.
+    The |Logger| is the core object of ``loguru``, every logging configuration and usage pass
+    through a call to one of its methods. There is only one logger, so there is no need to retrieve
+    one before usage.
 
     Once the ``logger`` is imported, it can be used to write messages about events happening in your
     code. By reading the output logs of your application, you gain a better understanding of the
@@ -159,66 +221,6 @@ class Logger:
     contains the ``__name__`` of the module, this is why you don't need named loggers.
 
     You should not instantiate a |Logger| by yourself, use ``from loguru import logger`` instead.
-
-    .. |Logger| replace:: :class:`~Logger`
-    .. |add| replace:: :meth:`~Logger.add()`
-    .. |remove| replace:: :meth:`~Logger.remove()`
-    .. |catch| replace:: :meth:`~Logger.catch()`
-    .. |bind| replace:: :meth:`~Logger.bind()`
-    .. |contextualize| replace:: :meth:`~Logger.contextualize()`
-    .. |patch| replace:: :meth:`~Logger.patch()`
-    .. |opt| replace:: :meth:`~Logger.opt()`
-    .. |log| replace:: :meth:`~Logger.log()`
-    .. |level| replace:: :meth:`~Logger.level()`
-    .. |enable| replace:: :meth:`~Logger.enable()`
-    .. |disable| replace:: :meth:`~Logger.disable()`
-
-    .. |str| replace:: :class:`str`
-    .. |int| replace:: :class:`int`
-    .. |bool| replace:: :class:`bool`
-    .. |tuple| replace:: :class:`tuple`
-    .. |list| replace:: :class:`list`
-    .. |dict| replace:: :class:`dict`
-    .. |str.format| replace:: :meth:`str.format()`
-    .. |Path| replace:: :class:`pathlib.Path`
-    .. |match.groupdict| replace:: :meth:`re.Match.groupdict()`
-    .. |Handler| replace:: :class:`logging.Handler`
-    .. |sys.stderr| replace:: :data:`sys.stderr`
-    .. |sys.exc_info| replace:: :func:`sys.exc_info()`
-    .. |time| replace:: :class:`datetime.time`
-    .. |datetime| replace:: :class:`datetime.datetime`
-    .. |timedelta| replace:: :class:`datetime.timedelta`
-    .. |open| replace:: :func:`open()`
-    .. |logging| replace:: :mod:`logging`
-    .. |contextvars| replace:: :mod:`contextvars`
-    .. |Thread.run| replace:: :meth:`threading.Thread.run()`
-    .. |Exception| replace:: :class:`Exception`
-    .. |locale.getpreferredencoding| replace:: :func:`locale.getpreferredencoding()`
-
-    .. |logger.trace| replace:: :meth:`logger.trace()<Logger.trace()>`
-    .. |logger.debug| replace:: :meth:`logger.debug()<Logger.debug()>`
-    .. |logger.info| replace:: :meth:`logger.info()<Logger.info()>`
-    .. |logger.success| replace:: :meth:`logger.success()<Logger.success()>`
-    .. |logger.warning| replace:: :meth:`logger.warning()<Logger.warning()>`
-    .. |logger.error| replace:: :meth:`logger.error()<Logger.error()>`
-    .. |logger.critical| replace:: :meth:`logger.critical()<Logger.critical()>`
-
-    .. |file-like object| replace:: ``file-like object``
-    .. _file-like object: https://docs.python.org/3/glossary.html#term-file-object
-    .. |class| replace:: ``class``
-    .. _class: https://docs.python.org/3/tutorial/classes.html
-    .. |function| replace:: ``function``
-    .. _function: https://docs.python.org/3/library/functions.html#callable
-    .. |re.Pattern| replace:: ``re.Pattern``
-    .. _re.Pattern: https://docs.python.org/3/library/re.html#re-objects
-    .. |re.Match| replace:: ``re.Match``
-    .. _re.Match: https://docs.python.org/3/library/re.html#match-objects
-
-    .. _Pendulum: https://pendulum.eustace.io/docs/#tokens
-    .. _better_exceptions: https://github.com/Qix-/better-exceptions
-    .. _@sdispater: https://github.com/sdispater
-    .. _@Qix-: https://github.com/Qix-
-    .. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
     """
 
     def __init__(self, core, exception, depth, record, lazy, ansi, raw, patcher, extra):
@@ -908,7 +910,7 @@ class Logger:
         wrapped by this method. This is also very useful to decorate |Thread.run| methods while
         using threads to propagate errors to the main logger thread.
 
-        Note that the visibility of variables values (which uses the cool `better_exceptions`_
+        Note that the visibility of variables values (which uses the cool `better-exceptions`_
         library from `@Qix-`_) depends on the ``diagnose`` option of each configured sink.
 
         The returned object can also be used as a context manager.
@@ -928,7 +930,7 @@ class Logger:
 
         Returns
         -------
-        decorator / context manager
+        :term:`decorator` / :term:`context manager`
             An object that can be used to decorate a function or as a context manager to log
             exceptions possibly caught.
 
@@ -1138,7 +1140,7 @@ class Logger:
 
         Returns
         -------
-        context manager
+        :term:`context manager`
             A context manager that will bind the attributes once entered and restore the initial
             state of the ``extra`` dict while exited.
 
