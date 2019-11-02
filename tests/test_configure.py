@@ -44,9 +44,9 @@ def test_extra(writer):
     assert writer.read() == "1 9\n"
 
 
-def test_patch(writer):
+def test_patcher(writer):
     logger.add(writer, format="{extra[a]} {extra[b]}")
-    logger.configure(patch=lambda record: record["extra"].update(a=1, b=2))
+    logger.configure(patcher=lambda record: record["extra"].update(a=1, b=2))
 
     logger.debug("")
 
@@ -109,7 +109,7 @@ def test_returned_ids(capsys):
 
 
 def test_dont_reset_by_default(writer):
-    logger.configure(extra={"a": 1}, patch=lambda r: r["extra"].update(b=2))
+    logger.configure(extra={"a": 1}, patcher=lambda r: r["extra"].update(b=2))
     logger.level("b", no=30)
     logger.add(writer, format="{level} {extra[a]} {extra[b]} {message}")
 
@@ -140,11 +140,11 @@ def test_reset_previous_extra(writer):
         logger.debug("Nope")
 
 
-def test_reset_previous_patch(writer):
-    logger.configure(patch=lambda r: r.update(a=123))
+def test_reset_previous_patcher(writer):
+    logger.configure(patcher=lambda r: r.update(a=123))
     logger.add(writer, format="{extra[a]}", catch=False)
 
-    logger.configure(patch=lambda r: None)
+    logger.configure(patcher=lambda r: None)
 
     with pytest.raises(KeyError):
         logger.debug("Nope")

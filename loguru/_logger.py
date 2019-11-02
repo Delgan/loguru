@@ -1362,7 +1362,7 @@ class Logger:
         """
         self._change_activation(name, True)
 
-    def configure(self, *, handlers=None, levels=None, extra=None, patch=None, activation=None):
+    def configure(self, *, handlers=None, levels=None, extra=None, patcher=None, activation=None):
         """Configure the core logger.
 
         It should be noted that ``extra`` values set using this function are available across all
@@ -1382,11 +1382,11 @@ class Logger:
             A dict containing additional parameters bound to the core logger, useful to share
             common properties if you call |bind| in several of your files modules. If not ``None``,
             this will remove previously configured ``extra`` dict.
-        patch : |function|_, optional
+        patcher : |function|_, optional
             A function that will be applied to the record dict of each logged messages across all
             modules using the logger. It should modify the dict in-place without returning anything.
             The function is executed prior to the one possibly added by the |patch| method. If not
-            ``None``, this will replace previously configured ``patch`` function.
+            ``None``, this will replace previously configured ``patcher`` function.
         activation : |list| of |tuple|, optional
             A list of ``(name, state)`` tuples which denotes which loggers should be enabled (if
             `state` is ``True``) or disabled (if `state` is ``False``). The calls to |enable|
@@ -1408,7 +1408,7 @@ class Logger:
         ...     ],
         ...     levels=[dict(name="NEW", no=13, icon="¤", color="")],
         ...     extra={"common_to_all": "default"},
-        ...     patch=lambda record: record["extra"].update(some_value=42),
+        ...     patcher=lambda record: record["extra"].update(some_value=42),
         ...     activation=[("my_module.secret", False), ("another_library.module", True)],
         ... )
         [1, 2]
@@ -1431,9 +1431,9 @@ class Logger:
             for params in levels:
                 self.level(**params)
 
-        if patch is not None:
+        if patcher is not None:
             with self._core.lock:
-                self._core.patcher = patch
+                self._core.patcher = patcher
 
         if extra is not None:
             with self._core.lock:

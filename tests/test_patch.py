@@ -19,7 +19,7 @@ def test_patch_before_add(writer):
 
 
 def test_add_using_patched(writer):
-    logger.configure(patch=lambda r: r["extra"].update(a=-1))
+    logger.configure(patcher=lambda r: r["extra"].update(a=-1))
     logger_patched = logger.patch(lambda r: r["extra"].update(a=0))
     logger_patched.add(writer, format="{extra[a]} {message}")
     logger.debug("A")
@@ -60,7 +60,7 @@ def test_no_conflict(writer):
 
 
 def test_override_configured(writer):
-    logger.configure(patch=lambda r: r["extra"].update(a=123, b=678))
+    logger.configure(patcher=lambda r: r["extra"].update(a=123, b=678))
     logger2 = logger.patch(lambda r: r["extra"].update(a=456))
 
     logger2.add(writer, format="{extra[a]} {extra[b]} {message}")
