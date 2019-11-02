@@ -118,7 +118,7 @@ def test_file_sink_ascii_encoding(tmpdir):
     )
     logger.info("天")
     logger.remove()
-    assert file.read() == "\\u5929\n"
+    assert file.read_text("ascii") == "\\u5929\n"
 
 
 def test_file_sink_utf8_encoding(tmpdir):
@@ -126,7 +126,7 @@ def test_file_sink_utf8_encoding(tmpdir):
     logger.add(str(file), encoding="utf8", format="{message}", errors="strict", catch=False)
     logger.info("天")
     logger.remove()
-    assert file.read() == "天\n"
+    assert file.read_text("utf8") == "天\n"
 
 
 def test_disabled_logger_in_sink(sink_with_logger):

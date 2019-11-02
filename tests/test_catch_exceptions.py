@@ -259,7 +259,7 @@ def test_file_sink_ascii_encoding(tmpdir):
         logger.exception("")
 
     logger.remove()
-    result = file.read()
+    result = file.read_text("ascii")
     assert result.count('"\\u5929" * a') == 1
     assert result.count("-> '\\u5929'") == 1
 
@@ -275,7 +275,7 @@ def test_file_sink_utf8_encoding(tmpdir):
         logger.exception("")
 
     logger.remove()
-    result = file.read()
+    result = file.read_text("utf8")
     assert result.count('"天" * a') == 1
     assert result.count("└ '天'") == 1
 
