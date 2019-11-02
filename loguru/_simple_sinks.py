@@ -2,14 +2,13 @@ import logging
 
 
 class StreamSink:
-    def __init__(self, stream, kwargs):
+    def __init__(self, stream):
         self._stream = stream
-        self._kwargs = kwargs
         self._flushable = hasattr(stream, "flush") and callable(stream.flush)
         self._stoppable = hasattr(stream, "stop") and callable(stream.stop)
 
     def write(self, message):
-        self._stream.write(message, **self._kwargs)
+        self._stream.write(message)
         if self._flushable:
             self._stream.flush()
 
@@ -19,15 +18,15 @@ class StreamSink:
 
 
 class StandardSink:
-    def __init__(self, handler, kwargs):
+    def __init__(self, handler):
         self._handler = handler
-        self._kwargs = kwargs
+        self._record_factory = logging.getLogRecordFactory()
 
     def write(self, message):
         record = message.record
         message = str(message)
         exc = record["exception"]
-        record = logging.root.makeRecord(
+        record = self._record_factory(
             record["name"],
             record["level"].no,
             record["file"].path,
@@ -37,7 +36,6 @@ class StandardSink:
             (exc.type, exc.value, exc.traceback) if exc else None,
             record["function"],
             record["extra"],
-            **self._kwargs
         )
         if exc:
             record.exc_text = "\n"
@@ -48,12 +46,11 @@ class StandardSink:
 
 
 class CallableSink:
-    def __init__(self, function, kwargs):
+    def __init__(self, function):
         self._function = function
-        self._kwargs = kwargs
 
     def write(self, message):
-        self._function(message, **self._kwargs)
+        self._function(message)
 
     def stop(self):
         pass

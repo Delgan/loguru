@@ -69,18 +69,6 @@ def test_function_sink(rep):
 
 
 @repetitions
-def test_class_sink(rep):
-    out = []
-
-    class A:
-        def write(self, m):
-            out.append(m)
-
-    log(A, rep)
-    assert out == [expected] * rep
-
-
-@repetitions
 def test_file_object_sink(rep):
     class A:
         def __init__(self):
@@ -119,7 +107,7 @@ def test_flush(rep):
         def flush(self):
             flushed.append(out[-1])
 
-    log(A, rep)
+    log(A(), rep)
     assert flushed == [expected] * rep
 
 

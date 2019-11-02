@@ -1,17 +1,18 @@
 `Unreleased`_
 =============
 
+- Remove ``class`` objects from the list of supported sinks and restrict usage of ``**kwargs`` in ``.add()`` to file sink only. User is in charge of instantiating sink and wrapping additional keyword arguments if needed, before passing it to the ``.add()`` method.
 - Fix incompatibility with ``multiprocessing`` on Windows by entirely refactoring the internal structure of the ``logger`` so it can be inherited by child processes along with added handlers (`#108 <https://github.com/Delgan/loguru/issues/108>`_).
 - Fix an error using a ``filter`` function "by name" while receiving a log with ``record["name"]`` equals to ``None``.
 - Fix ``AttributeError`` while using a file sink on some distributions (like Alpine Linux) missing the ``os.getxattr`` and ``os.setxattr`` functions (`#158 <https://github.com/Delgan/loguru/pull/158>`_, thanks `@joshgordon <https://github.com/joshgordon>`_).
 - Fix values wrongly displayed for keyword arguments during exception formatting with ``diagnose=True`` (`#144 <https://github.com/Delgan/loguru/issues/144>`_).
-- Fix logging messages wrongly cutted at the end while using standard ``logging.Handler`` sinks with ``.opt(raw=True)`` (`#136 <https://github.com/Delgan/loguru/issues/136>`_).
+- Fix logging messages wrongly chopped off at the end while using standard ``logging.Handler`` sinks with ``.opt(raw=True)`` (`#136 <https://github.com/Delgan/loguru/issues/136>`_).
 - Add support for ``copy.deepcopy()`` of the ``logger`` allowing multiple independent loggers with separate set of handlers (`#72 <https://github.com/Delgan/loguru/issues/72>`_).
 - Prevent hypothetical ``ImportError`` if a Python installation is missing the built-in ``distutils`` module (`#118 <https://github.com/Delgan/loguru/issues/118>`_).
 - Add the possibility to convert ``datetime`` to UTC before formatting (in logs and filenames) by adding ``"!UTC"`` at the end of the time format specifier (`#128 <https://github.com/Delgan/loguru/issues/128>`_).
 - Add the level ``name`` as the first argument of namedtuple returned by the ``.level()`` method.
 - Replace ``ValueError`` with ``TypeError`` for exceptions raised when a ``logger`` method was called with argument of invalid type.
-- Remove inheritance of some record dict attributes to ``str`` (for ``"level"``, ``"file"``, ``"thread"`` and ``"process"``) and ``namedtuple`` (for ``"exception"``) in order to faciliate patching.
+- Remove inheritance of some record dict attributes to ``str`` (for ``"level"``, ``"file"``, ``"thread"`` and ``"process"``) and ``namedtuple`` (for ``"exception"``) in order to facilitate patching.
 
 
 `0.3.2`_ (2019-07-21)

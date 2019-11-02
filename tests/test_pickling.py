@@ -8,6 +8,10 @@ import pytest
 from loguru import logger
 
 
+def print_(message):
+    print(message, end="")
+
+
 class StreamHandler:
     def __init__(self, flushable=False, stoppable=False):
         if flushable:
@@ -70,7 +74,7 @@ def compression_function(path):
 
 
 def test_pickling_function_handler(capsys):
-    logger.add(print, format="{level} - {function} - {message}", end="")
+    logger.add(print_, format="{level} - {function} - {message}")
     pickled = pickle.dumps(logger)
     unpikcled = pickle.loads(pickled)
     unpikcled.debug("A message")
@@ -102,15 +106,6 @@ def test_pickling_standard_handler():
     unpickled.debug("A message")
     handler = next(iter(unpickled._core.handlers.values()))._sink._handler
     assert handler.written == "DEBUG - test_pickling_standard_handler - A message"
-
-
-def test_pickling_class_handler():
-    logger.add(StreamHandler, format="{level} - {function} - {message}")
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.debug("A message")
-    stream = next(iter(unpickled._core.handlers.values()))._sink._stream
-    assert stream.wrote == "DEBUG - test_pickling_class_handler - A message\n"
 
 
 def test_pickling_file_handler(tmpdir):
@@ -185,7 +180,7 @@ def test_pickling_handler_not_serializable():
 
 
 def test_pickling_filter_function(capsys):
-    logger.add(print, format="{message}", filter=filter_function, end="")
+    logger.add(print_, format="{message}", filter=filter_function)
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.info("Nope")
@@ -197,7 +192,7 @@ def test_pickling_filter_function(capsys):
 
 @pytest.mark.parametrize("filter", ["", "tests"])
 def test_pickling_filter_name(capsys, filter):
-    logger.add(print, format="{message}", filter=filter, end="")
+    logger.add(print_, format="{message}", filter=filter)
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.info("A message")
@@ -207,7 +202,7 @@ def test_pickling_filter_name(capsys, filter):
 
 
 def test_pickling_format_function(capsys):
-    logger.add(print, format=format_function, end="")
+    logger.add(print_, format=format_function)
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.info("The message")
@@ -247,7 +242,7 @@ def test_pickling_patched_logger(writer):
 
 
 def test_remove_after_pickling(capsys):
-    i = logger.add(print, end="", format="{message}")
+    i = logger.add(print_, format="{message}")
     logger.info("A")
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
@@ -259,7 +254,7 @@ def test_remove_after_pickling(capsys):
 
 
 def test_pickling_logging_method(capsys):
-    logger.add(print, format="{level} - {function} - {message}", end="")
+    logger.add(print_, format="{level} - {function} - {message}")
     pickled = pickle.dumps(logger.critical)
     func = pickle.loads(pickled)
     func("A message")
@@ -269,7 +264,7 @@ def test_pickling_logging_method(capsys):
 
 
 def test_pickling_log_method(capsys):
-    logger.add(print, format="{level} - {function} - {message}", end="")
+    logger.add(print_, format="{level} - {function} - {message}")
     pickled = pickle.dumps(logger.log)
     func = pickle.loads(pickled)
     func(19, "A message")

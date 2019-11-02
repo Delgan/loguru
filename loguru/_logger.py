@@ -244,7 +244,7 @@ class Logger:
 
         Parameters
         ----------
-        sink : |file-like object|_, |str|, |Path|, |function|_, |Handler| or |class|_
+        sink : |file-like object|_, |str|, |Path|, |function|_, or |Handler|
             An object in charge of receiving formatted logging messages and propagating them to an
             appropriate endpoint.
         level : |int| or |str|, optional
@@ -276,8 +276,7 @@ class Logger:
             caught. If ``True``, an exception message is displayed on |sys.stderr| but the exception
             is not propagated to the caller, preventing your app to crash.
         **kwargs
-            Additional parameters that will be passed to the sink while creating it or while
-            logging messages (the exact behavior depends on the sink type).
+            Additional parameters that are only valid to configure a file sink (see below).
 
 
         If and only if the sink is a file, the following parameters apply:
@@ -334,8 +333,6 @@ class Logger:
           procedure entirely defined by user preferences and needs.
         - A built-in |Handler| like ``logging.StreamHandler``. In such a case, the `Loguru` records
           are automatically converted to the structure expected by the |logging| module.
-        - A |class|_ object that will be used to instantiate the sink using ``**kwargs`` attributes
-          passed. Hence, the class should instantiate objects which are therefore valid sinks.
 
         Note that you should avoid using  the ``logger`` inside any of your sinks as this would
         result in infinite recursion or dead lock if the module's sink was not explicitly disabled.
@@ -698,26 +695,11 @@ class Logger:
         ...
         >>> stream_object = RandomStream(seed=12345, threshold=0.25)
         >>> logger.add(stream_object, level="INFO")
-        >>> logger.add(RandomStream, level="DEBUG", seed=34567, threshold=0.5)
         """
         if colorize is None and serialize:
             colorize = False
 
-        if isclass(sink):
-            sink = sink(**kwargs)
-            return self.add(
-                sink,
-                level=level,
-                format=format,
-                filter=filter,
-                colorize=colorize,
-                serialize=serialize,
-                backtrace=backtrace,
-                diagnose=diagnose,
-                enqueue=enqueue,
-                catch=catch,
-            )
-        elif isinstance(sink, (str, PathLike)):
+        if isinstance(sink, (str, PathLike)):
             path = sink
             name = str(path)
 
@@ -725,6 +707,7 @@ class Logger:
                 colorize = False
 
             wrapped_sink = FileSink(path, **kwargs)
+            kwargs = {}
             encoding = wrapped_sink.encoding
             terminator = "\n"
             exception_prefix = ""
@@ -739,7 +722,7 @@ class Logger:
             else:
                 stream = sink
 
-            wrapped_sink = StreamSink(stream, kwargs)
+            wrapped_sink = StreamSink(stream)
             encoding = getattr(sink, "encoding", None)
             terminator = "\n"
             exception_prefix = ""
@@ -749,7 +732,7 @@ class Logger:
             if colorize is None:
                 colorize = False
 
-            wrapped_sink = StandardSink(sink, kwargs)
+            wrapped_sink = StandardSink(sink)
             encoding = getattr(sink, "encoding", None)
             terminator = ""
             exception_prefix = "\n"
@@ -759,12 +742,15 @@ class Logger:
             if colorize is None:
                 colorize = False
 
-            wrapped_sink = CallableSink(sink, kwargs)
+            wrapped_sink = CallableSink(sink)
             encoding = "utf8"
             terminator = "\n"
             exception_prefix = ""
         else:
-            raise TypeError("Cannot log to objects of type '%s'." % type(sink).__name__)
+            raise TypeError("Cannot log to objects of type '%s'" % type(sink).__name__)
+
+        if kwargs:
+            raise TypeError("add() got an unexpected keyword argument '%s'" % next(iter(kwargs)))
 
         if filter is None:
             filter_func = None

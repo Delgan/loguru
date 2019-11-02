@@ -2,10 +2,14 @@ from loguru import logger
 import copy
 
 
+def print_(message):
+    print(message, end="")
+
+
 def test_add_sink_after_deepcopy(capsys):
     logger_ = copy.deepcopy(logger)
 
-    logger_.add(print, format="{message}", end="", catch=False)
+    logger_.add(print_, format="{message}", catch=False)
 
     logger_.info("A")
     logger.info("B")
@@ -16,7 +20,7 @@ def test_add_sink_after_deepcopy(capsys):
 
 
 def test_add_sink_before_deepcopy(capsys):
-    logger.add(print, format="{message}", end="", catch=False)
+    logger.add(print_, format="{message}", catch=False)
 
     logger_ = copy.deepcopy(logger)
 
@@ -29,7 +33,7 @@ def test_add_sink_before_deepcopy(capsys):
 
 
 def test_remove_from_original(capsys):
-    logger.add(print, format="{message}", end="", catch=False)
+    logger.add(print_, format="{message}", catch=False)
 
     logger_ = copy.deepcopy(logger)
     logger.remove()
@@ -43,7 +47,7 @@ def test_remove_from_original(capsys):
 
 
 def test_remove_from_copy(capsys):
-    logger.add(print, format="{message}", end="", catch=False)
+    logger.add(print_, format="{message}", catch=False)
 
     logger_ = copy.deepcopy(logger)
     logger_.remove()

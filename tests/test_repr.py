@@ -4,6 +4,7 @@ import sys
 import pathlib
 import re
 
+
 def test_no_handler():
     assert repr(logger) == "<loguru.logger handlers=[]>"
 
@@ -64,33 +65,6 @@ def test_stream_object_without_name_attr():
     assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=MyStream())]>"
 
 
-def test_class():
-    class MyStream:
-        def __init__(self):
-            self.name = "<foobar>"
-
-        def write(self, m):
-            pass
-
-        def __repr__(self):
-            return "MyStream()"
-
-    logger.add(MyStream)
-    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<foobar>)]>"
-
-
-def test_class_without_name_attr():
-    class MyStream:
-        def write(self, m):
-            pass
-
-        def __repr__(self):
-            return "MyStream()"
-
-    logger.add(MyStream)
-    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=MyStream())]>"
-
-
 def test_function():
     def my_function(message):
         pass
@@ -127,16 +101,6 @@ def test_standard_handler():
         r = r"<loguru\.logger handlers=\[\(id=0, level=10, sink=<logging\.StreamHandler .*>\)\]>"
         assert re.match(r, repr(logger))
 
-
-def test_standard_handler_class():
-    handler = logging.Handler
-    logger.add(handler)
-    if sys.version_info >= (3, 6):
-        r = "<loguru.logger handlers=[(id=0, level=10, sink=<Handler (NOTSET)>)]>"
-        assert repr(logger) == r
-    else:
-        r = r"<loguru\.logger handlers=\[\(id=0, level=10, sink=<logging\.Handler .*>\)\]>"
-        assert re.match(r, repr(logger))
 
 def test_multiple_handlers():
     logger.add(sys.__stdout__)
