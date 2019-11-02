@@ -178,7 +178,7 @@ class ExceptionFormatter:
     def _get_char(self, char, default):
         try:
             char.encode(self._encoding)
-        except UnicodeEncodeError:
+        except (UnicodeEncodeError, LookupError):
             return default
         else:
             return char

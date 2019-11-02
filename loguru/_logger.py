@@ -804,7 +804,7 @@ class Logger:
                 % type(format).__name__
             )
 
-        if encoding is None:
+        if not isinstance(encoding, str):
             encoding = "ascii"
 
         with self._core.lock:

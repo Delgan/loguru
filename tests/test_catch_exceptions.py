@@ -221,10 +221,18 @@ def test_no_caret_if_no_backtrace(writer, diagnose):
     assert sum(line.startswith("> ") for line in writer.read().splitlines()) == 0
 
 
-@pytest.mark.parametrize("encoding", ["ascii", "UTF8", None])
+@pytest.mark.parametrize("encoding", ["ascii", "UTF8", None, "unknown-encoding", "", object()])
 def test_sink_encoding(writer, encoding):
-    writer.encoding = encoding
-    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
+    class Writer:
+        def __init__(self, encoding):
+            self.encoding = encoding
+            self.output = ""
+
+        def write(self, message):
+            self.output += message
+
+    writer = Writer(encoding)
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="", catch=False)
 
     def foo(a, b):
         a / b
@@ -237,7 +245,7 @@ def test_sink_encoding(writer, encoding):
     except ZeroDivisionError:
         logger.exception("")
 
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+    assert writer.output.endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_file_sink_ascii_encoding(tmpdir):
