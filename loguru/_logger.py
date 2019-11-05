@@ -678,6 +678,11 @@ class Logger:
 
         >>> logger.add("file_{time}.log", level="TRACE", rotation="100 MB")
 
+        >>> def debug_only(record):
+        ...     return record["level"].name == "DEBUG"
+        ...
+        >>> logger.add("debug.log", filter=debug_only)  # Other levels are filterd out
+
         >>> def my_sink(message):
         ...     record = message.record
         ...     update_db(message, time=record.time, level=record.level)
@@ -960,7 +965,6 @@ class Logger:
 
         >>> with logger.catch(message="Because we never know..."):
         ...    main()  # No exception, no logs
-        ...
         """
         if callable(exception) and (
             not isclass(exception) or not issubclass(exception, BaseException)
@@ -1524,7 +1528,6 @@ class Logger:
         >>> reg = r"(?P<lvl>[0-9]+): (?P<msg>.*)"    # If log format is "{level.no} - {message}"
         >>> for e in logger.parse("file.log", reg):  # A file line could be "10 - A debug message"
         ...     print(e)                             # => {'lvl': '10', 'msg': 'A debug message'}
-        ...
 
         >>> caster = dict(lvl=int)                   # Parse 'lvl' key as an integer
         >>> for e in logger.parse("file.log", reg, cast=caster):

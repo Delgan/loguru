@@ -77,7 +77,10 @@ For example, by calling ``other_logger = logger.bind(name="other")``, each :ref:
 
 Let suppose you want a sink to log only some very specific messages::
 
-    logger.start("specific.log", filter=lambda record: "specific" in record["extra"])
+    def specific_only(record):
+        return "specific" in record["extra"]
+
+    logger.add("specific.log", filter=specific_only)
 
     specific_logger = logger.bind(specific=True)
 
@@ -87,9 +90,9 @@ Let suppose you want a sink to log only some very specific messages::
 Another example, if you want to attach one sink to one named logger::
 
     # Only write messages from "a" logger
-    logger.start("a.log", filter=lambda record: record["extra"].get("name") == "a")
+    logger.add("a.log", filter=lambda record: record["extra"].get("name") == "a")
     # Only write messages from "b" logger
-    logger.start("b.log", filter=lambda record: record["extra"].get("name") == "b")
+    logger.add("b.log", filter=lambda record: record["extra"].get("name") == "b")
 
     logger_a = logger.bind(name="a")
     logger_b = logger.bind(name="b")
