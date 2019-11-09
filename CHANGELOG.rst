@@ -1,6 +1,7 @@
 `Unreleased`_
 =============
 
+- Add type hints to annotate the public methods using a ``.pyi`` stub file.
 - Remove ``class`` objects from the list of supported sinks and restrict usage of ``**kwargs`` in ``.add()`` to file sink only. User is in charge of instantiating sink and wrapping additional keyword arguments if needed, before passing it to the ``.add()`` method.
 - Rename the ``logger.configure()`` keyword argument ``patch`` to ``patcher`` so it better matches the signature of ``logger.patch()``.
 - Fix incompatibility with ``multiprocessing`` on Windows by entirely refactoring the internal structure of the ``logger`` so it can be inherited by child processes along with added handlers (`#108 <https://github.com/Delgan/loguru/issues/108>`_).

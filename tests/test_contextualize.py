@@ -29,13 +29,15 @@ def test_contextualize_in_function(writer):
 
 
 def test_contextualize_reset():
+    contexts = []
+    output = []
+
     def sink(message):
         contexts.append(message.record["extra"])
         output.append(str(message))
 
     logger.add(sink, format="{level} {message}")
-    contexts = []
-    output = []
+
 
     logger.info("A")
 

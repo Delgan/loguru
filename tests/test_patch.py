@@ -42,7 +42,7 @@ def test_not_override_parent_logger(writer):
 def test_override_previous_patched(writer):
     logger.add(writer, format="{extra[x]} {message}")
     logger2 = logger.patch(lambda r: r["extra"].update(x=3))
-    logger2 = logger2.patch(lambda r: r["extra"].update(x=2)).debug("4")
+    logger2.patch(lambda r: r["extra"].update(x=2)).debug("4")
     assert writer.read() == "2 4\n"
 
 

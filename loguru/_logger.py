@@ -1091,7 +1091,7 @@ class Logger:
         """
         return Logger(self._core, exception, depth, record, lazy, ansi, raw, *self._options[-2:])
 
-    def bind(_self, **kwargs):
+    def bind(__self, **kwargs):
         """Bind attributes to the ``extra`` dict of each logged message record.
 
         This is used to add custom context to each logging call.
@@ -1124,11 +1124,11 @@ class Logger:
         >>> instance_2.call("Second instance")
         127.0.0.1 - Second instance
         """
-        *options, extra = _self._options
-        return Logger(_self._core, *options, {**extra, **kwargs})
+        *options, extra = __self._options
+        return Logger(__self._core, *options, {**extra, **kwargs})
 
     @contextlib.contextmanager
-    def contextualize(_self, **kwargs):
+    def contextualize(__self, **kwargs):
         """Bind attributes to the context-local ``extra`` dict while inside the ``with`` block.
 
         Contrary to |bind| there is no ``logger`` returned, the ``extra`` dict is modified in-place
@@ -1162,13 +1162,13 @@ class Logger:
         >>> logger.info("Done.")
         Done. | {}
         """
-        with _self._core.lock:
+        with __self._core.lock:
             new_context = {**context.get(), **kwargs}
             token = context.set(new_context)
 
         yield
 
-        with _self._core.lock:
+        with __self._core.lock:
             context.reset(token)
 
     def patch(self, patcher):
@@ -1326,7 +1326,7 @@ class Logger:
 
         Note that in some rare circumstances, it is not possible for `Loguru` to
         determine the module's ``__name__`` value. In such situation, ``record["name"]`` will be
-        equals to ``None``, this is why ``None`` is also a valid argument.
+        equal to ``None``, this is why ``None`` is also a valid argument.
 
         Parameters
         ----------
@@ -1705,43 +1705,43 @@ class Logger:
         for handler in core.handlers.values():
             handler.emit(log_record, level_id, from_decorator, ansi, raw)
 
-    def trace(_self, _message, *args, **kwargs):
-        r"""Log ``_message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
-        _self._log("TRACE", None, False, _self._options, _message, args, kwargs)
+    def trace(__self, __message, *args, **kwargs):
+        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
+        __self._log("TRACE", None, False, __self._options, __message, args, kwargs)
 
-    def debug(_self, _message, *args, **kwargs):
-        r"""Log ``_message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
-        _self._log("DEBUG", None, False, _self._options, _message, args, kwargs)
+    def debug(__self, __message, *args, **kwargs):
+        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
+        __self._log("DEBUG", None, False, __self._options, __message, args, kwargs)
 
-    def info(_self, _message, *args, **kwargs):
-        r"""Log ``_message.format(*args, **kwargs)`` with severity ``'INFO'``."""
-        _self._log("INFO", None, False, _self._options, _message, args, kwargs)
+    def info(__self, __message, *args, **kwargs):
+        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'INFO'``."""
+        __self._log("INFO", None, False, __self._options, __message, args, kwargs)
 
-    def success(_self, _message, *args, **kwargs):
-        r"""Log ``_message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
-        _self._log("SUCCESS", None, False, _self._options, _message, args, kwargs)
+    def success(__self, __message, *args, **kwargs):
+        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
+        __self._log("SUCCESS", None, False, __self._options, __message, args, kwargs)
 
-    def warning(_self, _message, *args, **kwargs):
-        r"""Log ``_message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
-        _self._log("WARNING", None, False, _self._options, _message, args, kwargs)
+    def warning(__self, __message, *args, **kwargs):
+        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
+        __self._log("WARNING", None, False, __self._options, __message, args, kwargs)
 
-    def error(_self, _message, *args, **kwargs):
-        r"""Log ``_message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
-        _self._log("ERROR", None, False, _self._options, _message, args, kwargs)
+    def error(__self, __message, *args, **kwargs):
+        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
+        __self._log("ERROR", None, False, __self._options, __message, args, kwargs)
 
-    def critical(_self, _message, *args, **kwargs):
-        r"""Log ``_message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
-        _self._log("CRITICAL", None, False, _self._options, _message, args, kwargs)
+    def critical(__self, __message, *args, **kwargs):
+        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
+        __self._log("CRITICAL", None, False, __self._options, __message, args, kwargs)
 
-    def exception(_self, _message, *args, **kwargs):
+    def exception(__self, __message, *args, **kwargs):
         r"""Convenience method for logging an ``'ERROR'`` with exception information."""
-        options = (True,) + _self._options[1:]
-        _self._log("ERROR", None, False, options, _message, args, kwargs)
+        options = (True,) + __self._options[1:]
+        __self._log("ERROR", None, False, options, __message, args, kwargs)
 
-    def log(_self, _level, _message, *args, **kwargs):
-        r"""Log ``_message.format(*args, **kwargs)`` with severity ``_level``."""
-        level_id, static_level_no = _self._dynamic_level(_level)
-        _self._log(level_id, static_level_no, False, _self._options, _message, args, kwargs)
+    def log(__self, __level, __message, *args, **kwargs):
+        r"""Log ``__message.format(*args, **kwargs)`` with severity ``__level``."""
+        level_id, static_level_no = __self._dynamic_level(__level)
+        __self._log(level_id, static_level_no, False, __self._options, __message, args, kwargs)
 
     @staticmethod
     @functools.lru_cache(maxsize=32)

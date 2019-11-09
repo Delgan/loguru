@@ -1,2 +1,4 @@
 include LICENSE
+include loguru/__init__.pyi
+include loguru/py.typed
 recursive-include tests *.py *.txt

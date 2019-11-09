@@ -26,7 +26,7 @@ def reset_logger():
         loguru.logger.remove()
         loguru.logger.__init__(loguru._logger.Core(), None, 0, False, False, False, False, None, {})
         logging.Logger.manager.loggerDict.clear()
-        logging.root = logging.RootLogger(logging.WARNING)
+        logging.root = logging.RootLogger("WARNING")
 
     reset()
     yield
