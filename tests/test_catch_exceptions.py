@@ -445,7 +445,7 @@ def test_exception_is_none():
     assert err is None
 
 
-def test_exception_is_unpackable():
+def test_exception_is_tuple():
     exception = None
 
     def writer(msg):
@@ -458,51 +458,21 @@ def test_exception_is_unpackable():
         1 / 0
     except ZeroDivisionError:
         logger.exception("Exception")
+        reference = sys.exc_info()
 
-    type_, value, traceback = exception
-    assert type_ == ZeroDivisionError
-    assert isinstance(value, ZeroDivisionError)
-    assert isinstance(traceback, types.TracebackType)
+    t_1, v_1, tb_1 = exception
+    t_2, v_2, tb_2 = (x for x in exception)
+    t_3, v_3, tb_3 = exception[0], exception[1], exception[2]
+    t_4, v_4, tb_4 = exception.type, exception.value, exception.traceback
 
-
-def test_exception_is_subscriptable():
-    exception = None
-
-    def writer(msg):
-        nonlocal exception
-        exception = msg.record["exception"]
-
-    logger.add(writer, catch=False)
-
-    try:
-        1 / 0
-    except ZeroDivisionError:
-        logger.exception("Exception")
-
-    type_, value, traceback = exception[0], exception[1], exception[2]
-    assert type_ == ZeroDivisionError
-    assert isinstance(value, ZeroDivisionError)
-    assert isinstance(traceback, types.TracebackType)
-
-
-def test_exception_has_attributes():
-    exception = None
-
-    def writer(msg):
-        nonlocal exception
-        exception = msg.record["exception"]
-
-    logger.add(writer, catch=False)
-
-    try:
-        1 / 0
-    except ZeroDivisionError:
-        logger.exception("Exception")
-
-    type_, value, traceback = exception.type, exception.value, exception.traceback
-    assert type_ == ZeroDivisionError
-    assert isinstance(value, ZeroDivisionError)
-    assert isinstance(traceback, types.TracebackType)
+    assert len(exception) == 3
+    assert exception == reference
+    assert reference == exception
+    assert not (exception != reference)
+    assert not (reference != exception)
+    assert all(t == ZeroDivisionError for t in (t_1, t_2, t_3, t_4))
+    assert all(isinstance(v, ZeroDivisionError) for v in (v_1, v_2, v_3, v_4))
+    assert all(isinstance(tb, types.TracebackType) for tb in (tb_1, tb_2, tb_3, tb_4))
 
 
 @pytest.mark.parametrize("exception", [ZeroDivisionError, (ValueError, ZeroDivisionError)])

@@ -66,9 +66,18 @@ class ExceptionRecattr:
     def __repr__(self):
         return "(type=%r, value=%r, traceback=%r)" % (self.type, self.value, self.traceback)
 
+    def __iter__(self):
+        return iter((self.type, self.value, self.traceback))
+
     def __getitem__(self, index):
         return (self.type, self.value, self.traceback)[index]
 
     def __reduce__(self):
         exception = (self.type, self.value, None)  # tracebacks are not pickable
         return (ExceptionRecattr, exception)
+
+    def __eq__(self, other):
+        return (self.type, self.value, self.traceback) == other
+
+    def __len__(self):
+        return 3

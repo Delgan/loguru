@@ -36,6 +36,19 @@ def test_patch_record_process(writer):
     assert writer.read() == "123 Process-123 123\n"
 
 
+def test_patch_record_exception(writer):
+    def patch(record):
+        record["exception"].traceback = None
+
+    logger.add(writer, format="")
+    try:
+        1 / 0
+    except ZeroDivisionError:
+        logger.patch(patch).exception("Error")
+
+    assert writer.read() == "\nZeroDivisionError: division by zero\n"
+
+
 def test_level_repr():
     level = recattrs.LevelRecattr("FOO", 123, "!!")
     assert repr(level) == "(name='FOO', no=123, icon='!!')"
