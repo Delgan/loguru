@@ -5,12 +5,24 @@ from loguru import logger
 
 class InterceptHandler(logging.Handler):
     def emit(self, record):
-        logger.opt(depth=6, exception=record.exc_info).log(record.levelno, record.getMessage())
+        # Get corresponding Loguru level if it exists
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+
+        # Find caller from where originated the logged message
+        frame, depth = logging.currentframe(), 2
+        while frame.f_code.co_filename == logging.__file__:
+            frame = frame.f_back
+            depth += 1
+
+        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
 def test_formatting(writer, make_logging_logger):
     fmt = "{name} - {file.name} - {function} - {level.name} - {level.no} - {line} - {module} - {message}"
-    expected = "tests.test_interception - test_interception.py - test_formatting - Level 10 - 10 - 19 - test_interception - This is the message\n"
+    expected = "tests.test_interception - test_interception.py - test_formatting - DEBUG - 10 - 31 - test_interception - This is the message\n"
 
     logging_logger = make_logging_logger("tests", InterceptHandler())
 
@@ -94,11 +106,53 @@ def test_exception(writer, make_logging_logger):
     assert sum(line.startswith("> ") for line in lines) == 1
 
 
-def test_log_level(writer, make_logging_logger):
+def test_level_is_no(writer, make_logging_logger):
     logging_logger = make_logging_logger("tests", InterceptHandler())
-    logger.add(writer, format="{level.no} - {level.name} - {message}")
+    logger.add(writer, format="<lvl>{level.no} - {level.name} - {message}</lvl>", colorize=True)
 
     logging_logger.log(12, "Hop")
 
     result = writer.read()
-    assert result == "12 - Level 12 - Hop\n"
+    assert result == "12 - Level 12 - Hop\x1b[0m\n"
+
+
+def test_level_does_not_exist(writer, make_logging_logger):
+    logging.addLevelName(152, "FANCY_LEVEL")
+    logging_logger = make_logging_logger("tests", InterceptHandler())
+    logger.add(writer, format="<lvl>{level.no} - {level.name} - {message}</lvl>", colorize=True)
+
+    logging_logger.log(152, "Nop")
+
+    result = writer.read()
+    assert result == "152 - Level 152 - Nop\x1b[0m\n"
+
+
+def test_level_exist_builtin(writer, make_logging_logger):
+    logging_logger = make_logging_logger("tests", InterceptHandler())
+    logger.add(writer, format="<lvl>{level.no} - {level.name} - {message}</lvl>", colorize=True)
+
+    logging_logger.error("Error...")
+
+    result = writer.read()
+    assert result == "\x1b[31m\x1b[1m40 - ERROR - Error...\x1b[0m\n"
+
+
+def test_level_exists_custom(writer, make_logging_logger):
+    logging.addLevelName(99, "ANOTHER_FANCY_LEVEL")
+    logger.level("ANOTHER_FANCY_LEVEL", no=99, color="<green>", icon="")
+    logging_logger = make_logging_logger("tests", InterceptHandler())
+
+    logger.add(writer, format="<lvl>{level.no} - {level.name} - {message}</lvl>", colorize=True)
+
+    logging_logger.log(99, "Yep!")
+
+    result = writer.read()
+    assert result == "\x1b[32m99 - ANOTHER_FANCY_LEVEL - Yep!\x1b[0m\n"
+
+
+def test_using_logging_function(writer):
+    logging.getLogger(None).addHandler(InterceptHandler())
+    logger.add(writer, format="{function} {line} {module} {file.name} {message}")
+    logging.warning("ABC")
+    result = writer.read()
+    assert result == "test_using_logging_function 156 test_interception test_interception.py ABC\n"
