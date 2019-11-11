@@ -1,8 +1,7 @@
-import os, site, sys
-from usersite.lib import divide_indirect
+import _init
+import sys
+from somelib import divide_indirect
 from loguru import logger
-
-site.USER_SITE = os.path.abspath(os.path.join(os.path.dirname(__file__), "usersite"))
 
 
 def test(*, backtrace, colorize, diagnose):

@@ -5,7 +5,6 @@ import keyword
 import linecache
 import os
 import re
-import site
 import sys
 import sysconfig
 import tokenize
@@ -138,42 +137,10 @@ class ExceptionFormatter:
 
     @staticmethod
     def _get_lib_dirs():
-        # https://git.io/fh5wm
-        # https://stackoverflow.com/q/122327/2291710
-        lib_dirs = []
-
-        stdlib_path = sysconfig.get_path("stdlib")
-
-        if stdlib_path is not None:
-            lib_dirs.append(stdlib_path)
-
-        if site.USER_SITE is not None:
-            lib_dirs.append(site.USER_SITE)
-
-        if hasattr(site, "getsitepackages"):
-            site_packages = site.getsitepackages()
-            lib_dirs.extend(site_packages)
-
-        if hasattr(sys, "real_prefix"):
-            lib_dirs.append(sys.real_prefix)
-            if stdlib_path is not None:
-                sys_prefix = stdlib_path.replace(sys.prefix, sys.real_prefix)
-                lib_dirs.append(sys_prefix)
-
-        try:
-            from distutils.errors import DistutilsError
-            from distutils.sysconfig import get_python_lib
-        except ImportError:
-            pass
-        else:
-            try:
-                python_lib = get_python_lib()
-            except DistutilsError:
-                pass
-            else:
-                lib_dirs.append(python_lib)
-
-        return [os.path.abspath(d) + os.sep for d in lib_dirs]
+        schemes = sysconfig.get_scheme_names()
+        names = ["stdlib", "platstdlib", "platlib", "purelib"]
+        paths = {sysconfig.get_path(name, scheme) for scheme in schemes for name in names}
+        return [os.path.abspath(path).lower() + os.sep for path in paths if path in sys.path]
 
     def _get_char(self, char, default):
         try:
@@ -187,7 +154,7 @@ class ExceptionFormatter:
         filepath = os.path.abspath(file).lower()
         if not filepath.endswith(".py"):
             return False
-        return not any(filepath.startswith(d.lower()) for d in self._lib_dirs)
+        return not any(filepath.startswith(d) for d in self._lib_dirs)
 
     def _extract_frames(self, tb, is_first, *, limit=None, from_decorator=False):
         frames, final_source = [], None

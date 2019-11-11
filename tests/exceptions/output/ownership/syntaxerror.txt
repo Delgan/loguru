@@ -1,15 +1,15 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m18[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m17[0m, in [35m<module>[0m
     [1mtest[0m[1m([0m[1mbacktrace[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mcolorize[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mdiagnose[0m[35m[1m=[0m[36m[1mTrue[0m[1m)[0m
     [36m└ [0m[36m[1m<function test at 0xDEADBEEF>[0m
 
-> File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m13[0m, in [35mtest[0m
+> File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m12[0m, in [35mtest[0m
     [1msyntaxerror[0m[1m([0m[1m)[0m
     [36m└ [0m[36m[1m<function syntaxerror at 0xDEADBEEF>[0m
 
-  File "usersite/lib.py", line 18, in syntaxerror
+  File "/usr/lib/python/somelib/__init__.py", line 18, in syntaxerror
     exec("foo =")
   File "<string>", line 1
     foo =
@@ -19,11 +19,11 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m13[0m, in [35mtest[0m
+  File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m12[0m, in [35mtest[0m
     [1msyntaxerror[0m[1m([0m[1m)[0m
     [36m└ [0m[36m[1m<function syntaxerror at 0xDEADBEEF>[0m
 
-  File "usersite/lib.py", line 18, in syntaxerror
+  File "/usr/lib/python/somelib/__init__.py", line 18, in syntaxerror
     exec("foo =")
   File "<string>", line 1
     foo =
@@ -32,11 +32,11 @@
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
 [33m[1mTraceback (most recent call last):[0m
-  File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m20[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m19[0m, in [35m<module>[0m
     [1mtest[0m[1m([0m[1mbacktrace[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mcolorize[0m[35m[1m=[0m[36m[1mTrue[0m[1m,[0m [1mdiagnose[0m[35m[1m=[0m[36m[1mFalse[0m[1m)[0m
-> File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m13[0m, in [35mtest[0m
+> File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m12[0m, in [35mtest[0m
     [1msyntaxerror[0m[1m([0m[1m)[0m
-  File "usersite/lib.py", line 18, in syntaxerror
+  File "/usr/lib/python/somelib/__init__.py", line 18, in syntaxerror
     exec("foo =")
   File "<string>", line 1
     foo =
@@ -44,9 +44,9 @@
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
 [33m[1mTraceback (most recent call last):[0m
-  File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m13[0m, in [35mtest[0m
+  File "[32mtests/exceptions/source/ownership/[0m[32m[1msyntaxerror.py[0m", line [33m12[0m, in [35mtest[0m
     [1msyntaxerror[0m[1m([0m[1m)[0m
-  File "usersite/lib.py", line 18, in syntaxerror
+  File "/usr/lib/python/somelib/__init__.py", line 18, in syntaxerror
     exec("foo =")
   File "<string>", line 1
     foo =
@@ -54,9 +54,9 @@
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/ownership/syntaxerror.py", line 13, in test
+  File "tests/exceptions/source/ownership/syntaxerror.py", line 12, in test
     syntaxerror()
-  File "usersite/lib.py", line 18, in syntaxerror
+  File "/usr/lib/python/somelib/__init__.py", line 18, in syntaxerror
     exec("foo =")
   File "<string>", line 1
     foo =

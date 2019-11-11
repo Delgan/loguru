@@ -1,5 +1,5 @@
 import asyncio
-import distutils
+import distutils.sysconfig
 import os
 import platform
 import re
@@ -23,7 +23,7 @@ def normalize(exception):
         )
         exception = re.sub(r"(\r\n|\r|\n)", "\n", exception)
 
-    exception = re.sub(r'"[^"]*usersite/lib.py"', '"usersite/lib.py"', exception)
+    exception = re.sub(r'"[^"]*/somelib/__init__.py"', '"/usr/lib/python/somelib/__init__.py"', exception)
 
     exception = re.sub(r"\b0x[0-9a-fA-F]+\b", "0xDEADBEEF", exception)
 
