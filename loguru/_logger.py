@@ -87,20 +87,20 @@ from ._handler import Handler
 from ._recattrs import ExceptionRecattr, FileRecattr, LevelRecattr, ProcessRecattr, ThreadRecattr
 from ._simple_sinks import StreamSink, StandardSink, CallableSink
 
-try:
+if sys.version_info >= (3, 6):
     from os import PathLike
-except ImportError:
+else:
     from pathlib import PurePath as PathLike
 
-if sys.version_info < (3, 7):
+if sys.version_info >= (3, 7):
+    from contextvars import ContextVar
+else:
     import asyncio
 
     if hasattr(asyncio, "_get_running_loop"):
         from aiocontextvars import ContextVar
     else:
         from contextvars import ContextVar
-else:
-    from contextvars import ContextVar
 
 
 def parse_ansi(color):

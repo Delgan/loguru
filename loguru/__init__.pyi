@@ -1,7 +1,6 @@
 import sys
 from datetime import datetime, time, timedelta
 from logging import Handler
-from os import PathLike
 from types import TracebackType
 from typing import (
     Any,
@@ -23,6 +22,11 @@ from typing import (
     Union,
     overload,
 )
+
+if sys.version_info >= (3, 6):
+    from os import PathLike
+else:
+    from pathlib import PurePath as PathLike
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict, Protocol
