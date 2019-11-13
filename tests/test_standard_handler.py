@@ -37,6 +37,17 @@ def test_null_handler(capsys):
     assert err == ""
 
 
+def test_extra_kwargs(capsys):
+    handler = StreamHandler(sys.stdout)
+    formatter = Formatter("[%(abc)s] %(message)s")
+    handler.setFormatter(formatter)
+    logger.add(handler, format=r"\<{extra[abc]}> {message}", catch=False)
+    logger.bind(abc=123).info("Extra!")
+    out, err = capsys.readouterr()
+    assert out == "[123] <123> Extra!\n"
+    assert err == ""
+
+
 def test_no_exception():
     result = None
 
@@ -96,7 +107,10 @@ def test_exception_formatting(tmpdir):
 def test_standard_formatter(capsys, dynamic_format):
     fmt = "{level.no} {message} [Not Chopped]"
     if dynamic_format:
-        def format_(x): return fmt
+
+        def format_(x):
+            return fmt
+
     else:
         format_ = fmt
     handler = StreamHandler(sys.stdout)
@@ -113,7 +127,10 @@ def test_standard_formatter(capsys, dynamic_format):
 def test_standard_formatter_with_new_line(capsys, dynamic_format):
     fmt = "{level.no} {message}\n"
     if dynamic_format:
-        def format_(x): return fmt
+
+        def format_(x):
+            return fmt
+
     else:
         format_ = fmt
     handler = StreamHandler(sys.stdout)
@@ -130,7 +147,10 @@ def test_standard_formatter_with_new_line(capsys, dynamic_format):
 def test_raw_standard_formatter(capsys, dynamic_format):
     fmt = "{level.no} {message} [Not Chopped]"
     if dynamic_format:
-        def format_(x): return fmt
+
+        def format_(x):
+            return fmt
+
     else:
         format_ = fmt
     handler = StreamHandler(sys.stdout)
@@ -147,7 +167,10 @@ def test_raw_standard_formatter(capsys, dynamic_format):
 def test_raw_standard_formatter_with_new_line(capsys, dynamic_format):
     fmt = "{level.no} {message}\n"
     if dynamic_format:
-        def format_(x): return fmt
+
+        def format_(x):
+            return fmt
+
     else:
         format_ = fmt
     handler = StreamHandler(sys.stdout)

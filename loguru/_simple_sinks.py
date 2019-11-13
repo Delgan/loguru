@@ -20,13 +20,13 @@ class StreamSink:
 class StandardSink:
     def __init__(self, handler):
         self._handler = handler
-        self._record_factory = logging.getLogRecordFactory()
+        self._root_logger = logging.getLogger()
 
     def write(self, message):
         record = message.record
         message = str(message)
         exc = record["exception"]
-        record = self._record_factory(
+        record = self._root_logger.makeRecord(
             record["name"],
             record["level"].no,
             record["file"].path,
