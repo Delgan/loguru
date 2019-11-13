@@ -2,6 +2,7 @@ import pytest
 from loguru import logger
 import sys
 
+import logging
 from logging import StreamHandler, FileHandler, NullHandler, Handler
 from logging import Formatter
 
@@ -37,7 +38,7 @@ def test_null_handler(capsys):
     assert err == ""
 
 
-def test_extra_kwargs(capsys):
+def test_extra_dict(capsys):
     handler = StreamHandler(sys.stdout)
     formatter = Formatter("[%(abc)s] %(message)s")
     handler.setFormatter(formatter)
@@ -105,14 +106,12 @@ def test_exception_formatting(tmpdir):
 
 @pytest.mark.parametrize("dynamic_format", [False, True])
 def test_standard_formatter(capsys, dynamic_format):
-    fmt = "{level.no} {message} [Not Chopped]"
-    if dynamic_format:
+    def format_(x):
+        return "{level.no} {message} [Not Chopped]"
 
-        def format_(x):
-            return fmt
+    if not dynamic_format:
+        format_ = format_(None)
 
-    else:
-        format_ = fmt
     handler = StreamHandler(sys.stdout)
     formatter = Formatter("%(message)s %(levelname)s")
     handler.setFormatter(formatter)
@@ -125,14 +124,12 @@ def test_standard_formatter(capsys, dynamic_format):
 
 @pytest.mark.parametrize("dynamic_format", [False, True])
 def test_standard_formatter_with_new_line(capsys, dynamic_format):
-    fmt = "{level.no} {message}\n"
-    if dynamic_format:
+    def format_(x):
+        return "{level.no} {message}\n"
 
-        def format_(x):
-            return fmt
+    if not dynamic_format:
+        format_ = format_(None)
 
-    else:
-        format_ = fmt
     handler = StreamHandler(sys.stdout)
     formatter = Formatter("%(message)s %(levelname)s")
     handler.setFormatter(formatter)
@@ -145,14 +142,12 @@ def test_standard_formatter_with_new_line(capsys, dynamic_format):
 
 @pytest.mark.parametrize("dynamic_format", [False, True])
 def test_raw_standard_formatter(capsys, dynamic_format):
-    fmt = "{level.no} {message} [Not Chopped]"
-    if dynamic_format:
+    def format_(x):
+        return "{level.no} {message} [Not Chopped]"
 
-        def format_(x):
-            return fmt
+    if not dynamic_format:
+        format_ = format_(None)
 
-    else:
-        format_ = fmt
     handler = StreamHandler(sys.stdout)
     formatter = Formatter("%(message)s %(levelname)s")
     handler.setFormatter(formatter)
@@ -165,14 +160,12 @@ def test_raw_standard_formatter(capsys, dynamic_format):
 
 @pytest.mark.parametrize("dynamic_format", [False, True])
 def test_raw_standard_formatter_with_new_line(capsys, dynamic_format):
-    fmt = "{level.no} {message}\n"
-    if dynamic_format:
+    def format_(x):
+        return "{level.no} {message}\n"
 
-        def format_(x):
-            return fmt
+    if not dynamic_format:
+        format_ = format_(None)
 
-    else:
-        format_ = fmt
     handler = StreamHandler(sys.stdout)
     formatter = Formatter("%(message)s %(levelname)s")
     handler.setFormatter(formatter)

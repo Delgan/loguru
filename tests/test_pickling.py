@@ -108,6 +108,25 @@ def test_pickling_standard_handler():
     assert handler.written == "DEBUG - test_pickling_standard_handler - A message"
 
 
+def test_pickling_standard_handler_root_logger_not_picklable(monkeypatch, capsys):
+    def __reduce__():
+        raise TypeError("Not picklable")
+
+    monkeypatch.setattr(logging.getLogger(), "__reduce__", __reduce__, raising=False)
+
+    handler = StandardHandler(logging.NOTSET)
+    logger.add(handler, format="=> {message}", catch=False)
+
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+
+    logger.info("Ok")
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == ""
+    assert handler.written == "=> Ok"
+
+
 def test_pickling_file_handler(tmpdir):
     file = tmpdir.join("test.log")
     logger.add(str(file), format="{level} - {function} - {message}", delay=True)
