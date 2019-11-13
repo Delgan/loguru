@@ -94,25 +94,7 @@ def parse_duration(duration):
 
 
 def parse_frequency(frequency):
-    frequency = frequency.strip().lower()
-
-    if frequency == "hourly":
-
-        return Frequencies.hourly
-    elif frequency == "daily":
-
-        return Frequencies.daily
-    elif frequency == "weekly":
-
-        return Frequencies.weekly
-    elif frequency == "monthly":
-
-        return Frequencies.monthly
-    elif frequency == "yearly":
-
-        return Frequencies.yearly
-
-    return None
+    return getattr(Frequencies, frequency.strip().lower(), None)
 
 
 def parse_day(day):
