@@ -24,12 +24,16 @@ class Frequencies:
             y, m = t.year + 1, 1
         else:
             y, m = t.year, t.month + 1
-        return t.replace(year=y, month=m, day=1, hour=0, minute=0, second=0, microsecond=0)
+        return t.replace(
+            year=y, month=m, day=1, hour=0, minute=0, second=0, microsecond=0
+        )
 
     @staticmethod
     def yearly(t):
         y = t.year + 1
-        return t.replace(year=y, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        return t.replace(
+            year=y, month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+        )
 
 
 def parse_size(size):
@@ -81,12 +85,16 @@ def parse_duration(duration):
         try:
             value = float(value)
         except ValueError as e:
-            raise ValueError("Invalid float value while parsing duration: '%s'" % value) from e
+            raise ValueError(
+                "Invalid float value while parsing duration: '%s'" % value
+            ) from e
 
         try:
             unit = next(u for r, u in units if re.fullmatch(r, unit, flags=re.I))
         except StopIteration:
-            raise ValueError("Invalid unit value while parsing duration: '%s'" % unit) from None
+            raise ValueError(
+                "Invalid unit value while parsing duration: '%s'" % unit
+            ) from None
 
         seconds += value * unit
 
@@ -94,24 +102,29 @@ def parse_duration(duration):
 
 
 def parse_frequency(frequency):
-    return getattr(Frequencies, frequency.strip().lower(), None)
+    frequencies = {"hourly", "daily", "weekly", "monthly", "yearly"}
+    frequency = frequency.strip().lower()
+    if frequency not in frequencies:
+        return None
+    return getattr(Frequencies, frequency)
 
 
 def parse_day(day):
+    days = {
+        "monday": 0,
+        "tuesday": 1,
+        "wednesday": 2,
+        "thursday": 3,
+        "friday": 4,
+        "saturday": 5,
+        "sunday": 6,
+    }
     day = day.strip().lower()
-    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-    reg = re.compile(r"^w\d+$", flags=re.I)
-
     if day in days:
-        day = days.index(day)
-    elif reg.match(day):
-        day = int(day[1:])
-        if not 0 <= day < 7:
-            raise ValueError("Invalid weekday value while parsing day (expected [0-6]): '%d'" % day)
-    else:
-        day = None
-
-    return day
+        return days[day]
+    elif day.startswith("w") and day[1:].isdigit() and len(day) == 2:
+        if 0 <= day < 7:
+            return int(day[1])
 
 
 def parse_time(time):
