@@ -64,7 +64,7 @@ class RecordProcess(_RecordAttribute):
     id: int
     name: str
 
-class RecordException(ExcInfo):
+class RecordException(NamedTuple):
     type: Optional[Type[BaseException]]
     value: Optional[BaseException]
     traceback: Optional[TracebackType]
