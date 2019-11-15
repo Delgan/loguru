@@ -1,4 +1,3 @@
-import abc
 import datetime as datetime_
 import decimal
 import glob
@@ -285,16 +284,19 @@ class FileSink:
 
                 compress = partial(Compression.add_compress, opener=tarfile.open, mode="w:")
             elif ext == "tar.gz":
-                import tarfile, gzip
+                import tarfile
+                import gzip
 
                 compress = partial(Compression.add_compress, opener=tarfile.open, mode="w:gz")
             elif ext == "tar.bz2":
-                import tarfile, bz2
+                import tarfile
+                import bz2
 
                 compress = partial(Compression.add_compress, opener=tarfile.open, mode="w:bz2")
 
             elif ext == "tar.xz":
-                import tarfile, lzma
+                import tarfile
+                import lzma
 
                 compress = partial(Compression.add_compress, opener=tarfile.open, mode="w:xz")
             elif ext == "zip":

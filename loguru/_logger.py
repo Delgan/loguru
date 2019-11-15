@@ -54,8 +54,10 @@
 .. |re.Match| replace:: ``re.Match``
 .. _re.Match: https://docs.python.org/3/library/re.html#match-objects
 
-.. _Pendulum: https://pendulum.eustace.io/docs/#tokens
+.. |better-exceptions| replace:: ``better-exceptions``
 .. _better-exceptions: https://github.com/Qix-/better-exceptions
+
+.. _Pendulum: https://pendulum.eustace.io/docs/#tokens
 .. _@sdispater: https://github.com/sdispater
 .. _@Qix-: https://github.com/Qix-
 .. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
@@ -65,7 +67,6 @@ import functools
 import inspect
 import itertools
 import logging
-import pickle
 import re
 import sys
 import threading
@@ -912,7 +913,7 @@ class Logger:
         wrapped by this method. This is also very useful to decorate |Thread.run| methods while
         using threads to propagate errors to the main logger thread.
 
-        Note that the visibility of variables values (which uses the cool `better-exceptions`_
+        Note that the visibility of variables values (which uses the great |better-exceptions|_
         library from `@Qix-`_) depends on the ``diagnose`` option of each configured sink.
 
         The returned object can also be used as a context manager.
