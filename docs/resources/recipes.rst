@@ -33,6 +33,9 @@ Code snippets and recipes for ``loguru``
 
 .. _`unicode`: https://docs.python.org/3/howto/unicode.html
 
+.. |stackprinter| replace:: ``stackprinter``
+.. _stackprinter: https://github.com/cknd/stackprinter
+
 .. _`GH#88`: https://github.com/Delgan/loguru/issues/88
 .. _`GH#132`: https://github.com/Delgan/loguru/issues/132
 
@@ -301,6 +304,83 @@ Others solutions are possible by using a formatting function or class. For examp
 
     logger.remove()
     logger.add(sys.stderr, format=formatter.format)
+
+
+Customizing the formatting of exceptions
+----------------------------------------
+
+Loguru will automatically add the traceback of occurring exception while using ``logger.exception()`` or ``logger.opt(exception=True)``::
+
+    def inverse(x):
+        try:
+            1 / x
+        except ZeroDivisionError:
+            logger.exception("Oups...")
+
+    if __name__ == "__main__":
+        inverse(0)
+
+.. code-block:: none
+
+    2019-11-15 10:01:13.703 | ERROR    | __main__:inverse:8 - Oups...
+    Traceback (most recent call last):
+    File "foo.py", line 6, in inverse
+        1 / x
+    ZeroDivisionError: division by zero
+
+If the handler is added with ``backtrace=True``, the traceback is extended to see where the exception came from:
+
+.. code-block:: none
+
+    2019-11-15 10:11:32.829 | ERROR    | __main__:inverse:8 - Oups...
+    Traceback (most recent call last):
+      File "foo.py", line 16, in <module>
+        inverse(0)
+    > File "foo.py", line 6, in inverse
+        1 / x
+    ZeroDivisionError: division by zero
+
+If the handler is added with ``diagnose=True``, then the traceback is annotated to see what caused the problem:
+
+.. code-block:: none
+
+    Traceback (most recent call last):
+
+    File "foo.py", line 6, in inverse
+        1 / x
+            └ 0
+
+    ZeroDivisionError: division by zero
+
+It is possible to further personalize the formatting of exception by adding an handler with a custom ``format`` function. For example, supposing you want to format errors using the |stackprinter|_ library::
+
+    import stackprinter
+
+    def format(record):
+        format_ = "{time} {message}\n"
+
+        if record["exception"] is not None:
+            record["extra"]["stack"] = stackprinter.format(record["exception"])
+            format_ += "{extra[stack]}\n"
+
+        return format_
+
+    logger.add(sys.stderr, format=format)
+
+.. code-block:: none
+
+    2019-11-15T10:46:18.059964+0100 Oups...
+    File foo.py, line 17, in inverse
+        15   def inverse(x):
+        16       try:
+    --> 17           1 / x
+        18       except ZeroDivisionError:
+        ..................................................
+        x = 0
+        ..................................................
+
+    ZeroDivisionError: division by zero
+
 
 
 Capturing standard ``stdout``, ``stderr`` and ``warnings``
