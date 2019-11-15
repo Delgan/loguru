@@ -23,7 +23,9 @@ def normalize(exception):
         )
         exception = re.sub(r"(\r\n|\r|\n)", "\n", exception)
 
-    exception = re.sub(r'"[^"]*/somelib/__init__.py"', '"/usr/lib/python/somelib/__init__.py"', exception)
+    exception = re.sub(
+        r'"[^"]*/somelib/__init__.py"', '"/usr/lib/python/somelib/__init__.py"', exception
+    )
 
     exception = re.sub(r"\b0x[0-9a-fA-F]+\b", "0xDEADBEEF", exception)
 
@@ -465,6 +467,7 @@ def test_exception_is_tuple():
     t_3, v_3, tb_3 = exception[0], exception[1], exception[2]
     t_4, v_4, tb_4 = exception.type, exception.value, exception.traceback
 
+    assert isinstance(exception, tuple)
     assert len(exception) == 3
     assert exception == reference
     assert reference == exception

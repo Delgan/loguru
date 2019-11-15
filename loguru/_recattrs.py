@@ -1,3 +1,6 @@
+from collections import namedtuple
+
+
 class LevelRecattr:
     __slots__ = ("name", "no", "icon")
 
@@ -55,29 +58,10 @@ class ProcessRecattr:
         return self.id.__format__(spec)
 
 
-class ExceptionRecattr:
-    __slots__ = ("type", "value", "traceback")
-
-    def __init__(self, type_, value, traceback):
-        self.type = type_
-        self.value = value
-        self.traceback = traceback
-
+class ExceptionRecattr(namedtuple("ExceptionRecattr", ("type", "value", "traceback"))):
     def __repr__(self):
         return "(type=%r, value=%r, traceback=%r)" % (self.type, self.value, self.traceback)
-
-    def __iter__(self):
-        return iter((self.type, self.value, self.traceback))
-
-    def __getitem__(self, index):
-        return (self.type, self.value, self.traceback)[index]
 
     def __reduce__(self):
         exception = (self.type, self.value, None)  # tracebacks are not pickable
         return (ExceptionRecattr, exception)
-
-    def __eq__(self, other):
-        return (self.type, self.value, self.traceback) == other
-
-    def __len__(self):
-        return 3
