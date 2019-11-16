@@ -79,7 +79,7 @@ class Record(TypedDict):
     line: int
     message: str
     module: str
-    name: str
+    name: Union[str, None]
     process: RecordProcess
     thread: RecordThread
     time: datetime
