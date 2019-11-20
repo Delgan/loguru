@@ -8,6 +8,7 @@ import sys as _sys
 
 from . import _defaults
 from ._logger import Logger as _Logger, Core as _Core
+from ._handler import StrRecord
 
 __version__ = "0.3.2"
 

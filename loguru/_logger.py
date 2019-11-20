@@ -329,8 +329,9 @@ class Logger:
           method, it will be automatically called at sink termination.
         - A file path as |str| or |Path|. It can be parametrized with some additional parameters,
           see below.
-        - A simple |function|_ like ``lambda msg: print(msg)``. This allows for logging
-          procedure entirely defined by user preferences and needs.
+        - A simple |function|_ like ``lambda msg: print(msg)``. Will be called with one positional
+          argument of type |StrRecord|. This allows for logging procedure entirely defined by user
+          preferences and needs.
         - A built-in |Handler| like ``logging.StreamHandler``. In such a case, the `Loguru` records
           are automatically converted to the structure expected by the |logging| module.
 
@@ -341,9 +342,10 @@ class Logger:
 
         .. rubric:: The logged message
 
-        The logged message passed to all added sinks is nothing more than a string of the
-        formatted log, to which a special attribute is associated: the ``.record`` which is a dict
-        containing all contextual information possibly needed (see below).
+        The logged message passed to all added sinks is a |StrRecord|. |StrRecord| subclasses from 
+        |str| and may be used as such to access the formatted log message. For more fine-grained
+        control, the ``record`` attribute may be accessed for a dict containing all contextual
+        information possibly needed (see below).
 
         Logged messages are formatted according to the ``format`` of the added sink. This format
         is usually a string containing braces fields to display attributes from the record dict.

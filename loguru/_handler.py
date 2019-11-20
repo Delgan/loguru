@@ -10,6 +10,15 @@ from ._ansimarkup import AnsiMarkup
 
 
 class StrRecord(str):
+    """
+    A record to be logged.
+
+    This type is a subclass of |str| and may be used as such in cased where the formatted
+    message is desired.
+
+    Instances of ``StrRecord`` have an attribute ``record`` which is a |dict| containing all 
+    contextual information possibly needed.
+    """
     __slots__ = ("record",)
 
 
