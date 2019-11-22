@@ -29,13 +29,13 @@ def test_file_object(tmpdir):
 def test_file_str(tmpdir):
     path = str(tmpdir.join("test.log"))
     logger.add(path)
-    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=%s)]>" % path
+    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink='%s')]>" % path
 
 
 def test_file_pathlib(tmpdir):
     path = str(tmpdir.join("test.log"))
     logger.add(pathlib.Path(path))
-    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=%s)]>" % path
+    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink='%s')]>" % path
 
 
 def test_stream_object():
@@ -65,6 +65,21 @@ def test_stream_object_without_name_attr():
     assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=MyStream())]>"
 
 
+def test_stream_object_with_empty_name():
+    class MyStream2:
+        def __init__(self):
+            self.name = ""
+
+        def write(self, message):
+            pass
+
+        def __repr__(self):
+            return "MyStream2()"
+
+    logger.add(MyStream2())
+    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=MyStream2())]>"
+
+
 def test_function():
     def my_function(message):
         pass
@@ -89,6 +104,24 @@ def test_function_without_name():
     function = Function()
     logger.add(function)
     assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<Function>)]>"
+
+
+def test_function_with_empty_name():
+    class Function2:
+        def __call__(self, message):
+            pass
+
+        def __repr__(self):
+            return "<Function2>"
+
+        def __getattr__(self, name):
+            if name == "__name__":
+                return ""
+            return getattr(self.__class__, name)
+
+    function2 = Function2()
+    logger.add(function2)
+    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<Function2>)]>"
 
 
 def test_standard_handler():

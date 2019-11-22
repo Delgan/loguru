@@ -706,7 +706,7 @@ class Logger:
 
         if isinstance(sink, (str, PathLike)):
             path = sink
-            name = str(path)
+            name = repr(str(path))
 
             if colorize is None:
                 colorize = False
@@ -717,7 +717,7 @@ class Logger:
             terminator = "\n"
             exception_prefix = ""
         elif hasattr(sink, "write") and callable(sink.write):
-            name = getattr(sink, "name", repr(sink))
+            name = getattr(sink, "name", None) or repr(sink)
 
             if colorize is None:
                 colorize = _colorama.should_colorize(sink)
@@ -742,7 +742,7 @@ class Logger:
             terminator = ""
             exception_prefix = "\n"
         elif callable(sink):
-            name = getattr(sink, "__name__", repr(sink))
+            name = getattr(sink, "__name__", None) or repr(sink)
 
             if colorize is None:
                 colorize = False
