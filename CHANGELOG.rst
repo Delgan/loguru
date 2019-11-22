@@ -1,6 +1,7 @@
 `Unreleased`_
 =============
 
+- Add a way to filter logs using one level per module in the form of a ``dict`` passed to the ``filter`` argument (`#148 <https://github.com/Delgan/loguru/issues/148>`_).
 - Add type hints to annotate the public methods using a ``.pyi`` stub file (`#162 <https://github.com/Delgan/loguru/issues/162>`_).
 - Remove ``class`` objects from the list of supported sinks and restrict usage of ``**kwargs`` in ``.add()`` to file sink only. User is in charge of instantiating sink and wrapping additional keyword arguments if needed, before passing it to the ``.add()`` method.
 - Rename the ``logger.configure()`` keyword argument ``patch`` to ``patcher`` so it better matches the signature of ``logger.patch()``.
@@ -13,7 +14,7 @@
 - Prevent hypothetical ``ImportError`` if a Python installation is missing the built-in ``distutils`` module (`#118 <https://github.com/Delgan/loguru/issues/118>`_).
 - Add the possibility to convert ``datetime`` to UTC before formatting (in logs and filenames) by adding ``"!UTC"`` at the end of the time format specifier (`#128 <https://github.com/Delgan/loguru/issues/128>`_).
 - Add the level ``name`` as the first argument of namedtuple returned by the ``.level()`` method.
-- Replace ``ValueError`` with ``TypeError`` for exceptions raised when a ``logger`` method was called with argument of invalid type.
+- Raise ``TypeError`` instead of ``ValueError`` when a ``logger`` method is called with argument of invalid type.
 - Remove inheritance of some record dict attributes to ``str`` (for ``"level"``, ``"file"``, ``"thread"`` and ``"process"``).
 
 

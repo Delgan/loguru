@@ -162,6 +162,30 @@ def test_dont_reset_previous_levels(writer):
     assert writer.read() == "abc Test\n"
 
 
+def test_configure_handler_using_new_level(writer):
+    logger.configure(
+        levels=[{"name": "CONF_LVL", "no": 33, "icon": "", "color": ""}],
+        handlers=[
+            {"sink": writer, "level": "CONF_LVL", "format": "{level.name} {level.no} {message}"}
+        ],
+    )
+
+    logger.log("CONF_LVL", "Custom")
+    assert writer.read() == "CONF_LVL 33 Custom\n"
+
+
+def test_configure_filter_using_new_level(writer):
+    logger.configure(
+        levels=[{"name": "CONF_LVL_2", "no": 33, "icon": "", "color": ""}],
+        handlers=[
+            {"sink": writer, "level": 0, "filter": {"tests": "CONF_LVL_2"}, "format": "{message}"}
+        ],
+    )
+
+    logger.log("CONF_LVL_2", "Custom")
+    assert writer.read() == "Custom\n"
+
+
 def test_configure_before_bind(writer):
     logger.configure(extra={"a": "default_a", "b": "default_b"})
     logger.add(writer, format="{extra[a]} {extra[b]} {message}")

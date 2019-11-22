@@ -79,6 +79,7 @@ from threading import current_thread
 
 from . import _colorama
 from . import _defaults
+from . import _filters
 from ._ansimarkup import AnsiMarkup
 from ._better_exceptions import ExceptionFormatter
 from ._datetime import aware_now
@@ -103,17 +104,6 @@ else:
 
 def parse_ansi(color):
     return AnsiMarkup(strip=False).feed(color.strip(), strict=False)
-
-
-def filter_module(record, parent, length):
-    name = record["name"]
-    if name is None:
-        return False
-    return (name + ".")[:length] == parent
-
-
-def filter_none(record):
-    return record["name"] is not None
 
 
 Level = namedtuple("Level", ["name", "no", "color", "icon"])
@@ -251,7 +241,7 @@ class Logger:
             The minimum severity level from which logged messages should be sent to the sink.
         format : |str| or |function|_, optional
             The template used to format logged messages before being sent to the sink.
-        filter : |function|_ or |str|, optional
+        filter : |function|_, |str| or |dict|, optional
             A directive optionally used to decide for each logged message whether it should be sent
             to the sink or not.
         colorize : |bool|, optional
@@ -358,6 +348,13 @@ class Logger:
         sink and which one are ignored. A function can be used, accepting the record as an
         argument, and returning ``True`` if the message should be logged, ``False`` otherwise. If
         a string is used, only the records with the same ``name`` and its children will be allowed.
+        One can also pass a ``dict`` mapping module names to minimum required level. In such case,
+        each log record will search for it's closest parent in the ``dict`` and use the associated
+        level as the filter. The ``dict`` values can be ``int`` severity, ``str`` level name or
+        ``True`` and ``False`` to respectively authorize and discard all module logs
+        unconditionally. In order to set a default level, the `""` module name should be used as it
+        is the parent of all modules.
+
 
         .. _levels:
 
@@ -687,6 +684,13 @@ class Logger:
         ...
         >>> logger.add(my_sink)
 
+        >>> level_per_module = {
+        ...     "": "DEBUG",
+        ...     "third.lib": "WARNING",
+        ...     "anotherlib": False
+        ... }
+        >>> logger.add(lambda m: print(m, end=""), filter=level_per_module, level=0)
+
         >>> from logging import StreamHandler
         >>> logger.add(StreamHandler(sys.stderr), format="{message}")
 
@@ -760,16 +764,53 @@ class Logger:
         if filter is None:
             filter_func = None
         elif filter == "":
-            filter_func = filter_none
+            filter_func = _filters.filter_none
         elif isinstance(filter, str):
             parent = filter + "."
             length = len(parent)
-            filter_func = functools.partial(filter_module, parent=parent, length=length)
+            filter_func = functools.partial(_filters.filter_by_name, parent=parent, length=length)
+        elif isinstance(filter, dict):
+            level_per_module = {}
+            for module, level_ in filter.items():
+                if module is not None and not isinstance(module, str):
+                    raise TypeError(
+                        "The filter dict contains an invalid module, "
+                        "it should be a string (or None), not: '%s'" % type(module).__name__
+                    )
+                if level_ is False:
+                    levelno_ = False
+                elif level_ is True:
+                    levelno_ = 0
+                elif isinstance(level_, str):
+                    try:
+                        levelno_ = self.level(level_).no
+                    except ValueError:
+                        raise ValueError(
+                            "The filter dict contains a module '%s' associated to a level name "
+                            "which does not exist: '%s'" % (module, level_)
+                        )
+                elif isinstance(level_, int):
+                    levelno_ = level_
+                else:
+                    raise TypeError(
+                        "The filter dict contains a module '%s' associated to an invalid level, "
+                        "it should be an integer, a string or a boolean, not: '%s'"
+                        % (module, type(level_).__name__)
+                    )
+                if levelno_ < 0:
+                    raise ValueError(
+                        "The filter dict contains a module '%s' associated to an invalid level, "
+                        "it should be a positive interger, not: '%d'" % (module, levelno_)
+                    )
+                level_per_module[module] = levelno_
+            filter_func = functools.partial(
+                _filters.filter_by_level, level_per_module=level_per_module
+            )
         elif callable(filter):
             filter_func = filter
         else:
             raise TypeError(
-                "Invalid filter, it should be a function or a string, not: '%s'"
+                "Invalid filter, it should be a function, a string or a dict, not: '%s'"
                 % type(filter).__name__
             )
 

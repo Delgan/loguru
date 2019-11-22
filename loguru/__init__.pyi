@@ -90,6 +90,7 @@ class Message(str):
 class Writable(Protocol):
     def write(self, message: Message) -> None: ...
 
+FilterDict = Dict[Union[str, None], Union[str, int, bool]]
 FilterFunction = Callable[[Record], bool]
 FormatFunction = Callable[[Record], str]
 PatcherFunction = Callable[[Record], None]
@@ -112,7 +113,7 @@ class _HandlerConfig(TypedDict, total=False):
     sink: Union[str, PathLike, TextIO, Writable, Callable[[Message], None], Handler]
     level: Union[str, int]
     format: Union[str, FormatFunction]
-    filter: Union[str, FilterFunction]
+    filter: Optional[Union[str, FilterFunction, FilterDict]]
     colorize: Optional[bool]
     serialize: bool
     backtrace: bool
@@ -136,7 +137,7 @@ class Logger:
         *,
         level: Union[str, int] = ...,
         format: Union[str, FormatFunction] = ...,
-        filter: Union[str, FilterFunction] = ...,
+        filter: Optional[Union[str, FilterFunction, FilterDict]] = ...,
         colorize: Optional[bool] = ...,
         serialize: bool = ...,
         backtrace: bool = ...,
@@ -151,7 +152,7 @@ class Logger:
         *,
         level: Union[str, int] = ...,
         format: Union[str, FormatFunction] = ...,
-        filter: Union[str, FilterFunction] = ...,
+        filter: Optional[Union[str, FilterFunction, FilterDict]] = ...,
         colorize: Optional[bool] = ...,
         serialize: bool = ...,
         backtrace: bool = ...,
