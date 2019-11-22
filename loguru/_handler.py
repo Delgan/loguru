@@ -139,15 +139,19 @@ class Handler:
                 if self._stopped:
                     return
                 if self._enqueue:
-                    self._queue.put(str_record)
+                    try:
+                        self._queue.put(str_record)
+                    except Exception:
+                        if not self._catch:
+                            raise
+                        self._handle_error()
                 else:
                     self._sink.write(str_record)
 
         except Exception:
-            if self._catch:
-                self._handle_error(record)
-            else:
+            if not self._catch:
                 raise
+            self._handle_error(record)
 
     def stop(self):
         with self._lock:
@@ -248,16 +252,22 @@ class Handler:
         while True:
             try:
                 message = queue.get()
-                if message is None:
-                    break
+            except Exception:
+                if not self._catch:
+                    raise
+                self._handle_error()
+                continue
+
+            if message is None:
+                break
+
+            try:
                 self._sink.write(message)
             except Exception:
-                if self._catch:
-                    if message and hasattr(message, "record"):
-                        message = message.record
-                    self._handle_error(message)
-                else:
+                if not self._catch:
                     raise
+                record = getattr(message, "record", None)
+                self._handle_error(record)
 
     def _handle_error(self, record=None):
         if not sys.stderr:
