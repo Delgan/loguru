@@ -167,6 +167,15 @@ class AnsiMarkup:
         self._tags = []
         self._results = []
 
+    @staticmethod
+    def parse(color):
+        return AnsiMarkup(strip=False).feed(color.strip(), strict=False)
+
+    @staticmethod
+    def verify(format_, custom_markups_list):
+        custom_markups = {markup: "" for markup in custom_markups_list}
+        AnsiMarkup(custom_markups=custom_markups, strip=True).feed(format_, strict=True)
+
     def feed(self, text, *, strict=True):
         if strict:
             pre_tags = self._tags

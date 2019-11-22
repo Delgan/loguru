@@ -102,10 +102,6 @@ else:
     from contextvars import ContextVar
 
 
-def parse_ansi(color):
-    return AnsiMarkup(strip=False).feed(color.strip(), strict=False)
-
-
 Level = namedtuple("Level", ["name", "no", "color", "icon"])
 
 start_time = aware_now()
@@ -161,7 +157,7 @@ class Core:
         ]
         self.levels = {level.name: level for level in levels}
         self.levels_ansi_codes = {
-            name: parse_ansi(level.color) for name, level in self.levels.items()
+            name: AnsiMarkup.parse(level.color) for name, level in self.levels.items()
         }
         self.levels_ansi_codes[None] = ""
 
@@ -831,8 +827,7 @@ class Logger:
 
         if isinstance(format, str):
             try:
-                markups = {"level": "", "lvl": ""}
-                AnsiMarkup(custom_markups=markups, strip=True).feed(format, strict=True)
+                AnsiMarkup.verify(format, ["level", "lvl"])
             except ValueError as e:
                 raise ValueError(
                     "Invalid format, color markups could not be parsed correctly"
@@ -1346,7 +1341,7 @@ class Logger:
         if no < 0:
             raise ValueError("Invalid level no, it should be a positive integer, not: %d" % no)
 
-        ansi = parse_ansi(color)
+        ansi = AnsiMarkup.parse(color)
         level = Level(name, no, color, icon)
 
         with self._core.lock:
