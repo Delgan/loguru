@@ -1,3 +1,4 @@
+import os
 from os import environ
 
 
@@ -6,6 +7,8 @@ def env(key, type_, default=None):
         return default
 
     val = environ[key]
+    if os.name=="nt":
+        val=val.replace('"', '')
 
     if type_ == str:
         return val
