@@ -47,8 +47,8 @@
 
 .. |file-like object| replace:: ``file-like object``
 .. _file-like object: https://docs.python.org/3/glossary.html#term-file-object
-.. |function| replace:: ``function``
-.. _function: https://docs.python.org/3/glossary.html#function
+.. |callable object| replace:: ``callable object``
+.. _callable object: https://docs.python.org/3/library/functions.html#callable
 .. |re.Pattern| replace:: ``re.Pattern``
 .. _re.Pattern: https://docs.python.org/3/library/re.html#re-objects
 .. |re.Match| replace:: ``re.Match``
@@ -230,14 +230,14 @@ class Logger:
 
         Parameters
         ----------
-        sink : |file-like object|_, |str|, |Path|, |function|_, or |Handler|
+        sink : |file-like object|_, |str|, |Path|, |callable object|_, or |Handler|
             An object in charge of receiving formatted logging messages and propagating them to an
             appropriate endpoint.
         level : |int| or |str|, optional
             The minimum severity level from which logged messages should be sent to the sink.
-        format : |str| or |function|_, optional
+        format : |str| or |callable object|_, optional
             The template used to format logged messages before being sent to the sink.
-        filter : |function|_, |str| or |dict|, optional
+        filter : |callable object|_, |str| or |dict|, optional
             A directive optionally used to decide for each logged message whether it should be sent
             to the sink or not.
         colorize : |bool|, optional
@@ -269,13 +269,13 @@ class Logger:
 
         Parameters
         ----------
-        rotation : |str|, |int|, |time|, |timedelta| or |function|_, optional
+        rotation : |str|, |int|, |time|, |timedelta| or |callable object|_, optional
             A condition indicating whenever the current logged file should be closed and a new one
             started.
-        retention : |str|, |int|, |timedelta| or |function|_, optional
+        retention : |str|, |int|, |timedelta| or |callable object|_, optional
             A directive filtering old files that should be removed during rotation or end of
             program.
-        compression : |str| or |function|_, optional
+        compression : |str| or |callable object|_, optional
             A compression or archive format to which log files should be converted at closure.
         delay : |bool|, optional
             Whether the file should be created as soon as the sink is configured, or delayed until
@@ -315,8 +315,8 @@ class Logger:
           method, it will be automatically called at sink termination.
         - A file path as |str| or |Path|. It can be parametrized with some additional parameters,
           see below.
-        - A simple |function|_ like ``lambda msg: print(msg)``. This allows for logging
-          procedure entirely defined by user preferences and needs.
+        - A |callable object|_ (such as a simple function) like ``lambda msg: print(msg)``. This
+          allows for logging procedure entirely defined by user preferences and needs.
         - A built-in |Handler| like ``logging.StreamHandler``. In such a case, the `Loguru` records
           are automatically converted to the structure expected by the |logging| module.
 
@@ -554,7 +554,7 @@ class Logger:
         - a |str| for human-friendly parametrization of one of the previously enumerated types.
           Examples: ``"100 MB"``, ``"0.5 GB"``, ``"1 month 2 weeks"``, ``"4 days"``, ``"10h"``,
           ``"monthly"``, ``"18:00"``, ``"sunday"``, ``"w0"``, ``"monday at 12:00"``, ...
-        - a |function|_ which will be called before logging. It should accept two
+        - a |callable object|_ which will be invoked before logging. It should accept two
           arguments: the logged message and the file object, and it should return ``True`` if
           the rotation should happen now, ``False`` otherwise.
 
@@ -566,9 +566,9 @@ class Logger:
         - a |timedelta| which specifies the maximum age of files to keep.
         - a |str| for human-friendly parametrization of the maximum age of files to keep.
           Examples: ``"1 week, 3 days"``, ``"2 months"``, ...
-        - a |function|_ which will be called before the retention process. It should accept the list
-          of log files as argument and process to whatever it wants (moving files, removing them,
-          etc.).
+        - a |callable object|_ which will be invoked before the retention process. It should accept
+          the list of log files as argument and process to whatever it wants (moving files, removing
+          them, etc.).
 
         The ``compression`` happens at rotation or at sink stop if rotation is ``None``. This
         parameter accepts:
@@ -576,8 +576,8 @@ class Logger:
         - a |str| which corresponds to the compressed or archived file extension. This can be one
           of: ``"gz"``, ``"bz2"``, ``"xz"``, ``"lzma"``, ``"tar"``, ``"tar.gz"``, ``"tar.bz2"``,
           ``"tar.xz"``, ``"zip"``.
-        - a |function|_ which will be called before file termination. It should accept the path
-          of the log file as argument and process to whatever it wants (custom compression,
+        - a |callable object|_ which will be invoked before file termination. It should accept the
+          path of the log file as argument and process to whatever it wants (custom compression,
           network sending, removing it, etc.).
 
         .. _color:
@@ -1219,7 +1219,7 @@ class Logger:
 
         Parameters
         ----------
-        patcher: |function|_
+        patcher: |callable object|_
             The function to which the record dict will be passed as the sole argument. This function
             is in charge of updating the record in-place, the function does not need to return any
             value, the modified record object will be re-used.
@@ -1420,7 +1420,7 @@ class Logger:
             A dict containing additional parameters bound to the core logger, useful to share
             common properties if you call |bind| in several of your files modules. If not ``None``,
             this will remove previously configured ``extra`` dict.
-        patcher : |function|_, optional
+        patcher : |callable object|_, optional
             A function that will be applied to the record dict of each logged messages across all
             modules using the logger. It should modify the dict in-place without returning anything.
             The function is executed prior to the one possibly added by the |patch| method. If not
@@ -1542,7 +1542,7 @@ class Logger:
         pattern : |str| or |re.Pattern|_
             The regex to use for logs parsing, it should contain named groups which will be included
             in the returned dict.
-        cast : |function|_ or |dict|, optional
+        cast : |callable object|_ or |dict|, optional
             A function that should convert in-place the regex groups parsed (a dict of string
             values) to more appropriate types. If a dict is passed, it should be a mapping between
             keys of parsed log dict and the function that should be used to convert the associated
