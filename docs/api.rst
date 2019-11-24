@@ -8,6 +8,8 @@ API Reference
    :includehidden:
 
    api/logger.rst
+   api/type_hints.rst
+
 
 * :class:`~loguru._logger.Logger`
 
@@ -42,3 +44,5 @@ API Reference
     * :meth:`~loguru._logger.Logger.critical`
     * :meth:`~loguru._logger.Logger.log`
     * :meth:`~loguru._logger.Logger.exception`
+
+* :ref:`type-hints`

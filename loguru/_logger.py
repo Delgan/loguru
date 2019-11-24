@@ -19,6 +19,7 @@
 .. |int| replace:: :class:`int`
 .. |bool| replace:: :class:`bool`
 .. |tuple| replace:: :class:`tuple`
+.. |namedtuple| replace:: :func:`namedtuple<collections.namedtuple>`
 .. |list| replace:: :class:`list`
 .. |dict| replace:: :class:`dict`
 .. |str.format| replace:: :meth:`str.format()`
@@ -1293,7 +1294,7 @@ class Logger:
         Returns
         -------
         ``Level``
-            A namedtuple containing information about the level.
+            A |namedtuple| containing information about the level.
 
         Raises
         ------

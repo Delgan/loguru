@@ -482,6 +482,7 @@ Documentation
 -------------
 
 * `API Reference <https://loguru.readthedocs.io/en/stable/api/logger.html>`_
+* `Type hints <https://loguru.readthedocs.io/en/latest/api/type_hints.html>`_
 * `Help & Guides <https://loguru.readthedocs.io/en/stable/resources.html>`_
 * `Contributing <https://loguru.readthedocs.io/en/stable/project/contributing.html>`_
 * `License <https://loguru.readthedocs.io/en/stable/project/license.html>`_

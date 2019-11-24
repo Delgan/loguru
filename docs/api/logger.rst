@@ -1,5 +1,5 @@
-loguru.logger
-=============
+``loguru.logger``
+=================
 
 .. automodule:: loguru._logger
 
