@@ -94,35 +94,31 @@ def parse_duration(duration):
 
 
 def parse_frequency(frequency):
+    frequencies = {
+        "hourly": Frequencies.hourly,
+        "daily": Frequencies.daily,
+        "weekly": Frequencies.weekly,
+        "monthly": Frequencies.monthly,
+        "yearly": Frequencies.yearly,
+    }
     frequency = frequency.strip().lower()
-
-    if frequency == "hourly":
-
-        return Frequencies.hourly
-    elif frequency == "daily":
-
-        return Frequencies.daily
-    elif frequency == "weekly":
-
-        return Frequencies.weekly
-    elif frequency == "monthly":
-
-        return Frequencies.monthly
-    elif frequency == "yearly":
-
-        return Frequencies.yearly
-
-    return None
+    return frequencies.get(frequency, None)
 
 
 def parse_day(day):
+    days = {
+        "monday": 0,
+        "tuesday": 1,
+        "wednesday": 2,
+        "thursday": 3,
+        "friday": 4,
+        "saturday": 5,
+        "sunday": 6,
+    }
     day = day.strip().lower()
-    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-    reg = re.compile(r"^w\d+$", flags=re.I)
-
     if day in days:
-        day = days.index(day)
-    elif reg.match(day):
+        return days[day]
+    elif day.startswith("w") and day[1:].isdigit():
         day = int(day[1:])
         if not 0 <= day < 7:
             raise ValueError("Invalid weekday value while parsing day (expected [0-6]): '%d'" % day)

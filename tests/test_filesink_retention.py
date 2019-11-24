@@ -183,7 +183,8 @@ def test_invalid_retention(retention):
 
 
 @pytest.mark.parametrize(
-    "retention", ["W5", "monday at 14:00", "sunday", "nope", "5 MB", "3 hours 2 dayz", "d", "H"]
+    "retention",
+    ["W5", "monday at 14:00", "sunday", "nope", "5 MB", "3 hours 2 dayz", "d", "H", "__dict__"],
 )
 def test_unkown_retention(retention):
     with pytest.raises(ValueError):

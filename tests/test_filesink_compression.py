@@ -86,7 +86,7 @@ def test_invalid_compression(compression):
         logger.add("test.log", compression=compression)
 
 
-@pytest.mark.parametrize("compression", ["rar", ".7z", "tar.zip"])
+@pytest.mark.parametrize("compression", ["rar", ".7z", "tar.zip", "__dict__"])
 def test_unknown_compression(compression):
     with pytest.raises(ValueError):
         logger.add("test.log", compression=compression)

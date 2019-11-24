@@ -483,6 +483,7 @@ def test_invalid_rotation(rotation):
         "foobar",
         "w5 at [not|a|time]",
         "[not|a|day] at 12:00",
+        "__dict__",
     ],
 )
 def test_unknown_rotation(rotation):
