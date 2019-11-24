@@ -62,6 +62,7 @@
 .. _@Qix-: https://github.com/Qix-
 .. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
 """
+import builtins
 import contextlib
 import functools
 import inspect
@@ -803,6 +804,12 @@ class Logger:
                 _filters.filter_by_level, level_per_module=level_per_module
             )
         elif callable(filter):
+            if filter == builtins.filter:
+                raise ValueError(
+                    "The built-in 'filter()' function cannot be used as a 'filter' parameter, "
+                    "this is most likely a mistake (please double-check the arguments passed "
+                    "to 'logger.add()')."
+                )
             filter_func = filter
         else:
             raise TypeError(
@@ -835,6 +842,12 @@ class Logger:
             formatter = format + terminator + "{exception}"
             is_formatter_dynamic = False
         elif callable(format):
+            if format == builtins.format:
+                raise ValueError(
+                    "The built-in 'format()' function cannot be used as a 'format' parameter, "
+                    "this is most likely a mistake (please double-check the arguments passed "
+                    "to 'logger.add()')."
+                )
             formatter = format
             is_formatter_dynamic = True
         else:

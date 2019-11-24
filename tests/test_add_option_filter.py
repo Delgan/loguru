@@ -128,3 +128,8 @@ def test_filter_dict_with_updated_level(writer):
     logger.debug("Yes 2")
     logger.info("No 2")
     assert writer.read() == "Yes 1\nYes 2\n"
+
+
+def test_invalid_filter_builtin(writer):
+    with pytest.raises(ValueError, match=r".* most likely a mistake"):
+        logger.add(writer, filter=filter)

@@ -65,3 +65,8 @@ def test_invalid_format(writer, format):
 def test_invalid_markups(writer, format):
     with pytest.raises(ValueError, match=r"Invalid format"):
         logger.add(writer, format=format)
+
+
+def test_invalid_format_builtin(writer):
+    with pytest.raises(ValueError, match=r".* most likely a mistake"):
+        logger.add(writer, format=format)

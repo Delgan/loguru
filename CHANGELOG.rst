@@ -16,6 +16,7 @@
 - Add the possibility to convert ``datetime`` to UTC before formatting (in logs and filenames) by adding ``"!UTC"`` at the end of the time format specifier (`#128 <https://github.com/Delgan/loguru/issues/128>`_).
 - Add the level ``name`` as the first argument of namedtuple returned by the ``.level()`` method.
 - Raise ``TypeError`` instead of ``ValueError`` when a ``logger`` method is called with argument of invalid type.
+- Raise ``ValueError`` if the built-in ``format()`` and ``filter()`` functions are respectively used as ``format`` and ``filter`` arguments of the ``add()`` method. This helps the user to understand the problem, as such a mistake can quite easily occur (`#177 <https://github.com/Delgan/loguru/issues/177>`_).
 - Remove inheritance of some record dict attributes to ``str`` (for ``"level"``, ``"file"``, ``"thread"`` and ``"process"``).
 - Give a name to the worker thread used when ``enqueue=True`` (`#174 <https://github.com/Delgan/loguru/pull/174>`_, thanks `@t-mart <https://github.com/t-mart>`_).
 
