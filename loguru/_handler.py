@@ -9,7 +9,7 @@ import traceback
 from ._ansimarkup import AnsiMarkup
 
 
-class StrRecord(str):
+class Message(str):
     __slots__ = ("record",)
 
 
@@ -136,7 +136,7 @@ class Handler:
             if self._serialize:
                 formatted = self._serialize_record(formatted, record)
 
-            str_record = StrRecord(formatted)
+            str_record = Message(formatted)
             str_record.record = record
 
             with self._lock:

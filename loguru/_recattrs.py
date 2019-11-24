@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 
-class LevelRecattr:
+class RecordLevel:
     __slots__ = ("name", "no", "icon")
 
     def __init__(self, name, no, icon):
@@ -16,7 +16,7 @@ class LevelRecattr:
         return self.name.__format__(spec)
 
 
-class FileRecattr:
+class RecordFile:
     __slots__ = ("name", "path")
 
     def __init__(self, name, path):
@@ -30,7 +30,7 @@ class FileRecattr:
         return self.name.__format__(spec)
 
 
-class ThreadRecattr:
+class RecordThread:
     __slots__ = ("id", "name")
 
     def __init__(self, id_, name):
@@ -44,7 +44,7 @@ class ThreadRecattr:
         return self.id.__format__(spec)
 
 
-class ProcessRecattr:
+class RecordProcess:
     __slots__ = ("id", "name")
 
     def __init__(self, id_, name):
@@ -58,10 +58,10 @@ class ProcessRecattr:
         return self.id.__format__(spec)
 
 
-class ExceptionRecattr(namedtuple("ExceptionRecattr", ("type", "value", "traceback"))):
+class RecordException(namedtuple("RecordException", ("type", "value", "traceback"))):
     def __repr__(self):
         return "(type=%r, value=%r, traceback=%r)" % (self.type, self.value, self.traceback)
 
     def __reduce__(self):
         exception = (self.type, self.value, None)  # tracebacks are not pickable
-        return (ExceptionRecattr, exception)
+        return (RecordException, exception)

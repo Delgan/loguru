@@ -87,7 +87,7 @@ from ._datetime import aware_now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
-from ._recattrs import ExceptionRecattr, FileRecattr, LevelRecattr, ProcessRecattr, ThreadRecattr
+from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
 from ._simple_sinks import StreamSink, StandardSink, CallableSink
 
 if sys.version_info >= (3, 6):
@@ -1715,7 +1715,7 @@ class Logger:
                 type_, value, traceback = exception
             else:
                 type_, value, traceback = sys.exc_info()
-            exception = ExceptionRecattr(type_, value, traceback)
+            exception = RecordException(type_, value, traceback)
         else:
             exception = None
 
@@ -1723,15 +1723,15 @@ class Logger:
             "elapsed": elapsed,
             "exception": exception,
             "extra": {**core.extra, **context.get(), **extra},
-            "file": FileRecattr(file_name, file_path),
+            "file": RecordFile(file_name, file_path),
             "function": code.co_name,
-            "level": LevelRecattr(level_name, level_no, level_icon),
+            "level": RecordLevel(level_name, level_no, level_icon),
             "line": frame.f_lineno,
             "message": message,
             "module": splitext(file_name)[0],
             "name": name,
-            "process": ProcessRecattr(process.ident, process.name),
-            "thread": ThreadRecattr(thread.ident, thread.name),
+            "process": RecordProcess(process.ident, process.name),
+            "thread": RecordThread(thread.ident, thread.name),
             "time": current_datetime,
         }
 
