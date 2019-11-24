@@ -17,7 +17,8 @@
 - Add the level ``name`` as the first argument of namedtuple returned by the ``.level()`` method.
 - Raise ``TypeError`` instead of ``ValueError`` when a ``logger`` method is called with argument of invalid type.
 - Remove inheritance of some record dict attributes to ``str`` (for ``"level"``, ``"file"``, ``"thread"`` and ``"process"``).
-- Give queue worker thread a name.
+- Give a name to the worker thread used when ``enqueue=True`` (`#174 <https://github.com/Delgan/loguru/pull/174>`_, thanks `@t-mart <https://github.com/t-mart>`_).
+
 
 `0.3.2`_ (2019-07-21)
 =====================
