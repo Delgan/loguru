@@ -68,7 +68,7 @@ class Handler:
             self._thread = threading.Thread(
                 target=self._queued_writer,
                 daemon=True,
-                name="loguru-writer"
+                name="loguru-writer-%d" % self._id
             )
             self._thread.start()
 
