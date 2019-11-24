@@ -656,7 +656,8 @@ class Logger:
 
         The default levels' attributes can also be modified by setting the ``LOGURU_[LEVEL]_[ATTR]``
         environment variable. For example, on Windows: ``setx LOGURU_DEBUG_COLOR "<blue>"``
-        or ``setx LOGURU_TRACE_ICON "🚀"``.
+        or ``setx LOGURU_TRACE_ICON "🚀"``. If you use the ``set`` command, do not include quotes
+        but escape special symbol as needed, e.g. ``set LOGURU_DEBUG_COLOR=^<blue^>``.
 
         If you want to disable the pre-configured sink, you can set the ``LOGURU_AUTOINIT``
         variable to ``False``.
@@ -673,7 +674,7 @@ class Logger:
         >>> def debug_only(record):
         ...     return record["level"].name == "DEBUG"
         ...
-        >>> logger.add("debug.log", filter=debug_only)  # Other levels are filterd out
+        >>> logger.add("debug.log", filter=debug_only)  # Other levels are filtered out
 
         >>> def my_sink(message):
         ...     record = message.record
