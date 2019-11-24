@@ -65,7 +65,11 @@ class Handler:
         if self._enqueue:
             self._owner_process = multiprocessing.current_process()
             self._queue = multiprocessing.SimpleQueue()
-            self._thread = threading.Thread(target=self._queued_writer, daemon=True)
+            self._thread = threading.Thread(
+                target=self._queued_writer,
+                daemon=True,
+                name="loguru-writer-%d" % self._id
+            )
             self._thread.start()
 
     def __repr__(self):
