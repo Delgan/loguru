@@ -24,7 +24,7 @@ to prevent error at runtime. This is achieved with a |future|_ import in Python 
 
 A basic usage example could look like this:
 
-:: code-block:: python
+.. code-block:: python
 
     import loguru
     from loguru import logger
