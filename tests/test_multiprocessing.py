@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import multiprocessing
@@ -36,6 +37,26 @@ def subworker_remove_inheritance():
     logger.info("Nope")
 
 
+def subworker_complete(logger_):
+    async def work():
+        logger_.info("Child")
+        await logger_.complete()
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(work())
+
+
+def subworker_complete_inheritance():
+    async def work():
+        logger.info("Child")
+        await logger.complete()
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(work())
+
+
 def subworker_barrier(logger_, barrier):
     logger_.info("Child")
     barrier.wait()
@@ -67,7 +88,7 @@ def test_apply_spawn(monkeypatch):
 
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     with ctx.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
@@ -85,7 +106,7 @@ def test_apply_spawn(monkeypatch):
 def test_apply_fork():
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     with multiprocessing.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
@@ -103,7 +124,7 @@ def test_apply_fork():
 def test_apply_inheritance():
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     with multiprocessing.Pool(1) as pool:
         for i in range(3):
@@ -123,7 +144,7 @@ def test_apply_async_spawn(monkeypatch):
 
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     with ctx.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
@@ -142,7 +163,7 @@ def test_apply_async_spawn(monkeypatch):
 def test_apply_async_fork():
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     with multiprocessing.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
@@ -161,7 +182,7 @@ def test_apply_async_fork():
 def test_apply_async_inheritance():
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     with multiprocessing.Pool(1) as pool:
         for i in range(3):
@@ -182,11 +203,13 @@ def test_process_spawn(monkeypatch):
 
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     process = ctx.Process(target=subworker, args=(logger,))
     process.start()
     process.join()
+
+    assert process.exitcode == 0
 
     logger.info("Main")
     logger.remove()
@@ -198,11 +221,13 @@ def test_process_spawn(monkeypatch):
 def test_process_fork():
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     process = multiprocessing.Process(target=subworker, args=(logger,))
     process.start()
     process.join()
+
+    assert process.exitcode == 0
 
     logger.info("Main")
     logger.remove()
@@ -214,11 +239,13 @@ def test_process_fork():
 def test_process_inheritance():
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     process = multiprocessing.Process(target=subworker_inheritance)
     process.start()
     process.join()
+
+    assert process.exitcode == 0
 
     logger.info("Main")
     logger.remove()
@@ -232,11 +259,13 @@ def test_remove_in_child_process_spawn(monkeypatch):
 
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     process = ctx.Process(target=subworker_remove, args=(logger,))
     process.start()
     process.join()
+
+    assert process.exitcode == 0
 
     logger.info("Main")
     logger.remove()
@@ -248,11 +277,13 @@ def test_remove_in_child_process_spawn(monkeypatch):
 def test_remove_in_child_process_fork():
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     process = multiprocessing.Process(target=subworker_remove, args=(logger,))
     process.start()
     process.join()
+
+    assert process.exitcode == 0
 
     logger.info("Main")
     logger.remove()
@@ -264,11 +295,13 @@ def test_remove_in_child_process_fork():
 def test_remove_in_child_process_inheritance():
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     process = multiprocessing.Process(target=subworker_remove_inheritance)
     process.start()
     process.join()
+
+    assert process.exitcode == 0
 
     logger.info("Main")
     logger.remove()
@@ -286,7 +319,7 @@ def test_remove_in_main_process_spawn(monkeypatch):
     writer = Writer()
     barrier = ctx.Barrier(2)
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     process = ctx.Process(target=subworker_barrier, args=(logger, barrier))
     process.start()
@@ -294,6 +327,8 @@ def test_remove_in_main_process_spawn(monkeypatch):
     logger.info("Main")
     logger.remove()
     process.join()
+
+    assert process.exitcode == 0
 
     assert writer.read() == "Child\nMain\n"
 
@@ -303,7 +338,7 @@ def test_remove_in_main_process_fork():
     writer = Writer()
     barrier = multiprocessing.Barrier(2)
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     process = multiprocessing.Process(target=subworker_barrier, args=(logger, barrier))
     process.start()
@@ -311,6 +346,8 @@ def test_remove_in_main_process_fork():
     logger.info("Main")
     logger.remove()
     process.join()
+
+    assert process.exitcode == 0
 
     assert writer.read() == "Child\nMain\n"
 
@@ -320,7 +357,7 @@ def test_remove_in_main_process_inheritance():
     writer = Writer()
     barrier = multiprocessing.Barrier(2)
 
-    logger.add(writer, format="{message}", enqueue=True)
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
 
     process = multiprocessing.Process(target=subworker_barrier_inheritance, args=(barrier,))
     process.start()
@@ -329,7 +366,95 @@ def test_remove_in_main_process_inheritance():
     logger.remove()
     process.join()
 
+    assert process.exitcode == 0
+
     assert writer.read() == "Child\nMain\n"
+
+
+@pytest.mark.parametrize("loop_is_none", [True, False])
+def test_await_complete_spawn(capsys, monkeypatch, loop_is_none):
+    ctx = multiprocessing.get_context("spawn")
+    monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
+
+    async def writer(msg):
+        print(msg, end="")
+
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
+    loop = None if loop_is_none else new_loop
+
+    logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
+
+    process = ctx.Process(target=subworker_complete, args=(logger,))
+    process.start()
+    process.join()
+
+    assert process.exitcode == 0
+
+    async def local():
+        await logger.complete()
+
+    new_loop.run_until_complete(local())
+
+    out, err = capsys.readouterr()
+    assert out == "Child\n"
+    assert err == ""
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
+@pytest.mark.parametrize("loop_is_none", [True, False])
+def test_await_complete_fork(capsys, loop_is_none):
+    async def writer(msg):
+        print(msg, end="")
+
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
+    loop = None if loop_is_none else new_loop
+
+    logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
+
+    process = multiprocessing.Process(target=subworker_complete, args=(logger,))
+    process.start()
+    process.join()
+
+    assert process.exitcode == 0
+
+    async def local():
+        await logger.complete()
+
+    new_loop.run_until_complete(local())
+
+    out, err = capsys.readouterr()
+    assert out == "Child\n"
+    assert err == ""
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
+@pytest.mark.parametrize("loop_is_none", [True, False])
+def test_await_complete_inheritance(capsys, loop_is_none):
+    async def writer(msg):
+        print(msg, end="")
+
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
+    loop = None if loop_is_none else new_loop
+
+    logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
+
+    process = multiprocessing.Process(target=subworker_complete_inheritance)
+    process.start()
+    process.join()
+
+    assert process.exitcode == 0
+
+    async def local():
+        await logger.complete()
+
+    new_loop.run_until_complete(local())
+
+    out, err = capsys.readouterr()
+    assert out == "Child\n"
+    assert err == ""
 
 
 def test_not_picklable_sinks_spawn(monkeypatch, tmpdir, capsys):
@@ -340,13 +465,15 @@ def test_not_picklable_sinks_spawn(monkeypatch, tmpdir, capsys):
     stream = sys.stderr
     output = []
 
-    logger.add(str(filepath), format="{message}", enqueue=True)
+    logger.add(str(filepath), format="{message}", enqueue=True, catch=False)
     logger.add(stream, format="{message}", enqueue=True)
     logger.add(lambda m: output.append(m), format="{message}", enqueue=True)
 
     process = ctx.Process(target=subworker, args=[logger])
     process.start()
     process.join()
+
+    assert process.exitcode == 0
 
     logger.info("Main")
     logger.remove()
@@ -365,13 +492,15 @@ def test_not_picklable_sinks_fork(capsys, tmpdir):
     stream = sys.stderr
     output = []
 
-    logger.add(str(filepath), format="{message}", enqueue=True)
-    logger.add(stream, format="{message}", enqueue=True)
-    logger.add(lambda m: output.append(m), format="{message}", enqueue=True)
+    logger.add(str(filepath), format="{message}", enqueue=True, catch=False)
+    logger.add(stream, format="{message}", enqueue=True, catch=False)
+    logger.add(lambda m: output.append(m), format="{message}", enqueue=True, catch=False)
 
     process = multiprocessing.Process(target=subworker, args=[logger])
     process.start()
     process.join()
+
+    assert process.exitcode == 0
 
     logger.info("Main")
     logger.remove()
@@ -390,13 +519,15 @@ def test_not_picklable_sinks_inheritance(capsys, tmpdir):
     stream = sys.stderr
     output = []
 
-    logger.add(str(filepath), format="{message}", enqueue=True)
-    logger.add(stream, format="{message}", enqueue=True)
-    logger.add(lambda m: output.append(m), format="{message}", enqueue=True)
+    logger.add(str(filepath), format="{message}", enqueue=True, catch=False)
+    logger.add(stream, format="{message}", enqueue=True, catch=False)
+    logger.add(lambda m: output.append(m), format="{message}", enqueue=True, catch=False)
 
     process = multiprocessing.Process(target=subworker_inheritance)
     process.start()
     process.join()
+
+    assert process.exitcode == 0
 
     logger.info("Main")
     logger.remove()

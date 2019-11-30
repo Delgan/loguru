@@ -160,9 +160,12 @@ class Handler:
     def stop(self):
         with self._lock:
             self._stopped = True
-            if self._enqueue and self._owner_process == multiprocessing.current_process():
+            if self._enqueue:
+                if self._owner_process != multiprocessing.current_process():
+                    return
                 self._queue.put(None)
                 self._thread.join()
+
             self._sink.stop()
 
     async def complete(self):
