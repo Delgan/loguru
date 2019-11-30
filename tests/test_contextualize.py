@@ -182,3 +182,16 @@ def test_nested_contextualize(writer):
             logger.info("C")
 
     assert writer.read() == "B b\nA a\nC c\n"
+
+
+def test_context_reseted_despite_error(writer):
+    logger.add(writer, format="{message} {extra}")
+
+    try:
+        with logger.contextualize(foobar=456):
+            logger.info("Division")
+            1 / 0
+    except ZeroDivisionError:
+        logger.info("Error")
+
+    assert writer.read() == "Division {'foobar': 456}\nError {}\n"

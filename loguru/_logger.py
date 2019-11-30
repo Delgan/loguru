@@ -1299,10 +1299,11 @@ class Logger:
             new_context = {**context.get(), **kwargs}
             token = context.set(new_context)
 
-        yield
-
-        with __self._core.lock:
-            context.reset(token)
+        try:
+            yield
+        finally:
+            with __self._core.lock:
+                context.reset(token)
 
     def patch(self, patcher):
         """Attach a function to modify the record dict created by each logging call.
