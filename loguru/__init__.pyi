@@ -86,6 +86,11 @@ from typing import (
     overload,
 )
 
+if sys.version_info >= (3, 5, 3):
+    from typing import Coroutine
+else:
+    from typing_extensions import Coroutine
+
 if sys.version_info >= (3, 6):
     from os import PathLike
 else:
@@ -171,7 +176,7 @@ class Catcher:
         traceback: Optional[TracebackType],
     ) -> Optional[bool]: ...
 
-# Actually unusable because TypedDict can't allow extra keys: mypy/4617
+# Actually unusable because TypedDict can't allow extra keys: python/mypy#4617
 class _HandlerConfig(TypedDict, total=False):
     sink: Union[str, PathLike, TextIO, Writable, Callable[[Message], None], Handler]
     level: Union[str, int]
@@ -232,6 +237,7 @@ class Logger:
         **kwargs: Any
     ) -> int: ...
     def remove(self, handler_id: Optional[int] = ...) -> None: ...
+    async def complete(self) -> Coroutine: ...
     @overload
     def catch(
         self,
@@ -279,7 +285,7 @@ class Logger:
         patcher: Optional[PatcherFunction] = ...,
         activation: Optional[Sequence[ActivationConfig]] = ...
     ): ...
-    # @overload should be used to differentiate bytes and str once mypy/7781 is fixed
+    # @overload should be used to differentiate bytes and str once python/mypy#7781 is fixed
     @staticmethod
     def parse(
         file: Union[str, PathLike, TextIO, BinaryIO],

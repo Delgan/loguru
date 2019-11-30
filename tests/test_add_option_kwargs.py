@@ -32,7 +32,7 @@ def test_invalid_function_kwargs():
     def function(message):
         pass
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=r"add\(\) got an unexpected keyword argument"):
         logger.add(function, b="X")
 
 
@@ -46,10 +46,18 @@ def test_invalid_file_object_kwargs():
 
     writer = Writer()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=r"add\(\) got an unexpected keyword argument"):
         logger.add(writer, format="{message}", kw1="1", kw2="2")
 
 
 def test_invalid_file_kwargs():
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=r".*keyword argument;*"):
         logger.add("file.log", nope=123)
+
+
+def test_invalid_coroutine_kwargs():
+    async def foo():
+        pass
+
+    with pytest.raises(TypeError, match=r"add\(\) got an unexpected keyword argument"):
+        logger.add(foo, nope=123)

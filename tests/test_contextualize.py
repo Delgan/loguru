@@ -38,7 +38,6 @@ def test_contextualize_reset():
 
     logger.add(sink, format="{level} {message}")
 
-
     logger.info("A")
 
     with logger.contextualize(abc="def"):
@@ -67,11 +66,9 @@ def test_contextualize_async(writer):
     async def main():
         workers = [worker(i) for i in range(5)]
         await asyncio.gather(*workers)
+        await logger.complete()
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(main())
-    loop.close()
+    asyncio.run(main())
 
     assert sorted(writer.read().splitlines()) == ["End %d" % i for i in range(5)] + [
         "Start %d" % i for i in range(5)

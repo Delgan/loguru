@@ -5,6 +5,7 @@
 .. |Logger| replace:: :class:`~Logger`
 .. |add| replace:: :meth:`~Logger.add()`
 .. |remove| replace:: :meth:`~Logger.remove()`
+.. |complete| replace:: :meth:`~Logger.complete()`
 .. |catch| replace:: :meth:`~Logger.catch()`
 .. |bind| replace:: :meth:`~Logger.bind()`
 .. |contextualize| replace:: :meth:`~Logger.contextualize()`
@@ -37,6 +38,12 @@
 .. |Thread.run| replace:: :meth:`Thread.run()<threading.Thread.run()>`
 .. |Exception| replace:: :class:`Exception`
 .. |locale.getpreferredencoding| replace:: :func:`locale.getpreferredencoding()`
+.. |AbstractEventLoop| replace:: :class:`AbstractEventLoop<asyncio.AbstractEventLoop>`
+.. |asyncio.get_event_loop| replace:: :func:`asyncio.get_event_loop()`
+.. |asyncio.run| replace:: :func:`asyncio.run()`
+.. |loop.run_until_complete| replace::
+    :meth:`loop.run_until_complete()<asyncio.loop.run_until_complete()>`
+.. |loop.create_task| replace:: :meth:`loop.create_task()<asyncio.loop.create_task()>`
 
 .. |logger.trace| replace:: :meth:`logger.trace()<Logger.trace()>`
 .. |logger.debug| replace:: :meth:`logger.debug()<Logger.debug()>`
@@ -48,8 +55,10 @@
 
 .. |file-like object| replace:: ``file-like object``
 .. _file-like object: https://docs.python.org/3/glossary.html#term-file-object
-.. |callable object| replace:: ``callable object``
-.. _callable object: https://docs.python.org/3/library/functions.html#callable
+.. |callable| replace:: ``callable object``
+.. _callable: https://docs.python.org/3/library/functions.html#callable
+.. |coroutine function| replace:: ``coroutine function``
+.. _coroutine function: https://docs.python.org/3/glossary.html#term-coroutine-function
 .. |re.Pattern| replace:: ``re.Pattern``
 .. _re.Pattern: https://docs.python.org/3/library/re.html#re-objects
 .. |re.Match| replace:: ``re.Match``
@@ -63,6 +72,7 @@
 .. _@Qix-: https://github.com/Qix-
 .. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
 """
+import asyncio
 import builtins
 import contextlib
 import functools
@@ -89,7 +99,7 @@ from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
 from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
-from ._simple_sinks import StreamSink, StandardSink, CallableSink
+from ._simple_sinks import StreamSink, StandardSink, CallableSink, AsyncSink
 
 if sys.version_info >= (3, 6):
     from os import PathLike
@@ -213,6 +223,9 @@ class Logger:
         self._core = core
         self._options = (exception, depth, record, lazy, ansi, raw, patcher, extra)
 
+    def __repr__(self):
+        return "<loguru.logger handlers=%r>" % list(self._core.handlers.values())
+
     def add(
         self,
         sink,
@@ -232,14 +245,14 @@ class Logger:
 
         Parameters
         ----------
-        sink : |file-like object|_, |str|, |Path|, |callable object|_, or |Handler|
+        sink : |file-like object|_, |str|, |Path|, |callable|_, |coroutine function|_ or |Handler|
             An object in charge of receiving formatted logging messages and propagating them to an
             appropriate endpoint.
         level : |int| or |str|, optional
             The minimum severity level from which logged messages should be sent to the sink.
-        format : |str| or |callable object|_, optional
+        format : |str| or |callable|_, optional
             The template used to format logged messages before being sent to the sink.
-        filter : |callable object|_, |str| or |dict|, optional
+        filter : |callable|_, |str| or |dict|, optional
             A directive optionally used to decide for each logged message whether it should be sent
             to the sink or not.
         colorize : |bool|, optional
@@ -258,26 +271,34 @@ class Logger:
         enqueue : |bool|, optional
             Whether the messages to be logged should first pass through a multiprocess-safe queue
             before reaching the sink. This is useful while logging to a file through multiple
-            processes.
+            processes. This also has the advantage of making logging calls non-blocking.
         catch : |bool|, optional
             Whether errors occurring while sink handles logs messages should be automatically
             caught. If ``True``, an exception message is displayed on |sys.stderr| but the exception
             is not propagated to the caller, preventing your app to crash.
         **kwargs
-            Additional parameters that are only valid to configure a file sink (see below).
+            Additional parameters that are only valid to configure a coroutine or file sink (see
+            below).
 
-
-        If and only if the sink is a file, the following parameters apply:
+        If and only if the sink is a coroutine function, the following parameter applies:
 
         Parameters
         ----------
-        rotation : |str|, |int|, |time|, |timedelta| or |callable object|_, optional
+        loop : |AbstractEventLoop|, optional
+            The event loop in which the asynchronous logging task will be scheduled and executed. If
+            ``None``, the loop returned by |asyncio.get_event_loop| is used.
+
+        If and only if the sink is a file path, the following parameters apply:
+
+        Parameters
+        ----------
+        rotation : |str|, |int|, |time|, |timedelta| or |callable|_, optional
             A condition indicating whenever the current logged file should be closed and a new one
             started.
-        retention : |str|, |int|, |timedelta| or |callable object|_, optional
+        retention : |str|, |int|, |timedelta| or |callable|_, optional
             A directive filtering old files that should be removed during rotation or end of
             program.
-        compression : |str| or |callable object|_, optional
+        compression : |str| or |callable|_, optional
             A compression or archive format to which log files should be converted at closure.
         delay : |bool|, optional
             Whether the file should be created as soon as the sink is configured, or delayed until
@@ -312,13 +333,17 @@ class Logger:
         somehow. A sink can take many forms:
 
         - A |file-like object|_ like ``sys.stderr`` or ``open("somefile.log", "w")``. Anything with
-          a ``.write()`` method is considered as a file-like object. If it has a ``.flush()``
-          method, it will be automatically called after each logged message. If it has a ``.stop()``
-          method, it will be automatically called at sink termination.
+          a ``.write()`` method is considered as a file-like object. Custom handlers may also
+          implement ``flush()`` (called after each logged message), ``stop()`` (called at sink
+          termination) and ``complete()`` (awaited by the eponymous method).
         - A file path as |str| or |Path|. It can be parametrized with some additional parameters,
           see below.
-        - A |callable object|_ (such as a simple function) like ``lambda msg: print(msg)``. This
+        - A |callable|_ (such as a simple function) like ``lambda msg: print(msg)``. This
           allows for logging procedure entirely defined by user preferences and needs.
+        - A asynchronous |coroutine function|_ defined with the ``async def`` statement. The
+          coroutine object returned by such function will be added to the event loop using
+          |loop.create_task|. The tasks should be awaited before ending the loop by using
+          |complete|.
         - A built-in |Handler| like ``logging.StreamHandler``. In such a case, the `Loguru` records
           are automatically converted to the structure expected by the |logging| module.
 
@@ -352,7 +377,6 @@ class Logger:
         ``True`` and ``False`` to respectively authorize and discard all module logs
         unconditionally. In order to set a default level, the `""` module name should be used as it
         is the parent of all modules.
-
 
         .. _levels:
 
@@ -556,9 +580,9 @@ class Logger:
         - a |str| for human-friendly parametrization of one of the previously enumerated types.
           Examples: ``"100 MB"``, ``"0.5 GB"``, ``"1 month 2 weeks"``, ``"4 days"``, ``"10h"``,
           ``"monthly"``, ``"18:00"``, ``"sunday"``, ``"w0"``, ``"monday at 12:00"``, ...
-        - a |callable object|_ which will be invoked before logging. It should accept two
-          arguments: the logged message and the file object, and it should return ``True`` if
-          the rotation should happen now, ``False`` otherwise.
+        - a |callable|_ which will be invoked before logging. It should accept two arguments: the
+          logged message and the file object, and it should return ``True`` if the rotation should
+          happen now, ``False`` otherwise.
 
         The ``retention`` occurs at rotation or at sink stop if rotation is ``None``. Files are
         selected according to their basename, if it is the same that the sink file, with possible
@@ -568,8 +592,8 @@ class Logger:
         - a |timedelta| which specifies the maximum age of files to keep.
         - a |str| for human-friendly parametrization of the maximum age of files to keep.
           Examples: ``"1 week, 3 days"``, ``"2 months"``, ...
-        - a |callable object|_ which will be invoked before the retention process. It should accept
-          the list of log files as argument and process to whatever it wants (moving files, removing
+        - a |callable|_ which will be invoked before the retention process. It should accept the
+          list of log files as argument and process to whatever it wants (moving files, removing
           them, etc.).
 
         The ``compression`` happens at rotation or at sink stop if rotation is ``None``. This
@@ -578,9 +602,9 @@ class Logger:
         - a |str| which corresponds to the compressed or archived file extension. This can be one
           of: ``"gz"``, ``"bz2"``, ``"xz"``, ``"lzma"``, ``"tar"``, ``"tar.gz"``, ``"tar.bz2"``,
           ``"tar.xz"``, ``"zip"``.
-        - a |callable object|_ which will be invoked before file termination. It should accept the
-          path of the log file as argument and process to whatever it wants (custom compression,
-          network sending, removing it, etc.).
+        - a |callable|_ which will be invoked before file termination. It should accept the path of
+          the log file as argument and process to whatever it wants (custom compression, network
+          sending, removing it, etc.).
 
         .. _color:
 
@@ -690,6 +714,11 @@ class Logger:
         ... }
         >>> logger.add(lambda m: print(m, end=""), filter=level_per_module, level=0)
 
+        >>> async def publish(message):
+        ...     await api.post(message)
+        ...
+        >>> logger.add(publish, serialize=True)
+
         >>> from logging import StreamHandler
         >>> logger.add(StreamHandler(sys.stderr), format="{message}")
 
@@ -744,6 +773,26 @@ class Logger:
             encoding = getattr(sink, "encoding", None)
             terminator = ""
             exception_prefix = "\n"
+        elif inspect.iscoroutinefunction(sink):
+            name = getattr(sink, "__name__", None) or repr(sink)
+
+            if colorize is None:
+                colorize = False
+
+            loop = kwargs.pop("loop", None)
+
+            # The worker thread needs an event loop, it can't create a new one internally because
+            # it has to be accessible by the user while calling "complete()", instead we use the
+            # global one when the sink is added. If "enqueue=False", the event loop is dynamically
+            # retrieved at each logging call, which is much more convenient. However, coroutine can't
+            # access running loop in Python 3.5.2 and earlier versions, see python/asyncio#452.
+            if enqueue and loop is None:
+                loop = asyncio.get_event_loop()
+
+            wrapped_sink = AsyncSink(sink, loop)
+            encoding = "utf8"
+            terminator = "\n"
+            exception_prefix = ""
         elif callable(sink):
             name = getattr(sink, "__name__", None) or repr(sink)
 
@@ -897,9 +946,6 @@ class Logger:
 
         return handler_id
 
-    def __repr__(self):
-        return "<loguru.logger handlers=%r>" % list(self._core.handlers.values())
-
     def remove(self, handler_id=None):
         """Remove a previously added handler and stop sending logs to its sink.
 
@@ -947,6 +993,44 @@ class Logger:
             levelnos = (h.levelno for h in handlers.values())
             self._core.min_level = min(levelnos, default=float("inf"))
             self._core.handlers = handlers
+
+    async def complete(self):
+        """Wait for the end of the asynchronous tasks scheduled by coroutine handlers.
+
+        This method should be awaited before the end of a coroutine executed by |asyncio.run| or
+        |loop.run_until_complete| to ensure all asynchronous logging messages are processed. The
+        function |asyncio.get_event_loop| is called beforehand, only tasks scheduled in the same
+        loop that the current one will be awaited by the method.
+
+        It only applies to coroutine functions added as sinks, awaiting this method does nothing if
+        there is no such sink attached to the logger.
+
+        Returns
+        -------
+        :term:`coroutine`
+            A coroutine which ensures all asynchronous logging calls are completed when awaited.
+
+        Examples
+        --------
+        >>> async def sink(message):
+        ...     await asyncio.sleep(0.1)  # IO processing...
+        ...     print(message, end="")
+        ...
+        >>> async def work():
+        ...     logger.info("Start")
+        ...     logger.info("End")
+        ...     await logger.complete()
+        ...
+        >>> logger.add(sink)
+        1
+        >>> asyncio.run(work())
+        Start
+        End
+        """
+        with self._core.lock:
+            handlers = self._core.handlers.copy()
+            for handler in handlers.values():
+                await handler.complete()
 
     def catch(
         self,
@@ -1234,7 +1318,7 @@ class Logger:
 
         Parameters
         ----------
-        patcher: |callable object|_
+        patcher: |callable|_
             The function to which the record dict will be passed as the sole argument. This function
             is in charge of updating the record in-place, the function does not need to return any
             value, the modified record object will be re-used.
@@ -1435,7 +1519,7 @@ class Logger:
             A dict containing additional parameters bound to the core logger, useful to share
             common properties if you call |bind| in several of your files modules. If not ``None``,
             this will remove previously configured ``extra`` dict.
-        patcher : |callable object|_, optional
+        patcher : |callable|_, optional
             A function that will be applied to the record dict of each logged messages across all
             modules using the logger. It should modify the dict in-place without returning anything.
             The function is executed prior to the one possibly added by the |patch| method. If not
@@ -1557,7 +1641,7 @@ class Logger:
         pattern : |str| or |re.Pattern|_
             The regex to use for logs parsing, it should contain named groups which will be included
             in the returned dict.
-        cast : |callable object|_ or |dict|, optional
+        cast : |callable|_ or |dict|, optional
             A function that should convert in-place the regex groups parsed (a dict of string
             values) to more appropriate types. If a dict is passed, it should be a mapping between
             keys of parsed log dict and the function that should be used to convert the associated

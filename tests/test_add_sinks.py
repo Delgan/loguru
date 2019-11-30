@@ -1,3 +1,4 @@
+import asyncio
 import pathlib
 import sys
 import os
@@ -16,6 +17,16 @@ def log(sink, rep=1):
     i = logger.add(sink, format="{message}")
     for _ in range(rep):
         logger.debug(message)
+    logger.remove(i)
+    logger.debug("This shouldn't be printed neither.")
+
+
+async def async_log(sink, rep=1):
+    logger.debug("This shouldn't be printed.")
+    i = logger.add(sink, format="{message}")
+    for _ in range(rep):
+        logger.debug(message)
+    await logger.complete()
     logger.remove(i)
     logger.debug("This shouldn't be printed neither.")
 
@@ -66,6 +77,20 @@ def test_function_sink(rep):
     func = lambda log_message: a.append(log_message)
     log(func, rep)
     assert a == [expected] * rep
+
+
+@repetitions
+def test_coroutine_sink(capsys, rep):
+    async def async_print(msg):
+        await asyncio.sleep(0.01)
+        print(msg, end="")
+        await asyncio.sleep(0.01)
+
+    asyncio.run(async_log(async_print, rep))
+
+    out, err = capsys.readouterr()
+    assert err == ""
+    assert out == expected * rep
 
 
 @repetitions
@@ -135,6 +160,62 @@ def test_disabled_logger_in_sink(sink_with_logger):
     logger.add(sink, format="{message}")
     logger.info("Disabled test")
     assert sink.out == "Disabled test\n"
+
+
+@pytest.mark.parametrize("flush", [123, None])
+def test_custom_sink_invalid_flush(capsys, flush):
+    class Sink:
+        def __init__(self):
+            self.flush = flush
+
+        def write(self, message):
+            print(message, end="")
+
+    logger.add(Sink(), format="{message}")
+    logger.info("Test")
+
+    out, err = capsys.readouterr()
+    assert out == "Test\n"
+    assert err == ""
+
+
+@pytest.mark.parametrize("stop", [123, None])
+def test_custom_sink_invalid_stop(capsys, stop):
+    class Sink:
+        def __init__(self):
+            self.stop = stop
+
+        def write(self, message):
+            print(message, end="")
+
+    logger.add(Sink(), format="{message}")
+    logger.info("Test")
+    logger.remove()
+
+    out, err = capsys.readouterr()
+    assert out == "Test\n"
+    assert err == ""
+
+
+@pytest.mark.parametrize("complete", [123, None, lambda: None])
+def test_custom_sink_invalid_complete(capsys, complete):
+    class Sink:
+        def __init__(self):
+            self.complete = complete
+
+        def write(self, message):
+            print(message, end="")
+
+    async def worker():
+        logger.info("Test")
+        await logger.complete()
+
+    logger.add(Sink(), format="{message}")
+    asyncio.run(worker())
+
+    out, err = capsys.readouterr()
+    assert out == "Test\n"
+    assert err == ""
 
 
 @pytest.mark.parametrize("sink", [123, sys, object(), int])

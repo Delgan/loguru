@@ -1,3 +1,4 @@
+import asyncio
 import loguru
 import logging
 import itertools
@@ -7,6 +8,28 @@ import subprocess
 import sys
 import time
 import warnings
+
+if sys.version_info < (3, 5, 3):
+
+    def run(coro):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        res = loop.run_until_complete(coro)
+        loop.close()
+        asyncio.set_event_loop(None)
+        return res
+
+    asyncio.run = run
+elif sys.version_info < (3, 7):
+
+    def run(coro):
+        loop = asyncio.new_event_loop()
+        res = loop.run_until_complete(coro)
+        loop.close()
+        asyncio.set_event_loop(None)
+        return res
+
+    asyncio.run = run
 
 
 @pytest.fixture(scope="session", autouse=True)

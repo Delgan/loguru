@@ -1,8 +1,31 @@
+import loguru
 from loguru import logger
 import logging
 import sys
 import pathlib
 import re
+from inspect import iscoroutinefunction
+import builtins
+
+
+class Wrapper:
+    def __init__(self, wrapped, *, repr, name):
+        self._wrapped = wrapped
+        self._repr = repr
+        self._name = name
+        self.raised = False
+
+    def __repr__(self):
+        return self._repr
+
+    def __getattr__(self, name):
+        if name == "__name__":
+            if self._name is None:
+                self.raised = True
+                raise AttributeError
+            else:
+                return self._name
+        return getattr(self._wrapped, name)
 
 
 def test_no_handler():
@@ -88,40 +111,58 @@ def test_function():
     assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=my_function)]>"
 
 
-def test_function_without_name():
-    class Function:
-        def __call__(self, message):
-            pass
+def test_function_without_name(monkeypatch):
+    function = Wrapper(lambda _: None, repr="<FunctionWithout>", name=None)
+    monkeypatch.setattr(builtins, "callable", lambda x: x is function or callable(x))
 
-        def __repr__(self):
-            return "<Function>"
-
-        def __getattr__(self, name):
-            if name == "__name__":
-                raise AttributeError
-            return getattr(self.__class__, name)
-
-    function = Function()
     logger.add(function)
-    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<Function>)]>"
+    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<FunctionWithout>)]>"
+    assert function.raised
 
 
-def test_function_with_empty_name():
-    class Function2:
-        def __call__(self, message):
-            pass
+def test_function_with_empty_name(monkeypatch):
+    function = Wrapper(lambda _: None, repr="<FunctionEmpty>", name="")
+    monkeypatch.setattr(builtins, "callable", lambda x: x is function or callable(x))
 
-        def __repr__(self):
-            return "<Function2>"
+    logger.add(function)
+    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<FunctionEmpty>)]>"
+    assert not function.raised
 
-        def __getattr__(self, name):
-            if name == "__name__":
-                return ""
-            return getattr(self.__class__, name)
 
-    function2 = Function2()
-    logger.add(function2)
-    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<Function2>)]>"
+def test_coroutine_function():
+    async def my_async_function(message):
+        pass
+
+    logger.add(my_async_function)
+    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=my_async_function)]>"
+
+
+def test_coroutine_function_without_name(monkeypatch):
+    async_function = Wrapper(lambda _: None, repr="<AsyncFunctionWithout>", name=None)
+    monkeypatch.setattr(
+        loguru._logger.inspect,
+        "iscoroutinefunction",
+        lambda x: x is async_function or iscoroutinefunction(x),
+    )
+
+    logger.add(async_function)
+    assert (
+        repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<AsyncFunctionWithout>)]>"
+    )
+    assert async_function.raised
+
+
+def test_coroutine_function_with_empty_name(monkeypatch):
+    async_function = Wrapper(lambda _: None, repr="<AsyncFunctionEmpty>", name="")
+    monkeypatch.setattr(
+        loguru._logger.inspect,
+        "iscoroutinefunction",
+        lambda x: x is async_function or iscoroutinefunction(x),
+    )
+
+    logger.add(async_function)
+    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<AsyncFunctionEmpty>)]>"
+    assert not async_function.raised
 
 
 def test_standard_handler():

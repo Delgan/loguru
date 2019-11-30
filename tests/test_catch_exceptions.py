@@ -529,13 +529,13 @@ def test_decorate_function(writer):
 
 
 def test_decorate_coroutine(writer):
+    logger.add(writer, format="{message}", diagnose=False, backtrace=False, colorize=False)
+
     @logger.catch
     async def foo(a, b):
         return a + b
 
-    loop = asyncio.get_event_loop()
-    result = loop.run_until_complete(foo(100, 5))
-    loop.close()
+    result = asyncio.run(foo(100, 5))
 
     assert result == 105
     assert writer.read() == ""

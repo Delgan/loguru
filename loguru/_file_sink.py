@@ -336,3 +336,6 @@ class FileSink:
 
         self._file = None
         self._file_path = None
+
+    async def complete(self):
+        pass

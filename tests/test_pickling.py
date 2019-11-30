@@ -1,5 +1,6 @@
 import logging
 import pickle
+import asyncio
 import sys
 import datetime
 
@@ -10,6 +11,10 @@ from loguru import logger
 
 def print_(message):
     print(message, end="")
+
+
+async def async_print(msg):
+    print_(msg)
 
 
 class StreamHandler:
@@ -80,6 +85,22 @@ def test_pickling_function_handler(capsys):
     unpikcled.debug("A message")
     out, err = capsys.readouterr()
     assert out == "DEBUG - test_pickling_function_handler - A message\n"
+    assert err == ""
+
+
+def test_pickling_coroutine_function_handler(capsys):
+    logger.add(async_print, format="{level} - {function} - {message}")
+    pickled = pickle.dumps(logger)
+    unpikcled = pickle.loads(pickled)
+
+    async def async_debug():
+        unpikcled.debug("A message")
+        await unpikcled.complete()
+
+    asyncio.run(async_debug())
+
+    out, err = capsys.readouterr()
+    assert out == "DEBUG - async_debug - A message\n"
     assert err == ""
 
 
