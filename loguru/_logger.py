@@ -61,8 +61,6 @@
 .. _coroutine function: https://docs.python.org/3/glossary.html#term-coroutine-function
 .. |re.Pattern| replace:: ``re.Pattern``
 .. _re.Pattern: https://docs.python.org/3/library/re.html#re-objects
-.. |re.Match| replace:: ``re.Match``
-.. _re.Match: https://docs.python.org/3/library/re.html#match-objects
 
 .. |better_exceptions| replace:: ``better_exceptions``
 .. _better_exceptions: https://github.com/Qix-/better-exceptions
@@ -280,6 +278,7 @@ class Logger:
             Additional parameters that are only valid to configure a coroutine or file sink (see
             below).
 
+
         If and only if the sink is a coroutine function, the following parameter applies:
 
         Parameters
@@ -287,6 +286,7 @@ class Logger:
         loop : |AbstractEventLoop|, optional
             The event loop in which the asynchronous logging task will be scheduled and executed. If
             ``None``, the loop returned by |asyncio.get_event_loop| is used.
+
 
         If and only if the sink is a file path, the following parameters apply:
 
@@ -1840,31 +1840,31 @@ class Logger:
             handler.emit(log_record, level_id, from_decorator, ansi, raw)
 
     def trace(__self, __message, *args, **kwargs):
-        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
+        r"""Log ``message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
         __self._log("TRACE", None, False, __self._options, __message, args, kwargs)
 
     def debug(__self, __message, *args, **kwargs):
-        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
+        r"""Log ``message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
         __self._log("DEBUG", None, False, __self._options, __message, args, kwargs)
 
     def info(__self, __message, *args, **kwargs):
-        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'INFO'``."""
+        r"""Log ``message.format(*args, **kwargs)`` with severity ``'INFO'``."""
         __self._log("INFO", None, False, __self._options, __message, args, kwargs)
 
     def success(__self, __message, *args, **kwargs):
-        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
+        r"""Log ``message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
         __self._log("SUCCESS", None, False, __self._options, __message, args, kwargs)
 
     def warning(__self, __message, *args, **kwargs):
-        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
+        r"""Log ``message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
         __self._log("WARNING", None, False, __self._options, __message, args, kwargs)
 
     def error(__self, __message, *args, **kwargs):
-        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
+        r"""Log ``message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
         __self._log("ERROR", None, False, __self._options, __message, args, kwargs)
 
     def critical(__self, __message, *args, **kwargs):
-        r"""Log ``__message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
+        r"""Log ``message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
         __self._log("CRITICAL", None, False, __self._options, __message, args, kwargs)
 
     def exception(__self, __message, *args, **kwargs):
@@ -1873,7 +1873,7 @@ class Logger:
         __self._log("ERROR", None, False, options, __message, args, kwargs)
 
     def log(__self, __level, __message, *args, **kwargs):
-        r"""Log ``__message.format(*args, **kwargs)`` with severity ``__level``."""
+        r"""Log ``message.format(*args, **kwargs)`` with severity ``level``."""
         level_id, static_level_no = __self._dynamic_level(__level)
         __self._log(level_id, static_level_no, False, __self._options, __message, args, kwargs)
 

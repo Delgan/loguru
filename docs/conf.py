@@ -104,6 +104,9 @@ html_static_path = ["_static"]
 #
 # html_sidebars = {}
 
+# Try to fix formatting with Sphinx v2
+html4_writer = True
+
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
