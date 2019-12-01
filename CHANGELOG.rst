@@ -4,18 +4,19 @@
 - Add support for coroutine functions used as sinks and add the new ``logger.complete()`` asynchronous method to ``await`` them (`#171 <https://github.com/Delgan/loguru/issues/171>`_).
 - Add a way to filter logs using one level per module in the form of a ``dict`` passed to the ``filter`` argument (`#148 <https://github.com/Delgan/loguru/issues/148>`_).
 - Add type hints to annotate the public methods using a ``.pyi`` stub file (`#162 <https://github.com/Delgan/loguru/issues/162>`_).
+- Add support for ``copy.deepcopy()`` of the ``logger`` allowing multiple independent loggers with separate set of handlers (`#72 <https://github.com/Delgan/loguru/issues/72>`_).
+- Add the possibility to convert ``datetime`` to UTC before formatting (in logs and filenames) by adding ``"!UTC"`` at the end of the time format specifier (`#128 <https://github.com/Delgan/loguru/issues/128>`_).
+- Add the level ``name`` as the first argument of namedtuple returned by the ``.level()`` method.
 - Remove ``class`` objects from the list of supported sinks and restrict usage of ``**kwargs`` in ``.add()`` to file sink only. User is in charge of instantiating sink and wrapping additional keyword arguments if needed, before passing it to the ``.add()`` method.
 - Rename the ``logger.configure()`` keyword argument ``patch`` to ``patcher`` so it better matches the signature of ``logger.patch()``.
 - Fix incompatibility with ``multiprocessing`` on Windows by entirely refactoring the internal structure of the ``logger`` so it can be inherited by child processes along with added handlers (`#108 <https://github.com/Delgan/loguru/issues/108>`_).
-- Fix an error using a ``filter`` function "by name" while receiving a log with ``record["name"]`` equals to ``None``.
-- Fix incorrect record displayed while handling errors (if ``catch=True``) occurring because of non-picklable objects (if ``enqueue=True``).
 - Fix ``AttributeError`` while using a file sink on some distributions (like Alpine Linux) missing the ``os.getxattr`` and ``os.setxattr`` functions (`#158 <https://github.com/Delgan/loguru/pull/158>`_, thanks `@joshgordon <https://github.com/joshgordon>`_).
 - Fix values wrongly displayed for keyword arguments during exception formatting with ``diagnose=True`` (`#144 <https://github.com/Delgan/loguru/issues/144>`_).
 - Fix logging messages wrongly chopped off at the end while using standard ``logging.Handler`` sinks with ``.opt(raw=True)`` (`#136 <https://github.com/Delgan/loguru/issues/136>`_).
-- Add support for ``copy.deepcopy()`` of the ``logger`` allowing multiple independent loggers with separate set of handlers (`#72 <https://github.com/Delgan/loguru/issues/72>`_).
+- Fix potential errors during rotation if destination file exists due to large resolution clock on Windows (`#179 <https://github.com/Delgan/loguru/issues/179>`_).
+- Fix an error using a ``filter`` function "by name" while receiving a log with ``record["name"]`` equals to ``None``.
+- Fix incorrect record displayed while handling errors (if ``catch=True``) occurring because of non-picklable objects (if ``enqueue=True``).
 - Prevent hypothetical ``ImportError`` if a Python installation is missing the built-in ``distutils`` module (`#118 <https://github.com/Delgan/loguru/issues/118>`_).
-- Add the possibility to convert ``datetime`` to UTC before formatting (in logs and filenames) by adding ``"!UTC"`` at the end of the time format specifier (`#128 <https://github.com/Delgan/loguru/issues/128>`_).
-- Add the level ``name`` as the first argument of namedtuple returned by the ``.level()`` method.
 - Raise ``TypeError`` instead of ``ValueError`` when a ``logger`` method is called with argument of invalid type.
 - Raise ``ValueError`` if the built-in ``format()`` and ``filter()`` functions are respectively used as ``format`` and ``filter`` arguments of the ``add()`` method. This helps the user to understand the problem, as such a mistake can quite easily occur (`#177 <https://github.com/Delgan/loguru/issues/177>`_).
 - Remove inheritance of some record dict attributes to ``str`` (for ``"level"``, ``"file"``, ``"thread"`` and ``"process"``).

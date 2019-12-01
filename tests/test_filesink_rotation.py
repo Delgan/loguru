@@ -490,6 +490,54 @@ def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
     assert tmpdir.join("test.2018-01-01_00-00-00_000000.log").check(exists=1)
 
 
+def test_renaming_rotation_dest_exists(monkeypatch, monkeypatch_date, tmpdir):
+    date = (2019, 1, 2, 3, 4, 5, 6)
+    timestamp = datetime.datetime(*date).timestamp()
+    monkeypatch_date(*date)
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", lambda _: timestamp)
+
+    def rotate(file, msg):
+        return True
+
+    logger.add(str(tmpdir.join("rotate.log")), rotation=rotate, format="{message}")
+    logger.info("A")
+    logger.info("B")
+    logger.info("C")
+    assert len(tmpdir.listdir()) == 4
+    assert tmpdir.join("rotate.log").read() == "C\n"
+    assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.log").read() == ""
+    assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.2.log").read() == "A\n"
+    assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.3.log").read() == "B\n"
+
+
+def test_renaming_rotation_dest_exists_with_time(monkeypatch, monkeypatch_date, tmpdir):
+    date = (2019, 1, 2, 3, 4, 5, 6)
+    timestamp = datetime.datetime(*date).timestamp()
+    monkeypatch_date(*date)
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", lambda _: timestamp)
+
+    def rotate(file, msg):
+        return True
+
+    logger.add(str(tmpdir.join("rotate.{time}.log")), rotation=rotate, format="{message}")
+    logger.info("A")
+    logger.info("B")
+    logger.info("C")
+    assert len(tmpdir.listdir()) == 4
+    assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.log").read() == "C\n"
+    assert (
+        tmpdir.join("rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.log").read() == ""
+    )
+    assert (
+        tmpdir.join("rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.2.log").read()
+        == "A\n"
+    )
+    assert (
+        tmpdir.join("rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.3.log").read()
+        == "B\n"
+    )
+
+
 @pytest.mark.parametrize(
     "rotation", [object(), os, datetime.date(2017, 11, 11), datetime.datetime.now(), 1j]
 )

@@ -80,6 +80,48 @@ def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
     assert tmpdir.join("test.2018-01-01_00-00-00_000000.log.tar.gz").check(exists=1)
 
 
+def test_renaming_compression_dest_exists(monkeypatch, monkeypatch_date, tmpdir):
+    date = (2019, 1, 2, 3, 4, 5, 6)
+    timestamp = datetime.datetime(*date).timestamp()
+    monkeypatch_date(*date)
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", lambda _: timestamp)
+
+    for i in range(4):
+        logger.add(str(tmpdir.join("rotate.log")), compression=".tar.gz", format="{message}")
+        logger.info(str(i))
+        logger.remove()
+
+    assert len(tmpdir.listdir()) == 4
+    assert tmpdir.join("rotate.log.tar.gz").check(exists=1)
+    assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.log.tar.gz").check(exists=1)
+    assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.2.log.tar.gz").check(exists=1)
+    assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.3.log.tar.gz").check(exists=1)
+
+
+def test_renaming_compression_dest_exists_with_time(monkeypatch, monkeypatch_date, tmpdir):
+    date = (2019, 1, 2, 3, 4, 5, 6)
+    timestamp = datetime.datetime(*date).timestamp()
+    monkeypatch_date(*date)
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", lambda _: timestamp)
+
+    for i in range(4):
+        logger.add(str(tmpdir.join("rotate.{time}.log")), compression=".tar.gz", format="{message}")
+        logger.info(str(i))
+        logger.remove()
+
+    assert len(tmpdir.listdir()) == 4
+    assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.log.tar.gz").check(exists=1)
+    assert tmpdir.join(
+        "rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.log.tar.gz"
+    ).check(exists=1)
+    assert tmpdir.join(
+        "rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.2.log.tar.gz"
+    ).check(exists=1)
+    assert tmpdir.join(
+        "rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.3.log.tar.gz"
+    ).check(exists=1)
+
+
 @pytest.mark.parametrize("compression", [0, True, os, object(), {"zip"}])
 def test_invalid_compression(compression):
     with pytest.raises(TypeError):

@@ -13,6 +13,22 @@ from ._ctime_functions import get_ctime, set_ctime
 from ._datetime import aware_now, datetime
 
 
+def generate_rename_path(root, ext):
+    path_to_rename = root + ext
+    creation_time = get_ctime(path_to_rename)
+    creation_datetime = datetime.fromtimestamp(creation_time)
+    date = FileDateFormatter(creation_datetime)
+
+    renamed_path = "{}.{}{}".format(root, date, ext)
+    counter = 1
+
+    while os.path.exists(renamed_path):
+        counter += 1
+        renamed_path = "{}.{}.{}{}".format(root, date, counter, ext)
+
+    return renamed_path
+
+
 class FileDateFormatter:
     def __init__(self, datetime=None):
         self.datetime = datetime or aware_now()
@@ -42,13 +58,10 @@ class Compression:
 
     @staticmethod
     def compression(path_in, ext, compress_function):
-        path_out = "{}.{}".format(path_in, ext)
+        path_out = "{}{}".format(path_in, ext)
         if os.path.isfile(path_out):
-            creation_time = get_ctime(path_out)
-            creation_datetime = datetime.fromtimestamp(creation_time)
-            date = FileDateFormatter(creation_datetime)
             root, ext_before = os.path.splitext(path_in)
-            renamed_path = "{}.{}{}.{}".format(root, date, ext_before, ext)
+            renamed_path = generate_rename_path(root, ext_before + ext)
             os.rename(path_out, renamed_path)
         compress_function(path_in, path_out)
         os.remove(path_in)
@@ -171,11 +184,8 @@ class FileSink:
         os.makedirs(new_dir, exist_ok=True)
 
         if rename_existing and os.path.isfile(new_path):
-            creation_time = get_ctime(new_path)
-            creation_datetime = datetime.fromtimestamp(creation_time)
-            date = FileDateFormatter(creation_datetime)
             root, ext = os.path.splitext(new_path)
-            renamed_path = "{}.{}{}".format(root, date, ext)
+            renamed_path = generate_rename_path(root, ext)
             os.rename(new_path, renamed_path)
 
         self._file_path = new_path
@@ -311,7 +321,7 @@ class FileSink:
             else:
                 raise ValueError("Invalid compression format: '%s'" % ext)
 
-            return partial(Compression.compression, ext=ext, compress_function=compress)
+            return partial(Compression.compression, ext="." + ext, compress_function=compress)
         elif callable(compression):
             return compression
         else:
