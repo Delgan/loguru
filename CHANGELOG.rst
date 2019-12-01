@@ -1,5 +1,5 @@
-`Unreleased`_
-=============
+`0.4.0`_ (2019-12-02)
+=====================
 
 - Add support for coroutine functions used as sinks and add the new ``logger.complete()`` asynchronous method to ``await`` them (`#171 <https://github.com/Delgan/loguru/issues/171>`_).
 - Add a way to filter logs using one level per module in the form of a ``dict`` passed to the ``filter`` argument (`#148 <https://github.com/Delgan/loguru/issues/148>`_).
@@ -122,7 +122,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.3.2...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.4.0...master
+.. _0.4.0: https://github.com/delgan/loguru/releases/tag/0.4.0
 .. _0.3.2: https://github.com/delgan/loguru/releases/tag/0.3.2
 .. _0.3.1: https://github.com/delgan/loguru/releases/tag/0.3.1
 .. _0.3.0: https://github.com/delgan/loguru/releases/tag/0.3.0
