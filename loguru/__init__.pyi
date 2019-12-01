@@ -62,6 +62,7 @@ listed here and might be useful to type hint your code:
   attributes.
 """
 import sys
+from asyncio import AbstractEventLoop
 from datetime import datetime, time, timedelta
 from logging import Handler
 from types import TracebackType
@@ -87,9 +88,9 @@ from typing import (
 )
 
 if sys.version_info >= (3, 5, 3):
-    from typing import Coroutine
+    from typing import Awaitable
 else:
-    from typing_extensions import Coroutine
+    from typing_extensions import Awaitable
 
 if sys.version_info >= (3, 6):
     from os import PathLike
@@ -216,6 +217,22 @@ class Logger:
     @overload
     def add(
         self,
+        sink: Callable[[Message], Awaitable[None]],
+        *,
+        level: Union[str, int] = ...,
+        format: Union[str, FormatFunction] = ...,
+        filter: Optional[Union[str, FilterFunction, FilterDict]] = ...,
+        colorize: Optional[bool] = ...,
+        serialize: bool = ...,
+        backtrace: bool = ...,
+        diagnose: bool = ...,
+        enqueue: bool = ...,
+        catch: bool = ...,
+        loop: Optional[AbstractEventLoop] = ...
+    ) -> int: ...
+    @overload
+    def add(
+        self,
         sink: Union[str, PathLike],
         *,
         level: Union[str, int] = ...,
@@ -237,7 +254,7 @@ class Logger:
         **kwargs: Any
     ) -> int: ...
     def remove(self, handler_id: Optional[int] = ...) -> None: ...
-    async def complete(self) -> Coroutine: ...
+    async def complete(self) -> None: ...
     @overload
     def catch(
         self,
