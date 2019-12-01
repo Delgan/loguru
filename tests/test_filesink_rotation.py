@@ -10,7 +10,7 @@ import pathlib
 import platform
 import builtins
 from collections import namedtuple
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 import loguru
 from loguru import logger
 
@@ -21,6 +21,12 @@ def tmpdir_local(reset_logger):
     with tempfile.TemporaryDirectory(dir=".") as tempdir:
         yield pathlib.Path(tempdir)
         logger.remove()  # Deleting file not possible if still in use by Loguru
+
+
+def reload_filesink_ctime_functions(monkeypatch):
+    ctime_functions = importlib.reload(loguru._ctime_functions)
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", ctime_functions.get_ctime)
+    monkeypatch.setattr(loguru._file_sink, "set_ctime", ctime_functions.set_ctime)
 
 
 @pytest.fixture
@@ -77,9 +83,7 @@ def monkeypatch_filesystem(monkeypatch):
             win32_setctime = MagicMock(SUPPORTED=True, setctime=patched_setctime)
             monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
 
-        ctime_functions = importlib.reload(loguru._ctime_functions)
-        monkeypatch.setattr(loguru._file_sink, "get_ctime", ctime_functions.get_ctime)
-        monkeypatch.setattr(loguru._file_sink, "set_ctime", ctime_functions.set_ctime)
+        reload_filesink_ctime_functions(monkeypatch)
 
     return monkeypatch_filesystem
 
@@ -371,8 +375,12 @@ def test_time_rotation_reopening_linux_xattr_attributeerror(
 def test_time_rotation_windows_no_setctime(
     tmpdir, windows_filesystem, monkeypatch, monkeypatch_date
 ):
-    win32_setctime = MagicMock(SUPPORTED=False)
+    SUPPORTED = PropertyMock(return_value=False)
+    win32_setctime = MagicMock()
+    type(win32_setctime).SUPPORTED = SUPPORTED
     monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
+
+    reload_filesink_ctime_functions(monkeypatch)
 
     monkeypatch_date(2018, 10, 27, 5, 0, 0, 0)
     i = logger.add(str(tmpdir.join("test.{time}.log")), format="{message}", rotation="2 h")
@@ -385,7 +393,38 @@ def test_time_rotation_windows_no_setctime(
     assert len(tmpdir.listdir()) == 2
     assert tmpdir.join("test.2018-10-27_05-00-00_000000.log").read() == "1\n2\n"
     assert tmpdir.join("test.2018-10-27_07-30-00_000000.log").read() == "3\n"
+    assert SUPPORTED.called
     assert not win32_setctime.setctime.called
+
+
+@pytest.mark.parametrize("exception", [ValueError, OSError])
+def test_time_rotation_windows_setctime_exception(
+    tmpdir, windows_filesystem, monkeypatch, monkeypatch_date, exception
+):
+    setctime_called = False
+
+    def raising_setctime(filepath, timestamp):
+        nonlocal setctime_called
+        setctime_called = True
+        raise exception("Setctime error")
+
+    win32_setctime = MagicMock(SUPPORTED=True, setctime=raising_setctime)
+    monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
+
+    reload_filesink_ctime_functions(monkeypatch)
+
+    monkeypatch_date(2018, 10, 27, 5, 0, 0, 0)
+    i = logger.add(str(tmpdir.join("test.{time}.log")), format="{message}", rotation="2 h")
+    logger.info("1")
+    monkeypatch_date(2018, 10, 27, 6, 30, 0, 0)
+    logger.info("2")
+    assert len(tmpdir.listdir()) == 1
+    monkeypatch_date(2018, 10, 27, 7, 30, 0, 0)
+    logger.info("3")
+    assert len(tmpdir.listdir()) == 2
+    assert tmpdir.join("test.2018-10-27_05-00-00_000000.log").read() == "1\n2\n"
+    assert tmpdir.join("test.2018-10-27_07-30-00_000000.log").read() == "3\n"
+    assert setctime_called
 
 
 def test_function_rotation(monkeypatch_date, tmpdir):

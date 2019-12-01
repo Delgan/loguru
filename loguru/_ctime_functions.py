@@ -7,8 +7,13 @@ if os.name == "nt":
         return os.stat(filepath).st_ctime
 
     def set_ctime(filepath, timestamp):
-        if win32_setctime.SUPPORTED:
+        if not win32_setctime.SUPPORTED:
+            return
+
+        try:
             win32_setctime.setctime(filepath, timestamp)
+        except (OSError, ValueError):
+            pass
 
 
 elif hasattr(os.stat_result, "st_birthtime"):
