@@ -17,6 +17,7 @@ setup(
     name="loguru",
     version=version,
     packages=["loguru"],
+    package_data={"loguru": ["__init__.pyi", "py.typed"]},
     description="Python logging made (stupidly) simple",
     long_description=readme,
     long_description_content_type="text/x-rst",
