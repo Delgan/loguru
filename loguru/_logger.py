@@ -738,7 +738,7 @@ class Logger:
 
         if isinstance(sink, (str, PathLike)):
             path = sink
-            name = repr(str(path))
+            name = "'%s'" % path
 
             if colorize is None:
                 colorize = False
