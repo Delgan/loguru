@@ -77,11 +77,17 @@ Take the tour
 .. |remove| replace:: ``remove()``
 .. _remove: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.remove
 
+.. |complete| replace:: ``complete()``
+.. _complete: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.complete
+
 .. |catch| replace:: ``catch()``
 .. _catch: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.catch
 
 .. |bind| replace:: ``bind()``
 .. _bind: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.bind
+
+.. |contextualize| replace:: ``contextualize()``
+.. _contextualize: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.contextualize
 
 .. |patch| replace:: ``patch()``
 .. _patch: https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.patch
@@ -125,6 +131,7 @@ Take the tour
 .. |notifiers| replace:: ``notifiers``
 .. _notifiers: https://github.com/notifiers/notifiers
 
+
 Ready to use out of the box without boilerplate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -152,7 +159,7 @@ One answer: the |add|_ function.
 
     logger.add(sys.stderr, format="{time} {level} {message}", filter="my_module", level="INFO")
 
-This function should be used to register sinks_ which are responsible for managing `log messages`_ contextualized with a `record dict`_. A sink can take many forms: a simple function, a string path, a file-like object, a built-in Handler or a custom class.
+This function should be used to register sinks_ which are responsible for managing `log messages`_ contextualized with a `record dict`_. A sink can take many forms: a simple function, a string path, a file-like object, a coroutine function or a built-in Handler.
 
 Note that you may also |remove|_ a previously added handler by using the identifier returned while adding it. This is particularly useful if you want to supersede the default ``stderr`` handler: just call ``logger.remove()`` to make a fresh start.
 
@@ -219,6 +226,8 @@ All sinks added to the |logger|_ are thread-safe by default. They are not multip
 
     logger.add("somefile.log", enqueue=True)
 
+Coroutine functions used as sinks are also supported and should be awaited with |complete|_.
+
 
 Fully descriptive exceptions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -281,6 +290,14 @@ Using |bind|_ you can contextualize your logger messages by modifying the `extra
     logger_ctx = logger.bind(ip="192.168.0.1", user="someone")
     logger_ctx.info("Contextualize your logger easily")
     logger_ctx.bind(user="someoneelse").info("Inline binding of extra attribute")
+
+It is possible to modify a context-local state temporarily with |contextualize|_:
+
+::
+
+    with logger.contextualize(task=task_id):
+        do_something()
+        logger.info("End of task")
 
 You can also have more fine-grained control over your logs by combining |bind|_ and ``filter``:
 
@@ -482,8 +499,8 @@ Documentation
 -------------
 
 * `API Reference <https://loguru.readthedocs.io/en/stable/api/logger.html>`_
-* `Type hints <https://loguru.readthedocs.io/en/latest/api/type_hints.html>`_
 * `Help & Guides <https://loguru.readthedocs.io/en/stable/resources.html>`_
+* `Type hints <https://loguru.readthedocs.io/en/stable/api/type_hints.html>`_
 * `Contributing <https://loguru.readthedocs.io/en/stable/project/contributing.html>`_
 * `License <https://loguru.readthedocs.io/en/stable/project/license.html>`_
 * `Changelog <https://loguru.readthedocs.io/en/stable/project/changelog.html>`_
