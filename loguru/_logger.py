@@ -781,11 +781,11 @@ class Logger:
 
             loop = kwargs.pop("loop", None)
 
-            # The worker thread needs an event loop, it can't create a new one internally because
-            # it has to be accessible by the user while calling "complete()", instead we use the
-            # global one when the sink is added. If "enqueue=False", the event loop is dynamically
-            # retrieved at each logging call, which is much more convenient. However, coroutine can't
-            # access running loop in Python 3.5.2 and earlier versions, see python/asyncio#452.
+            # The worker thread needs an event loop, it can't create a new one internally because it
+            # has to be accessible by the user while calling "complete()", instead we use the global
+            # one when the sink is added. If "enqueue=False" the event loop is dynamically retrieved
+            # at each logging call, which is much more convenient. However, coroutine can't access
+            # running loop in Python 3.5.2 and earlier versions, see python/asyncio#452.
             if enqueue and loop is None:
                 loop = asyncio.get_event_loop()
 
