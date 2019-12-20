@@ -168,16 +168,22 @@ def test_updating_min_level(writer):
 def test_assign_custom_level_method(writer):
     logger.level("foobar", no=33, icon="🤖", color="<blue>")
 
-    def foobar(_, message, *args, **kwargs):
-        logger.opt(depth=1).log("foobar", message, *args, **kwargs)
+    def foobar(self, message, *args, **kwargs):
+        self.opt(depth=1).log("foobar", message, *args, **kwargs)
 
     logger.__class__.foobar = foobar
     logger.foobar("Message not logged")
     logger.add(
-        writer, format="<lvl>{level.name} {level.no} {level.icon} {message}</lvl>", colorize=True
+        writer,
+        format="<lvl>{level.name} {level.no} {level.icon} {message} {extra}</lvl>",
+        colorize=True,
     )
     logger.foobar("Logged message")
-    assert writer.read() == parse("<blue>foobar 33 🤖 Logged message</blue>\n")
+    logger.bind(something="otherthing").foobar("Another message")
+    assert writer.read() == parse(
+        "<blue>foobar 33 🤖 Logged message {}</blue>\n"
+        "<blue>foobar 33 🤖 Another message {'something': 'otherthing'}</blue>\n"
+    )
 
 
 @pytest.mark.parametrize("level", [3.4, object()])

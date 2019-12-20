@@ -265,8 +265,8 @@ After adding a new level, it's habitually used with the |log| function::
 
 For convenience, one can assign a new logging function which automatically uses the custom added level::
 
-    def foobar(_, message, *args, **kwargs):
-        logger.opt(depth=1).log("foobar", message, *args, **kwargs)
+    def foobar(self, message, *args, **kwargs):
+        self.opt(depth=1).log("foobar", message, *args, **kwargs)
 
     logger.__class__.foobar = foobar
 
