@@ -118,6 +118,8 @@ start_time = aware_now()
 
 context = ContextVar("loguru_context", default={})
 
+_UNSET = object()
+
 
 class Core:
     def __init__(self):
@@ -1156,7 +1158,7 @@ class Logger:
 
         return Catcher(False)
 
-    def opt(self, *, exception=None, record=False, lazy=False, ansi=False, raw=False, depth=0):
+    def opt(self, *, exception=_UNSET, record=_UNSET, lazy=_UNSET, ansi=_UNSET, raw=_UNSET, depth=_UNSET):
         r"""Parametrize a logging call to slightly change generated log message.
 
         Parameters
@@ -1222,7 +1224,11 @@ class Logger:
         >>> func()
         [18:11:54] DEBUG in 'func' - Get parent context
         """
-        return Logger(self._core, exception, depth, record, lazy, ansi, raw, *self._options[-2:])
+        options = list(self._options)
+        for i, opt in enumerate((exception, depth, record, lazy, ansi, raw)):
+            if opt is not _UNSET:
+                options[i] = opt
+        return Logger(self._core, *options)
 
     def bind(__self, **kwargs):
         """Bind attributes to the ``extra`` dict of each logged message record.

@@ -1,3 +1,8 @@
+`Unreleased`_
+=============
+- Allow calling ``.opt()`` multiple times, retaining the values set each time (`#192 <https://github.com/Delgan/loguru/issues/192>`_).
+
+
 `0.4.0`_ (2019-12-02)
 =====================
 

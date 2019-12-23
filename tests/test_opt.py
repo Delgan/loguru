@@ -357,3 +357,10 @@ def test_before_bind(writer):
     logger.add(writer, format="{message}")
     logger.opt(record=True).bind(key="value").info("{record[level]}")
     assert writer.read() == "INFO\n"
+
+
+@pytest.mark.parametrize("colorize", [True, False])
+def test_raw_with_ansi(writer, colorize):
+    logger.add(writer, format="XYZ", colorize=colorize)
+    logger.opt(raw=True).opt(ansi=True).info("Raw <red>colors</red> and <lvl>level</lvl>")
+    assert writer.read() == parse("Raw <red>colors</red> and <b>level</b>", colorize=colorize)
