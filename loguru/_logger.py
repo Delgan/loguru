@@ -1355,11 +1355,12 @@ class Logger:
         """Add, update or retrieve a logging level.
 
         Logging levels are defined by their ``name`` to which a severity ``no``, an ansi ``color``
-        and an ``icon`` are associated and possibly modified at run-time. To |log| to a custom
+        tag and an ``icon`` are associated and possibly modified at run-time. To |log| to a custom
         level, you should necessarily use its name, the severity number is not linked back to levels
         name (this implies that several levels can share the same severity).
 
-        To add a new level, all parameters should be passed so it can be properly configured.
+        To add a new level, its ``name`` and its ``no`` are required. A ``color`` and an ``icon``
+        can also be specified or will be empty by default.
 
         To update an existing level, pass its ``name`` with the parameters to be changed.
 
