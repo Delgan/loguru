@@ -1,4 +1,5 @@
 import pytest
+import functools
 from loguru import logger
 from loguru._ansimarkup import AnsiMarkup
 
@@ -168,10 +169,7 @@ def test_updating_min_level(writer):
 def test_assign_custom_level_method(writer):
     logger.level("foobar", no=33, icon="🤖", color="<blue>")
 
-    def foobar(self, message, *args, **kwargs):
-        self.opt(depth=1).log("foobar", message, *args, **kwargs)
-
-    logger.__class__.foobar = foobar
+    logger.__class__.foobar = functools.partialmethod(logger.__class__.log, "foobar")
     logger.foobar("Message not logged")
     logger.add(
         writer,

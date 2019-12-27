@@ -265,15 +265,33 @@ After adding a new level, it's habitually used with the |log| function::
 
 For convenience, one can assign a new logging function which automatically uses the custom added level::
 
-    def foobar(self, message, *args, **kwargs):
-        self.opt(depth=1).log("foobar", message, *args, **kwargs)
+    from functools import partialmethod
 
-    logger.__class__.foobar = foobar
+    logger.__class__.foobar = partialmethod(logger.__class__.log, "foobar")
 
     logger.foobar("A message")
 
 
-The new method need to be added only once and will be usable across all your files importing the ``logger``. Note that the call to ``opt(depth=1)`` is necessary to make sure that the logged message contains contextual information of the parent stack frame (where ``logger.foobar()`` is called). Also, assigning the method to ``logger.__class__`` rather than ``logger`` directly ensures that it stays available even after calling ``logger.bind()``, ``logger.patch()`` and ``logger.opt()`` (because these functions return a new ``logger`` instance).
+The new method need to be added only once and will be usable across all your files importing the ``logger``. Assigning the method to ``logger.__class__`` rather than ``logger`` directly ensures that it stays available even after calling ``logger.bind()``, ``logger.patch()`` and ``logger.opt()`` (because these functions return a new ``logger`` instance).
+
+
+Preserving an ``opt()`` parameter for the whole module
+------------------------------------------------------
+
+Supposing you wish to color each of your log messages without having to call ``logger.opt(ansi=True)`` every time, you can add this at the very beginning of your module::
+
+    logger = logger.opt(ansi=True)
+
+    logger.info("It <green>works</>!")
+
+However, it should be noted that it's not possible to chain |opt| calls, using this method again will reset the ``ansi`` option to its default value (which is ``False``). For this reason, it is also necessary to patch the |opt| method so that all subsequent calls continue to use the desired value::
+
+    from functools import partial
+
+    logger = logger.opt(ansi=True)
+    logger.opt = partial(logger.opt, ansi=True)
+
+    logger.opt(raw=True).info("It <green>still</> works!\n")
 
 
 Dynamically formatting messages to properly align values with padding

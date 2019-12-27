@@ -1159,6 +1159,9 @@ class Logger:
     def opt(self, *, exception=None, record=False, lazy=False, ansi=False, raw=False, depth=0):
         r"""Parametrize a logging call to slightly change generated log message.
 
+        Note that it's not possible to chain |opt| calls, the last one takes precedence over the
+        others as it will "reset" the options to their default values.
+
         Parameters
         ----------
         exception : |bool|, |tuple| or |Exception|, optional
