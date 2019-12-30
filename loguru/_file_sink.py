@@ -341,7 +341,7 @@ class FileSink:
                 self._compression_function(self._file_path)
 
             if self._retention_function is not None:
-                logs = glob.glob(self._glob_pattern)
+                logs = filter(os.path.isfile, glob.glob(self._glob_pattern))
                 self._retention_function(logs)
 
         self._file = None
