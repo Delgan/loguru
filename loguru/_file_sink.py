@@ -195,11 +195,14 @@ class FileSink:
     def _make_glob_pattern(path):
         tokens = string.Formatter().parse(path)
         parts = (glob.escape(text) + "*" * (name is not None) for text, name, *_ in tokens)
-        root, ext = os.path.splitext("".join(parts))
-        if ext:
-            pattern = root + ".*"
-        else:
-            pattern = root + "*"
+        pattern, ext = os.path.splitext("".join(parts))
+        # Allow for date appended to the root
+        if not pattern.endswith("*"):
+            pattern += "*"
+        pattern += ext
+        # Allow for compression extensions
+        if not pattern.endswith("*"):
+            pattern += "*"
         return pattern
 
     @staticmethod
