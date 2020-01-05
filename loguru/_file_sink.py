@@ -4,6 +4,7 @@ import glob
 import locale
 import numbers
 import os
+import re
 import shutil
 import string
 from functools import partial
@@ -155,7 +156,7 @@ class FileSink:
         self._kwargs = {**kwargs, "mode": mode, "buffering": buffering, "encoding": self.encoding}
         self._path = str(path)
 
-        self._glob_pattern = self._make_glob_pattern(self._path)
+        self._glob_pattern, self._regex_pattern = self._make_file_patterns(self._path)
         self._rotation_function = self._make_rotation_function(rotation)
         self._retention_function = self._make_retention_function(retention)
         self._compression_function = self._make_compression_function(compression)
@@ -192,18 +193,28 @@ class FileSink:
         self._file = open(new_path, **self._kwargs)
 
     @staticmethod
-    def _make_glob_pattern(path):
-        tokens = string.Formatter().parse(path)
-        parts = (glob.escape(text) + "*" * (name is not None) for text, name, *_ in tokens)
-        pattern, ext = os.path.splitext("".join(parts))
-        # Allow for date appended to the root
-        if not pattern.endswith("*"):
-            pattern += "*"
-        pattern += ext
-        # Allow for compression extensions
-        if not pattern.endswith("*"):
-            pattern += "*"
-        return pattern
+    def _make_file_patterns(path):
+        def escape(string_, escape_function, rep):
+            tokens = string.Formatter().parse(string_)
+            parts = (escape_function(text) + rep * (name is not None) for text, name, *_ in tokens)
+            return "".join(parts)
+
+        # Cleanup tokens to prevent false-positive in "splitext"
+        pattern = escape(path, lambda x: x, "{}")
+
+        root, ext = os.path.splitext(pattern)
+        basename = os.path.basename(root)
+
+        glob_pattern = escape(root, glob.escape, "*") + "*"
+
+        regex_pattern = re.compile(
+            escape(basename, re.escape, r"[\s\S]*")
+            + r"(\.[0-9]+-[0-9]+-[0-9]+_[0-9]+-[0-9]+-[0-9]+_[0-9]+(\.[0-9]+)?)?"
+            + escape(ext, re.escape, r"[\s\S]*")
+            + r"(\.[\s\S]*)?$"
+        )
+
+        return glob_pattern, regex_pattern
 
     @staticmethod
     def _make_rotation_function(rotation):
@@ -344,7 +355,11 @@ class FileSink:
                 self._compression_function(self._file_path)
 
             if self._retention_function is not None:
-                logs = filter(os.path.isfile, glob.glob(self._glob_pattern))
+                logs = [
+                    file
+                    for file in glob.glob(self._glob_pattern)
+                    if self._regex_pattern.match(os.path.basename(file)) and os.path.isfile(file)
+                ]
                 self._retention_function(logs)
 
         self._file = None
