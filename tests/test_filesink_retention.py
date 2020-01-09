@@ -36,7 +36,7 @@ def test_retention_count(tmpdir, retention):
     file = tmpdir.join("test.log")
 
     for i in range(retention):
-        tmpdir.join("test.%d.log" % i).write("test")
+        tmpdir.join("test.2011-01-01_01-01-%d_000001.log" % i).write("test")
 
     i = logger.add(str(file), retention=retention)
     logger.debug("test")
@@ -63,24 +63,61 @@ def test_retention_function(tmpdir):
 
 
 def test_managed_files(tmpdir):
-    others = ["test.log", "test.log.1", "test.log.1.gz", "test.log.rar", "test.1.log"]
+    others = [
+        "test.log",
+        "test.log.1",
+        "test.log.1.gz",
+        "test.log.rar",
+        "test.log",
+        "test.2019-11-12_03-22-07_018985.log",
+        "test.2019-11-12_03-22-07_018985.log.tar.gz",
+        "test.2019-11-12_03-22-07_018985.2.log",
+        "test.2019-11-12_03-22-07_018985.2.log.tar.gz",
+    ]
 
     for other in others:
         tmpdir.join(other).write(other)
 
-    i = logger.add(str(tmpdir.join("test.log")), retention=0)
+    i = logger.add(str(tmpdir.join("test.log")), retention=0, catch=False)
     logger.remove(i)
 
     assert len(tmpdir.listdir()) == 0
 
 
 def test_not_managed_files(tmpdir):
-    others = ["test_.log", "_test.log", "tes.log", "te.st.log", "testlog", "test"]
+    others = {
+        "test_.log",
+        "_test.log",
+        "tes.log",
+        "te.st.log",
+        "testlog",
+        "test",
+        "test.tar.gz",
+        "test.logs",
+        "test.foo",
+        "foo.test.log",
+        "test.foo.log",
+        "test.123.log",
+        "test.2019-11-12_03-22-07_018985.abc.log",
+        "test.2019-11-12_03-22-07_018985.123.abc.log",
+    }
 
     for other in others:
         tmpdir.join(other).write(other)
 
-    i = logger.add(str(tmpdir.join("test.log")), retention=0)
+    i = logger.add(str(tmpdir.join("test.log")), retention=0, catch=False)
+    logger.remove(i)
+
+    assert set(f.basename for f in tmpdir.listdir()) == others
+
+
+def test_directories_ignored(tmpdir):
+    others = ["test.log.2", "test.123.log", "test.log.tar.gz", "test.archive"]
+
+    for other in others:
+        tmpdir.join(other).mkdir()
+
+    i = logger.add(str(tmpdir.join("test.log")), retention=0, catch=False)
     logger.remove(i)
 
     assert len(tmpdir.listdir()) == len(others)
@@ -110,6 +147,25 @@ def test_manage_formatted_files(monkeypatch_date, tmpdir):
     assert f1.check(exists=0)
     assert f2.check(exists=0)
     assert f3.check(exists=0)
+
+
+def test_date_with_dot_after_extension(monkeypatch_date, tmpdir):
+    file = tmpdir.join("file.{time:YYYY.MM}_log")
+
+    i = logger.add(str(tmpdir.join("file*.log")), retention=0, catch=False)
+    logger.remove(i)
+
+    assert file.check(exists=0)
+
+
+def test_symbol_in_filename(tmpdir):
+    file = tmpdir.join("file123.log")
+    file.write("")
+
+    i = logger.add(str(tmpdir.join("file*.log")), retention=0, catch=False)
+    logger.remove(i)
+
+    assert file.check(exists=1)
 
 
 def test_manage_file_without_extension(tmpdir):

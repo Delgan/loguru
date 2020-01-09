@@ -1,3 +1,9 @@
+`Unreleased`
+============
+
+- Prevent unrelated files and directories to be incorrectly collected thus causing errors during the `retention` process (`#195 <https://github.com/Delgan/loguru/pull/195>`_, thanks `@gazpachoking <https://github.com/gazpachoking>`_).
+
+
 `0.4.0`_ (2019-12-02)
 =====================
 

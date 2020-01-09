@@ -37,7 +37,7 @@ def test_compression_early_remove(tmpdir):
 
 def test_retention(tmpdir):
     for i in range(5):
-        tmpdir.join("test.%d.log" % i).write("test")
+        tmpdir.join("test.2020-01-01_01-01-%d_000001.log" % i).write("test")
 
     i = logger.add(str(tmpdir.join("test.log")), retention=0, delay=True)
     logger.debug("a")
@@ -48,7 +48,7 @@ def test_retention(tmpdir):
 
 def test_retention_early_remove(tmpdir):
     for i in range(5):
-        tmpdir.join("test.%d.log" % i).write("test")
+        tmpdir.join("test.2020-01-01_01-01-%d_000001.log" % i).write("test")
 
     i = logger.add(str(tmpdir.join("test.log")), retention=0, delay=True)
     logger.remove(i)
