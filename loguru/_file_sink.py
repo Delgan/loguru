@@ -205,8 +205,10 @@ class FileSink:
         root, ext = os.path.splitext(pattern)
         basename = os.path.basename(root)
 
+        # Used to quickly list files matching the log filename base (ignoring renaming / extension)
         glob_pattern = escape(root, glob.escape, "*") + "*"
 
+        # Used to double-check the listed files, ensuring they entirely match a log filename pattern
         regex_pattern = re.compile(
             escape(basename, re.escape, r"[\s\S]*")
             + r"(\.[0-9]+-[0-9]+-[0-9]+_[0-9]+-[0-9]+-[0-9]+_[0-9]+(\.[0-9]+)?)?"
