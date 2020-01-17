@@ -1,7 +1,6 @@
 import pytest
 from colorama import Style as S, Fore as F, Back as B
-
-from loguru._ansimarkup import AnsiMarkup
+from .conftest import parse
 
 
 @pytest.mark.parametrize(
@@ -16,7 +15,7 @@ from loguru._ansimarkup import AnsiMarkup
     ],
 )
 def test_styles(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -29,7 +28,7 @@ def test_styles(text, expected):
     ],
 )
 def test_background_colors(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -42,7 +41,7 @@ def test_background_colors(text, expected):
     ],
 )
 def test_foreground_colors(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -74,13 +73,13 @@ def test_foreground_colors(text, expected):
     ],
 )
 def test_nested(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize("text", ["<b>", "<Y><b></b>", "<b><b></b>"])
 def test_strict_parsing(text):
     with pytest.raises(ValueError):
-        AnsiMarkup(strip=False).feed(text, strict=True)
+        parse(text, strip=False)
 
 
 @pytest.mark.parametrize(
@@ -92,7 +91,7 @@ def test_strict_parsing(text):
     ],
 )
 def test_permissive_parsing(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=False) == expected
+    assert parse(text, strip=False, strict=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -119,7 +118,7 @@ def test_permissive_parsing(text, expected):
     ],
 )
 def test_autoclose(text, expected):
-    AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -132,7 +131,7 @@ def test_autoclose(text, expected):
     ],
 )
 def test_escaping(text, expected):
-    AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -150,7 +149,7 @@ def test_escaping(text, expected):
 @pytest.mark.parametrize("strip", [True, False])
 def test_mismatched_error(text, strip):
     with pytest.raises(ValueError):
-        AnsiMarkup(strip=strip).feed(text, strict=True)
+        parse(text, strip=strip)
 
 
 @pytest.mark.parametrize(
@@ -159,14 +158,14 @@ def test_mismatched_error(text, strip):
 @pytest.mark.parametrize("strip", [True, False])
 def test_unbalanced_error(text, strip):
     with pytest.raises(ValueError):
-        AnsiMarkup(strip=strip).feed(text, strict=True)
+        parse(text, strip=strip)
 
 
 @pytest.mark.parametrize("text", ["<b>", "<Y><b></b>", "<b><b></b>", "<fg red>1<fg red>"])
 @pytest.mark.parametrize("strip", [True, False])
 def test_unclosed_error(text, strip):
     with pytest.raises(ValueError):
-        AnsiMarkup(strip=strip).feed(text, strict=True)
+        parse(text, strip=strip)
 
 
 @pytest.mark.parametrize(
@@ -189,7 +188,7 @@ def test_unclosed_error(text, strip):
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_color(text, strip):
     with pytest.raises(ValueError):
-        AnsiMarkup(strip=strip).feed(text, strict=True)
+        parse(text, strip=strip)
 
 
 @pytest.mark.parametrize(
@@ -203,4 +202,4 @@ def test_invalid_color(text, strip):
     ],
 )
 def test_strip(text, expected):
-    assert AnsiMarkup(strip=True).feed(text, strict=True) == expected
+    assert parse(text, strip=True) == expected

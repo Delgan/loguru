@@ -5,6 +5,7 @@ import sys
 import datetime
 
 import pytest
+from .conftest import parse
 
 from loguru import logger
 
@@ -55,7 +56,7 @@ class StandardHandler(logging.Handler):
 
 
 def format_function(record):
-    return "-> {message}"
+    return "-> <red>{message}</red>"
 
 
 def filter_function(record):
@@ -241,13 +242,25 @@ def test_pickling_filter_name(capsys, filter):
     assert err == ""
 
 
-def test_pickling_format_function(capsys):
-    logger.add(print_, format=format_function)
+@pytest.mark.parametrize("colorize", [True, False])
+def test_pickling_format_string(capsys, colorize):
+    logger.add(print_, format="-> <red>{message}</red>", colorize=colorize)
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.info("The message")
     out, err = capsys.readouterr()
-    assert out == "-> The message"
+    assert out == parse("-> <red>The message</red>\n", strip=not colorize)
+    assert err == ""
+
+
+@pytest.mark.parametrize("colorize", [True, False])
+def test_pickling_format_function(capsys, colorize):
+    logger.add(print_, format=format_function, colorize=colorize)
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    unpickled.info("The message")
+    out, err = capsys.readouterr()
+    assert out == parse("-> <red>The message</red>", strip=not colorize)
     assert err == ""
 
 

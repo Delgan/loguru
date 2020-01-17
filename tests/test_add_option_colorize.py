@@ -4,11 +4,7 @@ import sys
 import loguru
 from unittest.mock import MagicMock
 from loguru import logger
-from loguru._ansimarkup import AnsiMarkup
-
-
-def parse(text):
-    return AnsiMarkup(strip=False).feed(text, strict=True)
+from .conftest import parse
 
 
 class Stream:

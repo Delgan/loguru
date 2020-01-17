@@ -1,11 +1,7 @@
 import pytest
 import functools
 from loguru import logger
-from loguru._ansimarkup import AnsiMarkup
-
-
-def parse(text):
-    return AnsiMarkup(strip=False).feed(text, strict=True)
+from .conftest import parse
 
 
 def test_log_int_level(writer):
@@ -237,7 +233,7 @@ def test_edit_unknown_level():
         logger.level("foo", icon="?")
 
 
-@pytest.mark.parametrize("color", ["<foo>", "</red>"])
+@pytest.mark.parametrize("color", ["</>", "<foo>", "</red>", "<lvl>", " <level> "])
 def test_add_invalid_level_color(color):
     with pytest.raises(ValueError):
         logger.level("foobar", no=20, icon="", color=color)

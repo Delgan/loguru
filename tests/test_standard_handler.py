@@ -42,7 +42,7 @@ def test_extra_dict(capsys):
     handler = StreamHandler(sys.stdout)
     formatter = Formatter("[%(abc)s] %(message)s")
     handler.setFormatter(formatter)
-    logger.add(handler, format=r"\<{extra[abc]}> {message}", catch=False)
+    logger.add(handler, format="<{extra[abc]}> {message}", catch=False)
     logger.bind(abc=123).info("Extra!")
     out, err = capsys.readouterr()
     assert out == "[123] <123> Extra!\n"

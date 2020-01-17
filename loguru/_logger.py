@@ -55,7 +55,7 @@
 
 .. |file-like object| replace:: ``file-like object``
 .. _file-like object: https://docs.python.org/3/glossary.html#term-file-object
-.. |callable| replace:: ``callable object``
+.. |callable| replace:: ``callable``
 .. _callable: https://docs.python.org/3/library/functions.html#callable
 .. |coroutine function| replace:: ``coroutine function``
 .. _coroutine function: https://docs.python.org/3/glossary.html#term-coroutine-function
@@ -90,7 +90,7 @@ from threading import current_thread
 from . import _colorama
 from . import _defaults
 from . import _filters
-from ._ansimarkup import AnsiMarkup
+from ._colored_string import ColoredString
 from ._better_exceptions import ExceptionFormatter
 from ._datetime import aware_now
 from ._file_sink import FileSink
@@ -167,7 +167,7 @@ class Core:
         ]
         self.levels = {level.name: level for level in levels}
         self.levels_ansi_codes = {
-            name: AnsiMarkup.parse(level.color) for name, level in self.levels.items()
+            name: ColoredString.ansify(level.color) for name, level in self.levels.items()
         }
         self.levels_ansi_codes[None] = ""
 
@@ -885,12 +885,11 @@ class Logger:
 
         if isinstance(format, str):
             try:
-                AnsiMarkup.verify(format, ["level", "lvl"])
+                formatter = ColoredString.prepare_format(format + terminator + "{exception}")
             except ValueError as e:
                 raise ValueError(
                     "Invalid format, color markups could not be parsed correctly"
                 ) from e
-            formatter = format + terminator + "{exception}"
             is_formatter_dynamic = False
         elif callable(format):
             if format == builtins.format:
@@ -1445,7 +1444,7 @@ class Logger:
         if no < 0:
             raise ValueError("Invalid level no, it should be a positive integer, not: %d" % no)
 
-        ansi = AnsiMarkup.parse(color)
+        ansi = ColoredString.ansify(color)
         level = Level(name, no, color, icon)
 
         with self._core.lock:
@@ -1830,9 +1829,24 @@ class Logger:
             kwargs = {key: value() for key, value in kwargs.items()}
 
         if record:
-            log_record["message"] = message.format(*args, **kwargs, record=log_record)
+            if "record" in kwargs:
+                raise TypeError(
+                    "The message can't be formatted: 'record' shall not be used as a keyword "
+                    "argument while logger has been configured with '.opt(record=True)'"
+                )
+            kwargs.update(record=log_record)
+
+        if ansi:
+            if args or kwargs:
+                colored_message = ColoredString.prepare_message(message, args, kwargs)
+            else:
+                colored_message = ColoredString.prepare_simple_message(message)
+            log_record["message"] = colored_message.strip()
         elif args or kwargs:
+            colored_message = None
             log_record["message"] = message.format(*args, **kwargs)
+        else:
+            colored_message = None
 
         if core.patcher:
             core.patcher(log_record)
@@ -1841,7 +1855,7 @@ class Logger:
             patcher(log_record)
 
         for handler in core.handlers.values():
-            handler.emit(log_record, level_id, from_decorator, ansi, raw)
+            handler.emit(log_record, level_id, from_decorator, raw, colored_message)
 
     def trace(__self, __message, *args, **kwargs):
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'TRACE'``."""

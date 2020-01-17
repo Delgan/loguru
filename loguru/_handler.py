@@ -6,7 +6,21 @@ import sys
 import threading
 import traceback
 
-from ._ansimarkup import AnsiMarkup
+from ._colored_string import ColoredString
+
+
+def prepare_colored_format(format_, ansi_level):
+    colored = ColoredString.prepare_format(format_)
+    return colored.colorize(ansi_level)
+
+
+def prepare_stripped_format(format_):
+    colored = ColoredString.prepare_format(format_)
+    return colored.strip()
+
+
+def memoize(function):
+    return functools.lru_cache(maxsize=64)(function)
 
 
 class Message(str):
@@ -45,9 +59,9 @@ class Handler:
         self._id = id_
         self._levels_ansi_codes = levels_ansi_codes  # Warning, reference shared among handlers
 
-        self._static_format = None
         self._decolorized_format = None
         self._precolorized_formats = {}
+        self._memoize_dynamic_format = None
 
         self._lock = threading.Lock()
         self._queue = None
@@ -56,12 +70,17 @@ class Handler:
         self._stopped = False
         self._owner_process = None
 
-        if not self._is_formatter_dynamic:
-            self._static_format = self._formatter
-            self._decolorized_format = self._decolorize_format(self._static_format)
-
-            for level_name in self._levels_ansi_codes:
-                self.update_format(level_name)
+        if self._is_formatter_dynamic:
+            if self._colorize:
+                self._memoize_dynamic_format = memoize(prepare_colored_format)
+            else:
+                self._memoize_dynamic_format = memoize(prepare_stripped_format)
+        else:
+            if self._colorize:
+                for level_name in self._levels_ansi_codes:
+                    self.update_format(level_name)
+            else:
+                self._decolorized_format = self._formatter.strip()
 
         if self._enqueue:
             self._owner_process = multiprocessing.current_process()
@@ -75,7 +94,7 @@ class Handler:
     def __repr__(self):
         return "(id=%d, level=%d, sink=%s)" % (self._id, self._levelno, self._name)
 
-    def emit(self, record, level_id, from_decorator, is_ansi, is_raw):
+    def emit(self, record, level_id, from_decorator, is_raw, colored_message):
         try:
             if self._levelno > record["level"].no:
                 return
@@ -86,16 +105,6 @@ class Handler:
 
             if self._is_formatter_dynamic:
                 dynamic_format = self._formatter(record)
-                if self._colorize:
-                    level_ansi = self._levels_ansi_codes[level_id]
-                    precomputed_format = self._colorize_format(dynamic_format, level_ansi)
-                else:
-                    precomputed_format = self._decolorize_format(dynamic_format)
-            else:
-                if self._colorize:
-                    precomputed_format = self._precolorized_formats[level_id]
-                else:
-                    precomputed_format = self._decolorized_format
 
             formatter_record = record.copy()
 
@@ -103,35 +112,48 @@ class Handler:
                 formatter_record["exception"] = ""
             else:
                 type_, value, tb = record["exception"]
-                lines = self._exception_formatter.format_exception(
-                    type_, value, tb, from_decorator=from_decorator
-                )
+                formatter = self._exception_formatter
+                lines = formatter.format_exception(type_, value, tb, from_decorator=from_decorator)
                 formatter_record["exception"] = "".join(lines)
 
-            message = record["message"]
-
             if is_raw:
-                if not is_ansi:
-                    formatted = message
-                elif self._colorize:
-                    level_ansi = self._levels_ansi_codes[level_id]
-                    formatted = self._colorize_format(message, level_ansi)
+                if colored_message is None or not self._colorize:
+                    formatted = record["message"]
                 else:
-                    formatted = self._decolorize_format(message)
+                    ansi_level = self._levels_ansi_codes[level_id]
+                    formatted = colored_message.colorize(ansi_level)
+            elif self._is_formatter_dynamic:
+                if not self._colorize:
+                    precomputed_format = self._memoize_dynamic_format(dynamic_format)
+                    formatted = precomputed_format.format_map(formatter_record)
+                elif colored_message is None:
+                    ansi_level = self._levels_ansi_codes[level_id]
+                    precomputed_format = self._memoize_dynamic_format(dynamic_format, ansi_level)
+                    formatted = precomputed_format.format_map(formatter_record)
+                else:
+                    ansi_level = self._levels_ansi_codes[level_id]
+                    formatted = ColoredString.format_with_colored_message(
+                        dynamic_format,
+                        formatter_record,
+                        ansi_level=ansi_level,
+                        colored_message=colored_message,
+                    )
             else:
-                if not is_ansi:
+                if not self._colorize:
+                    precomputed_format = self._decolorized_format
                     formatted = precomputed_format.format_map(formatter_record)
-                elif self._colorize:
-                    if self._is_formatter_dynamic:
-                        format_with_tags = dynamic_format
-                    else:
-                        format_with_tags = self._static_format
-                    ansi_code = self._levels_ansi_codes[level_id]
-                    AnsiDict = self._memoize_ansi_messages(format_with_tags, ansi_code, message)
-                    formatted = precomputed_format.format_map(AnsiDict(formatter_record))
+                elif colored_message is None:
+                    ansi_level = self._levels_ansi_codes[level_id]
+                    precomputed_format = self._precolorized_formats[level_id]
+                    formatted = precomputed_format.format_map(formatter_record)
                 else:
-                    formatter_record["message"] = self._decolorize_format(message)
-                    formatted = precomputed_format.format_map(formatter_record)
+                    ansi_level = self._levels_ansi_codes[level_id]
+                    formatted = ColoredString.format_with_colored_message(
+                        self._formatter.string,
+                        formatter_record,
+                        ansi_level=ansi_level,
+                        colored_message=colored_message,
+                    )
 
             if self._serialize:
                 formatted = self._serialize_record(formatted, record)
@@ -186,7 +208,7 @@ class Handler:
         if not self._colorize or self._is_formatter_dynamic:
             return
         ansi_code = self._levels_ansi_codes[level_id]
-        self._precolorized_formats[level_id] = self._colorize_format(self._static_format, ansi_code)
+        self._precolorized_formats[level_id] = self._formatter.colorize(ansi_code)
 
     @property
     def levelno(self):
@@ -226,46 +248,6 @@ class Handler:
         }
 
         return json.dumps(serializable, default=str) + "\n"
-
-    @staticmethod
-    @functools.lru_cache(maxsize=32)
-    def _decolorize_format(format_):
-        markups = {"level": "", "lvl": ""}
-        return AnsiMarkup(custom_markups=markups, strip=True).feed(format_, strict=True)
-
-    @staticmethod
-    @functools.lru_cache(maxsize=32)
-    def _colorize_format(format_, ansi_code):
-        markups = {"level": ansi_code, "lvl": ansi_code}
-        return AnsiMarkup(custom_markups=markups, strip=False).feed(format_, strict=True)
-
-    @staticmethod
-    @functools.lru_cache(maxsize=32)
-    def _memoize_ansi_messages(format_, ansi_code, message):
-        markups = {"level": ansi_code, "lvl": ansi_code}
-        ansimarkup = AnsiMarkup(custom_markups=markups, strip=False)
-
-        def parse(string_, *, recursive=True):
-            for text, name, spec, _ in string.Formatter().parse(string_):
-                ansimarkup.feed(text, strict=False)
-                if spec and recursive:
-                    yield from parse(spec, recursive=False)
-                if name and name[:8] in ("message", "message.", "message["):
-                    yield ansimarkup.feed(message, strict=True)
-
-        messages = list(parse(format_))
-
-        class AnsiDict:
-            def __init__(self, record):
-                self._record = record
-                self._messages = iter(messages)
-
-            def __getitem__(self, key):
-                if key == "message":
-                    return next(self._messages)
-                return self._record[key]
-
-        return AnsiDict
 
     def _queued_writer(self):
         message = None
@@ -317,6 +299,7 @@ class Handler:
     def __getstate__(self):
         state = self.__dict__.copy()
         state["_lock"] = None
+        state["_memoize_dynamic_format"] = None
         if self._enqueue:
             state["_sink"] = None
             state["_thread"] = None
@@ -326,3 +309,8 @@ class Handler:
     def __setstate__(self, state):
         self.__dict__.update(state)
         self._lock = threading.Lock()
+        if self._is_formatter_dynamic:
+            if self._colorize:
+                self._memoize_dynamic_format = memoize(prepare_colored_format)
+            else:
+                self._memoize_dynamic_format = memoize(prepare_stripped_format)

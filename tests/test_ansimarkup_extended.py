@@ -1,7 +1,6 @@
 import pytest
 from colorama import Style as S, Fore as F, Back as B
-
-from loguru._ansimarkup import AnsiMarkup
+from .conftest import parse
 
 
 @pytest.mark.parametrize(
@@ -14,7 +13,7 @@ from loguru._ansimarkup import AnsiMarkup
     ],
 )
 def test_background_colors(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -27,7 +26,7 @@ def test_background_colors(text, expected):
     ],
 )
 def test_foreground_colors(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -39,7 +38,7 @@ def test_foreground_colors(text, expected):
     ],
 )
 def test_8bit_colors(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -52,7 +51,7 @@ def test_8bit_colors(text, expected):
     ],
 )
 def test_hex_colors(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -63,7 +62,7 @@ def test_hex_colors(text, expected):
     ],
 )
 def test_rgb_colors(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -89,21 +88,7 @@ def test_rgb_colors(text, expected):
     ],
 )
 def test_nested(text, expected):
-    assert AnsiMarkup(strip=False).feed(text, strict=True) == expected
-
-
-def test_parse_with_custom_tags():
-    markups = {"info": F.GREEN + S.BRIGHT}
-
-    am = AnsiMarkup(custom_markups=markups, strip=False)
-    assert am.feed("<info>1</info>", strict=True) == F.GREEN + S.BRIGHT + "1" + S.RESET_ALL
-
-
-def test_strip_with_custom_markups():
-    markups = {"red": "", "b,g,r": "", "fg 1,2,3": ""}
-
-    am = AnsiMarkup(custom_markups=markups, strip=True)
-    assert am.feed("<red>1</red><b,g,r>2</b,g,r><fg 1,2,3>3</fg 1,2,3>", strict=True) == "123"
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -123,7 +108,7 @@ def test_strip_with_custom_markups():
     ],
 )
 def test_tricky_parse(text, expected):
-    AnsiMarkup(strip=False).feed(text, strict=True) == expected
+    assert parse(text, strip=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -144,7 +129,7 @@ def test_tricky_parse(text, expected):
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_color(text, strip):
     with pytest.raises(ValueError):
-        AnsiMarkup(strip=strip).feed(text, strict=True)
+        parse(text, strip=strip)
 
 
 @pytest.mark.parametrize(
@@ -160,14 +145,14 @@ def test_invalid_color(text, strip):
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_hex(text, strip):
     with pytest.raises(ValueError):
-        AnsiMarkup(strip=strip).feed(text, strict=True)
+        parse(text, strip=strip)
 
 
 @pytest.mark.parametrize("text", ["<fg 256>1</fg 256>", "<bg 2222>1</bg 2222>", "<bg -1>1</bg -1>"])
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_8bit(text, strip):
     with pytest.raises(ValueError):
-        AnsiMarkup(strip=strip).feed(text, strict=True)
+        parse(text, strip=strip)
 
 
 @pytest.mark.parametrize(
@@ -183,7 +168,7 @@ def test_invalid_8bit(text, strip):
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_rgb(text, strip):
     with pytest.raises(ValueError):
-        AnsiMarkup(strip=strip).feed(text, strict=True)
+        parse(text, strip=strip)
 
 
 @pytest.mark.parametrize(
@@ -195,7 +180,7 @@ def test_invalid_rgb(text, strip):
     ],
 )
 def test_strip(text, expected):
-    assert AnsiMarkup(strip=True).feed(text, strict=True) == expected
+    assert parse(text, strip=True) == expected
 
 
 @pytest.mark.parametrize(
@@ -215,4 +200,4 @@ def test_strip(text, expected):
     ],
 )
 def test_tricky_strip(text, expected):
-    assert AnsiMarkup(strip=True).feed(text, strict=True) == expected
+    assert parse(text, strip=True) == expected

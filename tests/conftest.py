@@ -32,6 +32,17 @@ elif sys.version_info < (3, 7):
     asyncio.run = run
 
 
+def parse(text, *, strip=False, strict=True):
+    parser = loguru._colored_string.AnsiParser()
+    parser.feed(text)
+    tokens = parser.done(strict=strict)
+
+    if strip:
+        return parser.strip(tokens)
+    else:
+        return parser.colorize(tokens, "")
+
+
 @pytest.fixture(scope="session", autouse=True)
 def check_env_variables():
     for var in os.environ:

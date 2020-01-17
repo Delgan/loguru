@@ -67,6 +67,18 @@ def test_invalid_markups(writer, format):
         logger.add(writer, format=format)
 
 
+@pytest.mark.parametrize("colorize", [True, False])
+def test_markup_in_field(writer, colorize):
+    class F:
+        def __format__(self, spec):
+            return spec
+
+    logger.add(writer, format="{extra[f]:</>} {extra[f]: <blue> } {message}", colorize=colorize)
+    logger.bind(f=F()).info("Test")
+
+    assert writer.read() == "</>  <blue>  Test\n"
+
+
 def test_invalid_format_builtin(writer):
     with pytest.raises(ValueError, match=r".* most likely a mistake"):
         logger.add(writer, format=format)
