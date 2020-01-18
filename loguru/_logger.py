@@ -217,9 +217,9 @@ class Logger:
     You should not instantiate a |Logger| by yourself, use ``from loguru import logger`` instead.
     """
 
-    def __init__(self, core, exception, depth, record, lazy, ansi, raw, patcher, extra):
+    def __init__(self, core, exception, depth, record, lazy, colors, raw, patcher, extra):
         self._core = core
-        self._options = (exception, depth, record, lazy, ansi, raw, patcher, extra)
+        self._options = (exception, depth, record, lazy, colors, raw, patcher, extra)
 
     def __repr__(self):
         return "<loguru.logger handlers=%r>" % list(self._core.handlers.values())
@@ -611,9 +611,9 @@ class Logger:
         .. rubric:: The color markups
 
         To add colors to your logs, you just have to enclose your format string with the appropriate
-        tags (e.g. ``<tag>some message</tag>``). These tags are automatically removed if the sink
+        tags (e.g. ``<red>some message</red>``). These tags are automatically removed if the sink
         doesn't support ansi codes. For convenience, you can use ``</>`` to close the last opening
-        tag without repeating its name (e.g. ``<tag>another message</>``).
+        tag without repeating its name (e.g. ``<red>another message</>``).
 
         The special tag ``<level>`` (abbreviated with ``<lvl>``) is transformed according to
         the configured color of the logged message level.
@@ -641,7 +641,7 @@ class Logger:
         +------------------------------------+--------------------------------------+
         | Red (r)                            | Strike (s)                           |
         +------------------------------------+--------------------------------------+
-        | White (w)                          | Reverse (r)                          |
+        | White (w)                          | Reverse (v)                          |
         +------------------------------------+--------------------------------------+
         | Yellow (y)                         | Blink (l)                            |
         +------------------------------------+--------------------------------------+
@@ -1155,7 +1155,17 @@ class Logger:
 
         return Catcher(False)
 
-    def opt(self, *, exception=None, record=False, lazy=False, ansi=False, raw=False, depth=0):
+    def opt(
+        self,
+        *,
+        exception=None,
+        record=False,
+        lazy=False,
+        colors=False,
+        raw=False,
+        depth=0,
+        ansi=False
+    ):
         r"""Parametrize a logging call to slightly change generated log message.
 
         Note that it's not possible to chain |opt| calls, the last one takes precedence over the
@@ -1174,7 +1184,7 @@ class Logger:
             If ``True``, the logging call attribute to format the message should be functions which
             will be called only if the level is high enough. This can be used to avoid expensive
             functions if not necessary.
-        ansi : |bool|, optional
+        colors : |bool|, optional
             If ``True``, logged message will be colorized according to the markups it possibly
             contains.
         raw : |bool|, optional
@@ -1184,6 +1194,9 @@ class Logger:
             Specify which stacktrace should be used to contextualize the logged message. This is
             useful while using the logger from inside a wrapped function to retrieve worthwhile
             information.
+        ansi : |bool|, optional
+            Deprecated since version 0.4.1: the ``ansi`` parameter will be removed in Loguru 1.0.0,
+            it is replaced by ``colors`` which is a more appropriate name.
 
         Returns
         -------
@@ -1209,7 +1222,7 @@ class Logger:
         >>> logger.opt(lazy=True).debug("If sink <= DEBUG: {x}", x=lambda: math.factorial(2**5))
         [18:11:19] DEBUG in '<module>' - If sink <= DEBUG: 263130836933693530167218012160000000
 
-        >>> logger.opt(ansi=True).warning("We got a <red>BIG</red> problem")
+        >>> logger.opt(colors=True).warning("We got a <red>BIG</red> problem")
         [18:11:30] WARNING in '<module>' - We got a BIG problem
 
         >>> logger.opt(raw=True).debug("No formatting\n")
@@ -1224,7 +1237,14 @@ class Logger:
         >>> func()
         [18:11:54] DEBUG in 'func' - Get parent context
         """
-        return Logger(self._core, exception, depth, record, lazy, ansi, raw, *self._options[-2:])
+        if ansi:
+            colors = True
+            warnings.warn(
+                "The 'ansi' parameter is deprecated, please use 'colors' instead",
+                DeprecationWarning,
+            )
+
+        return Logger(self._core, exception, depth, record, lazy, colors, raw, *self._options[-2:])
 
     def bind(__self, **kwargs):
         """Bind attributes to the ``extra`` dict of each logged message record.
@@ -1746,7 +1766,7 @@ class Logger:
         if not core.handlers:
             return
 
-        (exception, depth, record, lazy, ansi, raw, patcher, extra) = options
+        (exception, depth, record, lazy, colors, raw, patcher, extra) = options
 
         frame = get_frame(depth + 2)
 
@@ -1836,7 +1856,7 @@ class Logger:
                 )
             kwargs.update(record=log_record)
 
-        if ansi:
+        if colors:
             if args or kwargs:
                 colored_message = ColoredString.prepare_message(message, args, kwargs)
             else:

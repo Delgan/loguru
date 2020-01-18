@@ -326,7 +326,7 @@ Sometime you would like to log verbose information without performance penalty i
 
     # By the way, "opt()" serves many usages
     logger.opt(exception=True).info("Error stacktrace added to the log message")
-    logger.opt(ansi=True).info("Per message <blue>colors</blue>")
+    logger.opt(colors=True).info("Per message <blue>colors</blue>")
     logger.opt(record=True).info("Display values from the record (eg. {record[thread]})")
     logger.opt(raw=True).info("Bypass sink formatting\n")
     logger.opt(depth=1).info("Use parent stack context (useful within wrapped functions)")

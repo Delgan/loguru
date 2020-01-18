@@ -278,18 +278,18 @@ The new method need to be added only once and will be usable across all your fil
 Preserving an ``opt()`` parameter for the whole module
 ------------------------------------------------------
 
-Supposing you wish to color each of your log messages without having to call ``logger.opt(ansi=True)`` every time, you can add this at the very beginning of your module::
+Supposing you wish to color each of your log messages without having to call ``logger.opt(colors=True)`` every time, you can add this at the very beginning of your module::
 
-    logger = logger.opt(ansi=True)
+    logger = logger.opt(colors=True)
 
     logger.info("It <green>works</>!")
 
-However, it should be noted that it's not possible to chain |opt| calls, using this method again will reset the ``ansi`` option to its default value (which is ``False``). For this reason, it is also necessary to patch the |opt| method so that all subsequent calls continue to use the desired value::
+However, it should be noted that it's not possible to chain |opt| calls, using this method again will reset the ``colors`` option to its default value (which is ``False``). For this reason, it is also necessary to patch the |opt| method so that all subsequent calls continue to use the desired value::
 
     from functools import partial
 
-    logger = logger.opt(ansi=True)
-    logger.opt = partial(logger.opt, ansi=True)
+    logger = logger.opt(colors=True)
+    logger.opt = partial(logger.opt, colors=True)
 
     logger.opt(raw=True).info("It <green>still</> works!\n")
 

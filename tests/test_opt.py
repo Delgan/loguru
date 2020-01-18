@@ -146,77 +146,77 @@ def test_depth(writer):
     assert writer.read() == "test_depth : Test 1\na : Test 2\ntest_depth : Test 3\n"
 
 
-def test_ansi(writer):
+def test_colors(writer):
     logger.add(writer, format="<red>a</red> {message}", colorize=True)
-    logger.opt(ansi=True).debug("<blue>b</blue>")
-    logger.opt(ansi=True).log(20, "<y>c</y>")
+    logger.opt(colors=True).debug("<blue>b</blue>")
+    logger.opt(colors=True).log(20, "<y>c</y>")
 
     assert writer.read() == parse(
         "<red>a</red> <blue>b</blue>\n" "<red>a</red> <y>c</y>\n", strip=False
     )
 
 
-def test_ansi_not_colorize(writer):
+def test_colors_not_colorize(writer):
     logger.add(writer, format="<red>a</red> {message}", colorize=False)
-    logger.opt(ansi=True).debug("<blue>b</blue>")
+    logger.opt(colors=True).debug("<blue>b</blue>")
     assert writer.read() == parse("<red>a</red> <blue>b</blue>\n", strip=True)
 
 
-def test_ansi_doesnt_color_unrelated(writer):
+def test_colors_doesnt_color_unrelated(writer):
     logger.add(writer, format="{message} {extra[trap]}", colorize=True)
-    logger.bind(trap="<red>B</red>").opt(ansi=True).debug("<red>A</red>")
+    logger.bind(trap="<red>B</red>").opt(colors=True).debug("<red>A</red>")
     assert writer.read() == parse("<red>A</red>", strip=False) + " <red>B</red>\n"
 
 
-def test_ansi_doesnt_strip_unrelated(writer):
+def test_colors_doesnt_strip_unrelated(writer):
     logger.add(writer, format="{message} {extra[trap]}", colorize=False)
-    logger.bind(trap="<red>B</red>").opt(ansi=True).debug("<red>A</red>")
+    logger.bind(trap="<red>B</red>").opt(colors=True).debug("<red>A</red>")
     assert writer.read() == parse("<red>A</red>", strip=True) + " <red>B</red>\n"
 
 
-def test_ansi_doesnt_raise_unrelated_colorize(writer):
+def test_colors_doesnt_raise_unrelated_colorize(writer):
     logger.add(writer, format="{message} {extra[trap]}", colorize=True, catch=False)
-    logger.bind(trap="</red>").opt(ansi=True).debug("A")
+    logger.bind(trap="</red>").opt(colors=True).debug("A")
     assert writer.read() == "A </red>\n"
 
 
-def test_ansi_doesnt_raise_unrelated_not_colorize(writer):
+def test_colors_doesnt_raise_unrelated_not_colorize(writer):
     logger.add(writer, format="{message} {extra[trap]}", colorize=False, catch=False)
-    logger.bind(trap="</red>").opt(ansi=True).debug("A")
+    logger.bind(trap="</red>").opt(colors=True).debug("A")
     assert writer.read() == "A </red>\n"
 
 
-def test_ansi_doesnt_raise_unrelated_colorize_dynamic(writer):
+def test_colors_doesnt_raise_unrelated_colorize_dynamic(writer):
     logger.add(writer, format=lambda x: "{message} {extra[trap]}", colorize=True, catch=False)
-    logger.bind(trap="</red>").opt(ansi=True).debug("A")
+    logger.bind(trap="</red>").opt(colors=True).debug("A")
     assert writer.read() == "A </red>"
 
 
-def test_ansi_doesnt_raise_unrelated_not_colorize_dynamic(writer):
+def test_colors_doesnt_raise_unrelated_not_colorize_dynamic(writer):
     logger.add(writer, format=lambda x: "{message} {extra[trap]}", colorize=False, catch=False)
-    logger.bind(trap="</red>").opt(ansi=True).debug("A")
+    logger.bind(trap="</red>").opt(colors=True).debug("A")
     assert writer.read() == "A </red>"
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_within_record(writer, colorize):
+def test_colors_within_record(writer, colorize):
     logger.add(writer, format="{message}", colorize=colorize)
     logger_ = logger.bind(start="<red>", end="</red>")
-    logger_.opt(ansi=True, record=True).debug("{record[extra][start]}B{record[extra][end]}")
+    logger_.opt(colors=True, record=True).debug("{record[extra][start]}B{record[extra][end]}")
     assert writer.read() == "<red>B</red>\n"
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_nested(writer, colorize):
+def test_colors_nested(writer, colorize):
     logger.add(writer, format="(<red>[{message}]</red>)", colorize=colorize)
-    logger.opt(ansi=True).debug("A<green>B</green>C<blue>D</blue>E")
+    logger.opt(colors=True).debug("A<green>B</green>C<blue>D</blue>E")
     assert writer.read() == parse(
         "(<red>[A<green>B</green>C<blue>D</blue>E]</red>)\n", strip=not colorize
     )
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_stripped_in_message_record(colorize):
+def test_colors_stripped_in_message_record(colorize):
     message = None
 
     def sink(msg):
@@ -224,7 +224,7 @@ def test_ansi_stripped_in_message_record(colorize):
         message = msg.record["message"]
 
     logger.add(sink, colorize=colorize)
-    logger.opt(ansi=True).debug("<red>Test</red>")
+    logger.opt(colors=True).debug("<red>Test</red>")
     assert message == "Test"
 
 
@@ -233,30 +233,30 @@ def test_ansi_stripped_in_message_record(colorize):
 def test_invalid_markup_in_message(writer, message, colorize):
     logger.add(writer, format="<red>{message}</red>", colorize=colorize, catch=False)
     with pytest.raises(ValueError):
-        logger.opt(ansi=True).debug(message)
+        logger.opt(colors=True).debug(message)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_with_args(writer, colorize):
+def test_colors_with_args(writer, colorize):
     logger.add(writer, format="=> {message} <=", colorize=colorize)
-    logger.opt(ansi=True).debug("the {0}test{end}", "<red>", end="</red>")
+    logger.opt(colors=True).debug("the {0}test{end}", "<red>", end="</red>")
     assert writer.read() == "=> the <red>test</red> <=\n"
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_with_level(writer, colorize):
+def test_colors_with_level(writer, colorize):
     logger.add(writer, format="{message}", colorize=colorize)
     logger.level("DEBUG", color="<green>")
-    logger.opt(ansi=True).debug("a <level>level</level> b")
+    logger.opt(colors=True).debug("a <level>level</level> b")
     assert writer.read() == parse("a <green>level</green> b\n", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_double_message(writer, colorize):
+def test_colors_double_message(writer, colorize):
     logger.add(
         writer, format="<red><b>{message}...</b> - <c>...{message}</c></red>", colorize=colorize
     )
-    logger.opt(ansi=True).debug("<g>foo</g> bar <g>baz</g>")
+    logger.opt(colors=True).debug("<g>foo</g> bar <g>baz</g>")
 
     assert writer.read() == parse(
         "<red><b><g>foo</g> bar <g>baz</g>...</b> - <c>...<g>foo</g> bar <g>baz</g></c></red>\n",
@@ -265,43 +265,43 @@ def test_ansi_double_message(writer, colorize):
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_multiple_calls(writer, colorize):
+def test_colors_multiple_calls(writer, colorize):
     logger.add(writer, format="{message}", colorize=colorize)
-    logger.opt(ansi=True).debug("a <red>foo</red> b")
-    logger.opt(ansi=True).debug("a <red>foo</red> b")
+    logger.opt(colors=True).debug("a <red>foo</red> b")
+    logger.opt(colors=True).debug("a <red>foo</red> b")
     assert writer.read() == parse("a <red>foo</red> b\na <red>foo</red> b\n", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_multiple_calls_level_color_changed(writer, colorize):
+def test_colors_multiple_calls_level_color_changed(writer, colorize):
     logger.add(writer, format="{message}", colorize=colorize)
     logger.level("INFO", color="<blue>")
-    logger.opt(ansi=True).info("a <level>foo</level> b")
+    logger.opt(colors=True).info("a <level>foo</level> b")
     logger.level("INFO", color="<red>")
-    logger.opt(ansi=True).info("a <level>foo</level> b")
+    logger.opt(colors=True).info("a <level>foo</level> b")
     assert writer.read() == parse("a <blue>foo</blue> b\na <red>foo</red> b\n", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_with_dynamic_formatter(writer, colorize):
+def test_colors_with_dynamic_formatter(writer, colorize):
     logger.add(writer, format=lambda r: "<red>{message}</red>", colorize=colorize)
-    logger.opt(ansi=True).debug("<b>a</b> <y>b</y>")
+    logger.opt(colors=True).debug("<b>a</b> <y>b</y>")
     assert writer.read() == parse("<red><b>a</b> <y>b</y></red>", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_with_format_specs(writer, colorize):
+def test_colors_with_format_specs(writer, colorize):
     fmt = "<g>{level.no:03d} {message!s:} {{nope}} {extra[a][b]!r}</g>"
     logger.add(writer, colorize=colorize, format=fmt)
-    logger.bind(a={"b": "c"}).opt(ansi=True).debug("<g>{X}</g>")
+    logger.bind(a={"b": "c"}).opt(colors=True).debug("<g>{X}</g>")
     assert writer.read() == parse("<g>010 <g>{X}</g> {nope} 'c'</g>\n", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_with_message_specs(writer, colorize):
+def test_colors_with_message_specs(writer, colorize):
     logger.add(writer, colorize=colorize, format="<g>{message}</g>")
-    logger.opt(ansi=True).debug("{} <b>A</b> {{nope}} {key:03d} {let!r}", 1, key=10, let="c")
-    logger.opt(ansi=True).debug("<b>{0:0{1}d}</b>", 2, 4)
+    logger.opt(colors=True).debug("{} <b>A</b> {{nope}} {key:03d} {let!r}", 1, key=10, let="c")
+    logger.opt(colors=True).debug("<b>{0:0{1}d}</b>", 2, 4)
     assert writer.read() == parse(
         "<g>1 <b>A</b> {nope} 010 'c'</g>\n<g><b>0002</b></g>\n", strip=not colorize
     )
@@ -310,40 +310,40 @@ def test_ansi_with_message_specs(writer, colorize):
 @pytest.mark.parametrize("colorize", [True, False])
 def test_colored_string_used_as_spec(writer, colorize):
     logger.add(writer, colorize=colorize, format="{level.no:{message}} <red>{message}</red>")
-    logger.opt(ansi=True).log(30, "03d")
+    logger.opt(colors=True).log(30, "03d")
     assert writer.read() == parse("030 <red>03d</red>\n", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
 def test_colored_string_getitem(writer, colorize):
     logger.add(writer, colorize=colorize, format="<red>{message[0]}</red>")
-    logger.opt(ansi=True).info("ABC")
+    logger.opt(colors=True).info("ABC")
     assert writer.read() == parse("<red>A</red>\n", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_without_formatting_args(writer, colorize):
+def test_colors_without_formatting_args(writer, colorize):
     string = "{} This { should } not } raise {"
     logger.add(writer, colorize=colorize, format="{message}")
-    logger.opt(ansi=True).info(string)
+    logger.opt(colors=True).info(string)
     assert writer.read() == string + "\n"
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_ansi_with_recursion_depth_exceeded(writer, colorize):
+def test_colors_with_recursion_depth_exceeded(writer, colorize):
     logger.add(writer, format="{message}", colorize=colorize)
 
     with pytest.raises(ValueError, match=r"Max string recursion exceeded"):
-        logger.opt(ansi=True).info("{foo:{foo:{foo:}}}", foo=123)
+        logger.opt(colors=True).info("{foo:{foo:{foo:}}}", foo=123)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
 @pytest.mark.parametrize("message", ["{} {0}", "{1} {}"])
-def test_ansi_with_invalid_indexing(writer, colorize, message):
+def test_colors_with_invalid_indexing(writer, colorize, message):
     logger.add(writer, format="{message}", colorize=colorize)
 
     with pytest.raises(ValueError, match=r"cannot switch"):
-        logger.opt(ansi=True).debug(message, 1, 2, 3)
+        logger.opt(colors=True).debug(message, 1, 2, 3)
 
 
 def test_raw(writer):
@@ -360,19 +360,19 @@ def test_raw_with_format_function(writer):
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_raw_with_ansi(writer, colorize):
+def test_raw_with_colors(writer, colorize):
     logger.add(writer, format="XYZ", colorize=colorize)
-    logger.opt(raw=True, ansi=True).info("Raw <red>colors</red> and <lvl>level</lvl>")
+    logger.opt(raw=True, colors=True).info("Raw <red>colors</red> and <lvl>level</lvl>")
     assert writer.read() == parse("Raw <red>colors</red> and <b>level</b>", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_args_with_ansi_not_formatted_twice(writer, colorize):
+def test_args_with_colors_not_formatted_twice(writer, colorize):
     logger.add(writer, format="{message}", colorize=colorize)
     a = MagicMock(__format__=MagicMock(return_value="a"))
     b = MagicMock(__format__=MagicMock(return_value="b"))
 
-    logger.opt(ansi=True).info("{} <red>{foo}</red>", a, foo=b)
+    logger.opt(colors=True).info("{} <red>{foo}</red>", a, foo=b)
     assert a.__format__.call_count == 1
     assert b.__format__.call_count == 1
     assert writer.read() == parse("a <red>b</red>\n", strip=not colorize)
@@ -380,11 +380,11 @@ def test_args_with_ansi_not_formatted_twice(writer, colorize):
 
 @pytest.mark.parametrize("dynamic_format", [True, False])
 @pytest.mark.parametrize("colorize", [True, False])
-@pytest.mark.parametrize("ansi", [True, False])
+@pytest.mark.parametrize("colors", [True, False])
 @pytest.mark.parametrize("raw", [True, False])
 @pytest.mark.parametrize("use_log", [True, False])
 @pytest.mark.parametrize("use_arg", [True, False])
-def test_all_ansi_combinations(writer, dynamic_format, colorize, ansi, raw, use_log, use_arg):
+def test_all_colors_combinations(writer, dynamic_format, colorize, colors, raw, use_log, use_arg):
     format_ = "<level>{level.no}</level> <red>{message}</red>"
     message = "<green>The</green> <lvl>{}</lvl>"
     arg = "message"
@@ -394,7 +394,7 @@ def test_all_ansi_combinations(writer, dynamic_format, colorize, ansi, raw, use_
 
     logger.add(writer, format=formatter if dynamic_format else format_, colorize=colorize)
 
-    logger_ = logger.opt(ansi=ansi, raw=raw)
+    logger_ = logger.opt(colors=colors, raw=raw)
 
     if use_log:
         if use_arg:
@@ -409,12 +409,12 @@ def test_all_ansi_combinations(writer, dynamic_format, colorize, ansi, raw, use_
 
     if use_log:
         if raw:
-            if ansi:
+            if colors:
                 expected = parse("<green>The</green> <level>message</level>", strip=not colorize)
             else:
                 expected = "<green>The</green> <lvl>message</lvl>"
         else:
-            if ansi:
+            if colors:
                 expected = parse(
                     "<level>20</level> <red><green>The</green> <level>message</level></red>\n",
                     strip=not colorize,
@@ -427,12 +427,12 @@ def test_all_ansi_combinations(writer, dynamic_format, colorize, ansi, raw, use_
 
     else:
         if raw:
-            if ansi:
+            if colors:
                 expected = parse("<green>The</green> <b>message</b>", strip=not colorize)
             else:
                 expected = "<green>The</green> <lvl>message</lvl>"
         else:
-            if ansi:
+            if colors:
                 expected = parse(
                     "<b>20</b> <red><green>The</green> <b>message</b></red>\n", strip=not colorize
                 )
@@ -467,3 +467,10 @@ def test_before_bind(writer):
     logger.add(writer, format="{message}")
     logger.opt(record=True).bind(key="value").info("{record[level]}")
     assert writer.read() == "INFO\n"
+
+
+def test_deprecated_ansi_argument(writer):
+    logger.add(writer, format="{message}", colorize=True)
+    with pytest.warns(DeprecationWarning):
+        logger.opt(ansi=True).info("Foo <red>bar</red> baz")
+    assert writer.read() == parse("Foo <red>bar</red> baz\n")
