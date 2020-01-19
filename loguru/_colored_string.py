@@ -172,7 +172,15 @@ class AnsiParser:
     def __init__(self):
         self._tokens = []
         self._tags = []
-        self._tokens_tags = []
+        self._color_tokens = []
+
+    @staticmethod
+    def strip(tokens):
+        output = ""
+        for type_, value in tokens:
+            if type_ == TokenType.TEXT:
+                output += value
+        return output
 
     @staticmethod
     def colorize(tokens, ansi_level):
@@ -187,14 +195,23 @@ class AnsiParser:
                     )
                 value = ansi_level
             output += value
+
         return output
 
     @staticmethod
-    def strip(tokens):
+    def wrap(tokens, *, ansi_level, color_tokens):
         output = ""
+
         for type_, value in tokens:
-            if type_ == TokenType.TEXT:
-                output += value
+            if type_ == TokenType.LEVEL:
+                value = ansi_level
+            output += value
+            if type_ == TokenType.CLOSING:
+                for subtype, subvalue in color_tokens:
+                    if subtype == TokenType.LEVEL:
+                        subvalue = ansi_level
+                    output += subvalue
+
         return output
 
     def feed(self, text, *, raw=False):
@@ -218,9 +235,9 @@ class AnsiParser:
             if markup[1] == "/":
                 if self._tags and (tag == "" or tag == self._tags[-1]):
                     self._tags.pop()
-                    self._tokens_tags.pop()
+                    self._color_tokens.pop()
                     self._tokens.append((TokenType.CLOSING, "\033[0m"))
-                    self._tokens.extend(self._tokens_tags)
+                    self._tokens.extend(self._color_tokens)
                     continue
                 elif tag in self._tags:
                     raise ValueError('Closing tag "%s" violates nesting rules' % markup)
@@ -242,26 +259,19 @@ class AnsiParser:
                 token = (TokenType.ANSI, ansi)
 
             self._tags.append(tag)
-            self._tokens_tags.append(token)
+            self._color_tokens.append(token)
             self._tokens.append(token)
 
         self._tokens.append((TokenType.TEXT, text[position:]))
-
-    def wrap(self, tokens, ansi_level):
-        wrapped = []
-        for token in tokens:
-            type_, _ = token
-            wrapped.append(token)
-            if type_ == TokenType.CLOSING:
-                wrapped.extend(self._tokens_tags)
-
-        return AnsiParser.colorize(wrapped, ansi_level)
 
     def done(self, *, strict=True):
         if strict and self._tags:
             faulty_tag = self._tags.pop(0)
             raise ValueError('Opening tag "<%s>" has no corresponding closing tag' % faulty_tag)
         return self._tokens
+
+    def current_color_tokens(self):
+        return list(self._color_tokens)
 
     def _get_ansicode(self, tag):
         style = self._style
@@ -301,10 +311,17 @@ class AnsiParser:
         return None
 
 
+class ColoringMessage(str):
+    __fields__ = ("_messages",)
+
+    def __format__(self, spec):
+        return next(self._messages).__format__(spec)
+
+
 class ColoredString:
-    def __init__(self, string, tokens):
-        self.string = string
+    def __init__(self, tokens, *, messages_color_tokens=None):
         self.tokens = tokens
+        self._messages_color_tokens = messages_color_tokens
 
     def colorize(self, ansi_level):
         return AnsiParser.colorize(self.tokens, ansi_level)
@@ -312,22 +329,35 @@ class ColoredString:
     def strip(self):
         return AnsiParser.strip(self.tokens)
 
+    def make_coloring_message(self, message, *, ansi_level, colored_message):
+        messages = [
+            message
+            if color_tokens is None
+            else AnsiParser.wrap(
+                colored_message.tokens, ansi_level=ansi_level, color_tokens=color_tokens
+            )
+            for color_tokens in self._messages_color_tokens
+        ]
+        coloring = ColoringMessage(message)
+        coloring._messages = iter(messages)
+        return coloring
+
     @classmethod
     def prepare_format(cls, string):
-        tokens = ColoredString._parse_without_formatting(string)
-        return cls(string, tokens)
+        tokens, messages_color_tokens = ColoredString._parse_without_formatting(string)
+        return cls(tokens, messages_color_tokens=messages_color_tokens)
 
     @classmethod
     def prepare_message(cls, string, args=(), kwargs={}):
         tokens = ColoredString._parse_with_formatting(string, args, kwargs)
-        return cls(string, tokens)
+        return cls(tokens)
 
     @classmethod
     def prepare_simple_message(cls, string):
         parser = AnsiParser()
         parser.feed(string)
         tokens = parser.done()
-        return cls(string, tokens)
+        return cls(tokens)
 
     @staticmethod
     def ansify(text):
@@ -337,23 +367,8 @@ class ColoredString:
         return AnsiParser.colorize(tokens, None)
 
     @staticmethod
-    def format_with_colored_message(string, kwargs, *, ansi_level, colored_message):
-        tokens = ColoredString._parse_with_formatting(
-            string, (), kwargs, ansi_level=ansi_level, colored_message=colored_message
-        )
-        return AnsiParser.colorize(tokens, ansi_level)
-
-    @staticmethod
     def _parse_with_formatting(
-        string,
-        args,
-        kwargs,
-        *,
-        recursion_depth=2,
-        auto_arg_index=0,
-        recursive=False,
-        ansi_level=None,
-        colored_message=None
+        string, args, kwargs, *, recursion_depth=2, auto_arg_index=0, recursive=False
     ):
         # This function re-implement Formatter._vformat()
 
@@ -386,12 +401,6 @@ class ColoredString:
                     auto_arg_index = False
 
                 obj, _ = formatter.get_field(field_name, args, kwargs)
-
-                # Will not match "message.attr" / "message[0]": in this case, the record["message"]
-                # which contains the striped message will be used and no coloration is needed
-                if field_name == "message" and not recursive and colored_message:
-                    obj = parser.wrap(colored_message.tokens, ansi_level)
-
                 obj = formatter.convert_field(obj, conversion)
 
                 format_spec, auto_arg_index = ColoredString._parse_with_formatting(
@@ -414,17 +423,28 @@ class ColoredString:
         return tokens
 
     @staticmethod
-    def _parse_without_formatting(string):
+    def _parse_without_formatting(string, *, recursion_depth=2, recursive=False):
+        if recursion_depth < 0:
+            raise ValueError("Max string recursion exceeded")
+
         formatter = Formatter()
         parser = AnsiParser()
+
+        messages_color_tokens = []
 
         for literal_text, field_name, format_spec, conversion in formatter.parse(string):
             if literal_text and literal_text[-1] in "{}":
                 literal_text += literal_text[-1]
 
-            parser.feed(literal_text)
+            parser.feed(literal_text, raw=recursive)
 
             if field_name is not None:
+                if field_name == "message":
+                    if recursive:
+                        messages_color_tokens.append(None)
+                    else:
+                        color_tokens = parser.current_color_tokens()
+                        messages_color_tokens.append(color_tokens)
                 field = "{%s" % field_name
                 if conversion:
                     field += "!%s" % conversion
@@ -433,4 +453,9 @@ class ColoredString:
                 field += "}"
                 parser.feed(field, raw=True)
 
-        return parser.done()
+                _, color_tokens = ColoredString._parse_without_formatting(
+                    format_spec, recursion_depth=recursion_depth - 1, recursive=True
+                )
+                messages_color_tokens.extend(color_tokens)
+
+        return parser.done(), messages_color_tokens

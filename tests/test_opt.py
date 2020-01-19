@@ -291,10 +291,10 @@ def test_colors_with_dynamic_formatter(writer, colorize):
 
 @pytest.mark.parametrize("colorize", [True, False])
 def test_colors_with_format_specs(writer, colorize):
-    fmt = "<g>{level.no:03d} {message!s:} {{nope}} {extra[a][b]!r}</g>"
+    fmt = "<g>{level.no:03d} {message:} {message!s:} {{nope}} {extra[a][b]!r}</g>"
     logger.add(writer, colorize=colorize, format=fmt)
     logger.bind(a={"b": "c"}).opt(colors=True).debug("<g>{X}</g>")
-    assert writer.read() == parse("<g>010 <g>{X}</g> {nope} 'c'</g>\n", strip=not colorize)
+    assert writer.read() == parse("<g>010 <g>{X}</g> {X} {nope} 'c'</g>\n", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
@@ -330,11 +330,31 @@ def test_colors_without_formatting_args(writer, colorize):
 
 
 @pytest.mark.parametrize("colorize", [True, False])
-def test_colors_with_recursion_depth_exceeded(writer, colorize):
+def test_colors_with_recursion_depth_exceeded_in_format(writer, colorize):
+    with pytest.raises(ValueError, match=r"Invalid format"):
+        logger.add(writer, format="{message:{message:{message:}}}", colorize=colorize)
+
+
+@pytest.mark.parametrize("colorize", [True, False])
+def test_colors_with_recursion_depth_exceeded_in_message(writer, colorize):
     logger.add(writer, format="{message}", colorize=colorize)
 
     with pytest.raises(ValueError, match=r"Max string recursion exceeded"):
         logger.opt(colors=True).info("{foo:{foo:{foo:}}}", foo=123)
+
+
+@pytest.mark.parametrize("colorize", [True, False])
+def test_colors_with_auto_indexing(writer, colorize):
+    logger.add(writer, format="{message}", colorize=colorize)
+    logger.opt(colors=True).info("<red>{}</red> <green>{}</green>", "foo", "bar")
+    assert writer.read() == parse("<red>foo</red> <green>bar</green>\n", strip=not colorize)
+
+
+@pytest.mark.parametrize("colorize", [True, False])
+def test_colors_with_manual_indexing(writer, colorize):
+    logger.add(writer, format="{message}", colorize=colorize)
+    logger.opt(colors=True).info("<red>{1}</red> <green>{0}</green>", "foo", "bar")
+    assert writer.read() == parse("<red>bar</red> <green>foo</green>\n", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
@@ -366,16 +386,31 @@ def test_raw_with_colors(writer, colorize):
     assert writer.read() == parse("Raw <red>colors</red> and <b>level</b>", strip=not colorize)
 
 
-@pytest.mark.parametrize("colorize", [True, False])
-def test_args_with_colors_not_formatted_twice(writer, colorize):
-    logger.add(writer, format="{message}", colorize=colorize)
+def test_args_with_colors_not_formatted_twice(capsys):
+    logger.add(sys.stdout, format="{message}", colorize=True)
+    logger.add(sys.stderr, format="{message}", colorize=False)
     a = MagicMock(__format__=MagicMock(return_value="a"))
     b = MagicMock(__format__=MagicMock(return_value="b"))
 
     logger.opt(colors=True).info("{} <red>{foo}</red>", a, foo=b)
+    out, err = capsys.readouterr()
+    assert out == parse("a <red>b</red>\n")
+    assert err == "a b\n"
     assert a.__format__.call_count == 1
     assert b.__format__.call_count == 1
-    assert writer.read() == parse("a <red>b</red>\n", strip=not colorize)
+
+
+@pytest.mark.parametrize("colorize", [True, False])
+def test_level_tag_wrapping_with_colors(writer, colorize):
+    logger.add(writer, format="<level>FOO {message} BAR</level>", colorize=colorize)
+    logger.opt(colors=True).info("> foo <red>{}</> bar <lvl>{}</> baz <green>{}</green> <", 1, 2, 3)
+    logger.opt(colors=True).log(33, "<lvl> {} <red>{}</red> {} </lvl>", 1, 2, 3)
+
+    assert writer.read() == parse(
+        "<b>FOO > foo <red>1</red> bar <b>2</b> baz <green>3</green> < BAR</b>\n"
+        "<level>FOO <level> 1 <red>2</red> 3 </level> BAR</level>\n",
+        strip=not colorize,
+    )
 
 
 @pytest.mark.parametrize("dynamic_format", [True, False])
@@ -385,7 +420,7 @@ def test_args_with_colors_not_formatted_twice(writer, colorize):
 @pytest.mark.parametrize("use_log", [True, False])
 @pytest.mark.parametrize("use_arg", [True, False])
 def test_all_colors_combinations(writer, dynamic_format, colorize, colors, raw, use_log, use_arg):
-    format_ = "<level>{level.no}</level> <red>{message}</red>"
+    format_ = "<level>{level.no:03}</level> <red>{message}</red>"
     message = "<green>The</green> <lvl>{}</lvl>"
     arg = "message"
 
@@ -416,12 +451,12 @@ def test_all_colors_combinations(writer, dynamic_format, colorize, colors, raw, 
         else:
             if colors:
                 expected = parse(
-                    "<level>20</level> <red><green>The</green> <level>message</level></red>\n",
+                    "<level>020</level> <red><green>The</green> <level>message</level></red>\n",
                     strip=not colorize,
                 )
             else:
                 expected = (
-                    parse("<level>20</level> <red>%s</red>\n", strip=not colorize)
+                    parse("<level>020</level> <red>%s</red>\n", strip=not colorize)
                     % "<green>The</green> <lvl>message</lvl>"
                 )
 
@@ -434,17 +469,14 @@ def test_all_colors_combinations(writer, dynamic_format, colorize, colors, raw, 
         else:
             if colors:
                 expected = parse(
-                    "<b>20</b> <red><green>The</green> <b>message</b></red>\n", strip=not colorize
+                    "<b>020</b> <red><green>The</green> <b>message</b></red>\n", strip=not colorize
                 )
             else:
                 expected = (
-                    parse("<b>20</b> <red>%s</red>\n", strip=not colorize)
+                    parse("<b>020</b> <red>%s</red>\n", strip=not colorize)
                     % "<green>The</green> <lvl>message</lvl>"
                 )
 
-    output = writer.read()
-    print(output.encode("utf8"))
-    print(expected.encode("utf8"))
     assert writer.read() == expected
 
 

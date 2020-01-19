@@ -11,7 +11,7 @@ from ._colored_string import ColoredString
 
 def prepare_colored_format(format_, ansi_level):
     colored = ColoredString.prepare_format(format_)
-    return colored.colorize(ansi_level)
+    return colored, colored.colorize(ansi_level)
 
 
 def prepare_stripped_format(format_):
@@ -128,16 +128,19 @@ class Handler:
                     formatted = precomputed_format.format_map(formatter_record)
                 elif colored_message is None:
                     ansi_level = self._levels_ansi_codes[level_id]
-                    precomputed_format = self._memoize_dynamic_format(dynamic_format, ansi_level)
+                    _, precomputed_format = self._memoize_dynamic_format(dynamic_format, ansi_level)
                     formatted = precomputed_format.format_map(formatter_record)
                 else:
                     ansi_level = self._levels_ansi_codes[level_id]
-                    formatted = ColoredString.format_with_colored_message(
-                        dynamic_format,
-                        formatter_record,
-                        ansi_level=ansi_level,
-                        colored_message=colored_message,
+                    formatter, precomputed_format = self._memoize_dynamic_format(
+                        dynamic_format, ansi_level
                     )
+                    coloring_message = formatter.make_coloring_message(
+                        record["message"], ansi_level=ansi_level, colored_message=colored_message
+                    )
+                    formatter_record["message"] = coloring_message
+                    formatted = precomputed_format.format_map(formatter_record)
+
             else:
                 if not self._colorize:
                     precomputed_format = self._decolorized_format
@@ -148,12 +151,12 @@ class Handler:
                     formatted = precomputed_format.format_map(formatter_record)
                 else:
                     ansi_level = self._levels_ansi_codes[level_id]
-                    formatted = ColoredString.format_with_colored_message(
-                        self._formatter.string,
-                        formatter_record,
-                        ansi_level=ansi_level,
-                        colored_message=colored_message,
+                    precomputed_format = self._precolorized_formats[level_id]
+                    coloring_message = self._formatter.make_coloring_message(
+                        record["message"], ansi_level=ansi_level, colored_message=colored_message
                     )
+                    formatter_record["message"] = coloring_message
+                    formatted = precomputed_format.format_map(formatter_record)
 
             if self._serialize:
                 formatted = self._serialize_record(formatted, record)
