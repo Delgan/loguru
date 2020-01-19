@@ -149,6 +149,7 @@ def test_manage_formatted_files(monkeypatch_date, tmpdir):
     assert f3.check(exists=0)
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support '*' in filename")
 def test_date_with_dot_after_extension(monkeypatch_date, tmpdir):
     file = tmpdir.join("file.{time:YYYY.MM}_log")
 
@@ -158,6 +159,7 @@ def test_date_with_dot_after_extension(monkeypatch_date, tmpdir):
     assert file.check(exists=0)
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support '*' in filename")
 def test_symbol_in_filename(tmpdir):
     file = tmpdir.join("file123.log")
     file.write("")
