@@ -1,5 +1,5 @@
-`Unreleased`_
-=============
+`0.4.1`_ (2020-01-19)
+=====================
 
 - Deprecate the ``ansi`` parameter of ``.opt()`` in favor of ``colors`` which is a name more appropriate.
 - Prevent unrelated files and directories to be incorrectly collected thus causing errors during the `retention` process (`#195 <https://github.com/Delgan/loguru/issues/195>`_, thanks `@gazpachoking <https://github.com/gazpachoking>`_).
@@ -131,7 +131,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.4.0...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.4.1...master
+.. _0.4.1: https://github.com/delgan/loguru/releases/tag/0.4.1
 .. _0.4.0: https://github.com/delgan/loguru/releases/tag/0.4.0
 .. _0.3.2: https://github.com/delgan/loguru/releases/tag/0.3.2
 .. _0.3.1: https://github.com/delgan/loguru/releases/tag/0.3.1
