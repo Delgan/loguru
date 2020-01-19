@@ -4,7 +4,6 @@ from datetime import datetime as datetime_
 from datetime import timedelta, timezone
 from time import localtime, strftime
 
-
 tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S{1,6}|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|X|x|E|Q|dddd|ddd|d"
 
 pattern = re.compile(r"(?:{0})|\[(?:{0}|!UTC)\]".format(tokens))

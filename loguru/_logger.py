@@ -87,17 +87,15 @@ from multiprocessing import current_process
 from os.path import basename, splitext
 from threading import current_thread
 
-from . import _colorama
-from . import _defaults
-from . import _filters
-from ._colored_string import ColoredString
+from . import _colorama, _defaults, _filters
 from ._better_exceptions import ExceptionFormatter
+from ._colored_string import ColoredString
 from ._datetime import aware_now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
 from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
-from ._simple_sinks import StreamSink, StandardSink, CallableSink, AsyncSink
+from ._simple_sinks import AsyncSink, CallableSink, StandardSink, StreamSink
 
 if sys.version_info >= (3, 6):
     from os import PathLike
