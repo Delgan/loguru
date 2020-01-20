@@ -95,7 +95,7 @@ from ._better_exceptions import ExceptionFormatter
 from ._datetime import aware_now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
-from ._handler import Handler
+from ._handler import Handler, JSONHandler
 from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
 from ._simple_sinks import StreamSink, StandardSink, CallableSink, AsyncSink
 
@@ -805,7 +805,10 @@ class Logger:
             exception_prefix = ""
         else:
             raise TypeError("Cannot log to objects of type '%s'" % type(sink).__name__)
+        type_ = kwargs.pop('type', ' ')
+        _hand = JSONHandler if type_ == 'json' else Handler
 
+        json_ensure_ascii = kwargs.pop('json_ensure_ascii', True)
         if kwargs:
             raise TypeError("add() got an unexpected keyword argument '%s'" % next(iter(kwargs)))
 
@@ -922,7 +925,7 @@ class Logger:
                 prefix=exception_prefix,
             )
 
-            handler = Handler(
+            handler = _hand(
                 name=name,
                 sink=wrapped_sink,
                 levelno=levelno,
@@ -1824,6 +1827,8 @@ class Logger:
             "thread": RecordThread(thread.ident, thread.name),
             "time": current_datetime,
         }
+        if kwargs.get('extra_dict'):
+            log_record['extra_dict'] = kwargs['extra_dict']
 
         if lazy:
             args = [arg() for arg in args]
