@@ -375,7 +375,7 @@ class JSONHandler(Handler):
             if self._filter is not None:
                 if not self._filter(record):
                     return
-            self.requiry_key = [k for k in self.requiry_key if k in record.keys()]
+            self.requiry_key = [k for k in self.requiry_key if k in record.keys() and k != 'extra_dict']
             tmp_dict = {k: record[k] for k in self.requiry_key}
             if 'time' in tmp_dict:
                 tmp_dict['time'] = tmp_dict['time'].strftime('%Y-%m-%d %H:%M:%S.%f')
