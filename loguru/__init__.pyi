@@ -19,13 +19,15 @@
 Loguru relies on a `stub file`_ to document its types. This implies that these types are not
 accessible during execution of your program, however they can be used by type checkers and IDE.
 Also, this means that your Python interpreter has to support `postponed evaluation of annotations`_
-to prevent error at runtime. This is achieved with a |future|_ import in Python 3.7 or by using
+to prevent error at runtime. This is achieved with a |future|_ import in Python 3.7+ or by using
 `string literals`_ for earlier versions.
 
 A basic usage example could look like this:
 
 .. code-block:: python
 
+    from __future__ import annotations
+    
     import loguru
     from loguru import logger
 
