@@ -735,7 +735,7 @@ class Logger:
         """
         if colorize is None and serialize:
             colorize = False
-
+        type_ = kwargs.pop('type', ' ')
         if isinstance(sink, (str, PathLike)):
             path = sink
             name = "'%s'" % path
@@ -805,7 +805,7 @@ class Logger:
             exception_prefix = ""
         else:
             raise TypeError("Cannot log to objects of type '%s'" % type(sink).__name__)
-        type_ = kwargs.pop('type', ' ')
+
         _hand = JSONHandler if type_ == 'json' else Handler
 
         json_ensure_ascii = kwargs.pop('json_ensure_ascii', True)
