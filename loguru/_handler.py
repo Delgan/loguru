@@ -386,7 +386,8 @@ class JSONHandler(Handler):
                     tmp_dict[k] = v
             if not tmp_dict.get('exception'):
                 tmp_dict.pop('exception')
-            str_record = json.dumps(tmp_dict, ensure_ascii=False) + '\n'
+            str_record = Message(json.dumps(tmp_dict, ensure_ascii=False) + '\n')
+            str_record.record = record
 
             with self._lock:
                 if self._stopped:
