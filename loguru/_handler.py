@@ -384,8 +384,11 @@ class JSONHandler(Handler):
             if record.get('extra_dict'):
                 for k, v in record['extra_dict'].items():
                     tmp_dict[k] = v
-            if not tmp_dict.get('exception'):
+            if not tmp_dict.get('exception') or not tmp_dict['exception'].value:
                 tmp_dict.pop('exception')
+            else:
+                tmp_dict['exception'] = traceback.format_exc()
+
             str_record = Message(json.dumps(tmp_dict, ensure_ascii=False) + '\n')
             str_record.record = record
 
