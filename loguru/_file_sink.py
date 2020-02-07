@@ -8,6 +8,7 @@ import re
 import shutil
 import string
 from functools import partial
+import time
 
 from . import _string_parsers as string_parsers
 from ._ctime_functions import get_ctime, set_ctime
@@ -172,9 +173,12 @@ class FileSink:
             self._initialize_file(rename_existing=False)
 
         if self._rotation_function is not None and self._rotation_function(message, self._file):
-            self._terminate(teardown=True)
-            self._initialize_file(rename_existing=True)
-            set_ctime(self._file_path, datetime.now().timestamp())
+            mtime = os.stat(self._file_path)
+            file_time = time.strftime('%H:%M:%S', time.localtime(mtime.st_mtime))
+            if (hasattr(self._rotation_function, '_limit') and self._rotation_function._limit.strftime('%H:%M:%S') > file_time ) or not hasattr(self._rotation_function, '_limit'):
+                self._terminate(teardown=True)
+                self._initialize_file(rename_existing=True)
+                set_ctime(self._file_path, datetime.now().timestamp())
 
         self._file.write(message)
 
