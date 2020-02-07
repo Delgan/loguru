@@ -735,6 +735,7 @@ class Logger:
         """
         if colorize is None and serialize:
             colorize = False
+
         if isinstance(sink, (str, PathLike)):
             path = sink
             name = "'%s'" % path
@@ -804,7 +805,6 @@ class Logger:
             exception_prefix = ""
         else:
             raise TypeError("Cannot log to objects of type '%s'" % type(sink).__name__)
-
 
         if kwargs:
             raise TypeError("add() got an unexpected keyword argument '%s'" % next(iter(kwargs)))
