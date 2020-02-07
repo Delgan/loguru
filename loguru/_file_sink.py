@@ -173,14 +173,24 @@ class FileSink:
             self._initialize_file(rename_existing=False)
 
         if self._rotation_function is not None and self._rotation_function(message, self._file):
-            mtime = os.stat(self._file_path)
-            file_time = time.strftime('%H:%M:%S', time.localtime(mtime.st_mtime))
-            if (hasattr(self._rotation_function, '_limit') and self._rotation_function._limit.strftime('%H:%M:%S') > file_time ) or not hasattr(self._rotation_function, '_limit'):
+            if self._limit_time_size():
                 self._terminate(teardown=True)
                 self._initialize_file(rename_existing=True)
                 set_ctime(self._file_path, datetime.now().timestamp())
+            else:
+                self._file = open(self._file_path, **self._kwargs)
 
         self._file.write(message)
+
+    def _limit_time_size(self):
+        file_stat = os.stat(self._file_path)
+        if hasattr(self._rotation_function, '_limit'):
+            file_time = time.strftime('%H:%M:%S', time.localtime(file_stat.st_mtime))
+            return self._rotation_function._limit.strftime('%H:%M:%S') > file_time
+        elif hasattr(self._rotation_function, 'keywords'):
+            file_size = file_stat.st_size
+            return self._rotation_function.keywords.size_limit > file_size
+        return True
 
     def _initialize_file(self, *, rename_existing):
         new_path = self._path.format_map({"time": FileDateFormatter()})
