@@ -189,7 +189,7 @@ class FileSink:
             return self._rotation_function._limit.strftime('%H:%M:%S') > file_time
         elif hasattr(self._rotation_function, 'keywords'):
             file_size = file_stat.st_size
-            return self._rotation_function.keywords.size_limit > file_size
+            return self._rotation_function.keywords['size_limit'] < file_size
         return True
 
     def _initialize_file(self, *, rename_existing):
