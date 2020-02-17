@@ -701,7 +701,7 @@ class Logger:
 
         >>> def my_sink(message):
         ...     record = message.record
-        ...     update_db(message, time=record.time, level=record.level)
+        ...     update_db(message, time=record["time"], level=record["level"])
         ...
         >>> logger.add(my_sink)
 
