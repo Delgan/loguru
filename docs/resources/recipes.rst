@@ -468,7 +468,7 @@ Trying to use the Loguru's ``logger`` during an iteration wrapped by the ``tqdm`
     from tqdm import tqdm
 
     logger.remove()
-    logger.add(tqdm.write, end="")
+    logger.add(lambda msg: tqdm.write(msg, end=""))
 
     logger.info("Initializing")
 
