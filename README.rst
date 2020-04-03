@@ -325,7 +325,7 @@ Sometime you would like to log verbose information without performance penalty i
     logger.opt(lazy=True).debug("If sink level <= DEBUG: {x}", x=lambda: expensive_function(2**64))
 
     # By the way, "opt()" serves many usages
-    logger.opt(exception=True).info("Error stacktrace added to the log message")
+    logger.opt(exception=True).info("Error stacktrace added to the log message (tuple accepted too)")
     logger.opt(colors=True).info("Per message <blue>colors</blue>")
     logger.opt(record=True).info("Display values from the record (eg. {record[thread]})")
     logger.opt(raw=True).info("Bypass sink formatting\n")
