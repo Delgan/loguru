@@ -14,6 +14,7 @@ Code snippets and recipes for ``loguru``
 .. |copy.deepcopy| replace:: :func:`copy.deepcopy`
 .. |os.fork| replace:: :func:`os.fork`
 .. |multiprocessing| replace:: :mod:`multiprocessing`
+.. |traceback| replace:: :mod:`traceback`
 .. |Pool| replace:: :class:`~multiprocessing.pool.Pool`
 .. |Pool.map| replace:: :meth:`~multiprocessing.pool.Pool.map`
 .. |Pool.apply| replace:: :meth:`~multiprocessing.pool.Pool.apply`
@@ -398,6 +399,51 @@ It is possible to further personalize the formatting of exception by adding an h
         ..................................................
 
     ZeroDivisionError: division by zero
+
+
+Displaying a stacktrace without using the error context
+-------------------------------------------------------
+
+It may be useful in some cases to display the traceback at the time your message is logged, while no exceptions have been raised. Although this feature is not built-in into Loguru as it is more related to debugging than logging, it is possible to |patch| your logger and then display the stacktrace as needed (using the |traceback| module)::
+
+    import traceback
+
+    def add_traceback(record):
+        extra = record["extra"]
+        if extra.get("with_traceback", False):
+            extra["traceback"] = "\n" + "".join(traceback.format_stack())
+        else:
+            extra["traceback"] = ""
+
+    logger = logger.patch(add_traceback)
+    logger.add(sys.stderr, format="{time} - {message}{extra[traceback]}")
+
+    logger.info("No traceback")
+    logger.bind(with_traceback=True).info("With traceback")
+
+Here is another example that demonstrates how to prefix the logged message with the full call stack::
+
+    import traceback
+    from itertools import takewhile
+
+    def tracing_formatter(record):
+        # Filter out frames coming from Loguru internals
+        frames = takewhile(lambda f: "/loguru/" not in f.filename, traceback.extract_stack())
+        stack = " > ".join("{}:{}:{}".format(f.filename, f.name, f.lineno) for f in frames)
+        record["extra"]["stack"] = stack
+        return "{level} | {extra[stack]} - {message}\n{exception}"
+
+    def foo():
+        logger.info("Deep call")
+
+    def bar():
+        foo()
+
+    logger.remove()
+    logger.add(sys.stderr, format=tracing_formatter)
+
+    bar()
+    # Output: "INFO | script.py:<module>:23 > script.py:bar:18 > script.py:foo:15 - Deep call"
 
 
 Manipulating newline terminator to write multiple logs on the same line
