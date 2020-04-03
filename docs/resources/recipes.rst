@@ -400,6 +400,34 @@ It is possible to further personalize the formatting of exception by adding an h
     ZeroDivisionError: division by zero
 
 
+Manipulating newline terminator to write multiple logs on the same line
+-----------------------------------------------------------------------
+
+You can temporarily log a message on a continuous line by combining the use of |bind|, |opt| and a custom ``format`` function. This is especially useful if you want to illustrate a step-by-step process in progress, for example::
+
+    def formatter(record):
+        end = record["extra"].get("end", "\n")
+        return "[{time}] {message}" + end + "{exception}"
+
+    logger.add(sys.stderr, format=formatter)
+    logger.add("foo.log", mode="w")
+
+    logger.bind(end="").debug("Progress: ")
+
+    for _ in range(5):
+        logger.opt(raw=True).debug(".")
+
+    logger.opt(raw=True).debug("\n")
+
+    logger.info("Done")
+
+.. code-block:: none
+
+    [2020-03-26T22:47:01.708016+0100] Progress: .....
+    [2020-03-26T22:47:01.709031+0100] Done
+
+Note, however, that you may encounter difficulties depending on the sinks you use. Logging is not always appropriate for this type of end-user message.
+
 
 Capturing standard ``stdout``, ``stderr`` and ``warnings``
 ----------------------------------------------------------
