@@ -620,7 +620,12 @@ class Logger:
         possible misuse. If you wish to display a markup tag literally, you can escape it by
         prepending a ``\`` like for example ``\<blue>``. If, for some reason, you need to escape a
         string programmatically, note that the regex used internally to parse markup tags is
-        ``r"\\?</?((?:[fb]g\s)?[^<>\s]*)>"``.
+        ``r"\\?</?((?:[fb]g\s)?[^<>\s]*)>"``.'
+
+        Note that when logging a message with ``opt(colors=True)``, color tags present in the
+        formatting arguments (``args`` and ``kwargs``) are completely ignored. This is important if
+        you need to log strings containing markups that might interfere with the color tags (in this
+        case, do not use f-string).
 
         Here are the available tags (note that compatibility may vary depending on terminal):
 
