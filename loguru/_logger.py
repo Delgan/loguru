@@ -583,8 +583,8 @@ class Logger:
           happen now, ``False`` otherwise.
 
         The ``retention`` occurs at rotation or at sink stop if rotation is ``None``. Files are
-        selected according to their basename, if it is the same that the sink file, with possible
-        time field being replaced with ``.*``. This parameter accepts:
+        selected if they match the pattern ``"basename(.*).ext(.*)"`` (possible time fields are
+        beforehand replaced with ``.*``) based on the sink file. This parameter accepts:
 
         - an |int| which indicates the number of log files to keep, while older files are removed.
         - a |timedelta| which specifies the maximum age of files to keep.
@@ -620,7 +620,7 @@ class Logger:
         possible misuse. If you wish to display a markup tag literally, you can escape it by
         prepending a ``\`` like for example ``\<blue>``. If, for some reason, you need to escape a
         string programmatically, note that the regex used internally to parse markup tags is
-        ``r"\\?</?((?:[fb]g\s)?[^<>\s]*)>"``.'
+        ``r"\\?</?((?:[fb]g\s)?[^<>\s]*)>"``.
 
         Note that when logging a message with ``opt(colors=True)``, color tags present in the
         formatting arguments (``args`` and ``kwargs``) are completely ignored. This is important if

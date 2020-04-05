@@ -63,7 +63,7 @@ def test_retention_function(tmpdir):
 
 
 def test_managed_files(tmpdir):
-    others = [
+    others = {
         "test.log",
         "test.log.1",
         "test.log.1.gz",
@@ -73,7 +73,13 @@ def test_managed_files(tmpdir):
         "test.2019-11-12_03-22-07_018985.log.tar.gz",
         "test.2019-11-12_03-22-07_018985.2.log",
         "test.2019-11-12_03-22-07_018985.2.log.tar.gz",
-    ]
+        "test.foo.log",
+        "test.123.log",
+        "test.2019-11-12_03-22-07_018985.abc.log",
+        "test.2019-11-12_03-22-07_018985.123.abc.log",
+        "test.foo.log.bar",
+        "test.log.log",
+    }
 
     for other in others:
         tmpdir.join(other).write(other)
@@ -92,14 +98,14 @@ def test_not_managed_files(tmpdir):
         "te.st.log",
         "testlog",
         "test",
+        "test.",
         "test.tar.gz",
         "test.logs",
         "test.foo",
+        "test.foo.logs",
+        "tests.logs.zip",
         "foo.test.log",
-        "test.foo.log",
-        "test.123.log",
-        "test.2019-11-12_03-22-07_018985.abc.log",
-        "test.2019-11-12_03-22-07_018985.123.abc.log",
+        "foo.test.log.zip",
     }
 
     for other in others:
@@ -109,6 +115,36 @@ def test_not_managed_files(tmpdir):
     logger.remove(i)
 
     assert set(f.basename for f in tmpdir.listdir()) == others
+
+
+@pytest.mark.parametrize("filename", ["test", "test.log"])
+def test_no_duplicates_in_listed_files(tmpdir, filename):
+    matching_files = None
+    others = [
+        "test.log",
+        "test.log.log",
+        "test.log.log.log",
+        "test",
+        "test..",
+        "test.log..",
+        "test..log",
+        "test...log",
+        "test.log..",
+        "test.log.a.log.b",
+    ]
+
+    def retention(files):
+        nonlocal matching_files
+        matching_files = files
+
+    for other in others:
+        tmpdir.join(other).write(other)
+
+    i = logger.add(str(tmpdir.join(filename)), retention=retention, catch=False)
+    logger.remove(i)
+
+    assert matching_files is not None
+    assert len(matching_files) == len(set(matching_files))
 
 
 def test_directories_ignored(tmpdir):

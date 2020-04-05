@@ -1,8 +1,14 @@
+`Unreleased`_
+=============
+
+- Fix the filter function listing files for  ``retention`` being too restrictive, it now matches files based on the pattern ``"basename(.*).ext(.*)"`` (`#229 <https://github.com/Delgan/loguru/issues/229>`_).
+
+
 `0.4.1`_ (2020-01-19)
 =====================
 
 - Deprecate the ``ansi`` parameter of ``.opt()`` in favor of ``colors`` which is a name more appropriate.
-- Prevent unrelated files and directories to be incorrectly collected thus causing errors during the `retention` process (`#195 <https://github.com/Delgan/loguru/issues/195>`_, thanks `@gazpachoking <https://github.com/gazpachoking>`_).
+- Prevent unrelated files and directories to be incorrectly collected thus causing errors during the ``retention`` process (`#195 <https://github.com/Delgan/loguru/issues/195>`_, thanks `@gazpachoking <https://github.com/gazpachoking>`_).
 - Strip color markups contained in ``record["message"]`` when logging with ``.opt(ansi=True)`` instead of leaving them as is (`#198 <https://github.com/Delgan/loguru/issues/198>`_).
 - Ignore color markups contained in ``*args`` and ``**kwargs`` when logging with ``.opt(ansi=True)``, leave them as is instead of trying to use them to colorize the message which could cause undesirable errors (`#197 <https://github.com/Delgan/loguru/issues/197>`_).
 
