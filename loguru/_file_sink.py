@@ -160,6 +160,7 @@ class FileSink:
         self._retention_function = self._make_retention_function(retention)
         self._compression_function = self._make_compression_function(compression)
 
+        self._initialized = False
         self._file = None
         self._file_path = None
 
@@ -168,7 +169,7 @@ class FileSink:
 
     def write(self, message):
         if self._file is None:
-            self._initialize_file(rename_existing=False)
+            self._initialize_file(rename_existing=self._initialized)
 
         if self._rotation_function is not None and self._rotation_function(message, self._file):
             self._terminate(teardown=True)
@@ -190,6 +191,7 @@ class FileSink:
 
         self._file_path = new_path
         self._file = open(new_path, **self._kwargs)
+        self._initialized = True
 
     @staticmethod
     def _make_glob_patterns(path):
@@ -335,12 +337,16 @@ class FileSink:
         self._terminate(teardown=self._rotation_function is None)
 
     def _terminate(self, *, teardown):
+        filepath = self._file_path
+
         if self._file is not None:
             self._file.close()
+            self._file = None
+            self._file_path = None
 
         if teardown:
-            if self._compression_function is not None and self._file_path is not None:
-                self._compression_function(self._file_path)
+            if self._compression_function is not None and filepath is not None:
+                self._compression_function(filepath)
 
             if self._retention_function is not None:
                 logs = {
@@ -350,9 +356,6 @@ class FileSink:
                     if os.path.isfile(file)
                 }
                 self._retention_function(list(logs))
-
-        self._file = None
-        self._file_path = None
 
     async def complete(self):
         pass

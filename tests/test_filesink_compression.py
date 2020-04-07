@@ -122,6 +122,99 @@ def test_renaming_compression_dest_exists_with_time(monkeypatch, monkeypatch_dat
     ).check(exists=1)
 
 
+@pytest.mark.parametrize("delay", [True, False])
+def test_exception_during_compression_at_rotation(tmpdir, capsys, delay):
+    raising = True
+
+    def failing_compression(file):
+        nonlocal raising
+        if raising:
+            raising = False
+            raise Exception("Compression error")
+
+    logger.add(
+        str(tmpdir.join("test.log")),
+        format="{message}",
+        compression=failing_compression,
+        rotation=0,
+        catch=True,
+        delay=delay,
+    )
+    logger.debug("AAA")
+    logger.debug("BBB")
+
+    files = sorted(tmpdir.listdir())
+    out, err = capsys.readouterr()
+
+    assert len(files) == 3
+    assert [file.read() for file in files] == ["", "", "BBB\n"]
+    assert out == ""
+    assert err.count("Logging error in Loguru Handler") == 1
+    assert err.count("Exception: Compression error") == 1
+
+
+@pytest.mark.parametrize("delay", [True, False])
+def test_exception_during_compression_at_rotation_not_caught(tmpdir, capsys, delay):
+    raising = True
+
+    def failing_compression(file):
+        nonlocal raising
+        if raising:
+            raising = False
+            raise Exception("Compression error")
+
+    logger.add(
+        str(tmpdir.join("test.log")),
+        format="{message}",
+        compression=failing_compression,
+        rotation=0,
+        catch=False,
+        delay=delay,
+    )
+    with pytest.raises(Exception, match="Compression error"):
+        logger.debug("AAA")
+    logger.debug("BBB")
+
+    files = sorted(tmpdir.listdir())
+    out, err = capsys.readouterr()
+
+    assert len(files) == 3
+    assert [file.read() for file in files] == ["", "", "BBB\n"]
+    assert out == err == ""
+
+
+@pytest.mark.parametrize("delay", [True, False])
+def test_exception_during_compression_at_remove(tmpdir, capsys, delay):
+    raising = True
+
+    def failing_compression(file):
+        nonlocal raising
+        if raising:
+            raising = False
+            raise Exception("Compression error")
+
+    i = logger.add(
+        str(tmpdir.join("test.log")),
+        format="{message}",
+        compression=failing_compression,
+        catch=True,
+        delay=delay,
+    )
+    logger.debug("AAA")
+
+    with pytest.raises(Exception, match=r"Compression error"):
+        logger.remove(i)
+
+    logger.debug("Nope")
+
+    files = sorted(tmpdir.listdir())
+    out, err = capsys.readouterr()
+
+    assert len(files) == 1
+    assert tmpdir.join("test.log").read() == "AAA\n"
+    assert out == err == ""
+
+
 @pytest.mark.parametrize("compression", [0, True, os, object(), {"zip"}])
 def test_invalid_compression(compression):
     with pytest.raises(TypeError):

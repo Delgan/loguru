@@ -538,6 +538,60 @@ def test_renaming_rotation_dest_exists_with_time(monkeypatch, monkeypatch_date, 
     )
 
 
+def test_exception_during_rotation(tmpdir, capsys):
+    raising = True
+
+    def failing_rotation(_, __):
+        nonlocal raising
+        if raising:
+            raising = False
+            raise Exception("Rotation error")
+        return False
+
+    logger.add(
+        str(tmpdir.join("test.log")), rotation=failing_rotation, format="{message}", catch=True
+    )
+
+    logger.info("A")
+    logger.info("B")
+
+    files = sorted(tmpdir.listdir())
+    out, err = capsys.readouterr()
+
+    len(files) == 1
+    assert tmpdir.join("test.log").read() == "B\n"
+    assert out == ""
+    assert err.count("Logging error in Loguru Handler") == 1
+    assert err.count("Exception: Rotation error") == 1
+
+
+def test_exception_during_rotation_not_caught(tmpdir, capsys):
+    raising = True
+
+    def failing_rotation(_, __):
+        nonlocal raising
+        if raising:
+            raising = False
+            raise Exception("Rotation error")
+        return False
+
+    logger.add(
+        str(tmpdir.join("test.log")), rotation=failing_rotation, format="{message}", catch=False
+    )
+
+    with pytest.raises(Exception, match=r"Rotation error"):
+        logger.info("A")
+
+    logger.info("B")
+
+    files = sorted(tmpdir.listdir())
+    out, err = capsys.readouterr()
+
+    len(files) == 1
+    assert tmpdir.join("test.log").read() == "B\n"
+    assert out == err == ""
+
+
 @pytest.mark.parametrize(
     "rotation", [object(), os, datetime.date(2017, 11, 11), datetime.datetime.now(), 1j]
 )

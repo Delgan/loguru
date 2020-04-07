@@ -270,6 +270,102 @@ def test_no_renaming(tmpdir):
     assert tmpdir.join("test.log").read() == "test\n"
 
 
+@pytest.mark.parametrize("delay", [True, False])
+def test_exception_during_retention_at_rotation(tmpdir, capsys, delay):
+    raising = True
+
+    def failing_retention(files):
+        nonlocal raising
+        if raising:
+            raising = False
+            raise Exception("Retention error")
+
+    logger.add(
+        str(tmpdir.join("test.log")),
+        format="{message}",
+        retention=failing_retention,
+        rotation=0,
+        catch=True,
+        delay=delay,
+    )
+
+    logger.debug("AAA")
+    logger.debug("BBB")
+
+    files = sorted(tmpdir.listdir())
+    out, err = capsys.readouterr()
+
+    assert len(files) == 3
+    assert [file.read() for file in files] == ["", "", "BBB\n"]
+    assert out == ""
+    assert err.count("Logging error in Loguru Handler") == 1
+    assert err.count("Exception: Retention error") == 1
+
+
+@pytest.mark.parametrize("delay", [True, False])
+def test_exception_during_retention_at_rotation_not_caught(tmpdir, capsys, delay):
+    raising = True
+
+    def failing_retention(files):
+        nonlocal raising
+        if raising:
+            raising = False
+            raise Exception("Retention error")
+
+    logger.add(
+        str(tmpdir.join("test.log")),
+        format="{message}",
+        retention=failing_retention,
+        rotation=0,
+        catch=False,
+        delay=delay,
+    )
+
+    with pytest.raises(Exception, match=r"Retention error"):
+        logger.debug("AAA")
+
+    logger.debug("BBB")
+
+    files = sorted(tmpdir.listdir())
+    out, err = capsys.readouterr()
+
+    assert len(files) == 3
+    assert [file.read() for file in files] == ["", "", "BBB\n"]
+    assert out == err == ""
+
+
+@pytest.mark.parametrize("delay", [True, False])
+def test_exception_during_retention_at_remove(tmpdir, capsys, delay):
+    raising = True
+
+    def failing_retention(files):
+        nonlocal raising
+        if raising:
+            raising = False
+            raise Exception("Retention error")
+
+    i = logger.add(
+        str(tmpdir.join("test.log")),
+        format="{message}",
+        retention=failing_retention,
+        catch=False,
+        delay=delay,
+    )
+    logger.debug("AAA")
+
+    with pytest.raises(Exception, match=r"Retention error"):
+        logger.remove(i)
+
+    logger.debug("Nope")
+
+    files = sorted(tmpdir.listdir())
+    out, err = capsys.readouterr()
+
+    assert len(files) == 1
+    assert tmpdir.join("test.log").read() == "AAA\n"
+    assert out == err == ""
+
+
 @pytest.mark.parametrize("retention", [datetime.time(12, 12, 12), os, object()])
 def test_invalid_retention(retention):
     with pytest.raises(TypeError):
