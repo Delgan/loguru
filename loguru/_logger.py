@@ -979,22 +979,23 @@ class Logger:
         with self._core.lock:
             handlers = self._core.handlers.copy()
 
-            if handler_id is None:
-                for handler in handlers.values():
-                    handler.stop()
-                handlers.clear()
-            else:
-                try:
-                    handler = handlers.pop(handler_id)
-                except KeyError:
-                    raise ValueError(
-                        "There is no existing handler with id %d" % handler_id
-                    ) from None
-                handler.stop()
+            if handler_id is not None and handler_id not in handlers:
+                raise ValueError("There is no existing handler with id %d" % handler_id) from None
 
-            levelnos = (h.levelno for h in handlers.values())
-            self._core.min_level = min(levelnos, default=float("inf"))
-            self._core.handlers = handlers
+            if handler_id is None:
+                handler_ids = list(handlers.keys())
+            else:
+                handler_ids = [handler_id]
+
+            for handler_id in handler_ids:
+                handler = handlers.pop(handler_id)
+
+                # This needs to be done first in case "stop()" raises an exception
+                levelnos = (h.levelno for h in handlers.values())
+                self._core.min_level = min(levelnos, default=float("inf"))
+                self._core.handlers = handlers
+
+                handler.stop()
 
     async def complete(self):
         """Wait for the end of the asynchronous tasks scheduled by coroutine handlers.
