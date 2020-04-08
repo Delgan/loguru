@@ -119,17 +119,6 @@ def test_filter_dict_with_custom_level(writer):
     assert writer.read() == "Yes\n"
 
 
-def test_filter_dict_with_updated_level(writer):
-    logger.add(writer, level=0, filter={"tests.test_add_option_filter": "INFO"}, format="{message}")
-    logger.debug("No 1")
-    logger.info("Yes 1")
-    logger.level("INFO", no=5)
-    logger.level("DEBUG", no=50)
-    logger.debug("Yes 2")
-    logger.info("No 2")
-    assert writer.read() == "Yes 1\nYes 2\n"
-
-
 def test_invalid_filter_builtin(writer):
     with pytest.raises(ValueError, match=r".* most likely a mistake"):
         logger.add(writer, filter=filter)

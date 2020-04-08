@@ -66,20 +66,20 @@ def test_add_malicious_level(writer):
 
 
 def test_add_existing_level(writer):
-    logger.level("INFO", 45, color="<red>")
+    logger.level("INFO", color="<red>")
     fmt = "{level.icon} + <level>{level.name}</level> + {level.no} = {message}"
     logger.add(writer, format=fmt, colorize=True)
 
     logger.info("a")
     logger.log("INFO", "b")
     logger.log(10, "c")
-    logger.log(45, "d")
+    logger.log(20, "d")
 
     assert writer.read() == parse(
-        "ℹ️ + <red>INFO</red> + 45 = a\n"
-        "ℹ️ + <red>INFO</red> + 45 = b\n"
+        "ℹ️ + <red>INFO</red> + 20 = a\n"
+        "ℹ️ + <red>INFO</red> + 20 = b\n"
         "  + Level 10\x1b[0m + 10 = c\n"
-        "  + Level 45\x1b[0m + 45 = d\n"
+        "  + Level 20\x1b[0m + 20 = d\n"
     )
 
 
@@ -91,13 +91,10 @@ def test_blank_color(writer):
 
 
 def test_edit_level(writer):
-    logger.level("info", no=0, color="<bold>", icon="[?]")
+    logger.level("info", no=11, color="<bold>", icon="[?]")
     fmt = "<level>->{level.no}, {level.name}, {level.icon}, {message}<-</level>"
     logger.add(writer, format=fmt, colorize=True)
 
-    logger.log("info", "nope")
-
-    logger.level("info", no=11)
     logger.log("info", "a")
 
     logger.level("info", icon="[!]")
@@ -114,11 +111,11 @@ def test_edit_level(writer):
 
 
 def test_edit_existing_level(writer):
-    logger.level("DEBUG", no=20, icon="!")
+    logger.level("DEBUG", icon="!")
     fmt = "{level.no}, <level>{level.name}</level>, {level.icon}, {message}"
     logger.add(writer, format=fmt, colorize=False)
     logger.debug("a")
-    assert writer.read() == "20, DEBUG, !, a\n"
+    assert writer.read() == "10, DEBUG, !, a\n"
 
 
 def test_get_level():
@@ -178,6 +175,11 @@ def test_assign_custom_level_method(writer):
         "<blue>foobar 33 🤖 Logged message {}</blue>\n"
         "<blue>foobar 33 🤖 Another message {'something': 'otherthing'}</blue>\n"
     )
+
+
+def test_updating_level_no_not_allowed():
+    with pytest.raises(TypeError, match=r".*can't update its severity"):
+        logger.level("DEBUG", 100)
 
 
 @pytest.mark.parametrize("level", [3.4, object()])

@@ -1388,7 +1388,8 @@ class Logger:
         To add a new level, its ``name`` and its ``no`` are required. A ``color`` and an ``icon``
         can also be specified or will be empty by default.
 
-        To update an existing level, pass its ``name`` with the parameters to be changed.
+        To update an existing level, pass its ``name`` with the parameters to be changed. It is not
+        possible to modify the ``no`` of a level once it has been added.
 
         To retrieve level information, the ``name`` solely suffices.
 
@@ -1447,12 +1448,11 @@ class Logger:
                     % name
                 )
             else:
-                old_no, old_color, old_icon = None, "", " "
+                old_color, old_icon = "", " "
+        elif no is not None:
+            raise TypeError("Level '%s' already exists, you can't update its severity no" % name)
         else:
-            _, old_no, old_color, old_icon = self.level(name)
-
-        if no is None:
-            no = old_no
+            _, no, old_color, old_icon = self.level(name)
 
         if color is None:
             color = old_color
