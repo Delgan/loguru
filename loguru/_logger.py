@@ -1041,6 +1041,7 @@ class Logger:
         *,
         level="ERROR",
         reraise=False,
+        onerror=None,
         message="An error has been caught in function '{record[function]}', "
         "process '{record[process].name}' ({record[process].id}), "
         "thread '{record[thread].name}' ({record[thread].id}):"
@@ -1065,6 +1066,9 @@ class Logger:
             The level name or severity with which the message should be logged.
         reraise : |bool|, optional
             Whether the exception should be raised again and hence propagated to the caller.
+        onerror : |callable|_, optional
+            A function that will be called if an error occurs, once the message has been logged.
+            It should accept the exception instance as it sole argument.
         message : |str|, optional
             The message that will be automatically logged if an exception occurs. Note that it will
             be formatted with the ``record`` attribute.
@@ -1101,6 +1105,12 @@ class Logger:
 
         >>> with logger.catch(message="Because we never know..."):
         ...    main()  # No exception, no logs
+
+        >>> # Use 'onerror' to prevent the program exit code to be 0 (if 'reraise=False') while
+        >>> # also avoiding the stacktrace to be duplicated on stderr (if 'reraise=True').
+        >>> @logger.catch(onerror=lambda _: sys.exit(1))
+        ... def main():
+        ...     1 / 0
         """
         if callable(exception) and (
             not isclass(exception) or not issubclass(exception, BaseException)
@@ -1130,6 +1140,9 @@ class Logger:
                 catch_options = [(type_, value, traceback_), depth, True] + options
                 level_id, static_level_no = self._dynamic_level(level)
                 self._log(level_id, static_level_no, from_decorator, catch_options, message, (), {})
+
+                if onerror is not None:
+                    onerror(value)
 
                 return not reraise
 
@@ -1303,7 +1316,7 @@ class Logger:
 
         Returns
         -------
-        :term:`context manager`
+        :term:`context manager` / :term:`decorator`
             A context manager (usable as a decorator too) that will bind the attributes once entered
             and restore the initial state of the ``extra`` dict while exited.
 

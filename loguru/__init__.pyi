@@ -263,6 +263,7 @@ class Logger:
         *,
         level: Union[str, int] = ...,
         reraise: bool = ...,
+        onerror: Optional[Callable[[BaseException], None]] = ...,
         message: str = ...
     ) -> Catcher: ...
     @overload

@@ -517,6 +517,43 @@ def test_reraise(writer):
     assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
+def test_onerror(writer):
+    is_error_valid = False
+    logger.add(writer, format="{message}")
+
+    def onerror(error):
+        nonlocal is_error_valid
+        logger.info("Called after logged message")
+        _, exception, _ = sys.exc_info()
+        is_error_valid = (error == exception) and isinstance(error, ZeroDivisionError)
+
+    @logger.catch(onerror=onerror)
+    def a():
+        1 / 0
+
+    a()
+
+    assert is_error_valid
+    assert writer.read().endswith(
+        "ZeroDivisionError: division by zero\n" "Called after logged message\n"
+    )
+
+
+def test_onerror_with_reraise(writer):
+    called = False
+    logger.add(writer, format="{message}")
+
+    def onerror(_):
+        nonlocal called
+        called = True
+
+    with pytest.raises(ZeroDivisionError):
+        with logger.catch(onerror=onerror, reraise=True):
+            1 / 0
+
+    assert called
+
+
 def test_decorate_function(writer):
     logger.add(writer, format="{message}", diagnose=False, backtrace=False, colorize=False)
 
