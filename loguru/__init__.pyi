@@ -107,15 +107,15 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import TypedDict, Protocol
 
-T = TypeVar("T")
-Function = Callable[..., T]
+_T = TypeVar("_T")
+_F = TypeVar("_F", bound=Callable[..., Any])
 ExcInfo = Tuple[Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]]
 
-class _GeneratorContextManager(ContextManager[T]):
-    def __call__(self, func: Function) -> Function: ...
+class _GeneratorContextManager(ContextManager[_T], Generic[_T]):
+    def __call__(self, func: _F) -> _F: ...
 
-Catcher = _GeneratorContextManager
-Contextualizer = _GeneratorContextManager
+Catcher = _GeneratorContextManager[None]
+Contextualizer = _GeneratorContextManager[None]
 
 class Level(NamedTuple):
     name: str
@@ -266,7 +266,7 @@ class Logger:
         message: str = ...
     ) -> Catcher: ...
     @overload
-    def catch(self, exception: Function = ...) -> Function: ...
+    def catch(self, exception: _F) -> _F: ...
     def opt(
         self,
         *,
