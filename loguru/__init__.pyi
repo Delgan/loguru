@@ -5,6 +5,7 @@
 
 .. |Logger| replace:: :class:`~loguru._logger.Logger`
 .. |catch| replace:: :meth:`~loguru._logger.Logger.catch()`
+.. |contextualize| replace:: :meth:`~loguru._logger.Logger.contextualize()`
 .. |bind| replace:: :meth:`~loguru._logger.Logger.bind()`
 .. |patch| replace:: :meth:`~loguru._logger.Logger.patch()`
 .. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
@@ -27,7 +28,7 @@ A basic usage example could look like this:
 .. code-block:: python
 
     from __future__ import annotations
-    
+
     import loguru
     from loguru import logger
 
@@ -56,6 +57,7 @@ listed here and might be useful to type hint your code:
 - ``Level``: the |namedtuple| returned by |level| (with ``name``, ``no``, ``color`` and ``icon``
   attributes).
 - ``Catcher``: the context decorator returned by |catch|.
+- ``Contextualizer``: the context decorator returned by |contextualize|.
 - ``RecordFile``: the ``record["file"]`` with ``name`` and ``path`` attributes.
 - ``RecordLevel``: the ``record["level"]`` with ``name``, ``no`` and ``icon`` attributes.
 - ``RecordThread``: the ``record["thread"]`` with ``id`` and ``name`` attributes.
@@ -72,7 +74,6 @@ from typing import (
     Any,
     BinaryIO,
     Callable,
-    ContextManager,
     Dict,
     Generator,
     Generic,
@@ -96,8 +97,10 @@ else:
 
 if sys.version_info >= (3, 6):
     from os import PathLike
+    from typing import ContextManager
 else:
     from pathlib import PurePath as PathLike
+    from typing_extensions import ContextManager
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict, Protocol
@@ -107,6 +110,12 @@ else:
 T = TypeVar("T")
 Function = Callable[..., T]
 ExcInfo = Tuple[Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]]
+
+class _GeneratorContextManager(ContextManager[T]):
+    def __call__(self, func: Function) -> Function: ...
+
+Catcher = _GeneratorContextManager
+Contextualizer = _GeneratorContextManager
 
 class Level(NamedTuple):
     name: str
@@ -168,16 +177,6 @@ PatcherFunction = Callable[[Record], None]
 RotationFunction = Callable[[Message, TextIO], bool]
 RetentionFunction = Callable[[List[str]], None]
 CompressionFunction = Callable[[str], None]
-
-class Catcher:
-    def __call__(self, function: Function) -> Function: ...
-    def __enter__(self) -> None: ...
-    def __exit__(
-        self,
-        type: Optional[Type[BaseException]],
-        value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> Optional[bool]: ...
 
 # Actually unusable because TypedDict can't allow extra keys: python/mypy#4617
 class _HandlerConfig(TypedDict, total=False):
@@ -280,7 +279,7 @@ class Logger:
         ansi: bool = ...
     ) -> Logger: ...
     def bind(__self, **kwargs: Any) -> Logger: ...
-    def contextualize(__self, **kwargs: Any) -> ContextManager: ...
+    def contextualize(__self, **kwargs: Any) -> Contextualizer: ...
     def patch(self, patcher: PatcherFunction) -> Logger: ...
     @overload
     def level(self, name: str) -> Level: ...

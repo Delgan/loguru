@@ -16,6 +16,18 @@ def test_contextualize(writer):
     assert writer.read() == "Contextualized bar 123\n"
 
 
+def test_contextualize_as_decorator(writer):
+    logger.add(writer, format="{message} {extra[foo]} {extra[baz]}")
+
+    @logger.contextualize(foo=123, baz="bar")
+    def task():
+        logger.info("Contextualized")
+
+    task()
+
+    assert writer.read() == "Contextualized 123 bar\n"
+
+
 def test_contextualize_in_function(writer):
     logger.add(writer, format="{message} {extra}")
 
@@ -184,7 +196,7 @@ def test_nested_contextualize(writer):
     assert writer.read() == "B b\nA a\nC c\n"
 
 
-def test_context_reseted_despite_error(writer):
+def test_context_reset_despite_error(writer):
     logger.add(writer, format="{message} {extra}")
 
     try:

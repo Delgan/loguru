@@ -1304,8 +1304,8 @@ class Logger:
         Returns
         -------
         :term:`context manager`
-            A context manager that will bind the attributes once entered and restore the initial
-            state of the ``extra`` dict while exited.
+            A context manager (usable as a decorator too) that will bind the attributes once entered
+            and restore the initial state of the ``extra`` dict while exited.
 
         Examples
         --------
