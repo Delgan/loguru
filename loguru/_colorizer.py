@@ -318,16 +318,25 @@ class ColoringMessage(str):
         return next(self._messages).__format__(spec)
 
 
-class ColoredString:
-    def __init__(self, tokens, *, messages_color_tokens=None):
+class ColoredMessage:
+    def __init__(self, tokens):
         self.tokens = tokens
-        self._messages_color_tokens = messages_color_tokens
+        self.stripped = AnsiParser.strip(tokens)
 
     def colorize(self, ansi_level):
         return AnsiParser.colorize(self.tokens, ansi_level)
 
+
+class ColoredFormat:
+    def __init__(self, tokens, messages_color_tokens):
+        self._tokens = tokens
+        self._messages_color_tokens = messages_color_tokens
+
     def strip(self):
-        return AnsiParser.strip(self.tokens)
+        return AnsiParser.strip(self._tokens)
+
+    def colorize(self, ansi_level):
+        return AnsiParser.colorize(self._tokens, ansi_level)
 
     def make_coloring_message(self, message, *, ansi_level, colored_message):
         messages = [
@@ -342,22 +351,24 @@ class ColoredString:
         coloring._messages = iter(messages)
         return coloring
 
-    @classmethod
-    def prepare_format(cls, string):
-        tokens, messages_color_tokens = ColoredString._parse_without_formatting(string)
-        return cls(tokens, messages_color_tokens=messages_color_tokens)
 
-    @classmethod
-    def prepare_message(cls, string, args=(), kwargs={}):
-        tokens = ColoredString._parse_with_formatting(string, args, kwargs)
-        return cls(tokens)
+class Colorizer:
+    @staticmethod
+    def prepare_format(string):
+        tokens, messages_color_tokens = Colorizer._parse_without_formatting(string)
+        return ColoredFormat(tokens, messages_color_tokens)
 
-    @classmethod
-    def prepare_simple_message(cls, string):
+    @staticmethod
+    def prepare_message(string, args=(), kwargs={}):
+        tokens = Colorizer._parse_with_formatting(string, args, kwargs)
+        return ColoredMessage(tokens)
+
+    @staticmethod
+    def prepare_simple_message(string):
         parser = AnsiParser()
         parser.feed(string)
         tokens = parser.done()
-        return cls(tokens)
+        return ColoredMessage(tokens)
 
     @staticmethod
     def ansify(text):
@@ -370,7 +381,7 @@ class ColoredString:
     def _parse_with_formatting(
         string, args, kwargs, *, recursion_depth=2, auto_arg_index=0, recursive=False
     ):
-        # This function re-implement Formatter._vformat()
+        # This function re-implements Formatter._vformat()
 
         if recursion_depth < 0:
             raise ValueError("Max string recursion exceeded")
@@ -403,7 +414,7 @@ class ColoredString:
                 obj, _ = formatter.get_field(field_name, args, kwargs)
                 obj = formatter.convert_field(obj, conversion)
 
-                format_spec, auto_arg_index = ColoredString._parse_with_formatting(
+                format_spec, auto_arg_index = Colorizer._parse_with_formatting(
                     format_spec,
                     args,
                     kwargs,
@@ -453,7 +464,7 @@ class ColoredString:
                 field += "}"
                 parser.feed(field, raw=True)
 
-                _, color_tokens = ColoredString._parse_without_formatting(
+                _, color_tokens = Colorizer._parse_without_formatting(
                     format_spec, recursion_depth=recursion_depth - 1, recursive=True
                 )
                 messages_color_tokens.extend(color_tokens)

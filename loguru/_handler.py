@@ -5,16 +5,16 @@ import sys
 import threading
 import traceback
 
-from ._colored_string import ColoredString
+from ._colorizer import Colorizer
 
 
 def prepare_colored_format(format_, ansi_level):
-    colored = ColoredString.prepare_format(format_)
+    colored = Colorizer.prepare_format(format_)
     return colored, colored.colorize(ansi_level)
 
 
 def prepare_stripped_format(format_):
-    colored = ColoredString.prepare_format(format_)
+    colored = Colorizer.prepare_format(format_)
     return colored.strip()
 
 
@@ -114,6 +114,9 @@ class Handler:
                 formatter = self._exception_formatter
                 lines = formatter.format_exception(type_, value, tb, from_decorator=from_decorator)
                 formatter_record["exception"] = "".join(lines)
+
+            if colored_message is not None and colored_message.stripped != record["message"]:
+                colored_message = None
 
             if is_raw:
                 if colored_message is None or not self._colorize:

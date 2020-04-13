@@ -506,3 +506,56 @@ def test_deprecated_ansi_argument(writer):
     with pytest.warns(DeprecationWarning):
         logger.opt(ansi=True).info("Foo <red>bar</red> baz")
     assert writer.read() == parse("Foo <red>bar</red> baz\n")
+
+
+@pytest.mark.parametrize("colors", [True, False])
+def test_message_update_not_overridden_by_patch(writer, colors):
+    def patcher(record):
+        record["message"] += " [Patched]"
+
+    logger.add(writer, format="{level} {message}", colorize=True)
+    logger.patch(patcher).opt(colors=colors).info("Message")
+
+    assert writer.read() == "INFO Message [Patched]\n"
+
+
+@pytest.mark.parametrize("colors", [True, False])
+def test_message_update_not_overridden_by_format(writer, colors):
+    def formatter(record):
+        record["message"] += " [Formatted]"
+        return "{level} {message}\n"
+
+    logger.add(writer, format=formatter, colorize=True)
+    logger.opt(colors=colors).info("Message")
+
+    assert writer.read() == "INFO Message [Formatted]\n"
+
+
+@pytest.mark.parametrize("colors", [True, False])
+def test_message_update_not_overridden_by_filter(writer, colors):
+    def filter(record):
+        record["message"] += " [Filtered]"
+        return True
+
+    logger.add(writer, format="{level} {message}", filter=filter, colorize=True)
+    logger.opt(colors=colors).info("Message")
+
+    assert writer.read() == "INFO Message [Filtered]\n"
+
+
+@pytest.mark.parametrize("colors", [True, False])
+def test_message_update_not_overridden_by_raw(writer, colors):
+    logger.add(writer, colorize=True)
+    logger.patch(lambda r: r.update(message="Updated!")).opt(raw=True, colors=colors).info("Raw!")
+    assert writer.read() == "Updated!"
+
+
+def test_overridden_message_ignore_colors(writer):
+    def formatter(record):
+        record["message"] += " <blue>[Ignored]</blue> </xyz>"
+        return "{message}\n"
+
+    logger.add(writer, format=formatter, colorize=True)
+    logger.opt(colors=True).info("<red>Message</red>")
+
+    assert writer.read() == "Message <blue>[Ignored]</blue> </xyz>\n"

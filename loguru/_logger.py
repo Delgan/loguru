@@ -89,7 +89,7 @@ from threading import current_thread
 
 from . import _colorama, _defaults, _filters
 from ._better_exceptions import ExceptionFormatter
-from ._colored_string import ColoredString
+from ._colorizer import Colorizer
 from ._datetime import aware_now
 from ._file_sink import FileSink
 from ._get_frame import get_frame
@@ -165,7 +165,7 @@ class Core:
         ]
         self.levels = {level.name: level for level in levels}
         self.levels_ansi_codes = {
-            name: ColoredString.ansify(level.color) for name, level in self.levels.items()
+            name: Colorizer.ansify(level.color) for name, level in self.levels.items()
         }
         self.levels_ansi_codes[None] = ""
 
@@ -888,7 +888,7 @@ class Logger:
 
         if isinstance(format, str):
             try:
-                formatter = ColoredString.prepare_format(format + terminator + "{exception}")
+                formatter = Colorizer.prepare_format(format + terminator + "{exception}")
             except ValueError as e:
                 raise ValueError(
                     "Invalid format, color markups could not be parsed correctly"
@@ -1481,7 +1481,7 @@ class Logger:
         if no < 0:
             raise ValueError("Invalid level no, it should be a positive integer, not: %d" % no)
 
-        ansi = ColoredString.ansify(color)
+        ansi = Colorizer.ansify(color)
         level = Level(name, no, color, icon)
 
         with self._core.lock:
@@ -1875,10 +1875,10 @@ class Logger:
 
         if colors:
             if args or kwargs:
-                colored_message = ColoredString.prepare_message(message, args, kwargs)
+                colored_message = Colorizer.prepare_message(message, args, kwargs)
             else:
-                colored_message = ColoredString.prepare_simple_message(message)
-            log_record["message"] = colored_message.strip()
+                colored_message = Colorizer.prepare_simple_message(message)
+            log_record["message"] = colored_message.stripped
         elif args or kwargs:
             colored_message = None
             log_record["message"] = message.format(*args, **kwargs)

@@ -33,7 +33,7 @@ elif sys.version_info < (3, 7):
 
 
 def parse(text, *, strip=False, strict=True):
-    parser = loguru._colored_string.AnsiParser()
+    parser = loguru._colorizer.AnsiParser()
     parser.feed(text)
     tokens = parser.done(strict=strict)
 
