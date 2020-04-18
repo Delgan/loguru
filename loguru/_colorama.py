@@ -22,6 +22,9 @@ def should_wrap(stream):
     if os.name != "nt":
         return False
 
+    if stream is not sys.__stdout__ and stream is not sys.__stderr__:
+        return False
+
     from colorama.win32 import winapi_test
 
     return winapi_test()

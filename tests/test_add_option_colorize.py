@@ -70,10 +70,17 @@ def patch_colorama(monkeypatch):
 
 @pytest.mark.parametrize("colorize", [True, False, None])
 @pytest.mark.parametrize("tty", [True, False])
-def test_colorize_stream_linux(patch_colorama, monkeypatch, colorize, tty):
-    monkeypatch.setattr(os, "name", "posix")
+@pytest.mark.parametrize("replace_original", [True, False])
+def test_colorize_stream(patch_colorama, monkeypatch, colorize, tty, replace_original):
     stream = Stream(tty)
-    logger.add(stream, format="<red>{message}</red>", colorize=colorize)
+
+    monkeypatch.delenv("TERM", raising=False)
+    monkeypatch.delenv("PYCHARM_HOSTED", raising=False)
+    monkeypatch.setattr(os, "name", "unix")
+    if replace_original:
+        monkeypatch.setattr(sys, "__stdout__", stream)
+
+    logger.add(stream, format="<red>{message}</red>", colorize=colorize, catch=False)
     logger.debug("Message")
 
     winapi_test = patch_colorama.win32.winapi_test
@@ -90,17 +97,23 @@ def test_colorize_stream_linux(patch_colorama, monkeypatch, colorize, tty):
 
 @pytest.mark.parametrize("colorize", [True, False, None])
 @pytest.mark.parametrize("tty", [True, False])
-def test_colorize_stream_windows(patch_colorama, monkeypatch, colorize, tty):
-    monkeypatch.setattr(os, "name", "nt")
+@pytest.mark.parametrize("replace_original", [True, False])
+def test_colorize_stream_windows(patch_colorama, monkeypatch, colorize, tty, replace_original):
     stream = Stream(tty)
-    logger.add(stream, format="<blue>{message}</blue>", colorize=colorize)
+
+    monkeypatch.delenv("TERM", raising=False)
+    monkeypatch.delenv("PYCHARM_HOSTED", raising=False)
+    monkeypatch.setattr(os, "name", "nt")
+    if replace_original:
+        monkeypatch.setattr(sys, "__stdout__", stream)
+
+    logger.add(stream, format="<blue>{message}</blue>", colorize=colorize, catch=False)
     logger.debug("Message")
-    writer = patch_colorama.AnsiToWin32().stream.write.called
 
     winapi_test = patch_colorama.win32.winapi_test
     stream_write = patch_colorama.AnsiToWin32().stream.write
 
-    if colorize or (colorize is None and tty):
+    if replace_original and (colorize or (colorize is None and tty)):
         assert winapi_test.called
         assert stream_write.called
     else:
