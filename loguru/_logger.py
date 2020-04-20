@@ -1042,6 +1042,7 @@ class Logger:
         level="ERROR",
         reraise=False,
         onerror=None,
+        exclude=None,
         message="An error has been caught in function '{record[function]}', "
         "process '{record[process].name}' ({record[process].id}), "
         "thread '{record[thread].name}' ({record[thread].id}):"
@@ -1069,6 +1070,9 @@ class Logger:
         onerror : |callable|_, optional
             A function that will be called if an error occurs, once the message has been logged.
             It should accept the exception instance as it sole argument.
+        exclude : |Exception|, optional
+            A type of exception (or a tuple of types) that will be purposely ignored and hence
+            propagated to the caller without being logged.
         message : |str|, optional
             The message that will be automatically logged if an exception occurs. Note that it will
             be formatted with the ``record`` attribute.
@@ -1129,6 +1133,9 @@ class Logger:
                     return
 
                 if not issubclass(type_, exception):
+                    return False
+
+                if exclude is not None and issubclass(type_, exclude):
                     return False
 
                 from_decorator = self_._from_decorator

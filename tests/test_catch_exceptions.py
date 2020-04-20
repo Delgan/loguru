@@ -478,7 +478,9 @@ def test_exception_is_tuple():
     assert all(isinstance(tb, types.TracebackType) for tb in (tb_1, tb_2, tb_3, tb_4))
 
 
-@pytest.mark.parametrize("exception", [ZeroDivisionError, (ValueError, ZeroDivisionError)])
+@pytest.mark.parametrize(
+    "exception", [ZeroDivisionError, ArithmeticError, (ValueError, ZeroDivisionError)]
+)
 def test_exception_not_raising(writer, exception):
     logger.add(writer)
 
@@ -502,6 +504,36 @@ def test_exception_raising(writer, exception):
         a()
 
     assert writer.read() == ""
+
+
+@pytest.mark.parametrize(
+    "exclude", [ZeroDivisionError, ArithmeticError, (ValueError, ZeroDivisionError)]
+)
+@pytest.mark.parametrize("exception", [BaseException, ZeroDivisionError])
+def test_exclude_exception_raising(writer, exclude, exception):
+    logger.add(writer)
+
+    @logger.catch(exception, exclude=exclude)
+    def a():
+        1 / 0
+
+    with pytest.raises(ZeroDivisionError):
+        a()
+
+    assert writer.read() == ""
+
+
+@pytest.mark.parametrize("exclude", [ValueError, ((SyntaxError, TypeError))])
+@pytest.mark.parametrize("exception", [BaseException, ZeroDivisionError])
+def test_exclude_exception_not_raising(writer, exclude, exception):
+    logger.add(writer)
+
+    @logger.catch(exception, exclude=exclude)
+    def a():
+        1 / 0
+
+    a()
+    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_reraise(writer):
