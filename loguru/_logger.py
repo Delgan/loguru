@@ -91,6 +91,7 @@ from . import _colorama, _defaults, _filters
 from ._better_exceptions import ExceptionFormatter
 from ._colorizer import Colorizer
 from ._datetime import aware_now
+from ._error_interceptor import ErrorInterceptor
 from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
@@ -736,6 +737,11 @@ class Logger:
         >>> stream_object = RandomStream(seed=12345, threshold=0.25)
         >>> logger.add(stream_object, level="INFO")
         """
+        with self._core.lock:
+            handler_id = next(self._core.handlers_count)
+
+        error_interceptor = ErrorInterceptor(catch, handler_id)
+
         if colorize is None and serialize:
             colorize = False
 
@@ -792,7 +798,7 @@ class Logger:
             if enqueue and loop is None:
                 loop = asyncio.get_event_loop()
 
-            wrapped_sink = AsyncSink(sink, loop)
+            wrapped_sink = AsyncSink(sink, loop, error_interceptor)
             encoding = "utf8"
             terminator = "\n"
             exception_prefix = ""
@@ -913,8 +919,6 @@ class Logger:
             encoding = "ascii"
 
         with self._core.lock:
-            handler_id = next(self._core.handlers_count)
-
             exception_formatter = ExceptionFormatter(
                 colorize=colorize,
                 encoding=encoding,
@@ -933,9 +937,9 @@ class Logger:
                 filter_=filter_func,
                 colorize=colorize,
                 serialize=serialize,
-                catch=catch,
                 enqueue=enqueue,
                 id_=handler_id,
+                error_interceptor=error_interceptor,
                 exception_formatter=exception_formatter,
                 levels_ansi_codes=self._core.levels_ansi_codes,
             )

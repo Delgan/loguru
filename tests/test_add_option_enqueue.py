@@ -1,6 +1,7 @@
 from loguru import logger
 import pytest
 import time
+import re
 
 
 class NotPicklable:
@@ -20,13 +21,8 @@ class NotUnpicklable:
 
 
 class NotWritable:
-    def __init__(self, remove_record=False):
-        self._remove_record = remove_record
-
     def write(self, message):
         if "fail" in message.record["extra"]:
-            if self._remove_record:
-                del message.record
             raise RuntimeError("You asked me to fail...")
         print(message, end="")
 
@@ -69,23 +65,6 @@ def test_enqueue_with_exception():
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
 
-def test_caught_exception_without_record(capsys):
-    logger.add(NotWritable(True), enqueue=True, catch=True, format="{message}")
-
-    logger.info("It's fine")
-    logger.bind(fail=True).info("Bye bye...")
-    logger.info("It's fine again")
-    logger.remove()
-
-    out, err = capsys.readouterr()
-    lines = err.strip().splitlines()
-    assert out == "It's fine\nIt's fine again\n"
-    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
-    assert lines[1].startswith("Record was: None")
-    assert lines[-2] == "RuntimeError: You asked me to fail..."
-    assert lines[-1] == "--- End of logging error ---"
-
-
 def test_caught_exception_queue_put(writer, capsys):
     logger.add(writer, enqueue=True, catch=True, format="{message}")
 
@@ -99,7 +78,7 @@ def test_caught_exception_queue_put(writer, capsys):
     assert writer.read() == "It's fine\nIt's fine again\n"
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
-    assert lines[1] == "Record was: None"
+    assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
     assert lines[-2] == "RuntimeError: You shall not serialize me!"
     assert lines[-1] == "--- End of logging error ---"
 
@@ -134,8 +113,7 @@ def test_caught_exception_sink_write(capsys):
     lines = err.strip().splitlines()
     assert out == "It's fine\nIt's fine again\n"
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
-    assert lines[1].startswith("Record was: {")
-    assert lines[1].endswith("}")
+    assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
     assert lines[-2] == "RuntimeError: You asked me to fail..."
     assert lines[-1] == "--- End of logging error ---"
 

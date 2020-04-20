@@ -9,6 +9,7 @@
 - Fix file sink left in an unstable state if an exception occurred during ``retention`` or ``compression`` process (`#238 <https://github.com/Delgan/loguru/issues/238>`_).
 - Fix situation where changes made to ``record["message"]`` were unexpectedly ignored when ``opt(colors=True)``, causing "out-of-date" ``message`` to be logged due to implementation details (`#221 <https://github.com/Delgan/loguru/issues/221>`_).
 - Fix possible exception if a stream having an ``isatty()`` method returning ``True`` but not being compatible with ``colorama`` is used on Windows (`#249 <https://github.com/Delgan/loguru/issues/249>`_).
+- Fix exceptions occurring in coroutine sinks never retrieved and hence causing warnings (`#227 <https://github.com/Delgan/loguru/issues/227>`_).
 
 
 `0.4.1`_ (2020-01-19)

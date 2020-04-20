@@ -2,6 +2,7 @@ import sys
 import pytest
 from loguru import logger
 import loguru
+import re
 import time
 
 
@@ -96,8 +97,7 @@ def test_broken_sink_message(capsys, enqueue):
 
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
-    assert lines[1].startswith("Record was: {")
-    assert lines[1].endswith("}")
+    assert re.match(r"Record was: \{.*Oops.*\}", lines[1])
     assert lines[-2].startswith("Exception: Error!")
     assert lines[-1] == "--- End of logging error ---"
 

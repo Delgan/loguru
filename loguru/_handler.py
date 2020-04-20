@@ -1,9 +1,7 @@
 import functools
 import json
 import multiprocessing
-import sys
 import threading
-import traceback
 
 from ._colorizer import Colorizer
 
@@ -38,8 +36,8 @@ class Handler:
         filter_,
         colorize,
         serialize,
-        catch,
         enqueue,
+        error_interceptor,
         exception_formatter,
         id_,
         levels_ansi_codes
@@ -52,8 +50,8 @@ class Handler:
         self._filter = filter_
         self._colorize = colorize
         self._serialize = serialize
-        self._catch = catch
         self._enqueue = enqueue
+        self._error_interceptor = error_interceptor
         self._exception_formatter = exception_formatter
         self._id = id_
         self._levels_ansi_codes = levels_ansi_codes  # Warning, reference shared among handlers
@@ -170,19 +168,14 @@ class Handler:
                 if self._stopped:
                     return
                 if self._enqueue:
-                    try:
-                        self._queue.put(str_record)
-                    except Exception:
-                        if not self._catch:
-                            raise
-                        self._handle_error()
+                    self._queue.put(str_record)
                 else:
                     self._sink.write(str_record)
 
         except Exception:
-            if not self._catch:
+            if not self._error_interceptor.should_catch():
                 raise
-            self._handle_error(record)
+            self._error_interceptor.print(record)
 
     def stop(self):
         with self._lock:
@@ -261,9 +254,9 @@ class Handler:
             try:
                 message = queue.get()
             except Exception:
-                if not self._catch:
+                if not self._error_interceptor.should_catch():
                     raise
-                self._handle_error()
+                self._error_interceptor.print(None)
                 continue
 
             if message is None:
@@ -276,30 +269,9 @@ class Handler:
             try:
                 self._sink.write(message)
             except Exception:
-                if not self._catch:
+                if not self._error_interceptor.should_catch():
                     raise
-                record = getattr(message, "record", None)
-                self._handle_error(record)
-
-    def _handle_error(self, record=None):
-        if not sys.stderr:
-            return
-
-        ex_type, ex, tb = sys.exc_info()
-
-        try:
-            sys.stderr.write("--- Logging error in Loguru Handler #%d ---\n" % self._id)
-            try:
-                record_repr = str(record)
-            except Exception:
-                record_repr = "/!\\ Unprintable record /!\\"
-            sys.stderr.write("Record was: %s\n" % record_repr)
-            traceback.print_exception(ex_type, ex, tb, None, sys.stderr)
-            sys.stderr.write("--- End of logging error ---\n")
-        except OSError:
-            pass
-        finally:
-            del ex_type, ex, tb
+                self._error_interceptor.print(message.record)
 
     def __getstate__(self):
         state = self.__dict__.copy()

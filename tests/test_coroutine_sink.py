@@ -6,6 +6,7 @@ import loguru
 import time
 import threading
 import os
+import re
 import multiprocessing
 from loguru import logger
 
@@ -324,6 +325,90 @@ def test_complete_standard_noop(capsys):
     out, err = capsys.readouterr()
     assert out == ""
     assert err == "A\nB\nC\nD\n"
+
+
+def test_exception_in_coroutine_caught(capsys):
+    async def sink(msg):
+        raise Exception("Oh no")
+
+    async def main():
+        logger.add(sink, catch=True)
+        logger.info("Hello world")
+        await asyncio.sleep(0.1)
+        await logger.complete()
+
+    asyncio.run(main())
+
+    out, err = capsys.readouterr()
+    lines = err.strip().splitlines()
+
+    assert out == ""
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
+    assert re.match(r"Record was: \{.*Hello world.*\}", lines[1])
+    assert lines[-2] == "Exception: Oh no"
+    assert lines[-1] == "--- End of logging error ---"
+
+
+def test_exception_in_coroutine_not_caught(capsys):
+    async def sink(msg):
+        raise Exception("Oh no")
+
+    async def main():
+        logger.add(sink, catch=False)
+        logger.info("Hello world")
+        await asyncio.sleep(0.1)
+        await logger.complete()
+
+    asyncio.run(main())
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert "Logging error in Loguru Handler" not in err
+    assert "was never retrieved" not in err
+    assert err.strip().endswith("Exception: Oh no")
+
+
+def test_exception_in_coroutine_during_complete_caught(capsys):
+    async def sink(msg):
+        await asyncio.sleep(0.1)
+        raise Exception("Oh no")
+
+    async def main():
+        logger.add(sink, catch=True)
+        logger.info("Hello world")
+        await logger.complete()
+
+    asyncio.run(main())
+
+    out, err = capsys.readouterr()
+    lines = err.strip().splitlines()
+
+    assert out == ""
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
+    assert re.match(r"Record was: \{.*Hello world.*\}", lines[1])
+    assert lines[-2] == "Exception: Oh no"
+    assert lines[-1] == "--- End of logging error ---"
+
+
+def test_exception_in_coroutine_during_complete_not_caught(capsys):
+    async def sink(msg):
+        await asyncio.sleep(0.1)
+        raise Exception("Oh no")
+
+    async def main():
+        logger.add(sink, catch=False)
+        logger.info("Hello world")
+        await logger.complete()
+
+    asyncio.run(main())
+
+    out, err = capsys.readouterr()
+    lines = err.strip().splitlines()
+
+    assert out == ""
+    assert "Logging error in Loguru Handler" not in err
+    assert "was never retrieved" not in err
+    assert err.strip().endswith("Exception: Oh no")
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")

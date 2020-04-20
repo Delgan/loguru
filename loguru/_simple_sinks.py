@@ -67,15 +67,25 @@ class StandardSink:
 
 
 class AsyncSink:
-    def __init__(self, function, loop):
+    def __init__(self, function, loop, error_interceptor):
         self._function = function
         self._loop = loop
+        self._error_interceptor = error_interceptor
         self._tasks = weakref.WeakSet()
 
     def write(self, message):
         coro = self._function(message)
         loop = self._loop or asyncio.get_event_loop()
         task = loop.create_task(coro)
+
+        def check_exception(future):
+            if future.cancelled() or future.exception() is None:
+                return
+            if not self._error_interceptor.should_catch():
+                raise future.exception()
+            self._error_interceptor.print(message.record, exception=future.exception())
+
+        task.add_done_callback(check_exception)
         self._tasks.add(task)
 
     def stop(self):
@@ -86,7 +96,10 @@ class AsyncSink:
         loop = asyncio.get_event_loop()
         for task in self._tasks:
             if get_loop(task) is loop:
-                await task
+                try:
+                    await task
+                except Exception:
+                    pass  # Handled in "check_exception()"
 
     def __getstate__(self):
         state = self.__dict__.copy()
