@@ -22,6 +22,7 @@
 [31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
 [33m[1mTraceback (most recent call last):[0m
+
   File "/usr/lib/python/somelib/__init__.py", line 10, in callme
     callback()
     └ <function test.<locals>.callback at 0xDEADBEEF>

@@ -306,8 +306,8 @@ class ExceptionFormatter:
             v = v[: max_length - 3] + "..."
         return v
 
-    def _format_locations(self, frames_lines):
-        prepend_with_new_line = False
+    def _format_locations(self, frames_lines, *, has_introduction):
+        prepend_with_new_line = has_introduction
         regex = r'^  File "(?P<file>.*?)", line (?P<line>[^,]+)(?:, in (?P<function>.*))?\n'
 
         for frame in frames_lines:
@@ -418,14 +418,15 @@ class ExceptionFormatter:
         exception_only[-1] = error_message + "\n"
 
         frames_lines = traceback.format_list(frames) + exception_only
+        has_introduction = bool(frames)
 
         if self._colorize or self._backtrace or self._diagnose:
-            frames_lines = self._format_locations(frames_lines)
+            frames_lines = self._format_locations(frames_lines, has_introduction=has_introduction)
 
         if is_first:
             yield self._prefix
 
-        if frames:
+        if has_introduction:
             introduction = "Traceback (most recent call last):"
             if self._colorize:
                 introduction = self._theme["introduction"].format(introduction)
