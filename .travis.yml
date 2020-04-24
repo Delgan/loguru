@@ -1,8 +1,8 @@
 language: python
 
-dist: xenial
+os: linux
 
-sudo: required
+dist: xenial
 
 python:
   - '3.5.2'
