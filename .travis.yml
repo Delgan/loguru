@@ -17,5 +17,10 @@ install:
 
 script: tox
 
-after_success:
-  - codecov --flags "python_${TRAVIS_PYTHON_VERSION//[^[:alnum:]]/}"
+after_success: |
+  VERSION="python_${TRAVIS_PYTHON_VERSION//[^[:alnum:]]/}" &&
+  codecov --required --flags $VERSION ||
+  (sleep 5 && codecov --required --flags $VERSION) ||
+  (sleep 10 && codecov --required --flags $VERSION) ||
+  (sleep 20 && codecov --required --flags $VERSION) ||
+  (sleep 30 && codecov --required --flags $VERSION)
