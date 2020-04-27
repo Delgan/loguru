@@ -79,7 +79,6 @@ import itertools
 import logging
 import re
 import sys
-import threading
 import warnings
 from collections import namedtuple
 from inspect import isclass
@@ -95,6 +94,7 @@ from ._error_interceptor import ErrorInterceptor
 from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
+from ._locks_machinery import create_logger_lock
 from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
 from ._simple_sinks import AsyncSink, CallableSink, StandardSink, StreamSink
 
@@ -181,7 +181,7 @@ class Core:
         self.activation_list = []
         self.activation_none = True
 
-        self.lock = threading.Lock()
+        self.lock = create_logger_lock()
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -190,7 +190,7 @@ class Core:
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.lock = threading.Lock()
+        self.lock = create_logger_lock()
 
 
 class Logger:

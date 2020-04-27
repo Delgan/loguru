@@ -1,11 +1,13 @@
 import asyncio
+import copy
 import os
 import sys
 import multiprocessing
-import loguru
-from loguru import logger
+import threading
 import time
 import pytest
+import loguru
+from loguru import logger
 
 
 def do_something(i):
@@ -538,3 +540,45 @@ def test_not_picklable_sinks_inheritance(capsys, tmpdir):
     assert out == ""
     assert err == "Child\nMain\n"
     assert output == ["Child\n", "Main\n"]
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="No 'os.register_at_fork()' function")
+@pytest.mark.parametrize("enqueue", [True, False])
+@pytest.mark.parametrize("deepcopied", [True, False])
+def test_no_deadlock_if_lock_in_use(tmpdir, enqueue, deepcopied):
+    if deepcopied:
+        logger_ = copy.deepcopy(logger)
+    else:
+        logger_ = logger
+
+    output = tmpdir.join("stdout.txt")
+    stdout = output.open("w")
+
+    def slow_sink(msg):
+        time.sleep(0.5)
+        stdout.write(msg)
+        stdout.flush()
+
+    def main():
+        logger_.info("Main")
+
+    def worker():
+        logger_.info("Child")
+
+    logger_.add(slow_sink, format="{message}", enqueue=enqueue, catch=False)
+
+    thread = threading.Thread(target=main)
+    thread.start()
+
+    process = multiprocessing.Process(target=worker)
+    process.start()
+
+    thread.join()
+    process.join(1)
+
+    assert process.exitcode == 0
+
+    logger_.remove()
+
+    assert output.read() in ("Main\nChild\n", "Child\nMain\n")

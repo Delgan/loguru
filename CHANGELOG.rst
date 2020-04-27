@@ -4,6 +4,7 @@
 - Remove the possibility to modify the severity ``no`` of levels once they have been added in order to prevent surprising behavior (`#209 <https://github.com/Delgan/loguru/issues/209>`_).
 - Add a new ``onerror`` optional argument to ``logger.catch()``, it should be a function which will be called when an exception occurs in order to customize error handling (`#224 <https://github.com/Delgan/loguru/issues/224>`_).
 - Add a new ``exclude`` optional argument to ``logger.catch()``, is should be a type of exception to be purposefully ignored and propagated to the caller without being logged (`#248 <https://github.com/Delgan/loguru/issues/248>`_).
+- Fix possible deadlock while mixing ``threading`` with ``multiprocessing`` on Linux (`#231 <https://github.com/Delgan/loguru/issues/231>`_).
 - Fix the filter function listing files for  ``retention`` being too restrictive, it now matches files based on the pattern ``"basename(.*).ext(.*)"`` (`#229 <https://github.com/Delgan/loguru/issues/229>`_).
 - Fix the impossibility to ``remove()`` a handler if an exception is raised while the sink' ``stop()`` function is called (`#237 <https://github.com/Delgan/loguru/issues/237>`_).
 - Fix file sink left in an unstable state if an exception occurred during ``retention`` or ``compression`` process (`#238 <https://github.com/Delgan/loguru/issues/238>`_).

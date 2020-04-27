@@ -1,9 +1,10 @@
 import functools
 import json
 import multiprocessing
-import threading
+from threading import Thread
 
 from ._colorizer import Colorizer
+from ._locks_machinery import create_handler_lock
 
 
 def prepare_colored_format(format_, ansi_level):
@@ -60,7 +61,7 @@ class Handler:
         self._precolorized_formats = {}
         self._memoize_dynamic_format = None
 
-        self._lock = threading.Lock()
+        self._lock = create_handler_lock()
         self._queue = None
         self._confirmation_event = None
         self._thread = None
@@ -83,7 +84,7 @@ class Handler:
             self._owner_process = multiprocessing.current_process()
             self._queue = multiprocessing.SimpleQueue()
             self._confirmation_event = multiprocessing.Event()
-            self._thread = threading.Thread(
+            self._thread = Thread(
                 target=self._queued_writer, daemon=True, name="loguru-writer-%d" % self._id
             )
             self._thread.start()
@@ -285,7 +286,7 @@ class Handler:
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self._lock = threading.Lock()
+        self._lock = create_handler_lock()
         if self._is_formatter_dynamic:
             if self._colorize:
                 self._memoize_dynamic_format = memoize(prepare_colored_format)
