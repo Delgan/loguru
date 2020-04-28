@@ -64,6 +64,7 @@ class Handler:
         self._lock = create_handler_lock()
         self._queue = None
         self._confirmation_event = None
+        self._confirmation_lock = None
         self._thread = None
         self._stopped = False
         self._owner_process = None
@@ -84,6 +85,7 @@ class Handler:
             self._owner_process = multiprocessing.current_process()
             self._queue = multiprocessing.SimpleQueue()
             self._confirmation_event = multiprocessing.Event()
+            self._confirmation_lock = multiprocessing.Lock()
             self._thread = Thread(
                 target=self._queued_writer, daemon=True, name="loguru-writer-%d" % self._id
             )
@@ -189,18 +191,20 @@ class Handler:
 
             self._sink.stop()
 
-    async def complete(self):
-        with self._lock:
-            # If "enqueue=True", we need first to empty the queue and make sure all enqueued records
-            # are converted to tasks and correctly scheduled before awaiting them with "complete()"
-            # (otherwise they might be never awaited).
-            if self._enqueue:
-                if self._owner_process != multiprocessing.current_process():
-                    return
-                self._queue.put(True)
-                self._confirmation_event.wait()
-                self._confirmation_event.clear()
+    def complete_queue(self):
+        if not self._enqueue:
+            return
 
+        with self._confirmation_lock:
+            self._queue.put(True)
+            self._confirmation_event.wait()
+            self._confirmation_event.clear()
+
+    async def complete_async(self):
+        if self._enqueue and self._owner_process != multiprocessing.current_process():
+            return
+
+        with self._lock:
             await self._sink.complete()
 
     def update_format(self, level_id):

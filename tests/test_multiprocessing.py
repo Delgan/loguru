@@ -7,6 +7,7 @@ import threading
 import time
 import pytest
 import loguru
+import platform
 from loguru import logger
 
 
@@ -582,3 +583,29 @@ def test_no_deadlock_if_lock_in_use(tmpdir, enqueue, deepcopied):
     logger_.remove()
 
     assert output.read() in ("Main\nChild\n", "Child\nMain\n")
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
+@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy is too slow")
+def test_complete_from_multiple_child_processes(capsys):
+    logger.add(lambda _: None, enqueue=True, catch=False)
+
+    barrier = multiprocessing.Barrier(100)
+
+    def worker(barrier):
+        barrier.wait()
+        logger.complete()
+
+    processes = []
+
+    for _ in range(100):
+        process = multiprocessing.Process(target=worker, args=(barrier,))
+        process.start()
+        processes.append(process)
+
+    for process in processes:
+        process.join(2)
+        assert process.exitcode == 0
+
+    out, err = capsys.readouterr()
+    assert out == err == ""

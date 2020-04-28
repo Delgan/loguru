@@ -15,6 +15,8 @@ Code snippets and recipes for ``loguru``
 .. |os.fork| replace:: :func:`os.fork`
 .. |multiprocessing| replace:: :mod:`multiprocessing`
 .. |traceback| replace:: :mod:`traceback`
+.. |Thread| replace:: :class:`~threading.Thread`
+.. |Process| replace:: :class:`~multiprocessing.Process`
 .. |Pool| replace:: :class:`~multiprocessing.pool.Pool`
 .. |Pool.map| replace:: :meth:`~multiprocessing.pool.Pool.map`
 .. |Pool.apply| replace:: :meth:`~multiprocessing.pool.Pool.apply`
@@ -31,6 +33,7 @@ Code snippets and recipes for ``loguru``
 .. |log| replace:: :meth:`~loguru._logger.Logger.log()`
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
+.. |complete| replace:: :meth:`~loguru._logger.Logger.complete()`
 
 .. _`unicode`: https://docs.python.org/3/howto/unicode.html
 
@@ -631,6 +634,7 @@ On Linux, thanks to |os.fork| there is no pitfall while using the ``logger`` ins
 
     def my_process():
         logger.info("Executing function in child process")
+        logger.complete()
 
     if __name__ == "__main__":
         logger.add("file.log", enqueue=True)
@@ -649,6 +653,7 @@ Things get a little more complicated on Windows. Indeed, this operating system d
 
     def my_process(logger_):
         logger_.info("Executing function in child process")
+        logger_.complete()
 
     if __name__ == "__main__":
         logger.remove()  # Default "sys.stderr" sink is not picklable
@@ -660,7 +665,7 @@ Things get a little more complicated on Windows. Indeed, this operating system d
 
         logger.info("Done")
 
-Windows requires the added sinks to be picklable or otherwise will raise an error while creating the child process. Many stream objects like standard output and file descriptors are not picklable. In such case, the ``enqueue=True`` argument is required as it will allow the child process to only inherit the ``Queue`` where logs are sent.
+Windows requires the added sinks to be picklable or otherwise will raise an error while creating the child process. Many stream objects like standard output and file descriptors are not picklable. In such case, the ``enqueue=True`` argument is required as it will allow the child process to only inherit the queue object where logs are sent.
 
 The |multiprocessing| library is also commonly used to start a pool of workers using for example |Pool.map| or |Pool.apply|. Again, it will work flawlessly on Linux, but it will require some tinkering on Windows. You will probably not be able to pass the ``logger`` as an argument for your worker functions because it needs to be picklable, but altough handlers added using ``enqueue=True`` are "inheritable", they are not "picklable". Instead, you will need to make use of the ``initializer`` and ``initargs`` parameters while creating the |Pool| object in a way allowing your workers to access the shared ``logger``. You can either assign it to a class attribute or override the global logger of your child processes:
 
@@ -715,4 +720,4 @@ The |multiprocessing| library is also commonly used to start a pool of workers u
 
         logger.info("Done")
 
-Independently of the operating system, note that the process in which a handler is added with ``enqueue=True`` is in charge of the ``Queue`` internally used. This means that you should avoid to ``.remove()`` such handler from the parent process is any child is likely to continue using it.
+Independently of the operating system, note that the process in which a handler is added with ``enqueue=True`` is in charge of the queue internally used. This means that you should avoid to ``.remove()`` such handler from the parent process is any child is likely to continue using it. More importantly, note that a |Thread| is started internally to consume the queue. Therefore, it is recommended to call |complete| before leaving |Process| to make sure the queue is left in a stable state.

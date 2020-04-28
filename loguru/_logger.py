@@ -1001,21 +1001,27 @@ class Logger:
 
                 handler.stop()
 
-    async def complete(self):
-        """Wait for the end of the asynchronous tasks scheduled by coroutine handlers.
+    def complete(self):
+        """Wait for the end of enqueued messages and asynchronous tasks scheduled by handlers.
 
-        This method should be awaited before the end of a coroutine executed by |asyncio.run| or
-        |loop.run_until_complete| to ensure all asynchronous logging messages are processed. The
-        function |asyncio.get_event_loop| is called beforehand, only tasks scheduled in the same
-        loop that the current one will be awaited by the method.
+        This method proceeds in two steps: first it waits for all logging messages added to handlers
+        with ``enqueue=True`` to be processed, then it returns an object that can be awaited to
+        finalize all logging tasks added to the event loop by coroutine sinks.
 
-        It only applies to coroutine functions added as sinks, awaiting this method does nothing if
-        there is no such sink attached to the logger.
+        It can be called from non-asynchronous code. This is especially recommended when the
+        ``logger`` is utilized with ``multiprocessing`` to ensure messages put to the internal
+        queue have been properly transmitted before leaving a child process.
+
+        The returned object should be awaited before the end of a coroutine executed by
+        |asyncio.run| or |loop.run_until_complete| to ensure all asynchronous logging messages are
+        processed. The function |asyncio.get_event_loop| is called beforehand, only tasks scheduled
+        in the same loop that the current one will be awaited by the method.
 
         Returns
         -------
-        :term:`coroutine`
-            A coroutine which ensures all asynchronous logging calls are completed when awaited.
+        :term:`awaitable`
+            An awaitable object which ensures all asynchronous logging calls are completed when
+            awaited.
 
         Examples
         --------
@@ -1033,11 +1039,32 @@ class Logger:
         >>> asyncio.run(work())
         Start
         End
+
+        >>> def process():
+        ...     logger.info("Message sent from the child")
+        ...     logger.complete()
+        ...
+        >>> logger.add(sys.stderr, enqueue=True)
+        1
+        >>> process = multiprocessing.Process(target=process)
+        >>> process.start()
+        >>> process.join()
+        Message sent from the child
         """
+
         with self._core.lock:
             handlers = self._core.handlers.copy()
             for handler in handlers.values():
-                await handler.complete()
+                handler.complete_queue()
+
+        class AwaitableCompleter:
+            def __await__(self_):
+                with self._core.lock:
+                    handlers = self._core.handlers.copy()
+                    for handler in handlers.values():
+                        yield from handler.complete_async().__await__()
+
+        return AwaitableCompleter()
 
     def catch(
         self,

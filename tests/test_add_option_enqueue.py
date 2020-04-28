@@ -2,6 +2,7 @@ from loguru import logger
 import pytest
 import time
 import re
+import sys
 
 
 class NotPicklable:
@@ -164,3 +165,21 @@ def test_not_caught_exception_sink_write(capsys):
     assert out == "It's fine\n"
     assert lines[0].startswith("Exception")
     assert lines[-1] == "RuntimeError: You asked me to fail..."
+
+
+def test_wait_for_all_messages_enqueued(capsys):
+    def slow_sink(message):
+        time.sleep(0.01)
+        sys.stderr.write(message)
+
+    logger.add(slow_sink, enqueue=True, catch=False, format="{message}")
+
+    for i in range(10):
+        logger.info(i)
+
+    logger.complete()
+
+    out, err = capsys.readouterr()
+
+    assert out == ""
+    assert err == "".join("%d\n" % i for i in range(10))

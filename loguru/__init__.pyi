@@ -6,6 +6,7 @@
 .. |Logger| replace:: :class:`~loguru._logger.Logger`
 .. |catch| replace:: :meth:`~loguru._logger.Logger.catch()`
 .. |contextualize| replace:: :meth:`~loguru._logger.Logger.contextualize()`
+.. |complete| replace:: :meth:`~loguru._logger.Logger.complete()`
 .. |bind| replace:: :meth:`~loguru._logger.Logger.bind()`
 .. |patch| replace:: :meth:`~loguru._logger.Logger.patch()`
 .. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
@@ -58,6 +59,7 @@ listed here and might be useful to type hint your code:
   attributes).
 - ``Catcher``: the context decorator returned by |catch|.
 - ``Contextualizer``: the context decorator returned by |contextualize|.
+- ``AwaitableCompleter``: the awaitable object returned by |complete|.
 - ``RecordFile``: the ``record["file"]`` with ``name`` and ``path`` attributes.
 - ``RecordLevel``: the ``record["level"]`` with ``name``, ``no`` and ``icon`` attributes.
 - ``RecordThread``: the ``record["thread"]`` with ``id`` and ``name`` attributes.
@@ -116,6 +118,7 @@ class _GeneratorContextManager(ContextManager[_T], Generic[_T]):
 
 Catcher = _GeneratorContextManager[None]
 Contextualizer = _GeneratorContextManager[None]
+AwaitableCompleter = Awaitable
 
 class Level(NamedTuple):
     name: str
@@ -255,7 +258,7 @@ class Logger:
         **kwargs: Any
     ) -> int: ...
     def remove(self, handler_id: Optional[int] = ...) -> None: ...
-    async def complete(self) -> None: ...
+    def complete(self) -> AwaitableCompleter: ...
     @overload
     def catch(
         self,
