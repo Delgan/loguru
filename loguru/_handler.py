@@ -61,13 +61,13 @@ class Handler:
         self._precolorized_formats = {}
         self._memoize_dynamic_format = None
 
+        self._stopped = False
         self._lock = create_handler_lock()
         self._queue = None
         self._confirmation_event = None
         self._confirmation_lock = None
-        self._thread = None
-        self._stopped = False
         self._owner_process = None
+        self._thread = None
 
         if self._is_formatter_dynamic:
             if self._colorize:
@@ -82,10 +82,10 @@ class Handler:
                 self._decolorized_format = self._formatter.strip()
 
         if self._enqueue:
-            self._owner_process = multiprocessing.current_process()
             self._queue = multiprocessing.SimpleQueue()
             self._confirmation_event = multiprocessing.Event()
             self._confirmation_lock = multiprocessing.Lock()
+            self._owner_process = multiprocessing.current_process()
             self._thread = Thread(
                 target=self._queued_writer, daemon=True, name="loguru-writer-%d" % self._id
             )
@@ -255,13 +255,19 @@ class Handler:
     def _queued_writer(self):
         message = None
         queue = self._queue
+
+        # We need to use a lock to protect sink during fork.
+        # Particularly, writing to stderr may lead to deadlock in child process.
+        lock = create_handler_lock()
+
         while True:
             try:
                 message = queue.get()
             except Exception:
-                if not self._error_interceptor.should_catch():
-                    raise
-                self._error_interceptor.print(None)
+                with lock:
+                    if not self._error_interceptor.should_catch():
+                        raise
+                    self._error_interceptor.print(None)
                 continue
 
             if message is None:
@@ -271,12 +277,13 @@ class Handler:
                 self._confirmation_event.set()
                 continue
 
-            try:
-                self._sink.write(message)
-            except Exception:
-                if not self._error_interceptor.should_catch():
-                    raise
-                self._error_interceptor.print(message.record)
+            with lock:
+                try:
+                    self._sink.write(message)
+                except Exception:
+                    if not self._error_interceptor.should_catch():
+                        raise
+                    self._error_interceptor.print(message.record)
 
     def __getstate__(self):
         state = self.__dict__.copy()
