@@ -98,7 +98,6 @@ def test_not_managed_files(tmpdir):
         "te.st.log",
         "testlog",
         "test",
-        "test.",
         "test.tar.gz",
         "test.logs",
         "test.foo",
@@ -107,6 +106,9 @@ def test_not_managed_files(tmpdir):
         "foo.test.log",
         "foo.test.log.zip",
     }
+
+    if os.name != "nt":
+        others.add("test.")
 
     for other in others:
         tmpdir.join(other).write(other)
