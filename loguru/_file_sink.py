@@ -13,9 +13,7 @@ from ._ctime_functions import get_ctime, set_ctime
 from ._datetime import aware_now, datetime
 
 
-def generate_rename_path(root, ext):
-    path_to_rename = root + ext
-    creation_time = get_ctime(path_to_rename)
+def generate_rename_path(root, ext, creation_time):
     creation_datetime = datetime.fromtimestamp(creation_time)
     date = FileDateFormatter(creation_datetime)
 
@@ -59,9 +57,11 @@ class Compression:
     @staticmethod
     def compression(path_in, ext, compress_function):
         path_out = "{}{}".format(path_in, ext)
-        if os.path.isfile(path_out):
+
+        if os.path.exists(path_out):
+            creation_time = get_ctime(path_out)
             root, ext_before = os.path.splitext(path_in)
-            renamed_path = generate_rename_path(root, ext_before + ext)
+            renamed_path = generate_rename_path(root, ext_before + ext, creation_time)
             os.rename(path_out, renamed_path)
         compress_function(path_in, path_out)
         os.remove(path_in)
@@ -160,38 +160,76 @@ class FileSink:
         self._retention_function = self._make_retention_function(retention)
         self._compression_function = self._make_compression_function(compression)
 
-        self._initialized = False
         self._file = None
         self._file_path = None
 
         if not delay:
-            self._initialize_file(rename_existing=False)
+            self._initialize_file()
 
     def write(self, message):
         if self._file is None:
-            self._initialize_file(rename_existing=self._initialized)
+            self._initialize_file()
 
         if self._rotation_function is not None and self._rotation_function(message, self._file):
-            self._terminate(teardown=True)
-            self._initialize_file(rename_existing=True)
-            set_ctime(self._file_path, datetime.now().timestamp())
+            self._terminate_file(is_rotating=True)
 
         self._file.write(message)
 
-    def _initialize_file(self, *, rename_existing):
-        new_path = self._path.format_map({"time": FileDateFormatter()})
-        new_path = os.path.abspath(new_path)
-        new_dir = os.path.dirname(new_path)
-        os.makedirs(new_dir, exist_ok=True)
+    def _prepare_new_path(self):
+        path = self._path.format_map({"time": FileDateFormatter()})
+        path = os.path.abspath(path)
+        dirname = os.path.dirname(path)
+        os.makedirs(dirname, exist_ok=True)
+        return path
 
-        if rename_existing and os.path.isfile(new_path):
-            root, ext = os.path.splitext(new_path)
-            renamed_path = generate_rename_path(root, ext)
-            os.rename(new_path, renamed_path)
+    def _initialize_file(self):
+        path = self._prepare_new_path()
+        self._file = open(path, **self._kwargs)
+        self._file_path = path
 
-        self._file_path = new_path
-        self._file = open(new_path, **self._kwargs)
-        self._initialized = True
+    def _terminate_file(self, *, is_rotating=False):
+        old_path = self._file_path
+
+        if self._file is not None:
+            self._file.close()
+            self._file = None
+            self._file_path = None
+
+        if is_rotating:
+            new_path = self._prepare_new_path()
+
+            if new_path == old_path:
+                creation_time = get_ctime(old_path)
+                root, ext = os.path.splitext(old_path)
+                renamed_path = generate_rename_path(root, ext, creation_time)
+                os.rename(old_path, renamed_path)
+                old_path = renamed_path
+
+        if is_rotating or self._rotation_function is None:
+            if self._compression_function is not None and old_path is not None:
+                self._compression_function(old_path)
+
+            if self._retention_function is not None:
+                logs = {
+                    file
+                    for pattern in self._glob_patterns
+                    for file in glob.glob(pattern)
+                    if os.path.isfile(file)
+                }
+                self._retention_function(list(logs))
+
+        if is_rotating:
+            file = open(new_path, **self._kwargs)
+            set_ctime(new_path, datetime.now().timestamp())
+
+            self._file_path = new_path
+            self._file = file
+
+    def stop(self):
+        self._terminate_file(is_rotating=False)
+
+    async def complete(self):
+        pass
 
     @staticmethod
     def _make_glob_patterns(path):
@@ -332,30 +370,3 @@ class FileSink:
             raise TypeError(
                 "Cannot infer compression for objects of type: '%s'" % type(compression).__name__
             )
-
-    def stop(self):
-        self._terminate(teardown=self._rotation_function is None)
-
-    def _terminate(self, *, teardown):
-        filepath = self._file_path
-
-        if self._file is not None:
-            self._file.close()
-            self._file = None
-            self._file_path = None
-
-        if teardown:
-            if self._compression_function is not None and filepath is not None:
-                self._compression_function(filepath)
-
-            if self._retention_function is not None:
-                logs = {
-                    file
-                    for pattern in self._glob_patterns
-                    for file in glob.glob(pattern)
-                    if os.path.isfile(file)
-                }
-                self._retention_function(list(logs))
-
-    async def complete(self):
-        pass

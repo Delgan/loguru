@@ -4,6 +4,8 @@ import sys
 import loguru
 from loguru import logger
 import datetime
+import threading
+import time
 
 
 @pytest.mark.parametrize(
@@ -30,12 +32,19 @@ def test_compression_function(tmpdir):
 
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
 def test_compression_at_rotation(tmpdir, mode):
-    i = logger.add(str(tmpdir.join("file.log")), rotation=0, compression="gz", mode=mode)
-    logger.debug("test")
+    logger.add(
+        str(tmpdir.join("file.log")), format="{message}", rotation=0, compression="gz", mode=mode
+    )
+    logger.debug("After compression")
 
-    assert len(tmpdir.listdir()) == 2
-    assert tmpdir.join("file.log").check(exists=1)
-    assert tmpdir.join("file.log.gz").check(exists=1)
+    files = sorted(tmpdir.listdir())
+
+    assert len(files) == 2
+    assert files[0].fnmatch(
+        "file.{0}-{1}-{1}_{1}-{1}-{1}_{2}.log.gz".format("[0-9]" * 4, "[0-9]" * 2, "[0-9]" * 6)
+    )
+    assert files[1].basename == "file.log"
+    assert files[1].read() == "After compression\n"
 
 
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
@@ -120,6 +129,57 @@ def test_renaming_compression_dest_exists_with_time(monkeypatch, monkeypatch_dat
     assert tmpdir.join(
         "rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.3.log.tar.gz"
     ).check(exists=1)
+
+
+def test_compression_use_renamed_file_after_rotation(tmpdir):
+    compressed_file = None
+
+    def compression(filepath):
+        nonlocal compressed_file
+        compressed_file = filepath
+
+    def rotation(message, _):
+        return message.record["extra"].get("rotate", False)
+
+    filepath = tmpdir.join("test.log")
+    logger.add(str(filepath), format="{message}", compression=compression, rotation=rotation)
+
+    logger.info("Before")
+    logger.bind(rotate=True).info("Rotation")
+    logger.info("After")
+
+    assert compressed_file != str(filepath)
+    assert open(compressed_file, "r").read() == "Before\n"
+    assert filepath.read() == "Rotation\nAfter\n"
+
+
+def test_threaded_compression_after_rotation(tmpdir):
+    thread = None
+
+    def rename(filepath):
+        time.sleep(1)
+        os.rename(filepath, str(tmpdir.join("test.log.mv")))
+
+    def compression(filepath):
+        nonlocal thread
+        thread = threading.Thread(target=rename, args=(filepath,))
+        thread.start()
+
+    def rotation(message, _):
+        return message.record["extra"].get("rotate", False)
+
+    logger.add(
+        str(tmpdir.join("test.log")), format="{message}", compression=compression, rotation=rotation
+    )
+
+    logger.info("Before")
+    logger.bind(rotate=True).info("Rotation")
+    logger.info("After")
+
+    thread.join()
+
+    assert tmpdir.join("test.log").read() == "Rotation\nAfter\n"
+    assert tmpdir.join("test.log.mv").read() == "Before\n"
 
 
 @pytest.mark.parametrize("delay", [True, False])

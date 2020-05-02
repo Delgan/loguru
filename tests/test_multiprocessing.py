@@ -627,7 +627,7 @@ def test_complete_from_multiple_child_processes(capsys):
         processes.append(process)
 
     for process in processes:
-        process.join(2)
+        process.join(5)
         assert process.exitcode == 0
 
     out, err = capsys.readouterr()

@@ -374,8 +374,8 @@ class Logger:
         each log record will search for it's closest parent in the ``dict`` and use the associated
         level as the filter. The ``dict`` values can be ``int`` severity, ``str`` level name or
         ``True`` and ``False`` to respectively authorize and discard all module logs
-        unconditionally. In order to set a default level, the `""` module name should be used as it
-        is the parent of all modules.
+        unconditionally. In order to set a default level, the ``""`` module name should be used as
+        it is the parent of all modules (it does not suppress global ``level`` threshold, though).
 
         .. _levels:
 
@@ -1391,7 +1391,7 @@ class Logger:
         once before sending the log message to the different handlers.
 
         It is recommended to apply modification on the ``record["extra"]`` dict rather than on the
-        ``record`` dict itself, as some values are used internally by Loguru, and modify them may
+        ``record`` dict itself, as some values are used internally by `Loguru`, and modify them may
         produce unexpected results.
 
         Parameters
@@ -1605,7 +1605,7 @@ class Logger:
             ``None``, this will replace previously configured ``patcher`` function.
         activation : |list| of |tuple|, optional
             A list of ``(name, state)`` tuples which denotes which loggers should be enabled (if
-            `state` is ``True``) or disabled (if `state` is ``False``). The calls to |enable|
+            ``state`` is ``True``) or disabled (if ``state`` is ``False``). The calls to |enable|
             and |disable| are made accordingly to the list order. This will not modify previously
             activated loggers, so if you need a fresh start prepend your list with ``("", False)``
             or ``("", True)``.
