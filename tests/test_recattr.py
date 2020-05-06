@@ -1,4 +1,7 @@
 import re
+
+import pytest
+
 from loguru import logger
 import loguru._recattrs as recattrs
 
@@ -74,3 +77,23 @@ def test_exception_repr():
     exception = recattrs.RecordException(ValueError, ValueError("Nope"), None)
     regex = r"\(type=<class 'ValueError'>, value=ValueError\('Nope',?\), traceback=None\)"
     assert re.fullmatch(regex, repr(exception))
+
+
+@pytest.mark.parametrize("level_string", ["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL", "CUSTOM"])
+def test_record_level_eq_logger_level(level_string):
+    if level_string != "CUSTOM":
+        logger_level = logger.level(level_string)
+    else:
+        logger_level = logger.level(level_string, no=80, color="<blue>", icon="?")
+
+    record_level = recattrs.RecordLevel(logger_level.name, logger_level.no, logger_level.icon)
+
+    assert record_level == logger_level
+
+
+def test_record_level_not_eq_no():
+    logger_level = logger.level("INFO")
+
+    different_name = recattrs.RecordLevel(logger_level.name, -10, logger_level.icon)
+
+    assert different_name != logger_level

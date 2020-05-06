@@ -15,6 +15,12 @@ class RecordLevel:
     def __format__(self, spec):
         return self.name.__format__(spec)
 
+    def __eq__(self, other):
+        if getattr(other, "name", None) and getattr(other, "no", None) and getattr(other, "icon", None):
+            return self.name == other.name and self.no == other.no and self.icon == other.icon
+
+        return False
+
 
 class RecordFile:
     __slots__ = ("name", "path")
