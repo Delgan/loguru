@@ -84,7 +84,7 @@ def test_record_level_eq_logger_level(level_string):
     if level_string != "CUSTOM":
         logger_level = logger.level(level_string)
     else:
-        logger_level = logger.level(level_string, no=80, color="<blue>", icon="?")
+        logger_level = logger.level(level_string, no=80, color="<blue>", icon="✩")
 
     record_level = recattrs.RecordLevel(logger_level.name, logger_level.no, logger_level.icon)
 

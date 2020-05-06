@@ -16,7 +16,7 @@ class RecordLevel:
         return self.name.__format__(spec)
 
     def __eq__(self, other):
-        if getattr(other, "name", None) and getattr(other, "no", None) and getattr(other, "icon", None):
+        if hasattr(other, "name") and hasattr(other, "no") and hasattr(other, "icon"):
             return self.name == other.name and self.no == other.no and self.icon == other.icon
 
         return False
