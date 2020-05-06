@@ -1,4 +1,5 @@
 import re
+from collections import namedtuple
 
 import pytest
 
@@ -97,3 +98,16 @@ def test_record_level_not_eq_no():
     different_name = recattrs.RecordLevel(logger_level.name, -10, logger_level.icon)
 
     assert different_name != logger_level
+
+
+OtherLevel = namedtuple("OtherLevel", ["name", "no"])
+
+
+def test_record_level_not_eq_other():
+    record_level = recattrs.RecordLevel("INFO", 20, "✩")
+    other = OtherLevel("INFO", 20)
+
+    assert record_level != other
+
+
+
