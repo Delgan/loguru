@@ -14,7 +14,7 @@ __version__ = "0.4.1"
 
 __all__ = ["logger"]
 
-logger = _Logger(_Core(), None, 0, False, False, False, False, None, {})
+logger = _Logger(_Core(), None, 0, False, False, False, False, True, None, {})
 
 if _defaults.LOGURU_AUTOINIT and _sys.stderr:
     logger.add(_sys.stderr)

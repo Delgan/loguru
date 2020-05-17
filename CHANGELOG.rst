@@ -2,6 +2,7 @@
 =============
 
 - Remove the possibility to modify the severity ``no`` of levels once they have been added in order to prevent surprising behavior (`#209 <https://github.com/Delgan/loguru/issues/209>`_).
+- Add better support for "structured logging" by automatically adding ``**kwargs`` to the ``extra`` dict besides using these arguments to format the message. This behavior can be disabled by using the new ``opt(capture=False)`` parameter  (`#2 <https://github.com/Delgan/loguru/issues/2>`_).
 - Add a new ``onerror`` optional argument to ``logger.catch()``, it should be a function which will be called when an exception occurs in order to customize error handling (`#224 <https://github.com/Delgan/loguru/issues/224>`_).
 - Add a new ``exclude`` optional argument to ``logger.catch()``, is should be a type of exception to be purposefully ignored and propagated to the caller without being logged (`#248 <https://github.com/Delgan/loguru/issues/248>`_).
 - Modify ``complete()`` to make it callable from non-asynchronous functions, it can thus be used if ``enqueue=True`` to make sure all messages have been processed (`#231 <https://github.com/Delgan/loguru/issues/231>`_).

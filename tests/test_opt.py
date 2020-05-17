@@ -146,6 +146,14 @@ def test_depth(writer):
     assert writer.read() == "test_depth : Test 1\na : Test 2\ntest_depth : Test 3\n"
 
 
+def test_capture(writer):
+    logger.add(writer, format="{message} {extra}")
+    logger.opt(capture=False).info("No {}", 123, no=False)
+    logger.opt(capture=False).info("Formatted: {fmt}", fmt=456)
+    logger.opt(capture=False).info("Formatted bis: {} {fmt}", 123, fmt=456)
+    assert writer.read() == "No 123 {}\nFormatted: 456 {}\nFormatted bis: 123 456 {}\n"
+
+
 def test_colors(writer):
     logger.add(writer, format="<red>a</red> {message}", colorize=True)
     logger.opt(colors=True).debug("<blue>b</blue>")

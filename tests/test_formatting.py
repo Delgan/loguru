@@ -123,6 +123,47 @@ def test_extra_formatting(writer):
     assert writer.read() == "my_test -> {'a': 10} -> level: DEBUG\n"
 
 
+def test_kwargs_in_extra_dict():
+    extra_dicts = []
+    messages = []
+
+    def sink(message):
+        extra_dicts.append(message.record["extra"])
+        messages.append(str(message))
+
+    logger.add(sink, format="{message}")
+    logger.info("A")
+    logger.info("B", foo=123)
+    logger.bind(merge=True).info("C", other=False)
+    logger.bind(override=False).info("D", override=True)
+    logger.info("Formatted kwargs: {foobar}", foobar=123)
+    logger.info("Ignored args: {}", 456)
+    logger.info("Both: {foobar} {}", 456, foobar=123)
+    logger.opt(lazy=True).info("Lazy: {lazy}", lazy=lambda: 789)
+
+    assert messages == [
+        "A\n",
+        "B\n",
+        "C\n",
+        "D\n",
+        "Formatted kwargs: 123\n",
+        "Ignored args: 456\n",
+        "Both: 123 456\n",
+        "Lazy: 789\n",
+    ]
+
+    assert extra_dicts == [
+        {},
+        {"foo": 123},
+        {"merge": True, "other": False},
+        {"override": True},
+        {"foobar": 123},
+        {},
+        {"foobar": 123},
+        {"lazy": 789},
+    ]
+
+
 def test_invalid_color_markup(writer):
     with pytest.raises(ValueError):
         logger.add(writer, format="<red>Not closed tag", colorize=True)

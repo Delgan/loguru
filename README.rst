@@ -287,9 +287,10 @@ Using |bind|_ you can contextualize your logger messages by modifying the `extra
 ::
 
     logger.add("file.log", format="{extra[ip]} {extra[user]} {message}")
-    logger_ctx = logger.bind(ip="192.168.0.1", user="someone")
-    logger_ctx.info("Contextualize your logger easily")
-    logger_ctx.bind(user="someoneelse").info("Inline binding of extra attribute")
+    context_logger = logger.bind(ip="192.168.0.1", user="someone")
+    context_logger.info("Contextualize your logger easily")
+    context_logger.bind(user="someone_else").info("Inline binding of extra attribute")
+    context_logger.info("Use kwargs to add context during formatting: {user}", user="anybody")
 
 It is possible to modify a context-local state temporarily with |contextualize|_:
 

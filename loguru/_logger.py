@@ -216,9 +216,9 @@ class Logger:
     You should not instantiate a |Logger| by yourself, use ``from loguru import logger`` instead.
     """
 
-    def __init__(self, core, exception, depth, record, lazy, colors, raw, patcher, extra):
+    def __init__(self, core, exception, depth, record, lazy, colors, raw, capture, patcher, extra):
         self._core = core
-        self._options = (exception, depth, record, lazy, colors, raw, patcher, extra)
+        self._options = (exception, depth, record, lazy, colors, raw, capture, patcher, extra)
 
     def __repr__(self):
         return "<loguru.logger handlers=%r>" % list(self._core.handlers.values())
@@ -376,6 +376,10 @@ class Logger:
         ``True`` and ``False`` to respectively authorize and discard all module logs
         unconditionally. In order to set a default level, the ``""`` module name should be used as
         it is the parent of all modules (it does not suppress global ``level`` threshold, though).
+
+        Note that while calling a logging method, the keyword arguments (if any) are automatically
+        added to the ``extra`` dict for convenient contextualization (in addition to being used for
+        formatting).
 
         .. _levels:
 
@@ -1218,6 +1222,7 @@ class Logger:
         lazy=False,
         colors=False,
         raw=False,
+        capture=True,
         depth=0,
         ansi=False
     ):
@@ -1245,6 +1250,9 @@ class Logger:
         raw : |bool|, optional
             If ``True``, the formatting of each sink will be bypassed and the message will be sent
             as is.
+        capture : |bool|, optional
+            If ``False``, the ``**kwargs`` of logged message will not automatically populate
+            the ``extra`` dict (although they are still used for formatting).
         depth : |int|, optional
             Specify which stacktrace should be used to contextualize the logged message. This is
             useful while using the logger from inside a wrapped function to retrieve worthwhile
@@ -1283,6 +1291,9 @@ class Logger:
         >>> logger.opt(raw=True).debug("No formatting\n")
         No formatting
 
+        >>> logger.opt(capture=False).info("Displayed but not captured: {value}", value=123)
+        [18:11:41] Displayed but not captured: 123
+
         >>> def wrapped():
         ...     logger.opt(depth=1).info("Get parent context")
         ...
@@ -1299,7 +1310,8 @@ class Logger:
                 DeprecationWarning,
             )
 
-        return Logger(self._core, exception, depth, record, lazy, colors, raw, *self._options[-2:])
+        args = self._options[-2:]
+        return Logger(self._core, exception, depth, record, lazy, colors, raw, capture, *args)
 
     def bind(__self, **kwargs):
         """Bind attributes to the ``extra`` dict of each logged message record.
@@ -1821,7 +1833,7 @@ class Logger:
         if not core.handlers:
             return
 
-        (exception, depth, record, lazy, colors, raw, patcher, extra) = options
+        (exception, depth, record, lazy, colors, raw, capture, patcher, extra) = options
 
         frame = get_frame(depth + 2)
 
@@ -1910,6 +1922,9 @@ class Logger:
                     "argument while logger has been configured with '.opt(record=True)'"
                 )
             kwargs.update(record=log_record)
+
+        if capture and kwargs:
+            log_record["extra"].update(kwargs)
 
         if colors:
             if args or kwargs:
