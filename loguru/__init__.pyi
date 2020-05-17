@@ -280,6 +280,7 @@ class Logger:
         lazy: bool = ...,
         colors: bool = ...,
         raw: bool = ...,
+        capture: bool = ...,
         depth: int = ...,
         ansi: bool = ...
     ) -> Logger: ...
