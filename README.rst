@@ -331,6 +331,7 @@ Sometime you would like to log verbose information without performance penalty i
     logger.opt(record=True).info("Display values from the record (eg. {record[thread]})")
     logger.opt(raw=True).info("Bypass sink formatting\n")
     logger.opt(depth=1).info("Use parent stack context (useful within wrapped functions)")
+    logger.opt(capture=False).info("Keyword arguments not added to {dest} dict", dest="extra")
 
 
 Customizable levels
