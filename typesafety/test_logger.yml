@@ -1,0 +1,27 @@
+---
+- case: logger.info(ok)
+  main: |
+    from loguru import logger
+
+    logger.info('test')
+    logger.info('test a={a}', a=1)
+    logger.info('test b={b}', b=lambda: 2)
+    logger.info('test c={}', 3)
+    logger.info('test c={} d={}', 3, 4)
+    logger.info('test e={} ip={ip}', 5, ip='129.22.33.33')
+- case: logger.info(bad,reason=extra_arg)
+  main: |
+    from loguru import logger
+
+    logger.info('test', a=1)
+- case: logger.info(bad,reason=missing_arg)
+  main: |
+    from loguru import logger
+
+    logger.info('test a={a} b={b}', a=1)
+- case: logger.info(bad,reason=callable_bad)
+  main: |
+    from loguru import logger
+
+    logger.info('test', a=lambda x: x)
+    logger.opt(lazy=True).info('test', a=lambda x: x)
