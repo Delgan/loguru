@@ -13,6 +13,11 @@
   main: |
     from loguru import logger
 
+    logger.info('test', 1)
+- case: logger.info(bad,reason=extra_kwarg)
+  main: |
+    from loguru import logger
+
     logger.info('test', a=1)
 - case: logger.info(bad,reason=missing_arg)
   main: |
