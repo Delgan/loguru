@@ -1,32 +1,105 @@
 ---
-- case: logger.info(ok)
+- case: ok
   main: |
     from loguru import logger
 
     logger.info('test')
-    logger.info('test a={a}', a=1)
-    logger.info('test b={b}', b=lambda: 2)
-    logger.info('test c={}', 3)
-    logger.info('test c={} d={}', 3, 4)
-    logger.info('test e={} ip={ip}', 5, ip='129.22.33.33')
-- case: logger.info(bad,reason=extra_arg)
+    logger.debug('test a={a}', a=1)
+    logger.warning('test b={b}', b=lambda: 2)
+    logger.exception('test c={}', 3)
+    logger.debug('test c={} d={}', 3, 4)
+    logger.exception('test e={} ip={ip}', 5, ip='129.22.33.33')
+    logger.debug('{}', lambda: 3)
+- case: with_alias
+  main: |
+    from datetime import datetime
+
+    from loguru import logger as LOG
+
+    LOG.info(
+      'I am lenghty message here produced at {d} '
+      'via {} using magic',
+      __name__,
+      d=datetime.utcnow(),
+    )
+- case: extra_arg
   main: |
     from loguru import logger
 
     logger.info('test', 1)
-- case: logger.info(bad,reason=extra_kwarg)
+    logger.debug('test {}', 1, 2, 3)
+    logger.warning('test {} {}', 1, 2, 3)
+    logger.error('test {} {} {}', 11, 22, 33, 44)
+    logger.exception('{}', 1, 2)
+  out: |
+    main:3: note: Expected 0 but found 1 positional arguments for log message
+    main:4: note: Expected 1 but found 3 positional arguments for log message
+    main:5: note: Expected 2 but found 3 positional arguments for log message
+    main:6: note: Expected 3 but found 4 positional arguments for log message
+    main:7: note: Expected 1 but found 2 positional arguments for log message
+- case: missing_arg
+  main: |
+    from loguru import logger
+
+    logger.info('test {} {}', 1)
+    logger.debug('test {} {} {} {}', 1, 2, 3)
+    logger.warning('test {} {} {}', 1, 2, 3)
+    logger.error('test {} {} {} {} {}', 11, 22, 33, 44)
+    logger.exception('{} {} {}', 1, 2)
+  out: |
+    main:3: error: Missing 1 positional arguments for log message  [loguru-logger-arg]
+    main:4: error: Missing 1 positional arguments for log message  [loguru-logger-arg]
+    main:6: error: Missing 1 positional arguments for log message  [loguru-logger-arg]
+    main:7: error: Missing 1 positional arguments for log message  [loguru-logger-arg]
+- case: extra_kwarg
   main: |
     from loguru import logger
 
     logger.info('test', a=1)
-- case: logger.info(bad,reason=missing_arg)
+
+    def foo() -> None:
+      logger.debug('test a={a}', a=2, b=1)
+
+    logger.warning('test', a=1)
+    logger.error('test', a=1)
+
+    try:
+      2 / 0
+    except ZeroDivisionError:
+      logger.exception('{a} / {b}', a=2, b=0, c=0)
+  out: |
+    main:3: error: a keyword argument not found in log message  [loguru-logger-kwarg]
+    main:6: error: b keyword argument not found in log message  [loguru-logger-kwarg]
+    main:8: error: a keyword argument not found in log message  [loguru-logger-kwarg]
+    main:9: error: a keyword argument not found in log message  [loguru-logger-kwarg]
+    main:14: error: c keyword argument not found in log message  [loguru-logger-kwarg]
+- case: missing_kwarg
   main: |
+    import random
     from loguru import logger
 
     logger.info('test a={a} b={b}', a=1)
-- case: logger.info(bad,reason=callable_bad)
+    logger.debug(
+      'foo foo={foo} and bar={bar} with car={car}',
+      foo=1,
+      bar=random.randint(1, 10),
+    )
+  out: |
+    main:4: error: b keyword argument is missing  [loguru-logger-kwarg]
+    main:6: error: car keyword argument is missing  [loguru-logger-kwarg]
+- case: bad_callable
   main: |
     from loguru import logger
 
-    logger.info('test', a=lambda x: x)
-    logger.opt(lazy=True).info('test', a=lambda x: x)
+    logger.opt(lazy=True).debug('test a={fn}', fn=lambda x: x)
+
+    def foo(a: int, b: int) -> str:
+      return f'{a * b}'
+
+    logger.opt(lazy=True).debug('test b={abc}', abc=foo)
+
+    logger.warning('{} and e={e}', lambda d: 100, e=lambda: 200)
+  out: |
+    main:3: error: Expected 0 arguments for <lambda>: fn kwarg   [loguru-logger-kwarg]
+    main:8: error: Expected 0 arguments for main.foo: abc  [loguru-logger-kwarg]
+    main:10: error: Expected 0 arguments for <lambda>: 0 arg   [loguru-logger-arg]
