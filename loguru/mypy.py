@@ -1,7 +1,6 @@
 import string
 import typing as t
 
-from mypy.checker import TypeChecker
 from mypy.nodes import LambdaExpr, StrExpr, NameExpr, FuncItem
 from mypy.plugin import MethodContext, Plugin
 from mypy.errorcodes import ErrorCode
@@ -23,7 +22,6 @@ ERROR_BAD_KWARG: t.Final[ErrorCode] = ErrorCode(
 def _loguru_logger_call_handler(ctx: MethodContext) -> Type:
     log_msg_expr = ctx.args[0][0]
     assert isinstance(log_msg_expr, StrExpr)
-    assert isinstance(ctx.api, TypeChecker)
 
     # collect call args/kwargs
     # due to funky structure mypy offers here, it's easier
