@@ -1,3 +1,4 @@
+import string
 import typing as t
 
 from mypy.nodes import StrExpr
@@ -19,45 +20,53 @@ ERROR_BAD_KWARG: t.Final[ErrorCode] = ErrorCode(
 
 
 def _loguru_logger_call_handler(ctx: MethodContext,) -> Type:
-    import string
+    log_msg_expr = ctx.args[0][0]
+    assert isinstance(log_msg_expr, StrExpr)
 
-    msg_arg = ctx.args[0][0]
-    assert isinstance(msg_arg, StrExpr)
+    # collect call args/kwargs
+    call_args_count = len(ctx.args[1])
+    call_kwargs = {kwarg_name: ctx.args[2][idx] for idx,kwarg_name in enumerate(ctx.arg_names[2])}
 
-    msg_value: str = msg_arg.value
-    msg_interpolation_args_count = 0
-    msg_interpolation_kwargs = []
-
-    for res in string.Formatter().parse(msg_value):
+    # collect args/kwargs from string interpolation
+    log_msg_value: str = log_msg_expr.value
+    log_msg_expected_args_count = 0
+    log_msg_expected_kwargs = []
+    for res in string.Formatter().parse(log_msg_value):
         if res[1] is None:
-            # not a placeholder
             continue
         elif not res[1].strip():
-            # positional placeholder
-            msg_interpolation_args_count += 1
+            log_msg_expected_args_count += 1
         else:
-            msg_interpolation_kwargs.append(res[1].strip())
+            log_msg_expected_kwargs.append(res[1].strip())
 
-    total_f_string_args = len(msg_interpolation_kwargs) + msg_interpolation_args_count
-    if total_f_string_args != len(ctx.args):
-        if msg_interpolation_args_count:
-            msg, code = (
-                "No positional arguments found in message",
-                ERROR_BAD_ARG,
-            )
+    if log_msg_expected_args_count > call_args_count:
+        ctx.api.msg.fail(
+            f"Missing {log_msg_expected_args_count - call_args_count} positional arguments for log message",
+            context=log_msg_expr,
+            code=ERROR_BAD_ARG,
+        )
+        return ctx.default_return_type
+    elif log_msg_expected_args_count < call_args_count:
+        ctx.api.msg.warn(
+            f"Expected {log_msg_expected_args_count}, but found {call_args_count} positional arguments for log message",
+            context=log_msg_expr,
+            code=ERROR_BAD_ARG,
+        )
+        return ctx.default_return_type
+
+    for log_msg_kwarg in log_msg_expected_kwargs:
+        maybe_kwarg_expr = call_kwargs.pop(log_msg_kwarg, None)
+        if maybe_kwarg_expr is None:
             ctx.api.msg.fail(
-                msg, context=ctx, code=code,
+                f"{log_msg_kwarg} keyword argument is missing", context=log_msg_expr, code=ERROR_BAD_KWARG,
             )
             return ctx.default_return_type
-        if msg_interpolation_kwargs:
-            msg, code = (
-                "No named arguments found in message",
-                ERROR_BAD_KWARG,
-            )
-            ctx.api.msg.fail(
-                msg, context=ctx, code=code,
-            )
-            return ctx.default_return_type
+        # TODO add kwarg type being lambda or any other callable
+
+    if call_kwargs:
+        ctx.api.msg.fail(
+            f"{call_kwargs.keys()} keyword argument are not present in log message", context=log_msg_expr, code=ERROR_BAD_KWARG,
+        )
 
     return ctx.default_return_type
 
