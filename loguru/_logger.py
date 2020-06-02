@@ -1078,6 +1078,7 @@ class Logger:
         reraise=False,
         onerror=None,
         exclude=None,
+        default=None,
         message="An error has been caught in function '{record[function]}', "
         "process '{record[process].name}' ({record[process].id}), "
         "thread '{record[thread].name}' ({record[thread].id}):"
@@ -1108,6 +1109,9 @@ class Logger:
         exclude : |Exception|, optional
             A type of exception (or a tuple of types) that will be purposely ignored and hence
             propagated to the caller without being logged.
+        default : optional
+            The value to be returned by the decorated function if an error occurred without being
+            re-raised.
         message : |str|, optional
             The message that will be automatically logged if an exception occurs. Note that it will
             be formatted with the ``record`` attribute.
@@ -1196,18 +1200,21 @@ class Logger:
                     async def catch_wrapper(*args, **kwargs):
                         with catcher:
                             return await function(*args, **kwargs)
+                        return default
 
                 elif inspect.isgeneratorfunction(function):
 
                     def catch_wrapper(*args, **kwargs):
                         with catcher:
                             return (yield from function(*args, **kwargs))
+                        return default
 
                 else:
 
                     def catch_wrapper(*args, **kwargs):
                         with catcher:
                             return function(*args, **kwargs)
+                        return default
 
                 functools.update_wrapper(catch_wrapper, function)
                 return catch_wrapper

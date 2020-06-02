@@ -623,3 +623,38 @@ def test_decorate_generator(writer):
 
     with pytest.raises(StopIteration, match=r"3"):
         next(f)
+
+
+def test_decorate_generator_with_error():
+    @logger.catch
+    def foo():
+        for i in range(3):
+            1 / (2 - i)
+            yield i
+
+    assert list(foo()) == [0, 1]
+
+
+def test_default_with_function():
+    @logger.catch(default=42)
+    def foo():
+        1 / 0
+
+    assert foo() == 42
+
+
+def test_default_with_generator():
+    @logger.catch(default=42)
+    def foo():
+        yield 1 / 0
+
+    with pytest.raises(StopIteration, match=r"42"):
+        next(foo())
+
+
+def test_default_with_coroutine():
+    @logger.catch(default=42)
+    async def foo():
+        return 1 / 0
+
+    assert asyncio.run(foo()) == 42

@@ -2,6 +2,7 @@
 =============
 
 - Modify the way the ``extra`` dict is used by ``LogRecord`` in order to prevent possible ``KeyError`` with standard ``logging`` handlers (`#271 <https://github.com/Delgan/loguru/issues/271>`_).
+- Add a new ``default`` optional argument to ``logger.catch()``, it should be the returned value by the decorated function in case an error occurred (`#272 <https://github.com/Delgan/loguru/issues/272>`_).
 
 
 `0.5.0`_ (2020-05-17)
