@@ -53,7 +53,7 @@ class StandardSink:
             (),
             (exc.type, exc.value, exc.traceback) if exc else None,
             record["function"],
-            record["extra"],
+            {"extra": record["extra"]},
         )
         if exc:
             record.exc_text = "\n"

@@ -40,12 +40,21 @@ def test_null_handler(capsys):
 
 def test_extra_dict(capsys):
     handler = StreamHandler(sys.stdout)
-    formatter = Formatter("[%(abc)s] %(message)s")
+    formatter = Formatter("%(extra)s %(message)s")
     handler.setFormatter(formatter)
     logger.add(handler, format="<{extra[abc]}> {message}", catch=False)
     logger.bind(abc=123).info("Extra!")
     out, err = capsys.readouterr()
-    assert out == "[123] <123> Extra!\n"
+    assert out == "{'abc': 123} <123> Extra!\n"
+    assert err == ""
+
+
+def test_no_conflict_with_extra_dict(capsys):
+    handler = StreamHandler(sys.stdout)
+    logger.add(handler, format="{message}", catch=False)
+    logger.bind(args=True, name="foobar", message="Wut?").info("OK!")
+    out, err = capsys.readouterr()
+    assert out == "OK!\n"
     assert err == ""
 
 
