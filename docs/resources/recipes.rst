@@ -317,7 +317,7 @@ Each handler added with ``serialize=True`` will create messages by converting th
 If you need to send structured logs to a file (or any kind of sink in general), a similar result can be obtained by using a custom ``format`` function::
 
     def formatter(record):
-        # Note that this function returns the string to be formatted, not the actual message to be logged
+        # Note this function returns the string to be formatted, not the actual message to be logged
         record["extra"]["serialized"] = serialize(record)
         return "{extra[serialized]}\n"
 
@@ -334,6 +334,40 @@ You can also use |patch| for this, so the serialization function will be called 
     # Note that if "format" is not a function, possible exception will be appended to the message
     logger.add(sys.stderr, format="{extra[serialized]}")
     logger.add("file.log", format="{extra[serialized]}")
+
+
+Rotating log file based on both size and time
+---------------------------------------------
+
+The ``rotation`` argument of file sinks accept size or time limits but not both for simplification reasons. However, it is possible to create a custom function to support more advanced scenarios::
+
+    import datetime
+
+    class Rotator:
+
+        def __init__(self, *, size, at):
+            now = datetime.datetime.now()
+
+            self._size_limit = size
+            self._time_limit = now.replace(hour=at.hour, minute=at.minute, second=at.second)
+
+            if now >= self._time_limit:
+                # The current time is already past the target time so it would rotate already.
+                # Add one day to prevent an immediate rotation.
+                self._time_limit += datetime.timedelta(days=1)
+
+        def should_rotate(self, message, file):
+            file.seek(0, 2)
+            if file.tell() + len(message) > self._size_limit:
+                return True
+            if message.record["time"].timestamp() > self._time_limit.timestamp():
+                self._time_limit += datetime.timedelta(days=1)
+                return True
+            return False
+
+    # Rotate file if over 500 MB or at midnight every day
+    rotator = Rotator(size=5e+8, at=datetime.time(0, 0, 0))
+    logger.add("file.log", rotation=rotator.should_rotate)
 
 
 Dynamically formatting messages to properly align values with padding
