@@ -298,6 +298,44 @@ However, it should be noted that it's not possible to chain |opt| calls, using t
     logger.opt(raw=True).info("It <green>still</> works!\n")
 
 
+Serializing log messages using a custom function
+------------------------------------------------
+
+Each handler added with ``serialize=True`` will create messages by converting the logging record to a valid JSON string. Depending on the sink for which the messages are intended, it may be useful to make changes to the generated string. Instead of using the ``serialize`` parameter, you can implement your own serialization function and use it directly in your sink::
+
+    def serialize(record):
+        subset = {"timestamp": record["time"].timestamp(), "message": record["message"]}
+        return json.dumps(subset)
+
+    def sink(message):
+        serialized = serialize(message.record)
+        print(serialized)
+
+    logger.add(sink)
+
+
+If you need to send structured logs to a file (or any kind of sink in general), a similar result can be obtained by using a custom ``format`` function::
+
+    def formatter(record):
+        # Note that this function returns the string to be formatted, not the actual message to be logged
+        record["extra"]["serialized"] = serialize(record)
+        return "{extra[serialized]}\n"
+
+    logger.add("file.log", format=formatter)
+
+
+You can also use |patch| for this, so the serialization function will be called only once in case you want to use it in multiple sinks::
+
+    def patching(record):
+        record["extra"]["serialized"] = serialize(record)
+
+    logger = logger.patch(patching)
+
+    # Note that if "format" is not a function, possible exception will be appended to the message
+    logger.add(sys.stderr, format="{extra[serialized]}")
+    logger.add("file.log", format="{extra[serialized]}")
+
+
 Dynamically formatting messages to properly align values with padding
 ---------------------------------------------------------------------
 
