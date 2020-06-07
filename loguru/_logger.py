@@ -609,6 +609,10 @@ class Logger:
           the log file as argument and process to whatever it wants (custom compression, network
           sending, removing it, etc.).
 
+        Either way, if you use a custom function designed according to your preferences, you must be
+        very careful not to use the ``logger`` within your function. Otherwise, there is a risk that
+        your program hang because of a deadlock.
+
         .. _color:
 
         .. rubric:: The color markups
