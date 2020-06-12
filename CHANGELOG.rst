@@ -1,5 +1,5 @@
-`Unreleased`_
-=============
+`0.5.1`_ (2020-06-12)
+=====================
 
 - Modify the way the ``extra`` dict is used by ``LogRecord`` in order to prevent possible ``KeyError`` with standard ``logging`` handlers (`#271 <https://github.com/Delgan/loguru/issues/271>`_).
 - Add a new ``default`` optional argument to ``logger.catch()``, it should be the returned value by the decorated function in case an error occurred (`#272 <https://github.com/Delgan/loguru/issues/272>`_).
@@ -157,7 +157,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.5.0...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.5.1...master
+.. _0.5.1: https://github.com/delgan/loguru/releases/tag/0.5.1
 .. _0.5.0: https://github.com/delgan/loguru/releases/tag/0.5.0
 .. _0.4.1: https://github.com/delgan/loguru/releases/tag/0.4.1
 .. _0.4.0: https://github.com/delgan/loguru/releases/tag/0.4.0
