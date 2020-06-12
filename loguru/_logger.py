@@ -1926,6 +1926,9 @@ class Logger:
             args = [arg() for arg in args]
             kwargs = {key: value() for key, value in kwargs.items()}
 
+        if capture and kwargs:
+            log_record["extra"].update(kwargs)
+
         if record:
             if "record" in kwargs:
                 raise TypeError(
@@ -1933,9 +1936,6 @@ class Logger:
                     "argument while logger has been configured with '.opt(record=True)'"
                 )
             kwargs.update(record=log_record)
-
-        if capture and kwargs:
-            log_record["extra"].update(kwargs)
 
         if colors:
             if args or kwargs:

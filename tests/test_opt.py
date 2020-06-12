@@ -22,6 +22,35 @@ def test_record_in_kwargs_too(writer):
         logger.opt(record=True).info("Foo {record}", record=123)
 
 
+def test_record_not_in_extra():
+    extra = None
+
+    def sink(message):
+        nonlocal extra
+        extra = message.record["extra"]
+
+    logger.add(sink, catch=False)
+
+    logger.opt(record=True).info("Test")
+
+    assert extra == {}
+
+
+def test_kwargs_in_extra_of_record():
+    message = None
+
+    def sink(message_):
+        nonlocal message
+        message = message_
+
+    logger.add(sink, format="{message}", catch=False)
+
+    logger.opt(record=True).info("Test {record[extra][foo]}", foo=123)
+
+    assert message == "Test 123\n"
+    assert message.record["extra"] == {"foo": 123}
+
+
 def test_exception_boolean(writer):
     logger.add(writer, format="{level.name}: {message}")
 

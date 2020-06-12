@@ -36,6 +36,32 @@ def test_serialize_with_exception():
     assert bool(sink.json["record"]["exception"])
 
 
+def test_serialize_with_catch_decorator():
+    sink = JsonSink()
+    logger.add(sink, format="{message}", serialize=True, catch=False)
+
+    @logger.catch
+    def foo():
+        1 / 0
+
+    foo()
+
+    lines = sink.json["text"].splitlines()
+    assert lines[0].startswith("An error has been caught")
+    assert lines[-1] == "ZeroDivisionError: division by zero"
+    assert bool(sink.json["record"]["exception"])
+
+
+def test_serialize_with_record_option():
+    sink = JsonSink()
+    logger.add(sink, format="{message}", serialize=True, catch=False)
+
+    logger.opt(record=True).info("Test", foo=123)
+
+    assert sink.json["text"] == "Test\n"
+    assert sink.dict["extra"] == {"foo": 123}
+
+
 def test_serialize_not_serializable():
     sink = JsonSink()
     logger.add(sink, format="{message}", catch=False, serialize=True)
