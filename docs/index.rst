@@ -12,4 +12,3 @@ Table of contents
    api.rst
    resources.rst
    project.rst
-   mypy.rst
