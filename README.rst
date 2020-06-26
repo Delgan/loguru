@@ -38,7 +38,11 @@ Installation
 
 ::
 
+    # without a mypy's plugin
     pip install loguru
+
+    # with mypy's plugin
+    pip install loguru[mypy]
 
 
 Features
@@ -503,6 +507,7 @@ Documentation
 * `API Reference <https://loguru.readthedocs.io/en/stable/api/logger.html>`_
 * `Help & Guides <https://loguru.readthedocs.io/en/stable/resources.html>`_
 * `Type hints <https://loguru.readthedocs.io/en/stable/api/type_hints.html>`_
+* `Mypy <https://loguru.readthedocs.io/en/stable/mypy.html>`_
 * `Contributing <https://loguru.readthedocs.io/en/stable/project/contributing.html>`_
 * `License <https://loguru.readthedocs.io/en/stable/project/license.html>`_
 * `Changelog <https://loguru.readthedocs.io/en/stable/project/changelog.html>`_

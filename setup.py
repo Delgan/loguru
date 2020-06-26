@@ -54,6 +54,9 @@ setup(
         "win32-setctime>=1.0.0 ; sys_platform=='win32'",
     ],
     extras_require={
+        "mypy": [
+            "loguru-mypy>=0.0.1",
+        ],
         "dev": [
             "black>=19.3b0 ; python_version>='3.6'",
             "codecov>=2.0.15",
