@@ -24,7 +24,7 @@ Plugin can be installed seperately or as an extra for **Loguru** by
 
 ::
 
-    pip install logoru[mypy]
+    pip install loguru[mypy]
 
 It is advised to visit its
 `documentation <https://github.com/kornicameister/loguru-mypy/blob/master/README.md>`.
