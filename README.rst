@@ -38,11 +38,7 @@ Installation
 
 ::
 
-    # without a mypy's plugin
     pip install loguru
-
-    # with mypy's plugin
-    pip install loguru[mypy]
 
 
 Features

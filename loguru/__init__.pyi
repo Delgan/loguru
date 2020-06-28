@@ -66,7 +66,26 @@ listed here and might be useful to type hint your code:
 - ``RecordProcess``: the ``record["process"]`` with ``id`` and ``name`` attributes.
 - ``RecordException``: the ``record["exception"]`` with ``type``, ``value`` and ``traceback``
   attributes.
+
+If that is not enough, one can also use
+`loguru-mypy <https://github.com/kornicameister/loguru-mypy>` to deal with couple
+of runtime details like:
+
+* `opt(lazy=True)` loggers accepting only `typing.Callable[[], typing.Any]`
+* `opt(record=True)` loggers that call log handler like so `logger.info(..., record={})`
+   and even more...
+
+Plugin can be installed seperately using:
+
+::
+
+    pip install loguru-mypy
+
+For more details, go to official
+`documentation <https://github.com/kornicameister/loguru-mypy/blob/master/README.md>`
+of loguru-mypy.
 """
+
 import sys
 from asyncio import AbstractEventLoop
 from datetime import datetime, time, timedelta
