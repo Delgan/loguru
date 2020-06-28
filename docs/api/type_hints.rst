@@ -7,4 +7,3 @@ Type hints
 
 
 See also: :ref:`type-hints-source`.
-
