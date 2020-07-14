@@ -6,18 +6,19 @@ logger.add(sys.stderr, format="", colorize=True, backtrace=False, diagnose=True)
 
 
 def bug_1(n):
-    return ("""multi-lines
-""" + n / 0)
+    return (
+        """multi-lines
+"""
+        + n / 0
+    )
 
 
 def bug_2(a, b, c):
-    return (1 / 0 + a + b + \
-            c)
+    return 1 / 0 + a + b + c
 
 
 def bug_3(string):
-    return min(10
-           , string, 20 / 0)
+    return min(10, string, 20 / 0)
 
 
 def bug_4():

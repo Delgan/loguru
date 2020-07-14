@@ -14,6 +14,7 @@ def multiline():
     a = b = A()
     a + b
 
+
 try:
     multiline()
 except TypeError:

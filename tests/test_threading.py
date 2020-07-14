@@ -110,7 +110,6 @@ def test_safe_removing_while_logging(capsys):
     assert sink.written == "aaa0bbb\n"
 
 
-
 def test_safe_writing_after_removing(capsys):
     barrier = Barrier(2)
 
