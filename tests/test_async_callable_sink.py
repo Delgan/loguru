@@ -11,15 +11,21 @@ import multiprocessing
 from loguru import logger
 
 
-async def async_writer(msg):
-    await asyncio.sleep(0.01)
-    print(msg, end="")
+class AsyncWriter:
 
+
+    async def __call__(self, msg):
+        await asyncio.sleep(0.01)
+        print(msg, end="")
+
+
+async_writer = AsyncWriter()
 
 def test_coroutine_function(capsys):
     async def worker():
         logger.debug("A message")
         await logger.complete()
+
 
     logger.add(async_writer, format="{message}")
 
@@ -34,10 +40,12 @@ def test_concurrent_execution(capsys):
     async def task(i):
         logger.debug("=> {}", i)
 
+
     async def main():
         tasks = [task(i) for i in range(10)]
         await asyncio.gather(*tasks)
         await logger.complete()
+
 
     logger.add(async_writer, format="{message}")
 
@@ -56,6 +64,7 @@ def test_recursive_coroutine(capsys):
         logger.info("{}!", i)
         await task(i - 1)
 
+
     logger.add(async_writer, format="{message}")
 
     asyncio.run(task(9))
@@ -70,6 +79,7 @@ def test_using_another_event_loop(capsys):
     async def worker():
         logger.debug("A message")
         await logger.complete()
+
 
     loop = asyncio.new_event_loop()
 
@@ -86,6 +96,7 @@ def test_using_another_event_loop_set_global_before_add(capsys):
     async def worker():
         logger.debug("A message")
         await logger.complete()
+
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -104,6 +115,7 @@ def test_using_another_event_loop_set_global_after_add(capsys):
         logger.debug("A message")
         await logger.complete()
 
+
     loop = asyncio.new_event_loop()
 
     logger.add(async_writer, format="{message}", loop=loop)
@@ -121,6 +133,7 @@ def test_run_mutiple_different_loops(capsys):
         logger.debug("Message {}", i)
         await logger.complete()
 
+
     logger.add(async_writer, format="{message}", loop=None)
 
     asyncio.run(worker(1))
@@ -136,6 +149,7 @@ def test_run_multiple_same_loop(capsys):
     async def worker(i):
         logger.debug("Message {}", i)
         await logger.complete()
+
 
     loop = asyncio.new_event_loop()
 
@@ -153,6 +167,7 @@ def test_run_multiple_same_loop_set_global(capsys):
     async def worker(i):
         logger.debug("Message {}", i)
         await logger.complete()
+
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -172,9 +187,11 @@ def test_complete_in_another_run(capsys):
     async def worker_1():
         logger.debug("A")
 
+
     async def worker_2():
         logger.debug("B")
         await logger.complete()
+
 
     loop = asyncio.new_event_loop()
 
@@ -192,9 +209,11 @@ def test_complete_in_another_run_set_global(capsys):
     async def worker_1():
         logger.debug("A")
 
+
     async def worker_2():
         logger.debug("B")
         await logger.complete()
+
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -212,12 +231,14 @@ def test_complete_in_another_run_set_global(capsys):
 def test_tasks_cancelled_on_remove(capsys):
     logger.add(async_writer, format="{message}", catch=False)
 
+
     async def foo():
         logger.info("A")
         logger.info("B")
         logger.info("C")
         logger.remove()
         await logger.complete()
+
 
     asyncio.run(foo())
 
@@ -229,9 +250,11 @@ def test_remove_without_tasks(capsys):
     logger.add(async_writer, format="{message}", catch=False)
     logger.remove()
 
+
     async def foo():
         logger.info("!")
         await logger.complete()
+
 
     asyncio.run(foo())
 
@@ -242,8 +265,10 @@ def test_remove_without_tasks(capsys):
 def test_complete_without_tasks(capsys):
     logger.add(async_writer, catch=False)
 
+
     async def worker():
         await logger.complete()
+
 
     asyncio.run(worker())
 
@@ -255,10 +280,12 @@ def test_complete_stream_noop(capsys):
     logger.add(sys.stderr, format="{message}", catch=False)
     logger.info("A")
 
+
     async def worker():
         logger.info("B")
         await logger.complete()
         logger.info("C")
+
 
     asyncio.run(worker())
 
@@ -275,10 +302,12 @@ def test_complete_file_noop(tmpdir):
     logger.add(str(filepath), format="{message}", catch=False)
     logger.info("A")
 
+
     async def worker():
         logger.info("B")
         await logger.complete()
         logger.info("C")
+
 
     asyncio.run(worker())
 
@@ -290,17 +319,21 @@ def test_complete_file_noop(tmpdir):
 def test_complete_function_noop():
     out = ""
 
+
     def write(msg):
         nonlocal out
         out += msg
 
+
     logger.add(write, format="{message}", catch=False)
     logger.info("A")
+
 
     async def worker():
         logger.info("B")
         await logger.complete()
         logger.info("C")
+
 
     asyncio.run(worker())
 
@@ -313,10 +346,12 @@ def test_complete_standard_noop(capsys):
     logger.add(logging.StreamHandler(sys.stderr), format="{message}", catch=False)
     logger.info("A")
 
+
     async def worker():
         logger.info("B")
         await logger.complete()
         logger.info("C")
+
 
     asyncio.run(worker())
 
@@ -331,11 +366,13 @@ def test_exception_in_coroutine_caught(capsys):
     async def sink(msg):
         raise Exception("Oh no")
 
+
     async def main():
         logger.add(sink, catch=True)
         logger.info("Hello world")
         await asyncio.sleep(0.1)
         await logger.complete()
+
 
     asyncio.run(main())
 
@@ -353,11 +390,13 @@ def test_exception_in_coroutine_not_caught(capsys):
     async def sink(msg):
         raise Exception("Oh no")
 
+
     async def main():
         logger.add(sink, catch=False)
         logger.info("Hello world")
         await asyncio.sleep(0.1)
         await logger.complete()
+
 
     asyncio.run(main())
 
@@ -373,10 +412,12 @@ def test_exception_in_coroutine_during_complete_caught(capsys):
         await asyncio.sleep(0.1)
         raise Exception("Oh no")
 
+
     async def main():
         logger.add(sink, catch=True)
         logger.info("Hello world")
         await logger.complete()
+
 
     asyncio.run(main())
 
@@ -395,10 +436,12 @@ def test_exception_in_coroutine_during_complete_not_caught(capsys):
         await asyncio.sleep(0.1)
         raise Exception("Oh no")
 
+
     async def main():
         logger.add(sink, catch=False)
         logger.info("Hello world")
         await logger.complete()
+
 
     asyncio.run(main())
 
@@ -416,9 +459,11 @@ def test_enqueue_coroutine_loop_not_none(capsys):
     loop = asyncio.new_event_loop()
     logger.add(async_writer, enqueue=True, loop=loop, format="{message}", catch=False)
 
+
     async def worker():
         logger.info("A")
         await logger.complete()
+
 
     loop.run_until_complete(worker())
 
@@ -433,9 +478,11 @@ def test_enqueue_coroutine_loop_not_none_set_global(capsys):
 
     logger.add(async_writer, enqueue=True, loop=loop, format="{message}", catch=False)
 
+
     async def worker():
         logger.info("A")
         await logger.complete()
+
 
     loop.run_until_complete(worker())
 
@@ -451,9 +498,11 @@ def test_enqueue_coroutine_loop_is_none(capsys):
 
     logger.add(async_writer, enqueue=True, loop=None, format="{message}", catch=False)
 
+
     async def worker(msg):
         logger.info(msg)
         await logger.complete()
+
 
     asyncio.run(worker("A"))
 
@@ -473,9 +522,11 @@ def test_enqueue_coroutine_loop_is_none_set_global(capsys):
 
     logger.add(async_writer, enqueue=True, loop=None, format="{message}", catch=False)
 
+
     async def worker(msg):
         logger.info(msg)
         await logger.complete()
+
 
     loop.run_until_complete(worker("A"))
 
@@ -487,17 +538,23 @@ def test_enqueue_coroutine_loop_is_none_set_global(capsys):
 def test_custom_complete_function(capsys):
     awaited = False
 
+
     class Handler:
+
+
         def write(self, message):
             print(message, end="")
+
 
         async def complete(self):
             nonlocal awaited
             awaited = True
 
+
     async def worker():
         logger.info("A")
         await logger.complete()
+
 
     logger.add(Handler(), catch=False, format="{message}")
 
@@ -518,11 +575,14 @@ def test_complete_from_another_loop(capsys, loop_is_none):
     loop = None if loop_is_none else main_loop
     logger.add(async_writer, loop=loop, format="{message}")
 
+
     async def worker_1():
         logger.info("A")
 
+
     async def worker_2():
         await logger.complete()
+
 
     main_loop.run_until_complete(worker_1())
     second_loop.run_until_complete(worker_2())
@@ -545,11 +605,14 @@ def test_complete_from_another_loop_set_global(capsys, loop_is_none):
     loop = None if loop_is_none else main_loop
     logger.add(async_writer, loop=loop, format="{message}")
 
+
     async def worker_1():
         logger.info("A")
 
+
     async def worker_2():
         await logger.complete()
+
 
     asyncio.set_event_loop(main_loop)
     main_loop.run_until_complete(worker_1())
@@ -575,11 +638,14 @@ def test_complete_from_multiple_threads_loop_is_none(capsys):
             logger.info("{:03}", i)
         await logger.complete()
 
+
     async def sink(msg):
         print(msg, end="")
 
+
     def worker_(i):
         asyncio.run(worker(i))
+
 
     logger.add(sink, catch=False, format="{message}")
 
@@ -603,11 +669,14 @@ def test_complete_from_multiple_threads_loop_is_not_none(capsys):
             logger.info("{:03}", i)
         await logger.complete()
 
+
     async def sink(msg):
         print(msg, end="")
 
+
     def worker_(i):
         asyncio.run(worker(i))
+
 
     loop = asyncio.new_event_loop()
     logger.add(sink, catch=False, format="{message}", loop=loop)
@@ -620,8 +689,10 @@ def test_complete_from_multiple_threads_loop_is_not_none(capsys):
     for t in threads:
         t.join()
 
+
     async def complete():
         await logger.complete()
+
 
     loop.run_until_complete(complete())
 
@@ -646,8 +717,11 @@ def subworker(logger_):
 
 
 class Writer:
+
+
     def __init__(self):
         self.output = ""
+
 
     async def write(self, message):
         self.output += message
@@ -665,8 +739,10 @@ def test_complete_with_sub_processes(monkeypatch, capsys):
     process.start()
     process.join()
 
+
     async def complete():
         await logger.complete()
+
 
     loop.run_until_complete(complete())
 

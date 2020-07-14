@@ -6,7 +6,7 @@ logger.add(sys.stderr, format="", colorize=True, backtrace=False, diagnose=True)
 
 
 def a():
-    1 / 0 + 1 * 0 - 1 % 0 // 1 ** 0 @ 1  # Error
+    1 / 0 + 1 * 0 - 1 % 0 // 1**0 @ 1  # Error
 
 
 def b():

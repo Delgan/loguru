@@ -98,7 +98,6 @@ from ._locks_machinery import create_logger_lock
 from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
 from ._simple_sinks import AsyncSink, CallableSink, StandardSink, StreamSink
 
-
 if sys.version_info >= (3, 6):
     from os import PathLike
 else:
@@ -110,6 +109,7 @@ elif sys.version_info >= (3, 5, 3):
     from aiocontextvars import ContextVar
 else:
     from contextvars import ContextVar
+
 
 Level = namedtuple("Level", ["name", "no", "color", "icon"])
 
@@ -790,9 +790,7 @@ class Logger:
             encoding = getattr(sink, "encoding", None)
             terminator = ""
             exception_prefix = "\n"
-        elif inspect.iscoroutinefunction(sink) or inspect.iscoroutinefunction(
-            getattr(sink, "__call__", None)
-        ):
+        elif inspect.iscoroutinefunction(sink) or (callable(sink) and inspect.iscoroutinefunction(sink.__call__)):
             name = getattr(sink, "__name__", None) or repr(sink)
 
             if colorize is None:
@@ -808,8 +806,7 @@ class Logger:
             if enqueue and loop is None:
                 loop = asyncio.get_event_loop()
 
-            coro = sink if inspect.iscoroutinefunction(sink) else sink.__call__
-            wrapped_sink = AsyncSink(coro, loop, error_interceptor)
+            wrapped_sink = AsyncSink(sink, loop, error_interceptor)
             encoding = "utf8"
             terminator = "\n"
             exception_prefix = ""
@@ -2002,6 +1999,7 @@ class Logger:
     @staticmethod
     @functools.lru_cache(maxsize=32)
     def _dynamic_level(level):
+
         if isinstance(level, str):
             return (level, None)
 

@@ -12,7 +12,7 @@ class XYZ:
 def a(b, c):
     x = XYZ()
     x.val = 9
-    (a, b, x.val,) = 12, 15 / c, 17
+    (a, b, x.val, ) = 12, 15 / c, 17
 
 
 def b():
@@ -30,14 +30,15 @@ def d(j):
     x, y, z = 2, 5, 3
     xyz = XYZ()
     xyz.val = 123
-    i = 12
-    z = x * y
-    y = j or xyz.val * c() + 3
+    i = 12 \
+        ; z = (x * y); y = (j or xyz.val * c() \
+            + 3)
 
 
 def e():
     a = 1
-    (5) + d(()) + a
+    (5 \
+        ) + d(()) + a
 
 
 with logger.catch():

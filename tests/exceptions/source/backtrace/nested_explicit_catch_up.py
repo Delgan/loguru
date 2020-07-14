@@ -14,7 +14,6 @@ def foo():
 def bar():
     1 / 0
 
-
 try:
     foo()
 except ZeroDivisionError:
