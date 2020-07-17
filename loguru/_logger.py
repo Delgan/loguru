@@ -790,7 +790,9 @@ class Logger:
             encoding = getattr(sink, "encoding", None)
             terminator = ""
             exception_prefix = "\n"
-        elif inspect.iscoroutinefunction(sink):
+        elif inspect.iscoroutinefunction(sink) or inspect.iscoroutinefunction(
+            getattr(sink, "__call__", None)
+        ):
             name = getattr(sink, "__name__", None) or repr(sink)
 
             if colorize is None:
@@ -805,8 +807,8 @@ class Logger:
             # running loop in Python 3.5.2 and earlier versions, see python/asyncio#452.
             if enqueue and loop is None:
                 loop = asyncio.get_event_loop()
-
-            wrapped_sink = AsyncSink(sink, loop, error_interceptor)
+            coro = sink if inspect.iscoroutinefunction(sink) else sink.__call__
+            wrapped_sink = AsyncSink(coro, loop, error_interceptor)
             encoding = "utf8"
             terminator = "\n"
             exception_prefix = ""
