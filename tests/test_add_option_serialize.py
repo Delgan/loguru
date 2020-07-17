@@ -1,4 +1,5 @@
 import json
+import sys
 from loguru import logger
 
 
@@ -21,9 +22,9 @@ def test_serialize():
     assert set(sink.dict.keys()) == set(sink.json["record"].keys())
 
 
-def test_serialize_with_exception():
+def test_serialize_exception():
     sink = JsonSink()
-    logger.add(sink, format="{message}", serialize=True)
+    logger.add(sink, format="{message}", serialize=True, catch=False)
 
     try:
         1 / 0
@@ -33,7 +34,63 @@ def test_serialize_with_exception():
     lines = sink.json["text"].splitlines()
     assert lines[0] == "Error"
     assert lines[-1] == "ZeroDivisionError: division by zero"
-    assert bool(sink.json["record"]["exception"])
+
+    assert sink.json["record"]["exception"] == {
+        "type": "ZeroDivisionError",
+        "value": "division by zero",
+        "traceback": True,
+    }
+
+
+def test_serialize_exception_without_context():
+    sink = JsonSink()
+    logger.add(sink, format="{message}", serialize=True, catch=False)
+
+    logger.exception("No Error")
+
+    lines = sink.json["text"].splitlines()
+    assert lines[0] == "No Error"
+    assert lines[-1] == "NoneType" if sys.version_info < (3, 5, 3) else "NoneType: None"
+
+    assert sink.json["record"]["exception"] == {
+        "type": None,
+        "value": None,
+        "traceback": False,
+    }
+
+
+def test_serialize_exception_none_tuple():
+    sink = JsonSink()
+    logger.add(sink, format="{message}", serialize=True, catch=False)
+
+    logger.opt(exception=(None, None, None)).error("No Error")
+
+    lines = sink.json["text"].splitlines()
+    assert lines[0] == "No Error"
+    assert lines[-1] == "NoneType" if sys.version_info < (3, 5, 3) else "NoneType: None"
+
+    assert sink.json["record"]["exception"] == {
+        "type": None,
+        "value": None,
+        "traceback": False,
+    }
+
+
+def test_serialize_exception_instrance():
+    sink = JsonSink()
+    logger.add(sink, format="{message}", serialize=True, catch=False)
+
+    logger.opt(exception=ZeroDivisionError("Oops")).error("Failure")
+
+    lines = sink.json["text"].splitlines()
+    assert lines[0] == "Failure"
+    assert lines[-1] == "ZeroDivisionError: Oops"
+
+    assert sink.json["record"]["exception"] == {
+        "type": "ZeroDivisionError",
+        "value": "Oops",
+        "traceback": False,
+    }
 
 
 def test_serialize_with_catch_decorator():

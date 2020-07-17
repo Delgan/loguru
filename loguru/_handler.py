@@ -219,6 +219,15 @@ class Handler:
 
     @staticmethod
     def _serialize_record(text, record):
+        exception = record["exception"]
+
+        if exception is not None:
+            exception = {
+                "type": None if exception.type is None else exception.type.__name__,
+                "value": exception.value,
+                "traceback": bool(record["exception"].traceback),
+            }
+
         serializable = {
             "text": text,
             "record": {
@@ -226,12 +235,7 @@ class Handler:
                     "repr": record["elapsed"],
                     "seconds": record["elapsed"].total_seconds(),
                 },
-                "exception": record["exception"]
-                and {
-                    "type": record["exception"].type.__name__,
-                    "value": record["exception"].value,
-                    "traceback": bool(record["exception"].traceback),
-                },
+                "exception": exception,
                 "extra": record["extra"],
                 "file": {"name": record["file"].name, "path": record["file"].path},
                 "function": record["function"],
