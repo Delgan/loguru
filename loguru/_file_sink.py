@@ -336,19 +336,19 @@ class FileSink:
 
                 compress = partial(Compression.add_compress, opener=tarfile.open, mode="w:")
             elif ext == "tar.gz":
-                import tarfile
                 import gzip
+                import tarfile
 
                 compress = partial(Compression.add_compress, opener=tarfile.open, mode="w:gz")
             elif ext == "tar.bz2":
-                import tarfile
                 import bz2
+                import tarfile
 
                 compress = partial(Compression.add_compress, opener=tarfile.open, mode="w:bz2")
 
             elif ext == "tar.xz":
-                import tarfile
                 import lzma
+                import tarfile
 
                 compress = partial(Compression.add_compress, opener=tarfile.open, mode="w:xz")
             elif ext == "zip":

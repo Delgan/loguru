@@ -1,7 +1,6 @@
 import os
-import weakref
 import threading
-
+import weakref
 
 if not hasattr(os, "register_at_fork"):
 

@@ -121,12 +121,13 @@ if sys.version_info >= (3, 6):
     from typing import ContextManager
 else:
     from pathlib import PurePath as PathLike
+
     from typing_extensions import ContextManager
 
 if sys.version_info >= (3, 8):
-    from typing import TypedDict, Protocol
+    from typing import Protocol, TypedDict
 else:
-    from typing_extensions import TypedDict, Protocol
+    from typing_extensions import Protocol, TypedDict
 
 _T = TypeVar("_T")
 _F = TypeVar("_F", bound=Callable[..., Any])
