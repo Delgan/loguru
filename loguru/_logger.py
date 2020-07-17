@@ -790,7 +790,9 @@ class Logger:
             encoding = getattr(sink, "encoding", None)
             terminator = ""
             exception_prefix = "\n"
-        elif inspect.iscoroutinefunction(sink) or inspect.iscoroutinefunction(getattr(sink, '__call__', None)):
+        elif inspect.iscoroutinefunction(sink) or inspect.iscoroutinefunction(
+            getattr(sink, "__call__", None)
+        ):
             name = getattr(sink, "__name__", None) or repr(sink)
 
             if colorize is None:

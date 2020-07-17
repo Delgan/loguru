@@ -15,15 +15,15 @@ async def async_writer(msg):
     await asyncio.sleep(0.01)
     print(msg, end="")
 
+
 class AsyncWriter:
-
-
     async def __call__(self, msg):
         await asyncio.sleep(0.01)
         print(msg, end="")
 
 
 async_writer_cls = AsyncWriter()
+
 
 def test_coroutine_function(capsys):
     async def worker():
@@ -37,6 +37,7 @@ def test_coroutine_function(capsys):
     out, err = capsys.readouterr()
     assert err == ""
     assert out == "A message\n"
+
 
 def test_async_callable_sink(capsys):
     async def worker():
