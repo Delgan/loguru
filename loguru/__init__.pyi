@@ -17,6 +17,12 @@
 .. _postponed evaluation of annotations: https://www.python.org/dev/peps/pep-0563/
 .. |future| replace:: ``__future__``
 .. _future: https://www.python.org/dev/peps/pep-0563/#enabling-the-future-behavior-in-python-3-7
+.. |loguru-mypy| replace:: ``loguru-mypy``
+.. _loguru-mypy: https://github.com/kornicameister/loguru-mypy
+.. |documentation of loguru-mypy| replace:: documentation of ``loguru-mypy``
+.. _documentation of loguru-mypy:
+    https://github.com/kornicameister/loguru-mypy/blob/master/README.md
+.. _@kornicameister: https://github.com/kornicameister
 
 Loguru relies on a `stub file`_ to document its types. This implies that these types are not
 accessible during execution of your program, however they can be used by type checkers and IDE.
@@ -67,23 +73,18 @@ listed here and might be useful to type hint your code:
 - ``RecordException``: the ``record["exception"]`` with ``type``, ``value`` and ``traceback``
   attributes.
 
-If that is not enough, one can also use
-`loguru-mypy <https://github.com/kornicameister/loguru-mypy>` to deal with couple
-of runtime details like:
-
-* `opt(lazy=True)` loggers accepting only `typing.Callable[[], typing.Any]`
-* `opt(record=True)` loggers that call log handler like so `logger.info(..., record={})`
-   and even more...
-
-Plugin can be installed seperately using:
-
-::
+If that is not enough, one can also use the |loguru-mypy|_ library developped by `@kornicameister`_.
+Plugin can be installed seperately using::
 
     pip install loguru-mypy
 
-For more details, go to official
-`documentation <https://github.com/kornicameister/loguru-mypy/blob/master/README.md>`
-of loguru-mypy.
+It helps to catch several possible runtime errors by performing additional checks like:
+
+- ``opt(lazy=True)`` loggers accepting only ``typing.Callable[[], typing.Any]`` arguments
+- ``opt(record=True)`` loggers wrongly calling log handler like so ``logger.info(..., record={})``
+- and even more...
+
+For more details, go to official |documentation of loguru-mypy|_.
 """
 
 import sys
