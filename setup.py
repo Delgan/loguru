@@ -55,11 +55,11 @@ setup(
     ],
     extras_require={
         "dev": [
-            "black>=19.3b0 ; python_version>='3.6'",
+            "black>=19.10b0 ; python_version>='3.6'",
             "codecov>=2.0.15",
             "colorama>=0.3.4",
             "flake8>=3.7.7",
-            "isort>=4.3.20",
+            "isort>=5.1.1 ; python_version>='3.6'",
             "tox>=3.9.0",
             "tox-travis>=0.12",
             "pytest>=4.6.2",
