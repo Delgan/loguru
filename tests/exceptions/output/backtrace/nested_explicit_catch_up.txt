@@ -1,6 +1,6 @@
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/nested_explicit_catch_up.py", line 18, in <module>
+  File "tests/exceptions/source/backtrace/nested_explicit_catch_up.py", line 19, in <module>
     foo()
   File "tests/exceptions/source/backtrace/nested_explicit_catch_up.py", line 10, in foo
     bar()
@@ -9,7 +9,7 @@ Traceback (most recent call last):
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/nested_explicit_catch_up.py", line 18, in <module>
+> File "tests/exceptions/source/backtrace/nested_explicit_catch_up.py", line 19, in <module>
     foo()
   File "tests/exceptions/source/backtrace/nested_explicit_catch_up.py", line 10, in foo
     bar()

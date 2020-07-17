@@ -45,7 +45,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
-    "autodoc_stub_file"
+    "autodoc_stub_file",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

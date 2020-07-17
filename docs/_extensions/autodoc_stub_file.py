@@ -17,11 +17,12 @@ import sys
 import types
 import code
 
+
 def get_module_docstring(filepath):
     with open(filepath) as file:
         source = file.read()
 
-    co = compile(source, filepath, 'exec')
+    co = compile(source, filepath, "exec")
 
     if co.co_consts and isinstance(co.co_consts[0], str):
         docstring = co.co_consts[0]
@@ -29,6 +30,7 @@ def get_module_docstring(filepath):
         docstring = None
 
     return docstring
+
 
 def setup(app):
     module_name = "autodoc_stub_file.loguru"
