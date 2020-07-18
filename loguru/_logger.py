@@ -74,14 +74,13 @@ import asyncio
 import builtins
 import contextlib
 import functools
-import inspect
 import itertools
 import logging
 import re
 import sys
 import warnings
 from collections import namedtuple
-from inspect import isclass
+from inspect import isclass, iscoroutinefunction, isgeneratorfunction
 from multiprocessing import current_process
 from os.path import basename, splitext
 from threading import current_thread
@@ -790,9 +789,7 @@ class Logger:
             encoding = getattr(sink, "encoding", None)
             terminator = ""
             exception_prefix = "\n"
-        elif inspect.iscoroutinefunction(sink) or inspect.iscoroutinefunction(
-            getattr(sink, "__call__", None)
-        ):
+        elif iscoroutinefunction(sink) or iscoroutinefunction(getattr(sink, "__call__", None)):
             name = getattr(sink, "__name__", None) or repr(sink)
 
             if colorize is None:
@@ -807,7 +804,8 @@ class Logger:
             # running loop in Python 3.5.2 and earlier versions, see python/asyncio#452.
             if enqueue and loop is None:
                 loop = asyncio.get_event_loop()
-            coro = sink if inspect.iscoroutinefunction(sink) else sink.__call__
+
+            coro = sink if iscoroutinefunction(sink) else sink.__call__
             wrapped_sink = AsyncSink(coro, loop, error_interceptor)
             encoding = "utf8"
             terminator = "\n"
@@ -1201,14 +1199,14 @@ class Logger:
             def __call__(_, function):
                 catcher = Catcher(True)
 
-                if inspect.iscoroutinefunction(function):
+                if iscoroutinefunction(function):
 
                     async def catch_wrapper(*args, **kwargs):
                         with catcher:
                             return await function(*args, **kwargs)
                         return default
 
-                elif inspect.isgeneratorfunction(function):
+                elif isgeneratorfunction(function):
 
                     def catch_wrapper(*args, **kwargs):
                         with catcher:
