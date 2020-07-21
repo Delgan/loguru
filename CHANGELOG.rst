@@ -2,7 +2,8 @@
 =============
 
 - Fix ``AttributeError`` within handlers using ``serialize=True`` when calling ``logger.exception()`` outside of the context of an exception (`#296 <https://github.com/Delgan/loguru/issues/296>`_).
-- Add support for async callable classes (with ``__call__`` method) used as sinks (`#294 <https://github.com/Delgan/loguru/issues/294>`_, thanks `@jessekrubin <https://github.com/jessekrubin>`_).
+- Fix error while logging an exception containing a non-picklable ``value`` to a handler with ``enqueue=True`` (`#298 <https://github.com/Delgan/loguru/issues/298>`_).
+- Add support for async callable classes (with ``__call__`` method) used as sinks (`#294 <https://github.com/Delgan/loguru/pull/294>`_, thanks `@jessekrubin <https://github.com/jessekrubin>`_).
 
 
 `0.5.1`_ (2020-06-12)

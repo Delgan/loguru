@@ -22,9 +22,6 @@ class AsyncWriter:
         print(msg, end="")
 
 
-async_writer_cls = AsyncWriter()
-
-
 def test_coroutine_function(capsys):
     async def worker():
         logger.debug("A message")
@@ -44,7 +41,7 @@ def test_async_callable_sink(capsys):
         logger.debug("A message")
         await logger.complete()
 
-    logger.add(async_writer_cls, format="{message}")
+    logger.add(AsyncWriter(), format="{message}")
 
     asyncio.run(worker())
 
