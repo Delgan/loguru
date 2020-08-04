@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import loguru
 import logging
 import itertools
@@ -62,8 +63,6 @@ def reset_logger():
             loguru._logger.Core(), None, 0, False, False, False, False, True, None, {}
         )
         loguru._logger.context.set({})
-        logging.Logger.manager.loggerDict.clear()
-        logging.root = logging.RootLogger("WARNING")
 
     reset()
     yield
@@ -134,20 +133,20 @@ def monkeypatch_date(monkeypatch):
     return monkeypatch_date
 
 
-@pytest.fixture
-def make_logging_logger():
-    def make_logging_logger(name, handler, fmt="%(message)s", level="DEBUG"):
-        logging_logger = logging.getLogger(name)
-        logging_logger.setLevel(level)
-        formatter = logging.Formatter(fmt)
+@contextlib.contextmanager
+def make_logging_logger(name, handler, fmt="%(message)s", level="DEBUG"):
+    logging_logger = logging.getLogger(name)
+    logging_logger.setLevel(level)
+    formatter = logging.Formatter(fmt)
 
-        handler.setLevel(level)
-        handler.setFormatter(formatter)
-        logging_logger.addHandler(handler)
+    handler.setLevel(level)
+    handler.setFormatter(formatter)
+    logging_logger.addHandler(handler)
 
-        return logging_logger
-
-    yield make_logging_logger
+    try:
+        yield logging_logger
+    finally:
+        logging_logger.removeHandler(handler)
 
 
 @pytest.fixture

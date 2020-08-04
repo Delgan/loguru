@@ -369,9 +369,9 @@ def test_exception_in_coroutine_caught(capsys):
     assert lines[-1] == "--- End of logging error ---"
 
 
-def test_exception_in_coroutine_not_caught(capsys):
+def test_exception_in_coroutine_not_caught(capsys, caplog):
     async def sink(msg):
-        raise Exception("Oh no")
+        raise ValueError("Oh no")
 
     async def main():
         logger.add(sink, catch=False)
@@ -382,10 +382,19 @@ def test_exception_in_coroutine_not_caught(capsys):
     asyncio.run(main())
 
     out, err = capsys.readouterr()
-    assert out == ""
-    assert "Logging error in Loguru Handler" not in err
-    assert "was never retrieved" not in err
-    assert err.strip().endswith("Exception: Oh no")
+    assert out == err == ""
+
+    records = caplog.records
+    assert len(records) == 1
+    record = records[0]
+
+    message = record.getMessage()
+    assert "Logging error in Loguru Handler" not in message
+    assert "was never retrieved" not in message
+
+    exc_type, exc_value, _ = record.exc_info
+    assert exc_type == ValueError
+    assert str(exc_value) == "Oh no"
 
 
 def test_exception_in_coroutine_during_complete_caught(capsys):
@@ -410,10 +419,10 @@ def test_exception_in_coroutine_during_complete_caught(capsys):
     assert lines[-1] == "--- End of logging error ---"
 
 
-def test_exception_in_coroutine_during_complete_not_caught(capsys):
+def test_exception_in_coroutine_during_complete_not_caught(capsys, caplog):
     async def sink(msg):
         await asyncio.sleep(0.1)
-        raise Exception("Oh no")
+        raise ValueError("Oh no")
 
     async def main():
         logger.add(sink, catch=False)
@@ -423,12 +432,19 @@ def test_exception_in_coroutine_during_complete_not_caught(capsys):
     asyncio.run(main())
 
     out, err = capsys.readouterr()
-    lines = err.strip().splitlines()
+    assert out == err == ""
 
-    assert out == ""
-    assert "Logging error in Loguru Handler" not in err
-    assert "was never retrieved" not in err
-    assert err.strip().endswith("Exception: Oh no")
+    records = caplog.records
+    assert len(records) == 1
+    record = records[0]
+
+    message = record.getMessage()
+    assert "Logging error in Loguru Handler" not in message
+    assert "was never retrieved" not in message
+
+    exc_type, exc_value, _ = record.exc_info
+    assert exc_type == ValueError
+    assert str(exc_value) == "Oh no"
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
