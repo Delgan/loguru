@@ -176,7 +176,7 @@ class RecordException(NamedTuple):
 class Record(TypedDict):
     elapsed: timedelta
     exception: Optional[RecordException]
-    extra: Dict[str, Any]
+    extra: Dict[Any, Any]
     file: RecordFile
     function: str
     level: RecordLevel
@@ -223,7 +223,7 @@ class LevelConfig(TypedDict, total=False):
 
 ActivationConfig = Tuple[Union[str, None], bool]
 
-class _Logger:
+class Logger:
     @overload
     def add(
         self,
@@ -258,7 +258,7 @@ class _Logger:
     @overload
     def add(
         self,
-        sink: Union[str, PathLike[str], TextIO, Writable, Callable[[Message], None], Handler],
+        sink: Union[str, PathLike[str]],
         *,
         level: Union[str, int] = ...,
         format: Union[str, FormatFunction] = ...,
@@ -304,10 +304,10 @@ class _Logger:
         capture: bool = ...,
         depth: int = ...,
         ansi: bool = ...
-    ) -> _Logger: ...
-    def bind(__self, **kwargs: Any) -> _Logger: ...
+    ) -> Logger: ...
+    def bind(__self, **kwargs: Any) -> Logger: ...
     def contextualize(__self, **kwargs: Any) -> Contextualizer: ...
-    def patch(self, patcher: PatcherFunction) -> _Logger: ...
+    def patch(self, patcher: PatcherFunction) -> Logger: ...
     @overload
     def level(self, name: str) -> Level: ...
     @overload
@@ -329,12 +329,12 @@ class _Logger:
         *,
         handlers: Sequence[Dict[str, Any]] = ...,
         levels: Optional[Sequence[LevelConfig]] = ...,
-        extra: Optional[Dict[str, Any]] = ...,
+        extra: Optional[Dict[Any, Any]] = ...,
         patcher: Optional[PatcherFunction] = ...,
         activation: Optional[Sequence[ActivationConfig]] = ...
     ) -> List[int]: ...
     # @staticmethod cannot be used with @overload in mypy (python/mypy#7781).
-    # However _Logger is not exposed and logger is an instance of _Logger
+    # However Logger is not exposed and logger is an instance of Logger
     # so for type checkers it is all the same whether it is defined here
     # as a static method or an instance method.
     @overload
@@ -396,4 +396,4 @@ class _Logger:
     def start(self, *args: Any, **kwargs: Any): ...
     def stop(self, *args: Any, **kwargs: Any): ...
 
-logger: _Logger
+logger: Logger
