@@ -176,7 +176,7 @@ class RecordException(NamedTuple):
 class Record(TypedDict):
     elapsed: timedelta
     exception: Optional[RecordException]
-    extra: dict
+    extra: Dict[str, Any]
     file: RecordFile
     function: str
     level: RecordLevel
@@ -204,7 +204,7 @@ CompressionFunction = Callable[[str], None]
 
 # Actually unusable because TypedDict can't allow extra keys: python/mypy#4617
 class _HandlerConfig(TypedDict, total=False):
-    sink: Union[str, PathLike, TextIO, Writable, Callable[[Message], None], Handler]
+    sink: Union[str, PathLike[str], TextIO, Writable, Callable[[Message], None], Handler]
     level: Union[str, int]
     format: Union[str, FormatFunction]
     filter: Optional[Union[str, FilterFunction, FilterDict]]
@@ -223,7 +223,7 @@ class LevelConfig(TypedDict, total=False):
 
 ActivationConfig = Tuple[Union[str, None], bool]
 
-class Logger:
+class _Logger:
     @overload
     def add(
         self,
@@ -258,7 +258,7 @@ class Logger:
     @overload
     def add(
         self,
-        sink: Union[str, PathLike],
+        sink: Union[str, PathLike[str], TextIO, Writable, Callable[[Message], None], Handler],
         *,
         level: Union[str, int] = ...,
         format: Union[str, FormatFunction] = ...,
@@ -304,10 +304,10 @@ class Logger:
         capture: bool = ...,
         depth: int = ...,
         ansi: bool = ...
-    ) -> Logger: ...
-    def bind(__self, **kwargs: Any) -> Logger: ...
+    ) -> _Logger: ...
+    def bind(__self, **kwargs: Any) -> _Logger: ...
     def contextualize(__self, **kwargs: Any) -> Contextualizer: ...
-    def patch(self, patcher: PatcherFunction) -> Logger: ...
+    def patch(self, patcher: PatcherFunction) -> _Logger: ...
     @overload
     def level(self, name: str) -> Level: ...
     @overload
@@ -329,19 +329,32 @@ class Logger:
         *,
         handlers: Sequence[Dict[str, Any]] = ...,
         levels: Optional[Sequence[LevelConfig]] = ...,
-        extra: Optional[dict] = ...,
+        extra: Optional[Dict[str, Any]] = ...,
         patcher: Optional[PatcherFunction] = ...,
         activation: Optional[Sequence[ActivationConfig]] = ...
     ) -> List[int]: ...
-    # @overload should be used to differentiate bytes and str once python/mypy#7781 is fixed
-    @staticmethod
+    # @staticmethod cannot be used with @overload in mypy (python/mypy#7781).
+    # However _Logger is not exposed and logger is an instance of _Logger
+    # so for type checkers it is all the same whether it is defined here
+    # as a static method or an instance method.
+    @overload
     def parse(
-        file: Union[str, PathLike, TextIO, BinaryIO],
-        pattern: Union[str, bytes, Pattern[str], Pattern[bytes]],
+        self,
+        file: Union[str, PathLike[str], TextIO],
+        pattern: Union[str, Pattern[str]],
         *,
-        cast: Union[dict, Callable[[dict], None]] = ...,
+        cast: Union[Dict[str, Callable[[str], Any]], Callable[[Dict[str, str]], None]] = ...,
         chunk: int = ...
-    ) -> Generator[dict, None, None]: ...
+    ) -> Generator[Dict[str, str], None, None]: ...
+    @overload
+    def parse(
+        self,
+        file: BinaryIO,
+        pattern: Union[bytes, Pattern[bytes]],
+        *,
+        cast: Union[Dict[str, Callable[[bytes], Any]], Callable[[Dict[str, bytes]], None]] = ...,
+        chunk: int = ...
+    ) -> Generator[Dict[str, bytes], None, None]: ...
     @overload
     def trace(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...
     @overload
@@ -383,4 +396,4 @@ class Logger:
     def start(self, *args: Any, **kwargs: Any): ...
     def stop(self, *args: Any, **kwargs: Any): ...
 
-logger: Logger
+logger: _Logger
