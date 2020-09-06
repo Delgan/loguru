@@ -1,5 +1,5 @@
-`Unreleased`_
-=============
+`0.5.2`_ (2020-09-06)
+=====================
 
 - Fix ``AttributeError`` within handlers using ``serialize=True`` when calling ``logger.exception()`` outside of the context of an exception (`#296 <https://github.com/Delgan/loguru/issues/296>`_).
 - Fix error while logging an exception containing a non-picklable ``value`` to a handler with ``enqueue=True`` (`#298 <https://github.com/Delgan/loguru/issues/298>`_).
@@ -165,7 +165,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.5.1...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.5.2...master
+.. _0.5.2: https://github.com/delgan/loguru/releases/tag/0.5.2
 .. _0.5.1: https://github.com/delgan/loguru/releases/tag/0.5.1
 .. _0.5.0: https://github.com/delgan/loguru/releases/tag/0.5.0
 .. _0.4.1: https://github.com/delgan/loguru/releases/tag/0.4.1
