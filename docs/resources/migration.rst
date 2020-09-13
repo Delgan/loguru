@@ -230,7 +230,7 @@ Making things work with Pytest and caplog
 
 If you've followed all the migration guidelines thus far, you'll notice that this test will fail. This is because |pytest|_ links to the standard library's ``logging`` module.
 
-So to fix things, we need to add a sink that propogates Loguru to ``logging``.
+So to fix things, we need to add a sink that propagates Loguru to ``logging``.
 This is done on the fixture itself by mokeypatching |caplog|_. In your ``conftest.py`` file, add the following::
 
     import logging
