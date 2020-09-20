@@ -1,7 +1,7 @@
-`Unreleased`_
-=============
+`0.5.3`_ (2020-09-20)
+=====================
 
-- Fix child process possibly hanging at exit while combining ``enqueue=True`` with third-party library like `uwsgi`` (`#309 <https://github.com/Delgan/loguru/issues/309>`_, thanks `@dstlmrk <https://github.com/dstlmrk>`_).
+- Fix child process possibly hanging at exit while combining ``enqueue=True`` with third party library like ``uwsgi`` (`#309 <https://github.com/Delgan/loguru/issues/309>`_, thanks `@dstlmrk <https://github.com/dstlmrk>`_).
 - Fix possible exception during formatting of non-string messages (`#331 <https://github.com/Delgan/loguru/issues/331>`_).
 
 
@@ -172,7 +172,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.5.2...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.5.3...master
+.. _0.5.3: https://github.com/delgan/loguru/releases/tag/0.5.3
 .. _0.5.2: https://github.com/delgan/loguru/releases/tag/0.5.2
 .. _0.5.1: https://github.com/delgan/loguru/releases/tag/0.5.1
 .. _0.5.0: https://github.com/delgan/loguru/releases/tag/0.5.0
