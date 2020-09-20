@@ -164,6 +164,64 @@ def test_kwargs_in_extra_dict():
     ]
 
 
+def test_non_string_message(writer):
+    logger.add(writer, format="{message}")
+
+    logger.info(1)
+    logger.info({})
+    logger.info(b"test")
+
+    assert writer.read() == "1\n{}\nb'test'\n"
+
+
+@pytest.mark.parametrize("colors", [True, False])
+def test_non_string_message_is_str_in_record(writer, colors):
+    output = ""
+
+    def sink(message):
+        nonlocal output
+        assert isinstance(message.record["message"], str)
+        output += message
+
+    def format(record):
+        assert isinstance(record["message"], str)
+        return "[{message}]\n"
+
+    logger.add(sink, format=format, catch=False)
+    logger.opt(colors=colors).info(123)
+    assert output == "[123]\n"
+
+
+@pytest.mark.parametrize("colors", [True, False])
+def test_missing_positional_field_during_formatting(writer, colors):
+    logger.add(writer)
+
+    with pytest.raises(IndexError):
+        logger.opt(colors=colors).info("Foo {} {}", 123)
+
+
+@pytest.mark.parametrize("colors", [True, False])
+def test_missing_named_field_during_formatting(writer, colors):
+    logger.add(writer)
+
+    with pytest.raises(KeyError):
+        logger.opt(colors=colors).info("Foo {bar}", baz=123)
+
+
+def test_not_formattable_message(writer):
+    logger.add(writer)
+
+    with pytest.raises(AttributeError):
+        logger.info(123, baz=456)
+
+
+def test_not_formattable_message_with_colors(writer):
+    logger.add(writer)
+
+    with pytest.raises(TypeError):
+        logger.opt(colors=True).info(123, baz=456)
+
+
 def test_invalid_color_markup(writer):
     with pytest.raises(ValueError):
         logger.add(writer, format="<red>Not closed tag", colorize=True)

@@ -1914,7 +1914,7 @@ class Logger:
             "function": code.co_name,
             "level": RecordLevel(level_name, level_no, level_icon),
             "line": frame.f_lineno,
-            "message": message,
+            "message": str(message),
             "module": splitext(file_name)[0],
             "name": name,
             "process": RecordProcess(process.ident, process.name),
@@ -1941,7 +1941,7 @@ class Logger:
             if args or kwargs:
                 colored_message = Colorizer.prepare_message(message, args, kwargs)
             else:
-                colored_message = Colorizer.prepare_simple_message(message)
+                colored_message = Colorizer.prepare_simple_message(str(message))
             log_record["message"] = colored_message.stripped
         elif args or kwargs:
             colored_message = None

@@ -1,3 +1,9 @@
+`Unreleased`_
+=============
+
+- Fix possible exception during formatting of non-string messages (`#331 <https://github.com/Delgan/loguru/issues/331>`_).
+
+
 `0.5.2`_ (2020-09-06)
 =====================
 
