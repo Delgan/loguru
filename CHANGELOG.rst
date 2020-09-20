@@ -1,6 +1,7 @@
 `Unreleased`_
 =============
 
+- Fix child process possibly hanging at exit while combining ``enqueue=True`` with third-party library like `uwsgi`` (`#309 <https://github.com/Delgan/loguru/issues/309>`_, thanks `@dstlmrk <https://github.com/dstlmrk>`_).
 - Fix possible exception during formatting of non-string messages (`#331 <https://github.com/Delgan/loguru/issues/331>`_).
 
 
