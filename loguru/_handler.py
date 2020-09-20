@@ -1,5 +1,6 @@
 import functools
 import json
+import os
 import multiprocessing
 from threading import Thread
 
@@ -66,7 +67,7 @@ class Handler:
         self._queue = None
         self._confirmation_event = None
         self._confirmation_lock = None
-        self._owner_process = None
+        self._owner_process_pid = None
         self._thread = None
 
         if self._is_formatter_dynamic:
@@ -85,7 +86,7 @@ class Handler:
             self._queue = multiprocessing.SimpleQueue()
             self._confirmation_event = multiprocessing.Event()
             self._confirmation_lock = multiprocessing.Lock()
-            self._owner_process = multiprocessing.current_process()
+            self._owner_process_pid = os.getpid()
             self._thread = Thread(
                 target=self._queued_writer, daemon=True, name="loguru-writer-%d" % self._id
             )
@@ -184,7 +185,7 @@ class Handler:
         with self._lock:
             self._stopped = True
             if self._enqueue:
-                if self._owner_process != multiprocessing.current_process():
+                if self._owner_process_pid != os.getpid():
                     return
                 self._queue.put(None)
                 self._thread.join()
@@ -201,7 +202,7 @@ class Handler:
             self._confirmation_event.clear()
 
     async def complete_async(self):
-        if self._enqueue and self._owner_process != multiprocessing.current_process():
+        if self._enqueue and self._owner_process_pid != os.getpid():
             return
 
         with self._lock:
