@@ -865,7 +865,7 @@ class Logger:
                 if levelno_ < 0:
                     raise ValueError(
                         "The filter dict contains a module '%s' associated to an invalid level, "
-                        "it should be a positive interger, not: '%d'" % (module, levelno_)
+                        "it should be a positive integer, not: '%d'" % (module, levelno_)
                     )
                 level_per_module[module] = levelno_
             filter_func = functools.partial(

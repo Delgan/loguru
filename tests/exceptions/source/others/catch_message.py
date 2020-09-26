@@ -10,8 +10,8 @@ def a():
     1 / 0
 
 
-with logger.catch(message="An error occured (1):"):
+with logger.catch(message="An error occurred (1):"):
     a()
 
-a = logger.catch(message="An error occured (2):")(a)
+a = logger.catch(message="An error occurred (2):")(a)
 a()

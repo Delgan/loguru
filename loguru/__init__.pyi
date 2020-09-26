@@ -73,8 +73,8 @@ listed here and might be useful to type hint your code:
 - ``RecordException``: the ``record["exception"]`` with ``type``, ``value`` and ``traceback``
   attributes.
 
-If that is not enough, one can also use the |loguru-mypy|_ library developped by `@kornicameister`_.
-Plugin can be installed seperately using::
+If that is not enough, one can also use the |loguru-mypy|_ library developed by `@kornicameister`_.
+Plugin can be installed separately using::
 
     pip install loguru-mypy
 

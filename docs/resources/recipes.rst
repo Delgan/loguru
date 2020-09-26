@@ -739,7 +739,7 @@ Things get a little more complicated on Windows. Indeed, this operating system d
 
 Windows requires the added sinks to be picklable or otherwise will raise an error while creating the child process. Many stream objects like standard output and file descriptors are not picklable. In such case, the ``enqueue=True`` argument is required as it will allow the child process to only inherit the queue object where logs are sent.
 
-The |multiprocessing| library is also commonly used to start a pool of workers using for example |Pool.map| or |Pool.apply|. Again, it will work flawlessly on Linux, but it will require some tinkering on Windows. You will probably not be able to pass the ``logger`` as an argument for your worker functions because it needs to be picklable, but altough handlers added using ``enqueue=True`` are "inheritable", they are not "picklable". Instead, you will need to make use of the ``initializer`` and ``initargs`` parameters while creating the |Pool| object in a way allowing your workers to access the shared ``logger``. You can either assign it to a class attribute or override the global logger of your child processes:
+The |multiprocessing| library is also commonly used to start a pool of workers using for example |Pool.map| or |Pool.apply|. Again, it will work flawlessly on Linux, but it will require some tinkering on Windows. You will probably not be able to pass the ``logger`` as an argument for your worker functions because it needs to be picklable, but although handlers added using ``enqueue=True`` are "inheritable", they are not "picklable". Instead, you will need to make use of the ``initializer`` and ``initargs`` parameters while creating the |Pool| object in a way allowing your workers to access the shared ``logger``. You can either assign it to a class attribute or override the global logger of your child processes:
 
 .. code::
 
@@ -785,7 +785,7 @@ The |multiprocessing| library is also commonly used to start a pool of workers u
 
         worker = workers_a.Worker()
         with Pool(4, initializer=worker.set_logger, initargs=(logger, )) as pool:
-            resuts = pool.map(worker.work, [1, 10, 100])
+            results = pool.map(worker.work, [1, 10, 100])
 
         with Pool(4, initializer=workers_b.set_logger, initargs=(logger, )) as pool:
             results = pool.map(workers_b.work, [1, 10, 100])
