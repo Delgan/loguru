@@ -1,11 +1,11 @@
-An error occured (1):
+An error occurred (1):
 Traceback (most recent call last):
   File "tests/exceptions/source/others/catch_message.py", line 14, in <module>
     a()
   File "tests/exceptions/source/others/catch_message.py", line 10, in a
     1 / 0
 ZeroDivisionError: division by zero
-An error occured (2):
+An error occurred (2):
 Traceback (most recent call last):
   File "tests/exceptions/source/others/catch_message.py", line 17, in <module>
     a()
