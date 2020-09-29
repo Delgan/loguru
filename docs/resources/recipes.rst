@@ -162,7 +162,7 @@ This can be achieved using a custom sink for the client and |patch| for the serv
                 while len(chunk) < slen:
                     chunk = chunk + self.connection.recv(slen - len(chunk))
                 record = pickle.loads(chunk)
-                level, message = record["level"], record["message"]
+                level, message = record["level"].no, record["message"]
                 logger.patch(lambda record: record.update(record)).log(level, message)
 
     server = socketserver.TCPServer(('localhost', 9999), LoggingStreamHandler)
