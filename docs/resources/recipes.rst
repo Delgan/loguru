@@ -370,6 +370,42 @@ The ``rotation`` argument of file sinks accept size or time limits but not both 
     logger.add("file.log", rotation=rotator.should_rotate)
 
 
+Adapting colors and format of logged messages dynamically
+---------------------------------------------------------
+
+It is possible to customize the colors of your logs thanks to several :ref:`markup tags <color>`. Those are used to configure the ``format`` of your handler. By creating a appropriate formatting function, you can easily define colors depending on the logged message.
+
+For example, if you want to associate each module with a unique color::
+
+    from collections import defaultdict
+    from random import choice
+
+    colors = ["blue", "cyan", "green", "magenta", "red", "yellow"]
+    color_per_module = defaultdict(lambda: choice(colors))
+
+    def formatter(record):
+        color_tag = color_per_module[record["name"]]
+        return "<" + color_tag + ">[{name}]</> <bold>{message}</>\n{exception}"
+
+    logger.add(sys.stderr, format=formatter)
+
+
+If you need to dynamically colorize the ``record["message"]``, make sure that the color tags appear in the returned format instead of modifying the message::
+
+    def rainbow(text):
+        colors = ["red", "yellow", "green", "cyan", "blue", "magenta"]
+        chars = ("<{}>{}</>".format(colors[i % len(colors)], c) for i, c in enumerate(text))
+        return "".join(chars)
+
+    def formatter(record):
+        rainbow_message = rainbow(record["message"])
+        # Prevent '{}' in message (if any) to be incorrectly parsed during formatting
+        escaped = rainbow_message.replace("{", "{{").replace("}", "}}")
+        return "<b>{time}</> " + escaped + "\n{exception}"
+
+    logger.add(sys.stderr, format=formatter)
+
+
 Dynamically formatting messages to properly align values with padding
 ---------------------------------------------------------------------
 
