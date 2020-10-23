@@ -2,7 +2,6 @@ import pytest
 from loguru import logger
 import sys
 
-import logging
 from logging import StreamHandler, FileHandler, NullHandler, Handler
 from logging import Formatter
 

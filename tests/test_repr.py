@@ -179,7 +179,10 @@ def test_standard_handler():
 def test_multiple_handlers():
     logger.add(sys.__stdout__)
     logger.add(sys.__stderr__)
-    r = "<loguru.logger handlers=[(id=0, level=10, sink=<stdout>), (id=1, level=10, sink=<stderr>)]>"
+    r = "<loguru.logger handlers=[" \
+        "(id=0, level=10, sink=<stdout>), " \
+        "(id=1, level=10, sink=<stderr>)" \
+        "]>"
     assert repr(logger) == r
 
 

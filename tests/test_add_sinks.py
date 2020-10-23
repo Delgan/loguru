@@ -74,7 +74,10 @@ def test_file_sink_folder_creation(rep, tmpdir):
 @repetitions
 def test_function_sink(rep):
     a = []
-    func = lambda log_message: a.append(log_message)
+
+    def func(log_message):
+        a.append(log_message)
+
     log(func, rep)
     assert a == [expected] * rep
 

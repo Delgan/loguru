@@ -1,7 +1,6 @@
 import logging
 import pickle
 import asyncio
-import sys
 import datetime
 
 import pytest
@@ -140,7 +139,7 @@ def test_pickling_standard_handler_root_logger_not_picklable(monkeypatch, capsys
     logger.add(handler, format="=> {message}", catch=False)
 
     pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
+    pickle.loads(pickled)
 
     logger.info("Ok")
     out, err = capsys.readouterr()

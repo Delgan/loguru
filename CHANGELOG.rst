@@ -1,3 +1,10 @@
+`0.5.4`_ (2020-10-24)
+=====================
+
+- Fix flake8 errors in tests/, docs/ and setup.py (`#353 <https://github.com/Delgan/loguru/issues/353>`_).
+- Optimize _Logger initialization reading using key/value style (`#353 <https://github.com/Delgan/loguru/issues/353>`_).
+
+
 `0.5.3`_ (2020-09-20)
 =====================
 

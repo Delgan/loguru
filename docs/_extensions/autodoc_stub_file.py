@@ -15,7 +15,6 @@ into account: ``make clean && make html``.
 import os
 import sys
 import types
-import code
 
 
 def get_module_docstring(filepath):

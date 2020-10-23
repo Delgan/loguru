@@ -7,9 +7,7 @@ import sys
 import time
 import tempfile
 import pathlib
-import platform
 import builtins
-from collections import namedtuple
 from unittest.mock import MagicMock, PropertyMock
 import loguru
 from loguru import logger
@@ -128,7 +126,7 @@ def linux_xattr_attributeerror_filesystem(monkeypatch, monkeypatch_filesystem):
 
 
 def test_renaming(tmpdir):
-    i = logger.add(str(tmpdir.join("file.log")), rotation=0, format="{message}")
+    logger.add(str(tmpdir.join("file.log")), rotation=0, format="{message}")
 
     time.sleep(0.1)
     logger.debug("a")
@@ -154,7 +152,7 @@ def test_renaming(tmpdir):
 
 def test_no_renaming(monkeypatch_date, tmpdir):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
-    i = logger.add(str(tmpdir.join("file_{time}.log")), rotation=0, format="{message}")
+    logger.add(str(tmpdir.join("file_{time}.log")), rotation=0, format="{message}")
 
     monkeypatch_date(2019, 1, 1, 0, 0, 0, 0)
     logger.debug("a")
@@ -196,7 +194,9 @@ def test_size_rotation(monkeypatch_date, tmpdir, size):
 @pytest.mark.parametrize(
     "when, hours",
     [
-        # hours = [Should not trigger, should trigger, should not trigger, should trigger, should trigger]
+        # hours = [
+        #   Should not trigger, should trigger, should not trigger, should trigger, should trigger
+        # ]
         ("13", [0, 1, 20, 4, 24]),
         ("13:00", [0.2, 0.9, 23, 1, 48]),
         ("13:00:00", [0.5, 1.5, 10, 15, 72]),
@@ -383,7 +383,7 @@ def test_time_rotation_windows_no_setctime(
     reload_filesink_ctime_functions(monkeypatch)
 
     monkeypatch_date(2018, 10, 27, 5, 0, 0, 0)
-    i = logger.add(str(tmpdir.join("test.{time}.log")), format="{message}", rotation="2 h")
+    logger.add(str(tmpdir.join("test.{time}.log")), format="{message}", rotation="2 h")
     logger.info("1")
     monkeypatch_date(2018, 10, 27, 6, 30, 0, 0)
     logger.info("2")
@@ -414,7 +414,7 @@ def test_time_rotation_windows_setctime_exception(
     reload_filesink_ctime_functions(monkeypatch)
 
     monkeypatch_date(2018, 10, 27, 5, 0, 0, 0)
-    i = logger.add(str(tmpdir.join("test.{time}.log")), format="{message}", rotation="2 h")
+    logger.add(str(tmpdir.join("test.{time}.log")), format="{message}", rotation="2 h")
     logger.info("1")
     monkeypatch_date(2018, 10, 27, 6, 30, 0, 0)
     logger.info("2")
@@ -430,7 +430,7 @@ def test_time_rotation_windows_setctime_exception(
 def test_function_rotation(monkeypatch_date, tmpdir):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
     x = iter([False, True, False])
-    i = logger.add(
+    logger.add(
         str(tmpdir.join("test_{time}.log")), rotation=lambda *_: next(x), format="{message}"
     )
     logger.debug("a")
@@ -477,10 +477,9 @@ def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
         assert os.path.basename(filepath) == "test.log"
         return datetime.datetime(2018, 1, 1, 0, 0, 0, 0).timestamp()
 
-    i = logger.add(str(tmpdir.join("test.log")), rotation=10, format="{message}")
+    logger.add(str(tmpdir.join("test.log")), rotation=10, format="{message}")
     logger.debug("X")
 
-    filesink = next(iter(logger._core.handlers.values()))._sink
     monkeypatch.setattr(loguru._file_sink, "get_ctime", creation_time)
 
     logger.debug("Y" * 20)

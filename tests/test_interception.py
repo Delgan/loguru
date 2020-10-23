@@ -94,7 +94,7 @@ def test_exception(writer):
 
         try:
             1 / 0
-        except:
+        except Exception:
             logging_logger.exception("Oops...")
 
     lines = writer.read().strip().splitlines()

@@ -7,7 +7,7 @@ def test_diagnose(writer):
     logger.add(writer, format="{message}", diagnose=True)
     try:
         1 / 0
-    except:
+    except Exception:
         logger.exception("")
     result_with = writer.read().strip()
 
@@ -17,7 +17,7 @@ def test_diagnose(writer):
     logger.add(writer, format="{message}", diagnose=False)
     try:
         1 / 0
-    except:
+    except Exception:
         logger.exception("")
     result_without = writer.read().strip()
 

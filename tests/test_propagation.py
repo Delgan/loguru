@@ -76,7 +76,7 @@ def test_exception(capsys, use_opt):
 
         try:
             1 / 0
-        except:
+        except Exception:
             if use_opt:
                 logger.opt(exception=True).error("Oops...")
             else:

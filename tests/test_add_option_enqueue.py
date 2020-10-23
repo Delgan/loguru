@@ -131,7 +131,6 @@ def test_not_caught_exception_queue_put(writer, capsys):
     logger.remove()
 
     out, err = capsys.readouterr()
-    lines = err.strip().splitlines()
     assert writer.read() == "It's fine\n"
     assert out == ""
     assert err == ""
