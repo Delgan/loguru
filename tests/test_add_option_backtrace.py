@@ -8,7 +8,7 @@ def test_backtrace(writer):
     logger.add(writer, format="{message}", backtrace=True)
     try:
         1 / 0
-    except:
+    except Exception:
         logger.exception("")
     result_with = writer.read().strip()
 
@@ -18,7 +18,7 @@ def test_backtrace(writer):
     logger.add(writer, format="{message}", backtrace=False)
     try:
         1 / 0
-    except:
+    except Exception:
         logger.exception("")
     result_without = writer.read().strip()
 

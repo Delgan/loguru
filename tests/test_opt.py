@@ -56,7 +56,7 @@ def test_exception_boolean(writer):
 
     try:
         1 / 0
-    except:
+    except Exception:
         logger.opt(exception=True).debug("Error {0} {record}", 1, record="test")
 
     lines = writer.read().strip().splitlines()
@@ -70,7 +70,7 @@ def test_exception_exc_info(writer):
 
     try:
         1 / 0
-    except:
+    except Exception:
         exc_info = sys.exc_info()
 
     logger.opt(exception=exc_info).debug("test")
@@ -86,7 +86,7 @@ def test_exception_class(writer):
 
     try:
         1 / 0
-    except:
+    except Exception:
         _, exc_class, _ = sys.exc_info()
 
     logger.opt(exception=exc_class).debug("test")
@@ -102,7 +102,7 @@ def test_exception_log_funcion(writer):
 
     try:
         1 / 0
-    except:
+    except Exception:
         logger.opt(exception=True).log(50, "Error")
 
     lines = writer.read().strip().splitlines()
@@ -128,13 +128,13 @@ def test_lazy(writer):
 
     logger.opt(lazy=True).log(20, "3: {}", laziness)
 
-    a = logger.add(writer, level=15, format="{level.no} => {message}")
-    b = logger.add(writer, level=20, format="{level.no} => {message}")
+    i = logger.add(writer, level=15, format="{level.no} => {message}")
+    logger.add(writer, level=20, format="{level.no} => {message}")
 
     logger.log(17, "4: {}", counter)
     logger.opt(lazy=True).log(14, "5: {lazy}", lazy=lambda: counter)
 
-    logger.remove(a)
+    logger.remove(i)
 
     logger.opt(lazy=True).log(16, "6: {0}", lambda: counter)
 

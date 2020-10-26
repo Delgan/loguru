@@ -1,7 +1,6 @@
 import sys
 import pytest
 from loguru import logger
-import loguru
 import re
 import time
 

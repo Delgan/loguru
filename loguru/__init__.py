@@ -14,7 +14,16 @@ __version__ = "0.5.3"
 
 __all__ = ["logger"]
 
-logger = _Logger(_Core(), None, 0, False, False, False, False, True, None, {})
+logger = _Logger(core=_Core(),
+                 exception=None,
+                 depth=0,
+                 record=False,
+                 lazy=False,
+                 colors=False,
+                 raw=False,
+                 capture=True,
+                 patcher=None,
+                 extra={})
 
 if _defaults.LOGURU_AUTOINIT and _sys.stderr:
     logger.add(_sys.stderr)

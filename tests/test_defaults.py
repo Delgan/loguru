@@ -13,14 +13,14 @@ def test_string(value, monkeypatch):
 def test_bool_positive(value, monkeypatch):
     key = "VALID_BOOL_POS"
     monkeypatch.setenv(key, value)
-    assert env(key, bool) == True
+    assert env(key, bool) is True
 
 
 @pytest.mark.parametrize("value", ["NO", "0", "false"])
 def test_bool_negative(value, monkeypatch):
     key = "VALID_BOOL_NEG"
     monkeypatch.setenv(key, value)
-    assert env(key, bool) == False
+    assert env(key, bool) is False
 
 
 def test_int(monkeypatch):

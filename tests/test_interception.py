@@ -23,8 +23,15 @@ class InterceptHandler(logging.Handler):
 
 
 def test_formatting(writer):
-    fmt = "{name} - {file.name} - {function} - {level.name} - {level.no} - {line} - {module} - {message}"
-    expected = "tests.test_interception - test_interception.py - test_formatting - DEBUG - 10 - 31 - test_interception - This is the message\n"
+    fmt = (
+        "{name} - {file.name} - {function} - {level.name} - "
+        "{level.no} - {line} - {module} - {message}"
+    )
+
+    expected = (
+        "tests.test_interception - test_interception.py - test_formatting - DEBUG - "
+        "10 - 38 - test_interception - This is the message\n"
+    )
 
     with make_logging_logger("tests", InterceptHandler()) as logging_logger:
         logger.add(writer, format=fmt)
@@ -94,7 +101,7 @@ def test_exception(writer):
 
         try:
             1 / 0
-        except:
+        except Exception:
             logging_logger.exception("Oops...")
 
     lines = writer.read().strip().splitlines()
@@ -150,4 +157,4 @@ def test_using_logging_function(writer):
         logging.warning("ABC")
 
     result = writer.read()
-    assert result == "test_using_logging_function 150 test_interception test_interception.py ABC\n"
+    assert result == "test_using_logging_function 157 test_interception test_interception.py ABC\n"

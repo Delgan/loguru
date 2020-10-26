@@ -3,9 +3,7 @@ import sys
 import pytest
 import logging
 import loguru
-import time
 import threading
-import os
 import re
 import multiprocessing
 from loguru import logger

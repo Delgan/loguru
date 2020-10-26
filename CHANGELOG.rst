@@ -1,3 +1,9 @@
+`_Unreleased`_
+==============
+
+- Fix ``flake8`` errors and improve code readability (`#353 <https://github.com/Delgan/loguru/issues/353>`_, thanks `@AndrewYakimets <https://github.com/AndrewYakimets>`_).
+
+
 `0.5.3`_ (2020-09-20)
 =====================
 
