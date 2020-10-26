@@ -12,8 +12,15 @@ class PropagateHandler(logging.Handler):
 
 
 def test_formatting(capsys):
-    fmt = "%(name)s - %(filename)s - %(funcName)s - %(levelname)s - %(levelno)s - %(lineno)d - %(module)s - %(message)s"
-    expected = "tests.test_propagation - test_propagation.py - test_formatting - DEBUG - 10 - 20 - test_propagation - This is my message\n"
+    fmt = (
+        "%(name)s - %(filename)s - %(funcName)s - %(levelname)s - "
+        "%(levelno)s - %(lineno)d - %(module)s - %(message)s"
+    )
+
+    expected = (
+        "tests.test_propagation - test_propagation.py - test_formatting - DEBUG - "
+        "10 - 27 - test_propagation - This is my message\n"
+    )
 
     with make_logging_logger("tests.test_propagation", StreamHandler(sys.stderr), fmt):
         logger.add(PropagateHandler(), format="{message}")
