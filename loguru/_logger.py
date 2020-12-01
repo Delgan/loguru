@@ -255,9 +255,11 @@ class Logger:
             Whether the color markups contained in the formatted message should be converted to ansi
             codes for terminal coloration, or stripped otherwise. If ``None``, the choice is
             automatically made based on the sink being a tty or not.
-        serialize : |bool|, optional
+        serialize : |bool| or |function|, optional
             Whether the logged message and its records should be first converted to a JSON string
             before being sent to the sink.
+            If serialize is a function, it will be used as serializer, and must
+            be compatible with json.dumps' interface.
         backtrace : |bool|, optional
             Whether the exception trace formatted should be extended upward, beyond the catching
             point, to show the full stacktrace which generated the error.

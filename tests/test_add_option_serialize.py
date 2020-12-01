@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 import sys
 from loguru import logger
@@ -11,6 +13,43 @@ class JsonSink:
     def write(self, message):
         self.dict = message.record
         self.json = json.loads(message)
+
+
+class CSVSink:
+    def __init__(self):
+        self.dict = None
+        self.csv = None
+
+    def write(self, message):
+        self.dict = message.record
+        keys = ["text", "elapsed", "message", "filename", "time"]
+        temp_io = io.StringIO(message)
+        self.csv = [a for a in csv.DictReader(temp_io, keys)][0]
+
+
+def test_serialize_to_csv():
+    keys = ["text", "elapsed", "message", "filename", "time"]
+
+    def serializer(message, default):
+        temp_io = io.StringIO()
+        writer = csv.DictWriter(temp_io, keys)
+        msg = {
+            "text": message["text"].strip(),
+            "message": message["record"]["message"],
+            "elapsed": message["record"]["elapsed"]["seconds"],
+            "filename": message["record"]["file"]["name"],
+        }
+
+        writer.writerows([msg])
+        temp_io.seek(0)
+        return temp_io.read()
+
+    sink = CSVSink()
+    logger.add(sink, format="{level} {message}", serialize=serializer)
+    logger.debug("Test")
+    assert sink.csv["text"] == "DEBUG Test"
+    assert sink.dict["message"] == sink.csv["message"]
+    assert not set(sink.csv.keys()).difference(keys)
 
 
 def test_serialize():

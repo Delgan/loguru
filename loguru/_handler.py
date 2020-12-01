@@ -163,7 +163,12 @@ class Handler:
                     formatted = precomputed_format.format_map(formatter_record)
 
             if self._serialize:
-                formatted = self._serialize_record(formatted, record)
+                if hasattr(self._serialize, "__call__"):
+                    serializer = self._serialize
+                else:
+                    serializer = json.dumps
+
+                formatted = self._serialize_record(serializer, formatted, record)
 
             str_record = Message(formatted)
             str_record.record = record
@@ -219,7 +224,7 @@ class Handler:
         return self._levelno
 
     @staticmethod
-    def _serialize_record(text, record):
+    def _serialize_record(serializer, text, record):
         exception = record["exception"]
 
         if exception is not None:
@@ -255,7 +260,7 @@ class Handler:
             },
         }
 
-        return json.dumps(serializable, default=str) + "\n"
+        return serializer(serializable, default=str) + "\n"
 
     def _queued_writer(self):
         message = None
