@@ -64,7 +64,7 @@ setup(
             "pytest>=4.6.2",
             "pytest-cov>=2.7.1",
             "Sphinx>=2.2.1",
-            "sphinx-autobuild>=0.7.1",
+            "sphinx-autobuild>=0.7.1 ; python_version>='3.6'",
             "sphinx-rtd-theme>=0.4.3",
         ]
     },
