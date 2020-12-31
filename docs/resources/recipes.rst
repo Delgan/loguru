@@ -370,6 +370,32 @@ The ``rotation`` argument of file sinks accept size or time limits but not both 
     logger.add("file.log", rotation=rotator.should_rotate)
 
 
+Implement RotatingFileHandler provided by logging package
+---------------------------------------------------------
+
+Rotate log files by assigning numbers to them::
+
+    class Retentor:
+        def __init__(self, path, backup_count):
+            self._path = path
+            self._backup_count = backup_count
+
+        def should_retente(self, logs):
+            new_log = sorted(logs).pop(0)
+
+            for i in range(self._backup_count, 0, -1):
+                new = f"{self._path}.{i}"
+                old = f"{self._path}.{i - 1}"
+                if os.path.isfile(old):
+                    os.replace(old, new)
+            os.replace(new_log, f"{self._path}.1")
+
+    # Retention file
+    logfile = "file.log"
+    retentor = Retentor(logfile, backup_count=3)
+    logger.add(logfile, rotation="0.5 KB", retention=retentor.should_retente)
+
+
 Adapting colors and format of logged messages dynamically
 ---------------------------------------------------------
 
