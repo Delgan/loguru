@@ -54,7 +54,7 @@ def test_rotation_permissions(tmpdir, permissions):
     assert all(re.match(r"file\.[0-9-_]+\.log", f.basename) for f in files[:2])
     if permissions and "win" not in sys.platform:
         for f in files:
-            st = os.stat(f)
+            st = os.stat(str(f))
             oct_perm = oct(S_IMODE(st.st_mode))
             assert oct_perm == oct(permissions)
 
