@@ -147,6 +147,7 @@ class FileSink:
         mode="a",
         buffering=1,
         encoding="utf8",
+        file_permissions=None,
         **kwargs
     ):
         self.encoding = encoding
@@ -161,6 +162,7 @@ class FileSink:
 
         self._file = None
         self._file_path = None
+        self._file_permissions = file_permissions
 
         if not delay:
             self._initialize_file()
@@ -184,6 +186,8 @@ class FileSink:
     def _initialize_file(self):
         path = self._prepare_new_path()
         self._file = open(path, **self._kwargs)
+        if self._file_permissions:
+            os.chmod(path, self._file_permissions)
         self._file_path = path
 
     def _terminate_file(self, *, is_rotating=False):
@@ -220,7 +224,8 @@ class FileSink:
         if is_rotating:
             file = open(new_path, **self._kwargs)
             set_ctime(new_path, datetime.now().timestamp())
-
+            if self._file_permissions:
+                os.chmod(new_path, self._file_permissions)
             self._file_path = new_path
             self._file = file
 

@@ -285,6 +285,8 @@ class Logger:
 
         Parameters
         ----------
+        file_permissions : |oct|, optional
+            An octal of permissions to apply to created log files.
         rotation : |str|, |int|, |time|, |timedelta| or |callable|_, optional
             A condition indicating whenever the current logged file should be closed and a new one
             started.
