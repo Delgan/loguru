@@ -8,7 +8,7 @@ from loguru import logger
 
 
 @pytest.mark.parametrize("permissions", [None, 0o0777, 0o0766, 0o0744])
-def test_lof_file_permissions(tmpdir, permissions):
+def test_log_file_permissions(tmpdir, permissions):
     log_file_name = "file.log"
     logger.add(str(tmpdir.join(log_file_name)), file_permissions=permissions, format="{message}")
 
@@ -22,7 +22,7 @@ def test_lof_file_permissions(tmpdir, permissions):
     assert files[0].read() == "a\n"
 
     if permissions and "win" not in sys.platform:
-        st = os.stat(files[0])
+        st = os.stat(str(files[0]))
         oct_perm = oct(S_IMODE(st.st_mode))
         assert oct_perm == oct(permissions)
 
@@ -42,7 +42,7 @@ def test_rotation_permissions(tmpdir, permissions):
     assert files[1].read() == "a\n"
     if permissions and "win" not in sys.platform:
         for f in files:
-            st = os.stat(f)
+            st = os.stat(str(f))
             oct_perm = oct(S_IMODE(st.st_mode))
             assert oct_perm == oct(permissions)
 
