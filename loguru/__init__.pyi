@@ -289,6 +289,7 @@ class Logger:
         reraise: bool = ...,
         onerror: Optional[Callable[[BaseException], None]] = ...,
         exclude: Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]] = ...,
+        default: Any = ...,
         message: str = ...
     ) -> Catcher: ...
     @overload
