@@ -1,36 +1,36 @@
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 21, in main
+  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 22, in main
     foo()
-  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 10, in foo
+  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 11, in foo
     bar()
-  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 15, in bar
+  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 16, in bar
     1 / 0
 ZeroDivisionError: division by zero
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 26, in <module>
+  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 27, in <module>
     main()
-  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 23, in main
+  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 24, in main
     raise ZeroDivisionError from e
 ZeroDivisionError
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 21, in main
+  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 22, in main
     foo()
-  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 10, in foo
+  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 11, in foo
     bar()
-  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 15, in bar
+  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 16, in bar
     1 / 0
 ZeroDivisionError: division by zero
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 26, in <module>
+> File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 27, in <module>
     main()
-  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 23, in main
+  File "tests/exceptions/source/backtrace/nested_chained_catch_up.py", line 24, in main
     raise ZeroDivisionError from e
 ZeroDivisionError

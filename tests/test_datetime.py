@@ -1,10 +1,12 @@
-import pytest
 import datetime
+import re
+import sys
 import time
+
+import pytest
+
 import loguru
 from loguru import logger
-import sys
-import re
 
 if sys.version_info < (3, 6):
     UTC_NAME = "UTC+00:00"

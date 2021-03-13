@@ -1,8 +1,11 @@
 import logging
-import pytest
 import sys
-from loguru import logger
 from logging import StreamHandler
+
+import pytest
+
+from loguru import logger
+
 from .conftest import make_logging_logger
 
 
@@ -19,7 +22,7 @@ def test_formatting(capsys):
 
     expected = (
         "tests.test_propagation - test_propagation.py - test_formatting - DEBUG - "
-        "10 - 27 - test_propagation - This is my message\n"
+        "10 - 30 - test_propagation - This is my message\n"
     )
 
     with make_logging_logger("tests.test_propagation", StreamHandler(sys.stderr), fmt):

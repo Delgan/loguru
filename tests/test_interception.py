@@ -1,8 +1,8 @@
 import logging
 
-from .conftest import make_logging_logger
-
 from loguru import logger
+
+from .conftest import make_logging_logger
 
 
 class InterceptHandler(logging.Handler):

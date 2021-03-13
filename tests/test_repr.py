@@ -1,11 +1,12 @@
-import loguru
-from loguru import logger
+import builtins
 import logging
-import sys
 import pathlib
 import re
+import sys
 from inspect import iscoroutinefunction
-import builtins
+
+import loguru
+from loguru import logger
 
 
 class Wrapper:

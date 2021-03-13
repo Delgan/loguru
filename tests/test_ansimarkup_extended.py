@@ -1,5 +1,8 @@
 import pytest
-from colorama import Style as S, Fore as F, Back as B
+from colorama import Back as B
+from colorama import Fore as F
+from colorama import Style as S
+
 from .conftest import parse
 
 

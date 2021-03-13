@@ -1,8 +1,10 @@
-import sys
-import pytest
-from loguru import logger
 import re
+import sys
 import time
+
+import pytest
+
+from loguru import logger
 
 from .conftest import default_threading_excepthook
 

@@ -1,10 +1,12 @@
 import asyncio
+import logging
+import os
 import pathlib
 import sys
-import os
-import logging
-from loguru import logger
+
 import pytest
+
+from loguru import logger
 
 message = "test message"
 expected = message + "\n"

@@ -1,7 +1,10 @@
-import pytest
 import sys
 from unittest.mock import MagicMock
+
+import pytest
+
 from loguru import logger
+
 from .conftest import parse
 
 

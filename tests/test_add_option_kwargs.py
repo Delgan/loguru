@@ -1,6 +1,8 @@
-import pytest
-from loguru import logger
 import io
+
+import pytest
+
+from loguru import logger
 
 
 def test_file_mode_a(tmpdir):

@@ -1,7 +1,7 @@
 import functools
 import json
-import os
 import multiprocessing
+import os
 from threading import Thread
 
 from ._colorizer import Colorizer

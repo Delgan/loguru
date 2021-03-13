@@ -1,7 +1,7 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_strings.py[0m", line [33m13[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_strings.py[0m", line [33m14[0m, in [35m<module>[0m
     [1ma[0m [35m[1m+[0m [36mb"prefix"[0m [35m[1m+[0m [36m'single'[0m [35m[1m+[0m [36m"""triple"""[0m [35m[1m+[0m [34m[1m1[0m [35m[1m+[0m [1mb[0m
     [36m│                                             └ [0m[36m[1m0[0m
     [36m└ [0m[36m[1m0[0m

@@ -1,21 +1,21 @@
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/function.py", line 21, in <module>
+> File "tests/exceptions/source/backtrace/function.py", line 22, in <module>
     a()
-  File "tests/exceptions/source/backtrace/function.py", line 10, in a
+  File "tests/exceptions/source/backtrace/function.py", line 11, in a
     1 / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/function.py", line 24, in <module>
+> File "tests/exceptions/source/backtrace/function.py", line 25, in <module>
     b()
-  File "tests/exceptions/source/backtrace/function.py", line 14, in b
+  File "tests/exceptions/source/backtrace/function.py", line 15, in b
     2 / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/function.py", line 27, in <module>
+> File "tests/exceptions/source/backtrace/function.py", line 28, in <module>
     c()
-  File "tests/exceptions/source/backtrace/function.py", line 18, in c
+  File "tests/exceptions/source/backtrace/function.py", line 19, in c
     3 / 0
 ZeroDivisionError: division by zero

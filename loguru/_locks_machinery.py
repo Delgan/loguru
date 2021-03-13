@@ -35,7 +35,9 @@ else:
             lock.release()
 
     os.register_at_fork(
-        before=acquire_locks, after_in_parent=release_locks, after_in_child=release_locks,
+        before=acquire_locks,
+        after_in_parent=release_locks,
+        after_in_child=release_locks,
     )
 
     def create_logger_lock():

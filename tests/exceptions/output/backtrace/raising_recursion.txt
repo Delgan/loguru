@@ -1,249 +1,249 @@
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 31, in <module>
-    a(1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
-    a(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
-    n / 0
-ZeroDivisionError: division by zero
-
-Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 31, in <module>
-    a(1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
-    n / 0
-ZeroDivisionError: division by zero
-
-Traceback (most recent call last):
   File "tests/exceptions/source/backtrace/raising_recursion.py", line 32, in <module>
-    a(2)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
+    a(1)
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
     a(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
-    a(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
-    n / 0
-ZeroDivisionError: division by zero
-
-Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 32, in <module>
-    a(2)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
-    a(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 13, in a
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
 > File "tests/exceptions/source/backtrace/raising_recursion.py", line 32, in <module>
+    a(1)
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 13, in a
+    n / 0
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 33, in <module>
     a(2)
   File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+    a(n - 1)
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+    a(n - 1)
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 13, in a
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
   File "tests/exceptions/source/backtrace/raising_recursion.py", line 33, in <module>
-    a(3)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
+    a(2)
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
     a(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
-    a(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
-    a(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
-    n / 0
-ZeroDivisionError: division by zero
-
-Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 33, in <module>
-    a(3)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
-    a(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
-    a(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
-    n / 0
-ZeroDivisionError: division by zero
-
-Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 33, in <module>
-    a(3)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 11, in a
-    a(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 13, in a
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
 > File "tests/exceptions/source/backtrace/raising_recursion.py", line 33, in <module>
+    a(2)
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 13, in a
+    n / 0
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 34, in <module>
     a(3)
   File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+    a(n - 1)
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+    a(n - 1)
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+    a(n - 1)
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 13, in a
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 35, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 34, in <module>
+    a(3)
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+    a(n - 1)
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+    a(n - 1)
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 13, in a
+    n / 0
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 34, in <module>
+    a(3)
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 12, in a
+    a(n - 1)
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 13, in a
+    n / 0
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 34, in <module>
+    a(3)
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 13, in a
+    n / 0
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 36, in <module>
     b(1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 20, in b
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 35, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 36, in <module>
     b(1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 20, in b
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 36, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 37, in <module>
     b(2)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 20, in b
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 36, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 37, in <module>
     b(2)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 20, in b
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 36, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 37, in <module>
     b(2)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 20, in b
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 37, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 38, in <module>
     b(3)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 20, in b
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 37, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 38, in <module>
     b(3)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 20, in b
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 37, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 38, in <module>
     b(3)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 18, in b
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
     b(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 20, in b
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 37, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 38, in <module>
     b(3)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 19, in b
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 20, in b
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 39, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 40, in <module>
     c(1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 27, in c
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 39, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 40, in <module>
     c(1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 27, in c
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 40, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 41, in <module>
     c(2)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 27, in c
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 40, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 41, in <module>
     c(2)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 27, in c
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 40, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 41, in <module>
     c(2)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 27, in c
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 41, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 42, in <module>
     c(3)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 27, in c
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 41, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 42, in <module>
     c(3)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 27, in c
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 41, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 42, in <module>
     c(3)
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 25, in c
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
     c(n - 1)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 27, in c
     n / 0
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/raising_recursion.py", line 41, in <module>
+  File "tests/exceptions/source/backtrace/raising_recursion.py", line 42, in <module>
     c(3)
-> File "tests/exceptions/source/backtrace/raising_recursion.py", line 26, in c
+> File "tests/exceptions/source/backtrace/raising_recursion.py", line 27, in c
     n / 0
 ZeroDivisionError: division by zero

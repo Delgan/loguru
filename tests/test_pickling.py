@@ -1,12 +1,13 @@
-import logging
-import pickle
 import asyncio
 import datetime
+import logging
+import pickle
 
 import pytest
-from .conftest import parse
 
 from loguru import logger
+
+from .conftest import parse
 
 
 def print_(message):

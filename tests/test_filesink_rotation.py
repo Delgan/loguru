@@ -1,14 +1,16 @@
-import pytest
+import builtins
 import datetime
 import importlib
 import os
+import pathlib
 import re
 import sys
-import time
 import tempfile
-import pathlib
-import builtins
+import time
 from unittest.mock import MagicMock, PropertyMock
+
+import pytest
+
 import loguru
 from loguru import logger
 
@@ -430,9 +432,7 @@ def test_time_rotation_windows_setctime_exception(
 def test_function_rotation(monkeypatch_date, tmpdir):
     monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
     x = iter([False, True, False])
-    logger.add(
-        str(tmpdir.join("test_{time}.log")), rotation=lambda *_: next(x), format="{message}"
-    )
+    logger.add(str(tmpdir.join("test_{time}.log")), rotation=lambda *_: next(x), format="{message}")
     logger.debug("a")
     assert tmpdir.join("test_2018-01-01_00-00-00_000000.log").read() == "a\n"
 

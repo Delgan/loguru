@@ -1,9 +1,11 @@
-from loguru import logger
-import pytest
-import time
+import pickle
 import re
 import sys
-import pickle
+import time
+
+import pytest
+
+from loguru import logger
 
 from .conftest import default_threading_excepthook
 

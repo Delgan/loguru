@@ -1,4 +1,5 @@
 import pytest
+
 from loguru._defaults import env
 
 

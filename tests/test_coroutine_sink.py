@@ -1,11 +1,13 @@
 import asyncio
-import sys
-import pytest
 import logging
-import loguru
-import threading
-import re
 import multiprocessing
+import re
+import sys
+import threading
+
+import pytest
+
+import loguru
 from loguru import logger
 
 

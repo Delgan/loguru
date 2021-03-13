@@ -1,11 +1,13 @@
-import pytest
+import datetime
 import os
 import sys
-import loguru
-from loguru import logger
-import datetime
 import threading
 import time
+
+import pytest
+
+import loguru
+from loguru import logger
 
 
 @pytest.mark.parametrize(

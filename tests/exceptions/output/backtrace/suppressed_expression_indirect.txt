@@ -1,54 +1,54 @@
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 14, in b
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 15, in b
     a(1, 0)
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 9, in a
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 10, in a
     x / y
 ZeroDivisionError: division by zero
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 28, in <module>
+> File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 29, in <module>
     c_decorated()
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 21, in c_decorated
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 22, in c_decorated
     b()
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 16, in b
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 17, in b
     raise ValueError("NOK") from e
 ValueError: NOK
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 14, in b
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 15, in b
     a(1, 0)
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 9, in a
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 10, in a
     x / y
 ZeroDivisionError: division by zero
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 31, in <module>
+> File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 32, in <module>
     c_not_decorated()
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 25, in c_not_decorated
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 26, in c_not_decorated
     b()
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 16, in b
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 17, in b
     raise ValueError("NOK") from e
 ValueError: NOK
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 14, in b
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 15, in b
     a(1, 0)
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 9, in a
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 10, in a
     x / y
 ZeroDivisionError: division by zero
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 34, in <module>
+> File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 35, in <module>
     c_not_decorated()
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 25, in c_not_decorated
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 26, in c_not_decorated
     b()
-  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 16, in b
+  File "tests/exceptions/source/backtrace/suppressed_expression_indirect.py", line 17, in b
     raise ValueError("NOK") from e
 ValueError: NOK

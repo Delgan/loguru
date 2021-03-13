@@ -1,7 +1,9 @@
 import sys
-import pytest
-from loguru import logger
 import time
+
+import pytest
+
+from loguru import logger
 
 
 class StopSinkError:

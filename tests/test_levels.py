@@ -1,6 +1,9 @@
-import pytest
 import functools
+
+import pytest
+
 from loguru import logger
+
 from .conftest import parse
 
 

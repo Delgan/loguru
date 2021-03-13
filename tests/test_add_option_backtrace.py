@@ -1,6 +1,5 @@
 from loguru import logger
 
-
 # See "test_catch_exceptions.py" for extended testing
 
 

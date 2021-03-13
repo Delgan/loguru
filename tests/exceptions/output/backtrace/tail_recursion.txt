@@ -1,99 +1,99 @@
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 28, in <module>
-    a(1)
-> File "tests/exceptions/source/backtrace/tail_recursion.py", line 11, in a
-    a(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 10, in a
-    1 / n
-ZeroDivisionError: division by zero
-
-Traceback (most recent call last):
   File "tests/exceptions/source/backtrace/tail_recursion.py", line 29, in <module>
-    a(2)
+    a(1)
+> File "tests/exceptions/source/backtrace/tail_recursion.py", line 12, in a
+    a(n - 1)
   File "tests/exceptions/source/backtrace/tail_recursion.py", line 11, in a
-    a(n - 1)
-> File "tests/exceptions/source/backtrace/tail_recursion.py", line 11, in a
-    a(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 10, in a
     1 / n
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
   File "tests/exceptions/source/backtrace/tail_recursion.py", line 30, in <module>
-    a(3)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 11, in a
+    a(2)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 12, in a
+    a(n - 1)
+> File "tests/exceptions/source/backtrace/tail_recursion.py", line 12, in a
     a(n - 1)
   File "tests/exceptions/source/backtrace/tail_recursion.py", line 11, in a
-    a(n - 1)
-> File "tests/exceptions/source/backtrace/tail_recursion.py", line 11, in a
-    a(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 10, in a
     1 / n
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 32, in <module>
-    b(1)
-> File "tests/exceptions/source/backtrace/tail_recursion.py", line 17, in b
-    b(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 15, in b
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 31, in <module>
+    a(3)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 12, in a
+    a(n - 1)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 12, in a
+    a(n - 1)
+> File "tests/exceptions/source/backtrace/tail_recursion.py", line 12, in a
+    a(n - 1)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 11, in a
     1 / n
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
   File "tests/exceptions/source/backtrace/tail_recursion.py", line 33, in <module>
-    b(2)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 17, in b
+    b(1)
+> File "tests/exceptions/source/backtrace/tail_recursion.py", line 18, in b
     b(n - 1)
-> File "tests/exceptions/source/backtrace/tail_recursion.py", line 17, in b
-    b(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 15, in b
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 16, in b
     1 / n
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
   File "tests/exceptions/source/backtrace/tail_recursion.py", line 34, in <module>
-    b(3)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 17, in b
+    b(2)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 18, in b
     b(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 17, in b
+> File "tests/exceptions/source/backtrace/tail_recursion.py", line 18, in b
     b(n - 1)
-> File "tests/exceptions/source/backtrace/tail_recursion.py", line 17, in b
-    b(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 15, in b
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 16, in b
     1 / n
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 36, in <module>
-    c(1)
-> File "tests/exceptions/source/backtrace/tail_recursion.py", line 23, in c
-    c(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 21, in c
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 35, in <module>
+    b(3)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 18, in b
+    b(n - 1)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 18, in b
+    b(n - 1)
+> File "tests/exceptions/source/backtrace/tail_recursion.py", line 18, in b
+    b(n - 1)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 16, in b
     1 / n
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
   File "tests/exceptions/source/backtrace/tail_recursion.py", line 37, in <module>
-    c(2)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 23, in c
+    c(1)
+> File "tests/exceptions/source/backtrace/tail_recursion.py", line 24, in c
     c(n - 1)
-> File "tests/exceptions/source/backtrace/tail_recursion.py", line 23, in c
-    c(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 21, in c
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 22, in c
     1 / n
 ZeroDivisionError: division by zero
 
 Traceback (most recent call last):
   File "tests/exceptions/source/backtrace/tail_recursion.py", line 38, in <module>
+    c(2)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 24, in c
+    c(n - 1)
+> File "tests/exceptions/source/backtrace/tail_recursion.py", line 24, in c
+    c(n - 1)
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 22, in c
+    1 / n
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 39, in <module>
     c(3)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 23, in c
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 24, in c
     c(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 23, in c
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 24, in c
     c(n - 1)
-> File "tests/exceptions/source/backtrace/tail_recursion.py", line 23, in c
+> File "tests/exceptions/source/backtrace/tail_recursion.py", line 24, in c
     c(n - 1)
-  File "tests/exceptions/source/backtrace/tail_recursion.py", line 21, in c
+  File "tests/exceptions/source/backtrace/tail_recursion.py", line 22, in c
     1 / n
 ZeroDivisionError: division by zero

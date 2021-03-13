@@ -1,6 +1,8 @@
-import _init
 import sys
+
+import _init
 from somelib import divide
+
 from loguru import logger
 
 

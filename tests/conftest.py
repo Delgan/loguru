@@ -1,15 +1,16 @@
 import asyncio
 import contextlib
-import loguru
 import logging
-import pytest
 import os
 import sys
-import time
-import warnings
 import threading
-import contextlib
+import time
 import traceback
+import warnings
+
+import pytest
+
+import loguru
 
 if sys.version_info < (3, 5, 3):
 

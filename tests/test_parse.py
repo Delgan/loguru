@@ -1,8 +1,9 @@
-import pytest
-import re
-import pathlib
 import io
+import pathlib
+import re
 from datetime import datetime
+
+import pytest
 
 from loguru import logger
 

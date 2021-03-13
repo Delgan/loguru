@@ -1,9 +1,9 @@
-import pytest
-from loguru import logger
 import sys
+from logging import FileHandler, Formatter, Handler, NullHandler, StreamHandler
 
-from logging import StreamHandler, FileHandler, NullHandler, Handler
-from logging import Formatter
+import pytest
+
+from loguru import logger
 
 
 def test_stream_handler(capsys):

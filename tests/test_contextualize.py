@@ -1,8 +1,10 @@
-from loguru import logger
-import threading
 import asyncio
 import sys
+import threading
+
 import pytest
+
+from loguru import logger
 
 
 def test_contextualize(writer):

@@ -1,11 +1,13 @@
 import importlib
 import sys
+
 import loguru
 
 
 def test_with_sys_getframe(monkeypatch):
     def patched():
         return
+
     monkeypatch.setattr(sys, "_getframe", patched())
     get_frame_module = importlib.reload(loguru._get_frame)
     assert get_frame_module.get_frame == patched()

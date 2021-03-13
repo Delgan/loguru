@@ -1,6 +1,8 @@
-import _init
 import sys
+
+import _init
 from somelib import assertionerror
+
 from loguru import logger
 
 

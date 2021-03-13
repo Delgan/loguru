@@ -1,44 +1,44 @@
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 10, in a
+  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 11, in a
     1 / 0
 ZeroDivisionError: division by zero
 
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 20, in <module>
+> File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 21, in <module>
     b()
-  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 17, in b
+  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 18, in b
     a()
-  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 12, in a
+  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 13, in a
     raise ValueError("NOK")
 ValueError: NOK
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 10, in a
+  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 11, in a
     1 / 0
 ZeroDivisionError: division by zero
 
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 23, in <module>
+> File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 24, in <module>
     a()
-  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 12, in a
+  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 13, in a
     raise ValueError("NOK")
 ValueError: NOK
 
 Traceback (most recent call last):
-  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 10, in a
+  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 11, in a
     1 / 0
 ZeroDivisionError: division by zero
 
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-> File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 26, in <module>
+> File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 27, in <module>
     a()
-  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 12, in a
+  File "tests/exceptions/source/backtrace/chained_expression_indirect.py", line 13, in a
     raise ValueError("NOK")
 ValueError: NOK

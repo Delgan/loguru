@@ -1,9 +1,12 @@
-import pytest
 import os
 import sys
-import loguru
 from unittest.mock import MagicMock
+
+import pytest
+
+import loguru
 from loguru import logger
+
 from .conftest import parse
 
 

@@ -1,7 +1,8 @@
-from threading import Thread, Barrier
 import itertools
-from loguru import logger
 import time
+from threading import Barrier, Thread
+
+from loguru import logger
 
 
 class NonSafeSink:

@@ -1,6 +1,7 @@
-from loguru import logger
-import time
 import re
+import time
+
+from loguru import logger
 
 
 def test_file_not_delayed(tmpdir):

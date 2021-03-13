@@ -1,15 +1,15 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mencoding.py[0m", line [33m17[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mencoding.py[0m", line [33m18[0m, in [35m<module>[0m
     [1mdiv[0m[1m([0m[1m)[0m
     [36m└ [0m[36m[1m<function div at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mencoding.py[0m", line [33m13[0m, in [35mdiv[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mencoding.py[0m", line [33m14[0m, in [35mdiv[0m
     [35m[1mreturn[0m [1m_deep[0m[1m([0m[36m"天"[0m[1m)[0m
     [36m       └ [0m[36m[1m<function _deep at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mencoding.py[0m", line [33m9[0m, in [35m_deep[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mencoding.py[0m", line [33m10[0m, in [35m_deep[0m
     [35m[1mreturn[0m [34m[1m1[0m [35m[1m/[0m [1mval[0m
     [36m           └ [0m[36m[1m'天'[0m
 
