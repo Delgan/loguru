@@ -4,6 +4,8 @@ from loguru import logger
 import re
 import time
 
+from .conftest import default_threading_excepthook
+
 
 def broken_sink(m):
     raise Exception("Error!")
@@ -131,7 +133,9 @@ def test_broken_sink_not_caught_enqueue():
 
     logger.add(broken_sink, format="{message}", enqueue=True, catch=False)
 
-    logger.info("A")
-    logger.info("B")
-    time.sleep(0.1)
+    with default_threading_excepthook():
+        logger.info("A")
+        logger.info("B")
+        time.sleep(0.1)
+
     assert called == 1

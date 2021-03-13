@@ -7,6 +7,9 @@ import os
 import sys
 import time
 import warnings
+import threading
+import contextlib
+import traceback
 
 if sys.version_info < (3, 5, 3):
 
@@ -40,6 +43,27 @@ def parse(text, *, strip=False, strict=True):
         return parser.strip(tokens)
     else:
         return parser.colorize(tokens, "")
+
+
+@contextlib.contextmanager
+def default_threading_excepthook():
+    if not hasattr(threading, "excepthook"):
+        yield
+        return
+
+    # Pytest added "PytestUnhandledThreadExceptionWarning", we need to
+    # remove it temporarily for somes tests checking exceptions in threads.
+
+    def excepthook(args):
+        print("Exception in thread:", file=sys.stderr, flush=True)
+        traceback.print_exception(
+            args.exc_type, args.exc_value, args.exc_traceback, file=sys.stderr
+        )
+
+    old_excepthook = threading.excepthook
+    threading.excepthook = excepthook
+    yield
+    threading.excepthook = old_excepthook
 
 
 @pytest.fixture(scope="session", autouse=True)

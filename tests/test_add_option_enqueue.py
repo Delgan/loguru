@@ -4,9 +4,8 @@ import time
 import re
 import sys
 import pickle
-import contextlib
-import threading
-import traceback
+
+from .conftest import default_threading_excepthook
 
 
 class NotPicklable:
@@ -30,27 +29,6 @@ class NotWritable:
         if "fail" in message.record["extra"]:
             raise RuntimeError("You asked me to fail...")
         print(message, end="")
-
-
-@contextlib.contextmanager
-def default_threading_excepthook():
-    if not hasattr(threading, "excepthook"):
-        yield
-        return
-
-    # Pytest added "PytestUnhandledThreadExceptionWarning", we need to
-    # remove it temporarily for somes tests checking exceptions in threads.
-
-    def excepthook(args):
-        print("Exception in thread:", file=sys.stderr, flush=True)
-        traceback.print_exception(
-            args.exc_type, args.exc_value, args.exc_traceback, file=sys.stderr
-        )
-
-    old_excepthook = threading.excepthook
-    threading.excepthook = excepthook
-    yield
-    threading.excepthook = old_excepthook
 
 
 def test_enqueue():
@@ -177,7 +155,7 @@ def test_not_caught_exception_queue_get(writer, capsys):
     assert lines[-1].endswith("UnpicklingError: You shall not de-serialize me!")
 
 
-def test_not_caught_exception_sink_write(monkeypatch, capsys):
+def test_not_caught_exception_sink_write(capsys):
     logger.add(NotWritable(), enqueue=True, catch=False, format="{message}")
 
     with default_threading_excepthook():
