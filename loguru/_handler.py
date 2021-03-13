@@ -189,6 +189,8 @@ class Handler:
                     return
                 self._queue.put(None)
                 self._thread.join()
+                if hasattr(self._queue, "close"):
+                    self._queue.close()
 
             self._sink.stop()
 
