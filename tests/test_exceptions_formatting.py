@@ -9,11 +9,40 @@ import pytest
 
 def normalize(exception):
     """Normalize exception output for reproducible test cases"""
-    if os.name:
+    if os.name == "nt":
         exception = re.sub(
             r'File[^"]+"[^"]+\.py[^"]*"', lambda m: m.group().replace("\\", "/"), exception
         )
         exception = re.sub(r"(\r\n|\r|\n)", "\n", exception)
+
+    if sys.version_info >= (3, 9, 0):
+
+        def fix_filepath(match):
+            filepath = match.group(1)
+            pattern = (
+                r'((?:\x1b\[[0-9]*m)+)([^"]+?)((?:\x1b\[[0-9]*m)+)([^"]+?)((?:\x1b\[[0-9]*m)+)'
+            )
+            match = re.match(pattern, filepath)
+            start_directory = os.path.dirname(os.path.dirname(__file__))
+            if match:
+                groups = list(match.groups())
+                groups[1] = os.path.relpath(os.path.abspath(groups[1]), start_directory) + "/"
+                relpath = "".join(groups)
+            else:
+                relpath = os.path.relpath(os.path.abspath(filepath), start_directory)
+            return 'File "%s"' % relpath
+
+        exception = re.sub(
+            r'File "([^"]+\.py[^"]*)"',
+            fix_filepath,
+            exception,
+        )
+
+    if sys.version_info < (3, 9, 0):
+        if "SyntaxError" in exception:
+            exception = re.sub(r"(\n *)(\^ *\n)", r"\1 \2", exception)
+        elif "IndentationError" in exception:
+            exception = re.sub(r"\n *\^ *\n", "\n", exception)
 
     exception = re.sub(
         r'"[^"]*/somelib/__init__.py"', '"/usr/lib/python/somelib/__init__.py"', exception

@@ -13,7 +13,7 @@
     exec("foo =")
   File "<string>", line 1
     foo =
-        ^
+         ^
 
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
@@ -27,7 +27,7 @@
     exec("foo =")
   File "<string>", line 1
     foo =
-        ^
+         ^
 
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
@@ -40,7 +40,7 @@
     exec("foo =")
   File "<string>", line 1
     foo =
-        ^
+         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
 [33m[1mTraceback (most recent call last):[0m
@@ -50,7 +50,7 @@
     exec("foo =")
   File "<string>", line 1
     foo =
-        ^
+         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
 Traceback (most recent call last):
@@ -60,5 +60,5 @@ Traceback (most recent call last):
     exec("foo =")
   File "<string>", line 1
     foo =
-        ^
+         ^
 SyntaxError: invalid syntax

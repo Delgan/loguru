@@ -7,6 +7,6 @@
 
   File "<string>", line 4
     b = 7 *
-          ^
+           ^
 
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m

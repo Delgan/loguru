@@ -1,20 +1,20 @@
 
   File "<string>", line 1
     foo =
-        ^
+         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
   File "<string>", line 1
     foo =
-        ^
+         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
   File "<string>", line 1
     foo =
-        ^
+         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m
 
   File "<string>", line 1
     foo =
-        ^
+         ^
 [31m[1mSyntaxError[0m:[1m invalid syntax[0m

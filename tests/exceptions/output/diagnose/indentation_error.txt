@@ -7,6 +7,5 @@
 
   File "<string>", line 4
     print("foobar")  #intentional faulty indentation here.
-    ^
 
 [31m[1mIndentationError[0m:[1m unexpected indent[0m
