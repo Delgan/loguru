@@ -34,6 +34,7 @@
 .. |timedelta| replace:: :class:`datetime.timedelta`
 .. |open| replace:: :func:`open()`
 .. |logging| replace:: :mod:`logging`
+.. |signal| replace:: :mod:`logging`
 .. |contextvars| replace:: :mod:`contextvars`
 .. |Thread.run| replace:: :meth:`Thread.run()<threading.Thread.run()>`
 .. |Exception| replace:: :class:`Exception`
@@ -69,6 +70,7 @@
 .. _@sdispater: https://github.com/sdispater
 .. _@Qix-: https://github.com/Qix-
 .. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
+.. _reentrant: https://en.wikipedia.org/wiki/Reentrancy_(computing)
 """
 import asyncio
 import builtins
@@ -345,8 +347,9 @@ class Logger:
         - A built-in |Handler| like ``logging.StreamHandler``. In such a case, the `Loguru` records
           are automatically converted to the structure expected by the |logging| module.
 
-        Note that you should avoid using  the ``logger`` inside any of your sinks as this would
-        result in infinite recursion or dead lock if the module's sink was not explicitly disabled.
+        Note that the logging functions are not `reentrant`_. This means you should avoid using
+        the ``logger`` inside any of your sinks or from within |signal| handlers. Otherwise, you
+        may face deadlock if the module's sink was not explicitly disabled.
 
         .. _message:
 
