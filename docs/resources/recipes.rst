@@ -10,6 +10,7 @@ Code snippets and recipes for ``loguru``
 .. |sys.stderr| replace:: :data:`sys.stderr`
 .. |warnings| replace:: :mod:`warnings`
 .. |warnings.showwarning| replace:: :func:`warnings.showwarning`
+.. |warnings.warn| replace:: :func:`warnings.warn`
 .. |contextlib.redirect_stdout| replace:: :func:`contextlib.redirect_stdout`
 .. |copy.deepcopy| replace:: :func:`copy.deepcopy`
 .. |os.fork| replace:: :func:`os.fork`
@@ -627,6 +628,12 @@ You may also capture warnings emitted by your application by replacing |warnings
         showwarning_(message, *args, **kwargs)
 
     warnings.showwarning = showwarning
+
+
+Alternatively, if you want to emit warnings based on logged messages, you can simply use |warnings.warn| as a sink::
+
+
+    logger.add(warnings.warn, format="{message}", filter=lambda record: record["level"].name == "WARNING")
 
 
 Circumventing modules whose ``__name__`` value is absent
