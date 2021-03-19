@@ -244,7 +244,7 @@ This is done on the fixture itself by mokeypatching |caplog|_. In your ``conftes
             def emit(self, record):
                 logging.getLogger(record.name).handle(record)
 
-        handler_id = logger.add(PropogateHandler(), format="{message} {extra}")
+        handler_id = logger.add(PropogateHandler(), format="{message} {extra}", level="TRACE")
         yield _caplog
         logger.remove(handler_id)
 
