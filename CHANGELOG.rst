@@ -1,4 +1,4 @@
-`_Unreleased`_
+`Unreleased`_
 ==============
 
 - Fix ``flake8`` errors and improve code readability (`#353 <https://github.com/Delgan/loguru/issues/353>`_, thanks `@AndrewYakimets <https://github.com/AndrewYakimets>`_).
