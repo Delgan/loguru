@@ -41,6 +41,9 @@ Code snippets and recipes for ``loguru``
 .. |stackprinter| replace:: ``stackprinter``
 .. _stackprinter: https://github.com/cknd/stackprinter
 
+.. |zmq| replace:: ``zmq``
+.. zmq: https://github.com/zeromq/pyzmq
+
 .. _`GH#88`: https://github.com/Delgan/loguru/issues/88
 .. _`GH#132`: https://github.com/Delgan/loguru/issues/132
 
@@ -171,6 +174,41 @@ This can be achieved using a custom sink for the client and |patch| for the serv
 
 
 Keep in mind though that `pickling is unsafe <https://intoli.com/blog/dangerous-pickles/>`_, use this with care.
+
+Another possibility is to use a third party library like |zmq|_ for example.
+
+.. code::
+
+    # client.py
+    import zmq
+    from zmq.log.handlers import PUBHandler
+    from loguru import logger
+
+    socket = zmq.Context().socket(zmq.PUB)
+    socket.connect("tcp://127.0.0.1:12345")
+    handler = PUBHandler(socket)
+    logger.add(handler)
+
+    logger.info("Logging from client")
+
+
+.. code::
+
+    # server.py
+    import sys
+    import zmq
+    from loguru import logger
+
+    socket = zmq.Context().socket(zmq.SUB)
+    socket.bind("tcp://127.0.0.1:12345")
+    socket.subscribe("")
+
+    logger.configure(handlers=[{"sink": sys.stderr, "format": "{message}"}])
+
+    while True:
+        _, message = socket.recv_multipart()
+        logger.info(message.decode("utf8").strip())
+
 
 
 Resolving ``UnicodeEncodeError`` and other encoding issues
