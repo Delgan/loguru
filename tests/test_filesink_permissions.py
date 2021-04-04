@@ -7,10 +7,13 @@ import time
 from loguru import logger
 
 
-@pytest.mark.parametrize("permissions", [None, 0o0777, 0o0766, 0o0744])
+@pytest.mark.parametrize("permissions", [0o0777, 0o0766, 0o0744])
 def test_log_file_permissions(tmpdir, permissions):
+    def file_permission_opener(file, flags):
+        return os.open(file, flags, permissions)
+
     log_file_name = "file.log"
-    logger.add(str(tmpdir.join(log_file_name)), file_permissions=permissions, format="{message}")
+    logger.add(str(tmpdir.join(log_file_name)), opener=file_permission_opener, format="{message}")
 
     time.sleep(0.1)
     logger.debug("a")
@@ -27,9 +30,12 @@ def test_log_file_permissions(tmpdir, permissions):
         assert oct_perm == oct(permissions)
 
 
-@pytest.mark.parametrize("permissions", [None, 0o0777, 0o0766, 0o0744])
+@pytest.mark.parametrize("permissions", [0o0777, 0o0766, 0o0744])
 def test_rotation_permissions(tmpdir, permissions):
-    logger.add(str(tmpdir.join("file.log")), rotation=0, file_permissions=permissions, format="{message}")
+    def file_permission_opener(file, flags):
+        return os.open(file, flags, permissions)
+
+    logger.add(str(tmpdir.join("file.log")), rotation=0, format="{message}", opener=file_permission_opener)
 
     time.sleep(0.1)
     logger.debug("a")
