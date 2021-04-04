@@ -9,11 +9,15 @@ from loguru import logger
 
 @pytest.mark.parametrize("permissions", [0o0777, 0o0766, 0o0744])
 def test_log_file_permissions(tmpdir, permissions):
+    files = tmpdir.listdir()
+    for f in files:
+        os.remove(f)
+
     def file_permission_opener(file, flags):
         return os.open(file, flags, permissions)
 
     log_file_name = "file.log"
-    logger.add(str(tmpdir.join(log_file_name)), opener=file_permission_opener, format="{message}")
+    logger.add(str(tmpdir.join(log_file_name)), format="{message}", opener=file_permission_opener)
 
     time.sleep(0.1)
     logger.debug("a")
@@ -63,4 +67,3 @@ def test_rotation_permissions(tmpdir, permissions):
             st = os.stat(str(f))
             oct_perm = oct(S_IMODE(st.st_mode))
             assert oct_perm == oct(permissions)
-
