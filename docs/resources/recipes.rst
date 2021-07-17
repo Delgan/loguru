@@ -42,7 +42,7 @@ Code snippets and recipes for ``loguru``
 .. _stackprinter: https://github.com/cknd/stackprinter
 
 .. |zmq| replace:: ``zmq``
-.. zmq: https://github.com/zeromq/pyzmq
+.. _zmq: https://github.com/zeromq/pyzmq
 
 .. _`GH#88`: https://github.com/Delgan/loguru/issues/88
 .. _`GH#132`: https://github.com/Delgan/loguru/issues/132

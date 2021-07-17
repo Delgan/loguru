@@ -175,5 +175,5 @@ napoleon_use_ivar = True
 
 
 def setup(app):
-    app.add_stylesheet("css/loguru.css")
-    app.add_javascript("js/coppybutton.js")
+    app.add_css_file("css/loguru.css")
+    app.add_js_file("js/coppybutton.js")
