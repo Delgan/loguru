@@ -1169,7 +1169,7 @@ class Logger:
         class Catcher:
             def __init__(self_, from_decorator):
                 self_._from_decorator = from_decorator
-                self_._decorating_method = False
+                self_._decorated_method_Self = None
 
             def __enter__(self_):
                 return None
@@ -1199,7 +1199,7 @@ class Logger:
 
                 return not reraise
 
-            def __check_method_or_func(self, args, decorated):
+            def __method_or_func(self, args, decorated):
                 # return True if the method decorated is a method of cls and false if it does not receive it
                 # class/instance methods -> return True
                 # regular function and static -> return False
@@ -1207,9 +1207,9 @@ class Logger:
                 # basically just runs over members of arg_0 and sees if the decorated method is one in one of the tuples
                 # tuple -> (name, val)
                 if args:
-                    return True if list(filter(lambda attr_tup: True if attr_tup[0] == decorated.__name__ else False,
-                                               getmembers(args[0]))) else False
-                return False
+                    return args[0] if list(filter(lambda attr_tup: True if attr_tup[0] == decorated.__name__ else False,
+                                               getmembers(args[0]))) else None
+                return None
 
             def __call__(_, function):
                 catcher = Catcher(True)
