@@ -474,3 +474,43 @@ def test_default_with_coroutine():
         return 1 / 0
 
     assert asyncio.run(foo()) == 42
+
+
+def test_onerror_with_bound():
+
+    def self_test_onerror(exception, obj_bound):
+        obj_bound.my_instance_var = 'working'
+
+    def cls_test_onerror(exception, obj_bound):
+        obj_bound.cls_var = 'working'
+
+    def onerror_test_on_regular_func(exception):
+        TestCls.cls_var = 'from_func'
+
+    class TestCls:
+        cls_var = None
+
+        def __init__(self):
+            self.my_instance_var = None
+
+        @logger.catch(onerror=self_test_onerror)
+        def test1(self, a, b, c):
+            raise Exception('test')
+
+        @classmethod
+        @logger.catch(onerror=cls_test_onerror)
+        def test2(cls):
+            raise Exception('test')
+
+        @staticmethod
+        @logger.catch(onerror=onerror_test_on_regular_func)
+        def test3():
+            raise Exception('from func')
+
+    t = TestCls()
+    t.test1(1,2,3)
+    TestCls.test2()
+    assert t.my_instance_var == 'working'
+    assert TestCls.cls_var == 'working'
+    TestCls.test3()
+    assert TestCls.cls_var == 'from_func'
