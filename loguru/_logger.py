@@ -1205,7 +1205,7 @@ class Logger:
 
                 return not reraise
 
-            def __method_or_func(self, args, decorated):
+            def __set_decorated_bound(self_, args, decorated):
                 # return True if the method decorated is a method of cls and false if it does not receive it
                 # class/instance methods -> return True
                 # regular function and static -> return False
@@ -1213,9 +1213,8 @@ class Logger:
                 # basically just runs over members of arg_0 and sees if the decorated method is one in one of the tuples
                 # tuple -> (name, val)
                 if args:
-                    return args[0] if list(filter(lambda attr_tup: True if attr_tup[0] == decorated.__name__ else False,
-                                               getmembers(args[0]))) else None
-                return None
+                    if list(filter(lambda attr_tup: True if attr_tup[0] == decorated.__name__ else False, getmembers(args[0])):
+                        self_._decorated_method_bound = args[0]
 
             def __call__(_, function):
                 catcher = Catcher(True)
