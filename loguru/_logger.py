@@ -82,7 +82,7 @@ import re
 import sys
 import warnings
 from collections import namedtuple
-from inspect import isclass, iscoroutinefunction, isgeneratorfunction, getmembers
+from inspect import isclass, iscoroutinefunction, isgeneratorfunction, getmembers, signature
 from multiprocessing import current_process
 from os.path import basename, splitext
 from threading import current_thread
@@ -1169,7 +1169,7 @@ class Logger:
         class Catcher:
             def __init__(self_, from_decorator):
                 self_._from_decorator = from_decorator
-                self_._decorated_method_Self = None
+                self_._decorated_method_bound = None
 
             def __enter__(self_):
                 return None
@@ -1195,7 +1195,13 @@ class Logger:
                 self._log(level_id, static_level_no, from_decorator, catch_options, message, (), {})
 
                 if onerror is not None:
-                    onerror(value)
+                    if self_._decorated_method_bound:
+                        if 'obj_bound' in signature(onerror).parameters.keys():
+                            onerror(value, obj_bound=self_._decorated_method_bound)
+                        else:
+                            onerror(value)
+                    else:
+                        onerror(value)
 
                 return not reraise
 
