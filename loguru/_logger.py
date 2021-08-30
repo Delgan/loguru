@@ -1222,7 +1222,7 @@ class Logger:
                 if iscoroutinefunction(function):
 
                     async def catch_wrapper(*args, **kwargs):
-
+                        catcher._set_decorated_bound(args, function)
                         with catcher:
                             return await function(*args, **kwargs)
                         return default
@@ -1230,6 +1230,7 @@ class Logger:
                 elif isgeneratorfunction(function):
 
                     def catch_wrapper(*args, **kwargs):
+                        catcher._set_decorated_bound(args, function)
                         with catcher:
                             return (yield from function(*args, **kwargs))
                         return default
@@ -1237,6 +1238,7 @@ class Logger:
                 else:
 
                     def catch_wrapper(*args, **kwargs):
+                        catcher._set_decorated_bound(args, function)
                         with catcher:
                             return function(*args, **kwargs)
                         return default
