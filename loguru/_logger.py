@@ -1213,7 +1213,7 @@ class Logger:
                 # basically just runs over members of arg_0 and sees if the decorated method is one in one of the tuples
                 # tuple -> (name, val)
                 if args:
-                    if list(filter(lambda attr_tup: True if attr_tup[0] == decorated.__name__ else False, getmembers(args[0])):
+                    if list(filter(lambda attr_tup: True if attr_tup[0] == decorated.__name__ else False, getmembers(args[0]))):
                         self_._decorated_method_bound = args[0]
 
             def __call__(_, function):
