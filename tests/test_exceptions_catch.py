@@ -514,3 +514,45 @@ def test_onerror_with_bound():
     assert TestCls.cls_var == 'working'
     TestCls.test3()
     assert TestCls.cls_var == 'from_func'
+
+def test_onerror_with_bound_reverse():
+
+    def self_test_onerror(exception):
+        TestCls.cls_var = 'working self without self'
+
+    def cls_test_onerror(exception):
+        TestCls.cls_var = 'working cls without cls'
+
+    def onerror_test_on_regular_func(exception, obj_bound):
+        # raise exception
+        # TestCls.cls_var = 'from_func'
+        pass
+
+    class TestCls:
+        cls_var = None
+
+        def __init__(self):
+            self.my_instance_var = None
+
+        @logger.catch(onerror=self_test_onerror)
+        def test1(self, a, b, c):
+            raise Exception('test')
+
+        @classmethod
+        @logger.catch(onerror=cls_test_onerror)
+        def test2(cls):
+            raise Exception('test')
+
+        @staticmethod
+        @logger.catch(onerror=onerror_test_on_regular_func)
+        def test3():
+            raise Exception('from func')
+
+    t = TestCls()
+    t.test1(1,2,3)
+    assert TestCls.cls_var == 'working self without self'
+    TestCls.test2()
+    assert TestCls.cls_var == 'working cls without cls'
+    with pytest.raises(TypeError):
+        TestCls.test3()
+
