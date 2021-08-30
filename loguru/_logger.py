@@ -82,7 +82,7 @@ import re
 import sys
 import warnings
 from collections import namedtuple
-from inspect import isclass, iscoroutinefunction, isgeneratorfunction
+from inspect import isclass, iscoroutinefunction, isgeneratorfunction, getmembers
 from multiprocessing import current_process
 from os.path import basename, splitext
 from threading import current_thread
@@ -110,7 +110,6 @@ elif sys.version_info >= (3, 5, 3):
     from aiocontextvars import ContextVar
 else:
     from contextvars import ContextVar
-
 
 Level = namedtuple("Level", ["name", "no", "color", "icon"])
 
@@ -225,19 +224,19 @@ class Logger:
         return "<loguru.logger handlers=%r>" % list(self._core.handlers.values())
 
     def add(
-        self,
-        sink,
-        *,
-        level=_defaults.LOGURU_LEVEL,
-        format=_defaults.LOGURU_FORMAT,
-        filter=_defaults.LOGURU_FILTER,
-        colorize=_defaults.LOGURU_COLORIZE,
-        serialize=_defaults.LOGURU_SERIALIZE,
-        backtrace=_defaults.LOGURU_BACKTRACE,
-        diagnose=_defaults.LOGURU_DIAGNOSE,
-        enqueue=_defaults.LOGURU_ENQUEUE,
-        catch=_defaults.LOGURU_CATCH,
-        **kwargs
+            self,
+            sink,
+            *,
+            level=_defaults.LOGURU_LEVEL,
+            format=_defaults.LOGURU_FORMAT,
+            filter=_defaults.LOGURU_FILTER,
+            colorize=_defaults.LOGURU_COLORIZE,
+            serialize=_defaults.LOGURU_SERIALIZE,
+            backtrace=_defaults.LOGURU_BACKTRACE,
+            diagnose=_defaults.LOGURU_DIAGNOSE,
+            enqueue=_defaults.LOGURU_ENQUEUE,
+            catch=_defaults.LOGURU_CATCH,
+            **kwargs
     ):
         r"""Add a handler sending log messages to a sink adequately configured.
 
@@ -1078,17 +1077,17 @@ class Logger:
         return AwaitableCompleter()
 
     def catch(
-        self,
-        exception=Exception,
-        *,
-        level="ERROR",
-        reraise=False,
-        onerror=None,
-        exclude=None,
-        default=None,
-        message="An error has been caught in function '{record[function]}', "
-        "process '{record[process].name}' ({record[process].id}), "
-        "thread '{record[thread].name}' ({record[thread].id}):"
+            self,
+            exception=Exception,
+            *,
+            level="ERROR",
+            reraise=False,
+            onerror=None,
+            exclude=None,
+            default=None,
+            message="An error has been caught in function '{record[function]}', "
+                    "process '{record[process].name}' ({record[process].id}), "
+                    "thread '{record[thread].name}' ({record[thread].id}):"
     ):
         """Return a decorator to automatically log possibly caught error in wrapped function.
 
@@ -1163,7 +1162,7 @@ class Logger:
         ...     1 / 0
         """
         if callable(exception) and (
-            not isclass(exception) or not issubclass(exception, BaseException)
+                not isclass(exception) or not issubclass(exception, BaseException)
         ):
             return self.catch()(exception)
 
@@ -1199,6 +1198,18 @@ class Logger:
 
                 return not reraise
 
+            def __check_method_or_func(self, args, decorated):
+                # return True if the method decorated is a method of cls and false if it does not receive it
+                # class/instance methods -> return True
+                # regular function and static -> return False
+
+                # basically just runs over members of arg_0 and sees if the decorated method is one in one of the tuples
+                # tuple -> (name, val)
+                if args:
+                    return True if list(filter(lambda attr_tup: True if attr_tup[0] == decorated.__name__ else False,
+                                               getmembers(args[0]))) else False
+                return False
+
             def __call__(_, function):
                 catcher = Catcher(True)
 
@@ -1229,16 +1240,16 @@ class Logger:
         return Catcher(False)
 
     def opt(
-        self,
-        *,
-        exception=None,
-        record=False,
-        lazy=False,
-        colors=False,
-        raw=False,
-        capture=True,
-        depth=0,
-        ansi=False
+            self,
+            *,
+            exception=None,
+            record=False,
+            lazy=False,
+            colors=False,
+            raw=False,
+            capture=True,
+            depth=0,
+            ansi=False
     ):
         r"""Parametrize a logging call to slightly change generated log message.
 
