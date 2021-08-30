@@ -1205,7 +1205,7 @@ class Logger:
 
                 return not reraise
 
-            def __set_decorated_bound(self_, args, decorated):
+            def _set_decorated_bound(self_, args, decorated):
                 # return True if the method decorated is a method of cls and false if it does not receive it
                 # class/instance methods -> return True
                 # regular function and static -> return False
@@ -1222,6 +1222,7 @@ class Logger:
                 if iscoroutinefunction(function):
 
                     async def catch_wrapper(*args, **kwargs):
+
                         with catcher:
                             return await function(*args, **kwargs)
                         return default
