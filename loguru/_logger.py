@@ -1169,6 +1169,7 @@ class Logger:
         class Catcher:
             def __init__(self_, from_decorator):
                 self_._from_decorator = from_decorator
+                self_._decorating_method = False
 
             def __enter__(self_):
                 return None
