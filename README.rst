@@ -197,7 +197,7 @@ Modern string formatting using braces style
 Exceptions catching within threads or main
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Have you ever seen your program crashing unexpectedly without seeing anything in the log file? Did you ever noticed that exceptions occurring in threads were not logged? This can be solved using the |catch|_ decorator / context manager which ensures that any error is correctly propagated to the |logger|_.
+Have you ever seen your program crashing unexpectedly without seeing anything in the log file? Did you ever notice that exceptions occurring in threads were not logged? This can be solved using the |catch|_ decorator / context manager which ensures that any error is correctly propagated to the |logger|_.
 
 ::
 
