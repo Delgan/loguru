@@ -282,6 +282,52 @@ Want your logs to be serialized for easier parsing or to pass them around? Using
 
     logger.add(custom_sink_function, serialize=True)
 
+Pass in custom serializer method to get more custom JSON out.
+
+::
+
+    def custom_serializer(formated_text: any, record: dict) -> str:
+        exception = record["exception"]
+
+        if exception is not None:
+            exception = {
+                "type": None if exception.type is None else exception.type.__name__,
+                "value": exception.value,
+                "traceback": bool(record["exception"].traceback),
+            }
+
+        serializable = {
+            "message": text,
+            "level": record["level"].name,
+            "record": {
+                "elapsed": {
+                    "repr": record["elapsed"],
+                    "seconds": record["elapsed"].total_seconds(),
+                },
+                "exception": exception,
+                "extra": record["extra"],
+                "file": {"name": record["file"].name, "path": record["file"].path},
+                "function": record["function"],
+                "level": {
+                    "icon": record["level"].icon,
+                    "name": record["level"].name,
+                    "no": record["level"].no,
+                },
+                "line": record["line"],
+                "message": record["message"],
+                "module": record["module"],
+                "name": record["name"],
+                "process": {"id": record["process"].id, "name": record["process"].name},
+                "thread": {"id": record["thread"].id, "name": record["thread"].name},
+                "time": {"repr": record["time"], "timestamp": record["time"].timestamp()},
+            },
+        }
+
+        return json.dumps(serializable, default=str) + "\n"
+
+    logger.add(custom_sink_function, serialize=True, serializer=custom_serializer)
+
+
 Using |bind|_ you can contextualize your logger messages by modifying the `extra` record attribute.
 
 ::
