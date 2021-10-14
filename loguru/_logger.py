@@ -233,6 +233,7 @@ class Logger:
         filter=_defaults.LOGURU_FILTER,
         colorize=_defaults.LOGURU_COLORIZE,
         serialize=_defaults.LOGURU_SERIALIZE,
+        serializer = None,
         backtrace=_defaults.LOGURU_BACKTRACE,
         diagnose=_defaults.LOGURU_DIAGNOSE,
         enqueue=_defaults.LOGURU_ENQUEUE,
@@ -260,6 +261,8 @@ class Logger:
         serialize : |bool|, optional
             Whether the logged message and its records should be first converted to a JSON string
             before being sent to the sink.
+        serializer: |callable|, optional
+            Whether the logger message to be seirialized differenty passin the method
         backtrace : |bool|, optional
             Whether the exception trace formatted should be extended upward, beyond the catching
             point, to show the full stacktrace which generated the error.
@@ -948,6 +951,7 @@ class Logger:
                 filter_=filter_func,
                 colorize=colorize,
                 serialize=serialize,
+                serializer= serializer,
                 enqueue=enqueue,
                 id_=handler_id,
                 error_interceptor=error_interceptor,

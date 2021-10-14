@@ -210,6 +210,7 @@ class _HandlerConfig(TypedDict, total=False):
     filter: Optional[Union[str, FilterFunction, FilterDict]]
     colorize: Optional[bool]
     serialize: bool
+    serializer: Callable[[str, Message], str]
     backtrace: bool
     diagnose: bool
     enqueue: bool
@@ -234,6 +235,7 @@ class Logger:
         filter: Optional[Union[str, FilterFunction, FilterDict]] = ...,
         colorize: Optional[bool] = ...,
         serialize: bool = ...,
+        serializer: Callable[[str, Message], str ] = ...,
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
@@ -249,6 +251,7 @@ class Logger:
         filter: Optional[Union[str, FilterFunction, FilterDict]] = ...,
         colorize: Optional[bool] = ...,
         serialize: bool = ...,
+        serializer: Callable[[str, Message], str ] = ...,
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
@@ -265,6 +268,7 @@ class Logger:
         filter: Optional[Union[str, FilterFunction, FilterDict]] = ...,
         colorize: Optional[bool] = ...,
         serialize: bool = ...,
+        serializer: Callable[[str, Message], str] = ...,
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,

@@ -38,6 +38,7 @@ class Handler:
         filter_,
         colorize,
         serialize,
+        serializer,
         enqueue,
         error_interceptor,
         exception_formatter,
@@ -52,6 +53,7 @@ class Handler:
         self._filter = filter_
         self._colorize = colorize
         self._serialize = serialize
+        self._serializer = serializer
         self._enqueue = enqueue
         self._error_interceptor = error_interceptor
         self._exception_formatter = exception_formatter
@@ -163,7 +165,10 @@ class Handler:
                     formatted = precomputed_format.format_map(formatter_record)
 
             if self._serialize:
-                formatted = self._serialize_record(formatted, record)
+                if self._serializer:
+                    formatted = self._serializer(formatted, record)
+                else:
+                    formatted = self._serialize_record(formatted, record)
 
             str_record = Message(formatted)
             str_record.record = record
