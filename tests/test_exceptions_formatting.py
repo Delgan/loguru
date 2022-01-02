@@ -30,7 +30,7 @@ def normalize(exception):
                 relpath = "".join(groups)
             else:
                 relpath = os.path.relpath(os.path.abspath(filepath), start_directory)
-            return 'File "%s"' % relpath
+            return 'File "%s"' % relpath.replace("\\", "/")
 
         exception = re.sub(
             r'File "([^"]+\.py[^"]*)"',
