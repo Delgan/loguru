@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import platform
 import multiprocessing
 import re
 import sys
@@ -689,6 +690,7 @@ class Writer:
         self.output += message
 
 
+@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy bug #3630")
 def test_complete_with_sub_processes(monkeypatch, capsys):
     ctx = multiprocessing.get_context("spawn")
     monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
