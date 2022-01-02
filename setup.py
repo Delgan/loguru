@@ -65,9 +65,9 @@ setup(
             "tox-travis>=0.12",
             "pytest>=4.6.2",
             "pytest-cov>=2.7.1",
-            "Sphinx>=4.1.1",
+            "Sphinx>=4.1.1 ; python_version>='3.6'",
             "sphinx-autobuild>=0.7.1 ; python_version>='3.6'",
-            "sphinx-rtd-theme>=0.4.3",
+            "sphinx-rtd-theme>=0.4.3 ; python_version>='3.6'",
         ]
     },
     python_requires=">=3.5",
