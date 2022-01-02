@@ -1,6 +1,5 @@
 import asyncio
 import copy
-import multiprocessing
 import os
 import platform
 import sys
@@ -11,6 +10,24 @@ import pytest
 
 import loguru
 from loguru import logger
+
+
+@pytest.fixture
+def fork_context(monkeypatch):
+    import multiprocessing
+
+    context = multiprocessing.get_context("fork")
+    monkeypatch.setattr(loguru._handler, "multiprocessing", context)
+    yield context
+
+
+@pytest.fixture
+def spawn_context(monkeypatch):
+    import multiprocessing
+
+    context = multiprocessing.get_context("spawn")
+    monkeypatch.setattr(loguru._handler, "multiprocessing", context)
+    yield context
 
 
 def do_something(i):
@@ -87,15 +104,12 @@ class Writer:
         return self._output
 
 
-def test_apply_spawn(monkeypatch):
-    ctx = multiprocessing.get_context("spawn")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
-
+def test_apply_spawn(spawn_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    with ctx.Pool(1, set_logger, [logger]) as pool:
+    with spawn_context.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
             pool.apply(do_something, (i,))
         pool.close()
@@ -108,12 +122,12 @@ def test_apply_spawn(monkeypatch):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_apply_fork():
+def test_apply_fork(fork_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    with multiprocessing.Pool(1, set_logger, [logger]) as pool:
+    with fork_context.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
             pool.apply(do_something, (i,))
         pool.close()
@@ -126,12 +140,12 @@ def test_apply_fork():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_apply_inheritance():
+def test_apply_inheritance(fork_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    with multiprocessing.Pool(1) as pool:
+    with fork_context.Pool(1) as pool:
         for i in range(3):
             pool.apply(do_something, (i,))
         pool.close()
@@ -143,15 +157,12 @@ def test_apply_inheritance():
     assert writer.read() == "#0\n#1\n#2\nDone!\n"
 
 
-def test_apply_async_spawn(monkeypatch):
-    ctx = multiprocessing.get_context("spawn")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
-
+def test_apply_async_spawn(spawn_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    with ctx.Pool(1, set_logger, [logger]) as pool:
+    with spawn_context.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
             result = pool.apply_async(do_something, (i,))
             result.get()
@@ -165,12 +176,12 @@ def test_apply_async_spawn(monkeypatch):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_apply_async_fork():
+def test_apply_async_fork(fork_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    with multiprocessing.Pool(1, set_logger, [logger]) as pool:
+    with fork_context.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
             result = pool.apply_async(do_something, (i,))
             result.get()
@@ -184,12 +195,12 @@ def test_apply_async_fork():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_apply_async_inheritance():
+def test_apply_async_inheritance(fork_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    with multiprocessing.Pool(1) as pool:
+    with fork_context.Pool(1) as pool:
         for i in range(3):
             result = pool.apply_async(do_something, (i,))
             result.get()
@@ -202,15 +213,12 @@ def test_apply_async_inheritance():
     assert writer.read() == "#0\n#1\n#2\nDone!\n"
 
 
-def test_process_spawn(monkeypatch):
-    ctx = multiprocessing.get_context("spawn")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
-
+def test_process_spawn(spawn_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    process = ctx.Process(target=subworker, args=(logger,))
+    process = spawn_context.Process(target=subworker, args=(logger,))
     process.start()
     process.join()
 
@@ -223,12 +231,12 @@ def test_process_spawn(monkeypatch):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_process_fork():
+def test_process_fork(fork_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    process = multiprocessing.Process(target=subworker, args=(logger,))
+    process = fork_context.Process(target=subworker, args=(logger,))
     process.start()
     process.join()
 
@@ -241,12 +249,12 @@ def test_process_fork():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_process_inheritance():
+def test_process_inheritance(fork_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    process = multiprocessing.Process(target=subworker_inheritance)
+    process = fork_context.Process(target=subworker_inheritance)
     process.start()
     process.join()
 
@@ -258,33 +266,12 @@ def test_process_inheritance():
     assert writer.read() == "Child\nMain\n"
 
 
-def test_remove_in_child_process_spawn(monkeypatch):
-    ctx = multiprocessing.get_context("spawn")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
-
+def test_remove_in_child_process_spawn(spawn_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    process = ctx.Process(target=subworker_remove, args=(logger,))
-    process.start()
-    process.join()
-
-    assert process.exitcode == 0
-
-    logger.info("Main")
-    logger.remove()
-
-    assert writer.read() == "Child\nMain\n"
-
-
-@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_remove_in_child_process_fork():
-    writer = Writer()
-
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
-
-    process = multiprocessing.Process(target=subworker_remove, args=(logger,))
+    process = spawn_context.Process(target=subworker_remove, args=(logger,))
     process.start()
     process.join()
 
@@ -297,12 +284,12 @@ def test_remove_in_child_process_fork():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_remove_in_child_process_inheritance():
+def test_remove_in_child_process_fork(fork_context):
     writer = Writer()
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    process = multiprocessing.Process(target=subworker_remove_inheritance)
+    process = fork_context.Process(target=subworker_remove, args=(logger,))
     process.start()
     process.join()
 
@@ -314,19 +301,34 @@ def test_remove_in_child_process_inheritance():
     assert writer.read() == "Child\nMain\n"
 
 
-def test_remove_in_main_process_spawn(monkeypatch):
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
+def test_remove_in_child_process_inheritance(fork_context):
+    writer = Writer()
+
+    logger.add(writer, format="{message}", enqueue=True, catch=False)
+
+    process = fork_context.Process(target=subworker_remove_inheritance)
+    process.start()
+    process.join()
+
+    assert process.exitcode == 0
+
+    logger.info("Main")
+    logger.remove()
+
+    assert writer.read() == "Child\nMain\n"
+
+
+def test_remove_in_main_process_spawn(spawn_context):
     # Actually, this test may fail if sleep time in main process is too small (and no barrier used)
     # In such situation, it seems the child process has not enough time to initialize itself
     # It may fail with an "EOFError" during unpickling of the (garbage collected / closed) Queue
-    ctx = multiprocessing.get_context("spawn")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
-
     writer = Writer()
-    barrier = ctx.Barrier(2)
+    barrier = spawn_context.Barrier(2)
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    process = ctx.Process(target=subworker_barrier, args=(logger, barrier))
+    process = spawn_context.Process(target=subworker_barrier, args=(logger, barrier))
     process.start()
     barrier.wait()
     logger.info("Main")
@@ -339,13 +341,13 @@ def test_remove_in_main_process_spawn(monkeypatch):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_remove_in_main_process_fork():
+def test_remove_in_main_process_fork(fork_context):
     writer = Writer()
-    barrier = multiprocessing.Barrier(2)
+    barrier = fork_context.Barrier(2)
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    process = multiprocessing.Process(target=subworker_barrier, args=(logger, barrier))
+    process = fork_context.Process(target=subworker_barrier, args=(logger, barrier))
     process.start()
     barrier.wait()
     logger.info("Main")
@@ -358,13 +360,13 @@ def test_remove_in_main_process_fork():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_remove_in_main_process_inheritance():
+def test_remove_in_main_process_inheritance(fork_context):
     writer = Writer()
-    barrier = multiprocessing.Barrier(2)
+    barrier = fork_context.Barrier(2)
 
     logger.add(writer, format="{message}", enqueue=True, catch=False)
 
-    process = multiprocessing.Process(target=subworker_barrier_inheritance, args=(barrier,))
+    process = fork_context.Process(target=subworker_barrier_inheritance, args=(barrier,))
     process.start()
     barrier.wait()
     logger.info("Main")
@@ -377,10 +379,7 @@ def test_remove_in_main_process_inheritance():
 
 
 @pytest.mark.parametrize("loop_is_none", [True, False])
-def test_await_complete_spawn(capsys, monkeypatch, loop_is_none):
-    ctx = multiprocessing.get_context("spawn")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
-
+def test_await_complete_spawn(capsys, spawn_context, loop_is_none):
     async def writer(msg):
         print(msg, end="")
 
@@ -390,7 +389,7 @@ def test_await_complete_spawn(capsys, monkeypatch, loop_is_none):
 
     logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
 
-    process = ctx.Process(target=subworker_complete, args=(logger,))
+    process = spawn_context.Process(target=subworker_complete, args=(logger,))
     process.start()
     process.join()
 
@@ -408,7 +407,7 @@ def test_await_complete_spawn(capsys, monkeypatch, loop_is_none):
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
 @pytest.mark.parametrize("loop_is_none", [True, False])
-def test_await_complete_fork(capsys, loop_is_none):
+def test_await_complete_fork(capsys, loop_is_none, fork_context):
     async def writer(msg):
         print(msg, end="")
 
@@ -418,7 +417,7 @@ def test_await_complete_fork(capsys, loop_is_none):
 
     logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
 
-    process = multiprocessing.Process(target=subworker_complete, args=(logger,))
+    process = fork_context.Process(target=subworker_complete, args=(logger,))
     process.start()
     process.join()
 
@@ -436,7 +435,7 @@ def test_await_complete_fork(capsys, loop_is_none):
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
 @pytest.mark.parametrize("loop_is_none", [True, False])
-def test_await_complete_inheritance(capsys, loop_is_none):
+def test_await_complete_inheritance(capsys, loop_is_none, fork_context):
     async def writer(msg):
         print(msg, end="")
 
@@ -446,7 +445,7 @@ def test_await_complete_inheritance(capsys, loop_is_none):
 
     logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
 
-    process = multiprocessing.Process(target=subworker_complete_inheritance)
+    process = fork_context.Process(target=subworker_complete_inheritance)
     process.start()
     process.join()
 
@@ -462,10 +461,7 @@ def test_await_complete_inheritance(capsys, loop_is_none):
     assert err == ""
 
 
-def test_not_picklable_sinks_spawn(monkeypatch, tmpdir, capsys):
-    ctx = multiprocessing.get_context("spawn")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
-
+def test_not_picklable_sinks_spawn(spawn_context, tmpdir, capsys):
     filepath = tmpdir.join("test.log")
     stream = sys.stderr
     output = []
@@ -474,7 +470,7 @@ def test_not_picklable_sinks_spawn(monkeypatch, tmpdir, capsys):
     logger.add(stream, format="{message}", enqueue=True)
     logger.add(lambda m: output.append(m), format="{message}", enqueue=True)
 
-    process = ctx.Process(target=subworker, args=[logger])
+    process = spawn_context.Process(target=subworker, args=[logger])
     process.start()
     process.join()
 
@@ -492,7 +488,7 @@ def test_not_picklable_sinks_spawn(monkeypatch, tmpdir, capsys):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_not_picklable_sinks_fork(capsys, tmpdir):
+def test_not_picklable_sinks_fork(capsys, tmpdir, fork_context):
     filepath = tmpdir.join("test.log")
     stream = sys.stderr
     output = []
@@ -501,7 +497,7 @@ def test_not_picklable_sinks_fork(capsys, tmpdir):
     logger.add(stream, format="{message}", enqueue=True, catch=False)
     logger.add(lambda m: output.append(m), format="{message}", enqueue=True, catch=False)
 
-    process = multiprocessing.Process(target=subworker, args=[logger])
+    process = fork_context.Process(target=subworker, args=[logger])
     process.start()
     process.join()
 
@@ -519,7 +515,7 @@ def test_not_picklable_sinks_fork(capsys, tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_not_picklable_sinks_inheritance(capsys, tmpdir):
+def test_not_picklable_sinks_inheritance(capsys, tmpdir, fork_context):
     filepath = tmpdir.join("test.log")
     stream = sys.stderr
     output = []
@@ -528,7 +524,7 @@ def test_not_picklable_sinks_inheritance(capsys, tmpdir):
     logger.add(stream, format="{message}", enqueue=True, catch=False)
     logger.add(lambda m: output.append(m), format="{message}", enqueue=True, catch=False)
 
-    process = multiprocessing.Process(target=subworker_inheritance)
+    process = fork_context.Process(target=subworker_inheritance)
     process.start()
     process.join()
 
@@ -549,7 +545,7 @@ def test_not_picklable_sinks_inheritance(capsys, tmpdir):
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="No 'os.register_at_fork()' function")
 @pytest.mark.parametrize("enqueue", [True, False])
 @pytest.mark.parametrize("deepcopied", [True, False])
-def test_no_deadlock_if_internal_lock_in_use(tmpdir, enqueue, deepcopied):
+def test_no_deadlock_if_internal_lock_in_use(tmpdir, enqueue, deepcopied, fork_context):
     if deepcopied:
         logger_ = copy.deepcopy(logger)
     else:
@@ -574,7 +570,7 @@ def test_no_deadlock_if_internal_lock_in_use(tmpdir, enqueue, deepcopied):
     thread = threading.Thread(target=main)
     thread.start()
 
-    process = multiprocessing.Process(target=worker)
+    process = fork_context.Process(target=worker)
     process.start()
 
     thread.join()
@@ -590,14 +586,14 @@ def test_no_deadlock_if_internal_lock_in_use(tmpdir, enqueue, deepcopied):
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="No 'os.register_at_fork()' function")
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
 @pytest.mark.parametrize("enqueue", [True, False])
-def test_no_deadlock_if_external_lock_in_use(enqueue, capsys):
+def test_no_deadlock_if_external_lock_in_use(enqueue, capsys, fork_context):
     # Can't reproduce the bug on pytest (even if stderr is not wrapped), but let it anyway
     logger.add(sys.stderr, enqueue=enqueue, catch=True, format="{message}")
     num = 100
 
     for i in range(num):
         logger.info("This is a message: {}", i)
-        process = multiprocessing.Process(target=lambda: None)
+        process = fork_context.Process(target=lambda: None)
         process.start()
         process.join(1)
         assert process.exitcode == 0
@@ -611,11 +607,11 @@ def test_no_deadlock_if_external_lock_in_use(enqueue, capsys):
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy is too slow")
-def test_complete_from_multiple_child_processes(capsys):
+def test_complete_from_multiple_child_processes(capsys, fork_context):
     logger.add(lambda _: None, enqueue=True, catch=False)
     num = 100
 
-    barrier = multiprocessing.Barrier(num)
+    barrier = fork_context.Barrier(num)
 
     def worker(barrier):
         barrier.wait()
@@ -624,7 +620,7 @@ def test_complete_from_multiple_child_processes(capsys):
     processes = []
 
     for _ in range(num):
-        process = multiprocessing.Process(target=worker, args=(barrier,))
+        process = fork_context.Process(target=worker, args=(barrier,))
         process.start()
         processes.append(process)
 
