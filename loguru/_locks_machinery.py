@@ -10,7 +10,6 @@ if not hasattr(os, "register_at_fork"):
     def create_handler_lock():
         return threading.Lock()
 
-
 else:
     # While forking, we need to sanitize all locks to make sure the child process doesn't run into
     # a deadlock (if a lock already acquired is inherited) and to protect sink from corrupted state.

@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from loguru._contextvars import load_contextvar_class
 from loguru import logger
+from loguru._contextvars import load_contextvar_class
 
 
 def test_contextualize(writer):

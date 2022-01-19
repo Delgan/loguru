@@ -1,7 +1,7 @@
 import asyncio
 import logging
-import platform
 import multiprocessing
+import platform
 import re
 import sys
 import threading

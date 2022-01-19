@@ -8,7 +8,6 @@ if sys.version_info >= (3, 7):
     def get_loop(task):
         return task.get_loop()
 
-
 else:
 
     def get_loop(task):
