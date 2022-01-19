@@ -1,6 +1,5 @@
 import builtins
 import datetime
-import importlib
 import os
 import pathlib
 import re
@@ -12,6 +11,7 @@ from unittest.mock import MagicMock, PropertyMock
 import pytest
 
 import loguru
+from loguru._ctime_functions import load_ctime_functions
 from loguru import logger
 
 
@@ -24,9 +24,9 @@ def tmpdir_local(reset_logger):
 
 
 def reload_filesink_ctime_functions(monkeypatch):
-    ctime_functions = importlib.reload(loguru._ctime_functions)
-    monkeypatch.setattr(loguru._file_sink, "get_ctime", ctime_functions.get_ctime)
-    monkeypatch.setattr(loguru._file_sink, "set_ctime", ctime_functions.set_ctime)
+    get_ctime, set_ctime = load_ctime_functions()
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", get_ctime)
+    monkeypatch.setattr(loguru._file_sink, "set_ctime", set_ctime)
 
 
 @pytest.fixture

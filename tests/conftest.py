@@ -174,11 +174,11 @@ def make_logging_logger(name, handler, fmt="%(message)s", level="DEBUG"):
 
 @pytest.fixture
 def f_globals_name_absent(monkeypatch):
-    getframe_ = loguru._get_frame.get_frame
+    getframe_ = loguru._get_frame.load_get_frame_function()
 
     def patched_getframe(*args, **kwargs):
         frame = getframe_(*args, **kwargs)
-        monkeypatch.delitem(frame.f_globals, "__name__", raising=False)
+        frame.f_globals.pop("__name__", None)
         return frame
 
     monkeypatch.setattr(loguru._logger, "get_frame", patched_getframe)

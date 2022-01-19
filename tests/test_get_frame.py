@@ -1,7 +1,7 @@
-import importlib
 import sys
 
 import loguru
+from loguru._get_frame import load_get_frame_function
 
 
 def test_with_sys_getframe(monkeypatch):
@@ -9,14 +9,12 @@ def test_with_sys_getframe(monkeypatch):
         return
 
     monkeypatch.setattr(sys, "_getframe", patched())
-    get_frame_module = importlib.reload(loguru._get_frame)
-    assert get_frame_module.get_frame == patched()
+    assert load_get_frame_function() == patched()
 
 
 def test_without_sys_getframe(monkeypatch):
     monkeypatch.delattr(sys, "_getframe")
-    get_frame_module = importlib.reload(loguru._get_frame)
-    assert get_frame_module.get_frame == loguru._get_frame.get_frame_fallback
+    assert load_get_frame_function() == loguru._get_frame.get_frame_fallback
 
 
 def test_get_frame_fallback():
