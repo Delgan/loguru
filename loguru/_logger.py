@@ -90,6 +90,7 @@ from threading import current_thread
 from . import _colorama, _defaults, _filters
 from ._better_exceptions import ExceptionFormatter
 from ._colorizer import Colorizer
+from ._contextvars import ContextVar
 from ._datetime import aware_now
 from ._error_interceptor import ErrorInterceptor
 from ._file_sink import FileSink
@@ -103,13 +104,6 @@ if sys.version_info >= (3, 6):
     from os import PathLike
 else:
     from pathlib import PurePath as PathLike
-
-if sys.version_info >= (3, 7):
-    from contextvars import ContextVar
-elif sys.version_info >= (3, 5, 3):
-    from aiocontextvars import ContextVar
-else:
-    from contextvars import ContextVar
 
 
 Level = namedtuple("Level", ["name", "no", "color", "icon"])
