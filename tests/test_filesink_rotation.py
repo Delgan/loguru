@@ -11,8 +11,8 @@ from unittest.mock import MagicMock, PropertyMock
 import pytest
 
 import loguru
-from loguru._ctime_functions import load_ctime_functions
 from loguru import logger
+from loguru._ctime_functions import load_ctime_functions
 
 
 @pytest.fixture
