@@ -43,6 +43,7 @@ Switching from standard ``logging`` to ``loguru``
 .. _caplog: https://docs.pytest.org/en/latest/logging.html?highlight=caplog#caplog-fixture
 
 .. _`GH#59`: https://github.com/Delgan/loguru/issues/59
+.. _`GH#474`: https://github.com/Delgan/loguru/issues/474
 
 
 
@@ -235,11 +236,12 @@ This is done by overriding the |caplog|_ fixture to capture its handler. In your
 
     import pytest
     from loguru import logger
+    from _pytest.logging import LogCaptureFixture
 
     @pytest.fixture
-    def caplog(_caplog):
-        handler_id = logger.add(_caplog.handler, format="{message}")
-        yield _caplog
+    def caplog(caplog: LogCaptureFixture):
+        handler_id = logger.add(caplog.handler, format="{message}")
+        yield caplog
         logger.remove(handler_id)
 
 Run your tests and things should all be working as expected. Additional information can be found in `GH#59`_ and `GH#474`_.
