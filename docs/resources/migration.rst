@@ -230,22 +230,16 @@ Making things work with Pytest and caplog
 
 If you've followed all the migration guidelines thus far, you'll notice that this test will fail. This is because |pytest|_ links to the standard library's ``logging`` module.
 
-So to fix things, we need to add a sink that propagates Loguru to ``logging``.
-This is done on the fixture itself by mokeypatching |caplog|_. In your ``conftest.py`` file, add the following::
+So to fix things, we need to add a sink that propagates Loguru to the caplog handler.
+This is done by overriding the |caplog|_ fixture to capture its handler. In your ``conftest.py`` file, add the following::
 
-    import logging
     import pytest
-    from _pytest.logging import caplog as _caplog
     from loguru import logger
 
     @pytest.fixture
     def caplog(_caplog):
-        class PropogateHandler(logging.Handler):
-            def emit(self, record):
-                logging.getLogger(record.name).handle(record)
-
-        handler_id = logger.add(PropogateHandler(), format="{message} {extra}", level="TRACE")
+        handler_id = logger.add(_caplog.handler, format="{message}")
         yield _caplog
         logger.remove(handler_id)
 
-Run your tests and things should all be working as expected. Additional information can be found in `GH#59`_.
+Run your tests and things should all be working as expected. Additional information can be found in `GH#59`_ and `GH#474`_.
