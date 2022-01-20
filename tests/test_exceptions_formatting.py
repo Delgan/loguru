@@ -44,6 +44,16 @@ def normalize(exception):
         elif "IndentationError" in exception:
             exception = re.sub(r"\n *\^ *\n", "\n", exception)
 
+    if sys.version_info < (3, 10, 0):
+        for module, line_before, line_after in [
+            ("handler_formatting_with_context_manager.py", 17, 16),
+            ("message_formatting_with_context_manager.py", 13, 10),
+        ]:
+            if module not in exception:
+                continue
+            expression = r"^(__main__ %s a) %d\n" % (module, line_before)
+            exception = re.sub(expression, r"\1 %d\n" % line_after, exception)
+
     exception = re.sub(
         r'"[^"]*/somelib/__init__.py"', '"/usr/lib/python/somelib/__init__.py"', exception
     )
