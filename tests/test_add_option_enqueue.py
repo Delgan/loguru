@@ -191,8 +191,7 @@ def test_wait_for_all_messages_enqueued(capsys):
     assert err == "".join("%d\n" % i for i in range(10))
 
 
-@pytest.mark.parametrize("arg", [NotPicklable(), NotUnpicklable()])
-def test_logging_not_picklable_exception(arg):
+def test_logging_not_picklable_exception():
     exception = None
 
     def sink(message):
@@ -202,7 +201,30 @@ def test_logging_not_picklable_exception(arg):
     logger.add(sink, enqueue=True, catch=False)
 
     try:
-        raise ValueError(arg)
+        raise ValueError(NotPicklable())
+    except Exception:
+        logger.exception("Oups")
+
+    logger.remove()
+
+    type_, value, traceback_ = exception
+    assert type_ is ValueError
+    assert value is None
+    assert traceback_ is None
+
+
+@pytest.mark.xfail(reason="No way to safely deserialize exception yet")
+def test_logging_not_unpicklable_exception():
+    exception = None
+
+    def sink(message):
+        nonlocal exception
+        exception = message.record["exception"]
+
+    logger.add(sink, enqueue=True, catch=False)
+
+    try:
+        raise ValueError(NotUnpicklable())
     except Exception:
         logger.exception("Oups")
 
