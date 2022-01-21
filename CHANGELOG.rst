@@ -3,6 +3,7 @@
 
 - Modify coroutine sink to make it discard log messages when ``loop=None`` and no event loop is running (due to internally using ``asyncio.get_running_loop()`` in place of ``asyncio.get_event_loop()``).
 - Remove the possibility to add a coroutine sink with ``enqueue=True`` if ``loop=None`` and no event loop is running.
+- Prevent non-ascii characters to be escaped while logging JSON message with ``serialize=True`` (`#574 <https://github.com/Delgan/loguru/pull/575>`_, thanks `@ponponon <https://github.com/ponponon>`_).
 - Fix ``flake8`` errors and improve code readability (`#353 <https://github.com/Delgan/loguru/issues/353>`_, thanks `@AndrewYakimets <https://github.com/AndrewYakimets>`_).
 
 
