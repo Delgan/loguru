@@ -40,7 +40,7 @@
 .. |Exception| replace:: :class:`Exception`
 .. |locale.getpreferredencoding| replace:: :func:`locale.getpreferredencoding()`
 .. |AbstractEventLoop| replace:: :class:`AbstractEventLoop<asyncio.AbstractEventLoop>`
-.. |asyncio.get_event_loop| replace:: :func:`asyncio.get_event_loop()`
+.. |asyncio.get_running_loop| replace:: :func:`asyncio.get_running_loop()`
 .. |asyncio.run| replace:: :func:`asyncio.run()`
 .. |loop.run_until_complete| replace::
     :meth:`loop.run_until_complete()<asyncio.loop.run_until_complete()>`
@@ -72,7 +72,6 @@
 .. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
 .. _reentrant: https://en.wikipedia.org/wiki/Reentrancy_(computing)
 """
-import asyncio
 import builtins
 import contextlib
 import functools
@@ -87,7 +86,7 @@ from multiprocessing import current_process
 from os.path import basename, splitext
 from threading import current_thread
 
-from . import _colorama, _defaults, _filters
+from . import _asyncio_loop, _colorama, _defaults, _filters
 from ._better_exceptions import ExceptionFormatter
 from ._colorizer import Colorizer
 from ._contextvars import ContextVar
@@ -279,7 +278,8 @@ class Logger:
         ----------
         loop : |AbstractEventLoop|, optional
             The event loop in which the asynchronous logging task will be scheduled and executed. If
-            ``None``, the loop returned by |asyncio.get_event_loop| is used.
+            ``None``, the loop used is the one returned by |asyncio.get_running_loop| at the time of
+            the logging call (task is discarded if there is no loop currently running).
 
 
         If and only if the sink is a file path, the following parameters apply:
@@ -314,6 +314,11 @@ class Logger:
         :class:`int`
             An identifier associated with the added sink and which should be used to
             |remove| it.
+
+        Raises
+        ------
+        ValueError
+            If any of the arguments passed to configure the sink is invalid.
 
         Notes
         -----
@@ -800,7 +805,13 @@ class Logger:
             # at each logging call, which is much more convenient. However, coroutine can't access
             # running loop in Python 3.5.2 and earlier versions, see python/asyncio#452.
             if enqueue and loop is None:
-                loop = asyncio.get_event_loop()
+                try:
+                    loop = _asyncio_loop.get_running_loop()
+                except RuntimeError as e:
+                    raise ValueError(
+                        "An event loop is required to add a coroutine sink with `enqueue=True`, "
+                        "but but none has been passed as argument and none is currently running."
+                    ) from e
 
             coro = sink if iscoroutinefunction(sink) else sink.__call__
             wrapped_sink = AsyncSink(coro, loop, error_interceptor)
@@ -1019,8 +1030,8 @@ class Logger:
 
         The returned object should be awaited before the end of a coroutine executed by
         |asyncio.run| or |loop.run_until_complete| to ensure all asynchronous logging messages are
-        processed. The function |asyncio.get_event_loop| is called beforehand, only tasks scheduled
-        in the same loop that the current one will be awaited by the method.
+        processed. The function |asyncio.get_running_loop| is called beforehand, only tasks
+        scheduled in the same loop that the current one will be awaited by the method.
 
         Returns
         -------

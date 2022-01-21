@@ -103,40 +103,6 @@ def test_using_another_event_loop(capsys):
     assert out == "A message\n"
 
 
-def test_using_another_event_loop_set_global_before_add(capsys):
-    async def worker():
-        logger.debug("A message")
-        await logger.complete()
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    logger.add(async_writer, format="{message}", loop=loop)
-
-    loop.run_until_complete(worker())
-
-    out, err = capsys.readouterr()
-    assert err == ""
-    assert out == "A message\n"
-
-
-def test_using_another_event_loop_set_global_after_add(capsys):
-    async def worker():
-        logger.debug("A message")
-        await logger.complete()
-
-    loop = asyncio.new_event_loop()
-
-    logger.add(async_writer, format="{message}", loop=loop)
-
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(worker())
-
-    out, err = capsys.readouterr()
-    assert err == ""
-    assert out == "A message\n"
-
-
 def test_run_mutiple_different_loops(capsys):
     async def worker(i):
         logger.debug("Message {}", i)
@@ -170,22 +136,50 @@ def test_run_multiple_same_loop(capsys):
     assert out == "Message 1\nMessage 2\n"
 
 
-def test_run_multiple_same_loop_set_global(capsys):
-    async def worker(i):
-        logger.debug("Message {}", i)
-        await logger.complete()
+def test_using_sink_without_running_loop_not_none(capsys):
+    loop = asyncio.new_event_loop()
 
+    logger.add(sys.stderr, format="=> {message}")
+    logger.add(async_writer, format="{message}", loop=loop)
+
+    logger.info("A message")
+
+    loop.run_until_complete(logger.complete())
+
+    out, err = capsys.readouterr()
+    assert err == "=> A message\n"
+    assert out == "A message\n"
+
+
+def test_using_sink_without_running_loop_none(capsys):
+    loop = asyncio.new_event_loop()
+
+    logger.add(sys.stderr, format="=> {message}")
+    logger.add(async_writer, format="{message}", loop=None)
+
+    logger.info("A message")
+
+    loop.run_until_complete(logger.complete())
+
+    out, err = capsys.readouterr()
+    assert err == "=> A message\n"
+    assert out == ""
+
+
+def test_global_loop_not_used(capsys):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    logger.add(async_writer, format="{message}", loop=loop)
+    logger.add(sys.stderr, format="=> {message}")
+    logger.add(async_writer, format="{message}", loop=None)
 
-    loop.run_until_complete(worker(1))
-    loop.run_until_complete(worker(2))
+    logger.info("A message")
+
+    loop.run_until_complete(logger.complete())
 
     out, err = capsys.readouterr()
-    assert err == ""
-    assert out == "Message 1\nMessage 2\n"
+    assert err == "=> A message\n"
+    assert out == ""
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
@@ -198,27 +192,6 @@ def test_complete_in_another_run(capsys):
         await logger.complete()
 
     loop = asyncio.new_event_loop()
-
-    logger.add(async_writer, format="{message}", loop=loop)
-
-    loop.run_until_complete(worker_1())
-    loop.run_until_complete(worker_2())
-
-    out, err = capsys.readouterr()
-    assert out == "A\nB\n"
-    assert err == ""
-
-
-def test_complete_in_another_run_set_global(capsys):
-    async def worker_1():
-        logger.debug("A")
-
-    async def worker_2():
-        logger.debug("B")
-        await logger.complete()
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
 
     logger.add(async_writer, format="{message}", loop=loop)
 
@@ -449,7 +422,7 @@ def test_exception_in_coroutine_during_complete_not_caught(capsys, caplog):
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
-def test_enqueue_coroutine_loop_not_none(capsys):
+def test_enqueue_coroutine_loop(capsys):
     loop = asyncio.new_event_loop()
     logger.add(async_writer, enqueue=True, loop=loop, format="{message}", catch=False)
 
@@ -464,57 +437,15 @@ def test_enqueue_coroutine_loop_not_none(capsys):
     assert err == ""
 
 
-def test_enqueue_coroutine_loop_not_none_set_global(capsys):
+def test_enqueue_coroutine_from_inside_coroutine_without_loop(capsys):
     loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    logger.add(async_writer, enqueue=True, loop=loop, format="{message}", catch=False)
 
     async def worker():
+        logger.add(async_writer, enqueue=True, loop=None, format="{message}", catch=False)
         logger.info("A")
         await logger.complete()
 
     loop.run_until_complete(worker())
-
-    out, err = capsys.readouterr()
-    assert out == "A\n"
-    assert err == ""
-
-
-@pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
-def test_enqueue_coroutine_loop_is_none(capsys):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    logger.add(async_writer, enqueue=True, loop=None, format="{message}", catch=False)
-
-    async def worker(msg):
-        logger.info(msg)
-        await logger.complete()
-
-    asyncio.run(worker("A"))
-
-    out, err = capsys.readouterr()
-    assert out == err == ""
-
-    loop.run_until_complete(worker("B"))
-
-    out, err = capsys.readouterr()
-    assert out == "A\nB\n"
-    assert err == ""
-
-
-def test_enqueue_coroutine_loop_is_none_set_global(capsys):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    logger.add(async_writer, enqueue=True, loop=None, format="{message}", catch=False)
-
-    async def worker(msg):
-        logger.info(msg)
-        await logger.complete()
-
-    loop.run_until_complete(worker("A"))
 
     out, err = capsys.readouterr()
     assert out == "A\n"
@@ -567,37 +498,6 @@ def test_complete_from_another_loop(capsys, loop_is_none):
     out, err = capsys.readouterr()
     assert out == err == ""
 
-    main_loop.run_until_complete(worker_2())
-
-    out, err = capsys.readouterr()
-    assert out == "A\n"
-    assert err == ""
-
-
-@pytest.mark.parametrize("loop_is_none", [True, False])
-def test_complete_from_another_loop_set_global(capsys, loop_is_none):
-    main_loop = asyncio.new_event_loop()
-    second_loop = asyncio.new_event_loop()
-
-    loop = None if loop_is_none else main_loop
-    logger.add(async_writer, loop=loop, format="{message}")
-
-    async def worker_1():
-        logger.info("A")
-
-    async def worker_2():
-        await logger.complete()
-
-    asyncio.set_event_loop(main_loop)
-    main_loop.run_until_complete(worker_1())
-
-    asyncio.set_event_loop(second_loop)
-    second_loop.run_until_complete(worker_2())
-
-    out, err = capsys.readouterr()
-    assert out == err == ""
-
-    asyncio.set_event_loop(main_loop)
     main_loop.run_until_complete(worker_2())
 
     out, err = capsys.readouterr()
@@ -678,7 +578,7 @@ async def async_mainworker(logger_):
 
 
 def subworker(logger_):
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     loop.run_until_complete(async_subworker(logger_))
 
 
@@ -711,3 +611,9 @@ def test_complete_with_sub_processes(monkeypatch, capsys):
     out, err = capsys.readouterr()
     assert out == err == ""
     assert writer.output == "Child\n"
+
+
+@pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
+def test_invalid_coroutine_sink_if_no_loop_with_enqueue():
+    with pytest.raises(ValueError):
+        logger.add(async_writer, enqueue=True, loop=None)

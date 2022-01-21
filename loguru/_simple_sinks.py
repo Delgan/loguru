@@ -1,17 +1,8 @@
 import asyncio
 import logging
-import sys
 import weakref
 
-if sys.version_info >= (3, 7):
-
-    def get_loop(task):
-        return task.get_loop()
-
-else:
-
-    def get_loop(task):
-        return task._loop
+from ._asyncio_loop import get_running_loop, get_task_loop
 
 
 class StreamSink:
@@ -73,9 +64,13 @@ class AsyncSink:
         self._tasks = weakref.WeakSet()
 
     def write(self, message):
-        coro = self._function(message)
-        loop = self._loop or asyncio.get_event_loop()
-        task = loop.create_task(coro)
+        try:
+            loop = self._loop or get_running_loop()
+        except RuntimeError:
+            return
+
+        coroutine = self._function(message)
+        task = loop.create_task(coroutine)
 
         def check_exception(future):
             if future.cancelled() or future.exception() is None:
@@ -92,9 +87,9 @@ class AsyncSink:
             task.cancel()
 
     async def complete(self):
-        loop = asyncio.get_event_loop()
+        loop = get_running_loop()
         for task in self._tasks:
-            if get_loop(task) is loop:
+            if get_task_loop(task) is loop:
                 try:
                     await task
                 except Exception:

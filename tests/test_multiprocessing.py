@@ -65,7 +65,6 @@ def subworker_complete(logger_):
         await logger_.complete()
 
     loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     loop.run_until_complete(work())
 
 
@@ -75,7 +74,6 @@ def subworker_complete_inheritance():
         await logger.complete()
 
     loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     loop.run_until_complete(work())
 
 
@@ -384,14 +382,11 @@ def test_remove_in_main_process_inheritance(fork_context):
 
 
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy bug #3630")
-@pytest.mark.parametrize("loop_is_none", [True, False])
-def test_await_complete_spawn(capsys, spawn_context, loop_is_none):
+def test_await_complete_spawn(capsys, spawn_context):
     async def writer(msg):
         print(msg, end="")
 
-    new_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(new_loop)
-    loop = None if loop_is_none else new_loop
+    loop = asyncio.new_event_loop()
 
     logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
 
@@ -404,7 +399,7 @@ def test_await_complete_spawn(capsys, spawn_context, loop_is_none):
     async def local():
         await logger.complete()
 
-    new_loop.run_until_complete(local())
+    loop.run_until_complete(local())
 
     out, err = capsys.readouterr()
     assert out == "Child\n"
@@ -412,14 +407,11 @@ def test_await_complete_spawn(capsys, spawn_context, loop_is_none):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-@pytest.mark.parametrize("loop_is_none", [True, False])
-def test_await_complete_fork(capsys, loop_is_none, fork_context):
+def test_await_complete_fork(capsys, fork_context):
     async def writer(msg):
         print(msg, end="")
 
-    new_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(new_loop)
-    loop = None if loop_is_none else new_loop
+    loop = asyncio.new_event_loop()
 
     logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
 
@@ -432,7 +424,7 @@ def test_await_complete_fork(capsys, loop_is_none, fork_context):
     async def local():
         await logger.complete()
 
-    new_loop.run_until_complete(local())
+    loop.run_until_complete(local())
 
     out, err = capsys.readouterr()
     assert out == "Child\n"
@@ -440,14 +432,11 @@ def test_await_complete_fork(capsys, loop_is_none, fork_context):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-@pytest.mark.parametrize("loop_is_none", [True, False])
-def test_await_complete_inheritance(capsys, loop_is_none, fork_context):
+def test_await_complete_inheritance(capsys, fork_context):
     async def writer(msg):
         print(msg, end="")
 
-    new_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(new_loop)
-    loop = None if loop_is_none else new_loop
+    loop = asyncio.new_event_loop()
 
     logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
 
@@ -460,7 +449,7 @@ def test_await_complete_inheritance(capsys, loop_is_none, fork_context):
     async def local():
         await logger.complete()
 
-    new_loop.run_until_complete(local())
+    loop.run_until_complete(local())
 
     out, err = capsys.readouterr()
     assert out == "Child\n"
