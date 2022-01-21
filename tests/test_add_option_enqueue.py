@@ -213,7 +213,7 @@ def test_logging_not_picklable_exception():
     assert traceback_ is None
 
 
-@pytest.mark.xfail(reason="No way to safely deserialize exception yet")
+@pytest.mark.skip(reason="No way to safely deserialize exception yet")
 def test_logging_not_unpicklable_exception():
     exception = None
 
