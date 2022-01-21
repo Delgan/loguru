@@ -1,5 +1,4 @@
 import asyncio
-import distutils.sysconfig
 import site
 import sys
 import sysconfig
@@ -184,50 +183,6 @@ def test_sysconfig_get_path_return_path(writer, monkeypatch):
 
 def test_sysconfig_get_path_return_none(writer, monkeypatch):
     monkeypatch.setattr(sysconfig, "get_path", lambda *a, **k: None)
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
-
-    try:
-        1 / 0
-    except ZeroDivisionError:
-        logger.exception("")
-
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
-
-
-def test_distutils_get_python_lib_return_path(writer, monkeypatch):
-    monkeypatch.setattr(distutils.sysconfig, "get_python_lib", lambda *a, **k: "/foo/bar/baz")
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
-
-    try:
-        1 / 0
-    except ZeroDivisionError:
-        logger.exception("")
-
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
-
-
-def test_distutils_get_python_lib_raise_exception(writer, monkeypatch):
-    def raising(*a, **k):
-        raise distutils.sysconfig.DistutilsPlatformError()
-
-    monkeypatch.setattr(distutils.sysconfig, "get_python_lib", raising)
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
-
-    try:
-        1 / 0
-    except ZeroDivisionError:
-        logger.exception("")
-
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
-
-
-def test_distutils_not_installed(writer, monkeypatch):
-    monkeypatch.setitem(sys.modules, "distutils", None)
-    monkeypatch.setitem(sys.modules, "distutils.errors", None)
-    monkeypatch.setitem(sys.modules, "distutils.sysconfig", None)
-    monkeypatch.delattr(loguru._better_exceptions, "distutils", raising=False)
-    monkeypatch.delattr(loguru._better_exceptions, "distutils.errors", raising=False)
-    monkeypatch.delattr(loguru._better_exceptions, "distutils.syconfig", raising=False)
     logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
     try:
