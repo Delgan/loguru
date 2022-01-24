@@ -257,7 +257,7 @@ class Handler:
             },
         }
 
-        return json.dumps(serializable, default=str) + "\n"
+        return json.dumps(serializable, default=str, ensure_ascii=False) + "\n"
 
     def _queued_writer(self):
         message = None
