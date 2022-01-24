@@ -199,8 +199,8 @@ class Logger:
 
     Handlers to which the logger sends log messages are added using the |add| method. Note that you
     can use the |Logger| right after import as it comes pre-configured (logs are emitted to
-    |sys.stderr| by default). Messages can be logged with different severity levels and using braces
-    attributes like the |str.format| method do.
+    |sys.stderr| by default). Messages can be logged with different severity levels and they can be
+    formatted using curly braces (it uses |str.format| under the hood).
 
     When a message is logged, a "record" is associated with it. This record is a dict which contains
     information about the logging context: time, function, file, line, thread, level... It also

@@ -15,6 +15,7 @@ Code snippets and recipes for ``loguru``
 .. |copy.deepcopy| replace:: :func:`copy.deepcopy`
 .. |os.fork| replace:: :func:`os.fork`
 .. |multiprocessing| replace:: :mod:`multiprocessing`
+.. |pickle| replace:: :mod:`pickle`
 .. |traceback| replace:: :mod:`traceback`
 .. |Thread| replace:: :class:`~threading.Thread`
 .. |Process| replace:: :class:`~multiprocessing.Process`
@@ -46,6 +47,66 @@ Code snippets and recipes for ``loguru``
 
 .. _`GH#88`: https://github.com/Delgan/loguru/issues/88
 .. _`GH#132`: https://github.com/Delgan/loguru/issues/132
+
+
+Security considerations when using Loguru
+-----------------------------------------
+
+Firstly, if you use |pickle| to load log messages (e.g. from the network), make sure the source is trustable or sign the data to verify its authenticity before deserializing it. If you do not take these precautions, malicious code could be executed by an attacker. You can read more details in this article: `What’s so dangerous about pickles? <https://intoli.com/blog/dangerous-pickles/>`_
+
+.. code::
+
+    import hashlib
+    import hmac
+    import pickle
+
+    def client(connection):
+        data = pickle.dumps("Log message")
+        digest =  hmac.digest(b"secret-shared-key", data, hashlib.sha1)
+        connection.send(digest + b" " + data)
+
+    def server(connection):
+        expected_digest, data = connection.read().split(b" ", 1)
+        data_digest = hmac.digest(b"secret-shared-key", data, hashlib.sha1)
+        if not hmac.compare_digest(data_digest, expected_digest):
+            print("Integrity error")
+        else:
+            message = pickle.loads(data)
+            logger.info(message)
+
+
+You should also avoid logging a message that could be maliciously hand-crafted by an attacker. Calling ``logger.debug(message, value)`` is roughly equivalent to calling ``print(message.format(value))`` and the same safety rules apply. In particular, an attacker could force printing of assumed hidden variables of your application. Here is an article explaining the possible vulnerability: `Be Careful with Python's New-Style String Format <https://lucumr.pocoo.org/2016/12/29/careful-with-str-format/>`_.
+
+.. code::
+
+    SECRET_KEY = 'Y0UC4NTS33Th1S!'
+
+    class SomeValue:
+        def __init__(self, value):
+            self.value = value
+
+    # If user types "{value.__init__.__globals__[SECRET_KEY]}" then the secret key is displayed.
+    message = "[Custom message] " + input()
+    logger.info(message, value=SomeValue(10))
+
+
+Note that by default, Loguru will display the value of existing variables when an ``Exception`` is logged. This is very useful for debugging but could lead to credentials appearing in log files. Make sure to turn it off in production (or set the ``LOGURU_DIAGNOSE=NO`` environment variable).
+
+.. code::
+
+    logger.add("out.log", diagnose=False)
+
+
+Another thing you should consider is to change the access permissions of your log file. Loguru creates files using the built-in |open| function, which means by default they might be read by a different user than the owner. If this is not desirable, be sure to modify the default access rights.
+
+.. code::
+
+    def opener(file, flags):
+        return os.open(file, flags, 0o600)
+
+    logger.add("combined.log", opener=opener)
+
+
 
 Changing the level of an existing handler
 -----------------------------------------
