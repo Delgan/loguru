@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 
 from loguru import logger
@@ -6,10 +7,12 @@ from loguru import logger
 
 class JsonSink:
     def __init__(self):
+        self.message = None
         self.dict = None
         self.json = None
 
     def write(self, message):
+        self.message = message
         self.dict = message.record
         self.json = json.loads(message)
 
@@ -21,6 +24,17 @@ def test_serialize():
     assert sink.json["text"] == "DEBUG Test\n"
     assert sink.dict["message"] == sink.json["record"]["message"] == "Test"
     assert set(sink.dict.keys()) == set(sink.json["record"].keys())
+
+
+def test_serialize_non_ascii_characters():
+    sink = JsonSink()
+    logger.add(sink, format="{level.icon} {message}", serialize=True)
+    logger.debug("天")
+    assert re.search(r'"message": "([^\"]+)"', sink.message).group(1) == "天"
+    assert re.search(r'"text": "([^\"]+)"', sink.message).group(1) == "🐞 天\\n"
+    assert re.search(r'"icon": "([^\"]+)"', sink.message).group(1) == "🐞"
+    assert sink.json["text"] == "🐞 天\n"
+    assert sink.dict["message"] == sink.json["record"]["message"] == "天"
 
 
 def test_serialize_exception():
@@ -77,7 +91,7 @@ def test_serialize_exception_none_tuple():
     }
 
 
-def test_serialize_exception_instrance():
+def test_serialize_exception_instance():
     sink = JsonSink()
     logger.add(sink, format="{message}", serialize=True, catch=False)
 
