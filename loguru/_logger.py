@@ -38,7 +38,6 @@
 .. |contextvars| replace:: :mod:`contextvars`
 .. |Thread.run| replace:: :meth:`Thread.run()<threading.Thread.run()>`
 .. |Exception| replace:: :class:`Exception`
-.. |locale.getpreferredencoding| replace:: :func:`locale.getpreferredencoding()`
 .. |AbstractEventLoop| replace:: :class:`AbstractEventLoop<asyncio.AbstractEventLoop>`
 .. |asyncio.get_running_loop| replace:: :func:`asyncio.get_running_loop()`
 .. |asyncio.run| replace:: :func:`asyncio.run()`
@@ -304,8 +303,7 @@ class Logger:
             The buffering policy as for built-in |open| function. It defaults to ``1`` (line
             buffered file).
         encoding : |str|, optional
-            The file encoding as for built-in |open| function. If ``None``, it defaults to
-            |locale.getpreferredencoding|.
+            The file encoding as for built-in |open| function. It defaults to ``"utf8"``.
         **kwargs
             Others parameters are passed to the built-in |open| function.
 

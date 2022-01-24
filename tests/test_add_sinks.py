@@ -159,6 +159,14 @@ def test_file_sink_utf8_encoding(tmpdir):
     assert file.read_text("utf8") == "天\n"
 
 
+def test_file_sink_default_encoding(tmpdir):
+    file = tmpdir.join("test.log")
+    logger.add(str(file), format="{message}", errors="strict", catch=False)
+    logger.info("天")
+    logger.remove()
+    assert file.read_text("utf8") == "天\n"
+
+
 def test_disabled_logger_in_sink(sink_with_logger):
     sink = sink_with_logger(logger)
     logger.disable("tests.conftest")

@@ -1,7 +1,6 @@
 import datetime as datetime_
 import decimal
 import glob
-import locale
 import numbers
 import os
 import shutil
@@ -147,10 +146,10 @@ class FileSink:
         delay=False,
         mode="a",
         buffering=1,
-        encoding=None,
+        encoding="utf8",
         **kwargs
     ):
-        self.encoding = locale.getpreferredencoding(False) if encoding is None else encoding
+        self.encoding = encoding
 
         self._kwargs = {**kwargs, "mode": mode, "buffering": buffering, "encoding": self.encoding}
         self._path = str(path)
