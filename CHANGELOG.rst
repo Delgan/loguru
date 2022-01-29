@@ -184,7 +184,7 @@ Initial release.
 
 
 .. _Unreleased: https://github.com/delgan/loguru/compare/0.6.0...master
-.. -0.6.0: https://github.com/delgan/loguru/releases/tag/0.6.0
+.. _0.6.0: https://github.com/delgan/loguru/releases/tag/0.6.0
 .. _0.5.3: https://github.com/delgan/loguru/releases/tag/0.5.3
 .. _0.5.2: https://github.com/delgan/loguru/releases/tag/0.5.2
 .. _0.5.1: https://github.com/delgan/loguru/releases/tag/0.5.1
