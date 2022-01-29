@@ -1,5 +1,5 @@
-`Unreleased`_
-==============
+`0.6.0`_ (2022-01-29)
+=====================
 
 - Remove internal use of ``pickle.loads()`` considered as a security vulnerability referenced as `CVE-2022-0329 https://nvd.nist.gov/vuln/detail/CVE-2022-0329`_ (`#563 <https://github.com/Delgan/loguru/issues/563>`_).
 - Modify coroutine sink to make it discard log messages when ``loop=None`` and no event loop is running (due to internally using ``asyncio.get_running_loop()`` in place of ``asyncio.get_event_loop()``).
@@ -183,7 +183,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.5.3...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.6.0...master
+.. -0.6.0: https://github.com/delgan/loguru/releases/tag/0.6.0
 .. _0.5.3: https://github.com/delgan/loguru/releases/tag/0.5.3
 .. _0.5.2: https://github.com/delgan/loguru/releases/tag/0.5.2
 .. _0.5.1: https://github.com/delgan/loguru/releases/tag/0.5.1
