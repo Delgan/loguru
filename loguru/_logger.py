@@ -98,7 +98,8 @@ from ._locks_machinery import create_logger_lock
 from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
 from ._simple_sinks import AsyncSink, CallableSink, StandardSink, StreamSink
 
-if sys.version_info >= (3, 6):
+
+if sys.version_info >= (3, 6):  #Python version check
     from os import PathLike
 else:
     from pathlib import PurePath as PathLike
@@ -112,6 +113,7 @@ context = ContextVar("loguru_context", default={})
 
 
 class Core:
+   """ The class describes logging levels. Used in Logger class """
     def __init__(self):
         levels = [
             Level(
@@ -770,10 +772,9 @@ class Logger:
             if colorize is None:
                 colorize = _colorama.should_colorize(sink)
 
+            stream = sink
             if colorize is True and _colorama.should_wrap(sink):
                 stream = _colorama.wrap(sink)
-            else:
-                stream = sink
 
             wrapped_sink = StreamSink(stream)
             encoding = getattr(sink, "encoding", None)
@@ -999,11 +1000,10 @@ class Logger:
 
             if handler_id is not None and handler_id not in handlers:
                 raise ValueError("There is no existing handler with id %d" % handler_id) from None
-
+                  
+            handler_ids = [handler_id]
             if handler_id is None:
                 handler_ids = list(handlers.keys())
-            else:
-                handler_ids = [handler_id]
 
             for handler_id in handler_ids:
                 handler = handlers.pop(handler_id)
@@ -1830,7 +1830,7 @@ class Logger:
     def _find_iter(fileobj, regex, chunk):
         buffer = fileobj.read(0)
 
-        while 1:
+        while True:
             text = fileobj.read(chunk)
             buffer += text
             matches = list(regex.finditer(buffer))
