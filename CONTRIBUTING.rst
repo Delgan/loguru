@@ -50,7 +50,7 @@ If you are willing to enhance `Loguru` by implementing non-trivial changes, plea
 
 5. Install `Loguru` in development mode::
 
-    $ pip install -e .[dev]
+    $ pip install -e ".[dev]"
 
 6. Implement the modifications wished. During the process of development, honor `PEP 8`_ as much as possible.
 7. Add unit tests (don't hesitate to be exhaustive!) and ensure none are failing using::
