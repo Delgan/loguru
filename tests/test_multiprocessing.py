@@ -102,7 +102,6 @@ class Writer:
         return self._output
 
 
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy bug #3630")
 def test_apply_spawn(spawn_context):
     writer = Writer()
 
@@ -156,7 +155,6 @@ def test_apply_inheritance(fork_context):
     assert writer.read() == "#0\n#1\n#2\nDone!\n"
 
 
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy bug #3630")
 def test_apply_async_spawn(spawn_context):
     writer = Writer()
 
@@ -213,7 +211,6 @@ def test_apply_async_inheritance(fork_context):
     assert writer.read() == "#0\n#1\n#2\nDone!\n"
 
 
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy bug #3630")
 def test_process_spawn(spawn_context):
     writer = Writer()
 
@@ -267,7 +264,6 @@ def test_process_inheritance(fork_context):
     assert writer.read() == "Child\nMain\n"
 
 
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy bug #3630")
 def test_remove_in_child_process_spawn(spawn_context):
     writer = Writer()
 
@@ -321,7 +317,6 @@ def test_remove_in_child_process_inheritance(fork_context):
     assert writer.read() == "Child\nMain\n"
 
 
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy bug #3630")
 def test_remove_in_main_process_spawn(spawn_context):
     # Actually, this test may fail if sleep time in main process is too small (and no barrier used)
     # In such situation, it seems the child process has not enough time to initialize itself
@@ -381,7 +376,6 @@ def test_remove_in_main_process_inheritance(fork_context):
     assert writer.read() == "Child\nMain\n"
 
 
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy bug #3630")
 def test_await_complete_spawn(capsys, spawn_context):
     async def writer(msg):
         print(msg, end="")
@@ -456,7 +450,6 @@ def test_await_complete_inheritance(capsys, fork_context):
     assert err == ""
 
 
-@pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy bug #3630")
 def test_not_picklable_sinks_spawn(spawn_context, tmpdir, capsys):
     filepath = tmpdir.join("test.log")
     stream = sys.stderr
@@ -570,7 +563,7 @@ def test_no_deadlock_if_internal_lock_in_use(tmpdir, enqueue, deepcopied, fork_c
     process.start()
 
     thread.join()
-    process.join(1)
+    process.join(2)
 
     assert process.exitcode == 0
 

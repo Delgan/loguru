@@ -6,7 +6,6 @@ import types
 
 import pytest
 
-import loguru
 from loguru import logger
 
 
