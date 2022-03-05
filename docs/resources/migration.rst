@@ -41,6 +41,10 @@ Switching from standard ``logging`` to ``loguru``
 .. _pytest: https://docs.pytest.org/en/latest/
 .. |caplog| replace:: ``caplog``
 .. _caplog: https://docs.pytest.org/en/latest/logging.html?highlight=caplog#caplog-fixture
+.. |pytest-loguru| replace:: ``pytest-loguru``
+.. _pytest: https://github.com/mcarans/pytest-loguru
+
+.. _@mcarans: https://github.com/mcarans
 
 .. _`GH#59`: https://github.com/Delgan/loguru/issues/59
 .. _`GH#474`: https://github.com/Delgan/loguru/issues/474
@@ -224,8 +228,14 @@ Making things work with Pytest and caplog
 
 |pytest|_ is a very common testing framework. The |caplog|_ fixture captures logging output so that it can be tested against. For example::
 
-    # `some_func` adds two numbers, and logs a warning if the first is < 1
-    def test_some_func_logs_warning(caplog):
+    from loguru import logger
+
+    def some_func(a, b):
+        if a < 0:
+            logger.warning("Oh no!")
+        return a + b
+
+    def test_some_func(caplog):
         assert some_func(-1, 3) == 2
         assert "Oh no!" in caplog.text
 
@@ -244,4 +254,4 @@ This is done by overriding the |caplog|_ fixture to capture its handler. In your
         yield caplog
         logger.remove(handler_id)
 
-Run your tests and things should all be working as expected. Additional information can be found in `GH#59`_ and `GH#474`_.
+Run your tests and things should all be working as expected. Additional information can be found in `GH#59`_ and `GH#474`_. You can also install and use the |pytest-loguru|_ package created by `@mcarans`_.
