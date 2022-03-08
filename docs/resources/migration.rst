@@ -42,7 +42,7 @@ Switching from standard ``logging`` to ``loguru``
 .. |caplog| replace:: ``caplog``
 .. _caplog: https://docs.pytest.org/en/latest/logging.html?highlight=caplog#caplog-fixture
 .. |pytest-loguru| replace:: ``pytest-loguru``
-.. _pytest: https://github.com/mcarans/pytest-loguru
+.. _pytest-loguru: https://github.com/mcarans/pytest-loguru
 
 .. _@mcarans: https://github.com/mcarans
 
