@@ -29,6 +29,8 @@ Switching from standard ``logging`` to ``loguru``
 .. |isEnabledFor| replace:: :meth:`~logging.Logger.isEnabledFor`
 .. |dictConfig| replace:: :func:`~logging.config.dictConfig`
 .. |basicConfig| replace:: :func:`~logging.basicConfig`
+.. |assertLogs| replace:: :meth:`~unittest.TestCase.assertLogs`
+.. |unittest| replace:: :mod:`unittest`
 
 .. |add| replace:: :meth:`~loguru._logger.Logger.add()`
 .. |remove| replace:: :meth:`~loguru._logger.Logger.remove()`
@@ -223,8 +225,26 @@ The |basicConfig| and |dictConfig| functions are replaced by the |configure| met
 This does not accept ``config.ini`` files, though, so you have to handle that yourself using your favorite format.
 
 
-Making things work with Pytest and caplog
------------------------------------------
+Replacing ``assertLogs()`` method from ``unittest`` library
+-----------------------------------------------------------
+
+The |assertLogs| method defined in the |unittest| from standard library is used to capture and test logged messages. However, it can't be made compatible with Loguru. It needs to be replaced with a custom context manager possibly implemented as follows::
+
+    from contextlib import contextmanager
+
+    @contextmanager
+    def capture_logs(level="INFO", format="{level}:{name}:{message}"):
+        """Capture loguru-based logs."""
+        output = []
+        handler_id = logger.add(output.append, level=level, format=format)
+        yield output
+        logger.remove(handler_id)
+
+It provides the list of logged messages for each of which you can access the ``record`` attribute.
+
+
+Replacing ``caplog`` fixture from ``pytest`` library
+----------------------------------------------------
 
 |pytest|_ is a very common testing framework. The |caplog|_ fixture captures logging output so that it can be tested against. For example::
 
