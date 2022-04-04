@@ -118,6 +118,16 @@ Another thing you should consider is to change the access permissions of your lo
     logger.add("combined.log", opener=opener)
 
 
+Avoiding logs to be printed twice on the terminal
+-------------------------------------------------
+
+The logger is pre-configured for convenience with a default handler which writes messages to |sys.stderr|. You should |remove| it first if you plan to |add| another handler logging messages to the console, otherwise you may end up with duplicated logs.
+
+.. code::
+
+    logger.remove()  # Remove all handlers added so far, including the default one.
+    logger.add(sys.stderr, level="WARNING")
+
 
 Changing the level of an existing handler
 -----------------------------------------
