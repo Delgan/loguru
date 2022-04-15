@@ -532,12 +532,14 @@ Dynamically formatting messages to properly align values with padding
 
 The default formatter is unable to vertically align log messages because the length of ``{name}``, ``{function}`` and ``{line}`` are not fixed.
 
-One workaround consists of using padding with some maximum value that should suffice most of the time, like this for example::
+One workaround consists of using padding with some maximum value that should suffice most of the time. For this purpose, you can use Python's string formatting directives, like in this example::
 
     fmt = "{time} | {level: <8} | {name: ^15} | {function: ^15} | {line: >3} | {message}"
     logger.add(sys.stderr, format=fmt)
 
-Others solutions are possible by using a formatting function or class. For example, it is possible to dynamically adjust the padding length based on previously encountered values::
+Here, ``<``, ``^`` and ``>`` will left, center, and right-align the respective keys, and pad them to a maximum length.
+
+Other solutions are possible by using a formatting function or class. For example, it is possible to dynamically adjust the padding length based on previously encountered values::
 
     class Formatter:
 
