@@ -264,13 +264,14 @@ If you've followed all the migration guidelines thus far, you'll notice that thi
 So to fix things, we need to add a sink that propagates Loguru to the caplog handler.
 This is done by overriding the |caplog|_ fixture to capture its handler. In your ``conftest.py`` file, add the following::
 
-    import pytest
-    from loguru import logger
-    from _pytest.logging import LogCaptureFixture
-
     @pytest.fixture
     def caplog(caplog: LogCaptureFixture):
-        handler_id = logger.add(caplog.handler, format="{message}")
+        handler_id = logger.add(
+            caplog.handler,
+            format="{message}",
+            level=0,
+            filter=lambda record: record["level"].no >= caplog.handler.level,
+        )
         yield caplog
         logger.remove(handler_id)
 
