@@ -68,7 +68,7 @@
 .. _Pendulum: https://pendulum.eustace.io/docs/#tokens
 .. _@sdispater: https://github.com/sdispater
 .. _@Qix-: https://github.com/Qix-
-.. _Formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
+.. _formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
 .. _reentrant: https://en.wikipedia.org/wiki/Reentrancy_(computing)
 """
 import builtins
@@ -422,11 +422,14 @@ class Logger:
         The record is just a Python dict, accessible from sinks by ``message.record``. It contains
         all contextual information of the logging call (time, function, file, line, level, etc.).
 
-        Each of its key can be used in the handler's ``format`` so the corresponding value is
-        properly displayed in the logged message (e.g. ``"{level}"`` -> ``"INFO"``). Some record's
-        values are objects with two or more attributes, these can be formatted with ``"{key.attr}"``
-        (``"{key}"`` would display one by default). `Formatting directives`_ like ``"{key: >3}"``
-        also works and is particularly useful for time (see below).
+        Each of the record keys can be used in the handler's ``format`` so the corresponding value
+        is properly displayed in the logged message (e.g. ``"{level}"`` will return ``"INFO"``).
+        Some records' values are objects with two or more attributes. These can be formatted with
+        ``"{key.attr}"`` (``"{key}"`` would display one by default).
+
+        Note that you can use any `formatting directives`_ available in Python's ``str.format()``
+        method (e.g. ``"{key: >3}"`` will right-align and pad to a width of 3 characters). This is
+        particularly useful for time formatting (see below).
 
         +------------+---------------------------------+----------------------------+
         | Key        | Description                     | Attributes                 |
