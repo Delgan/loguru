@@ -269,7 +269,6 @@ class Logger:
         diagnose: bool = ...,
         enqueue: bool = ...,
         catch: bool = ...,
-        permissions: Optional[oct] = ...,
         rotation: Optional[Union[str, int, time, timedelta, RotationFunction]] = ...,
         retention: Optional[Union[str, int, timedelta, RetentionFunction]] = ...,
         compression: Optional[Union[str, CompressionFunction]] = ...,
