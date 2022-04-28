@@ -1738,7 +1738,7 @@ class Logger:
             self._core.enabled = enabled
 
     @staticmethod
-    def parse(file, pattern, *, cast={}, chunk=2 ** 16):
+    def parse(file, pattern, *, cast={}, chunk=2**16):
         """Parse raw logs and extract each entry as a |dict|.
 
         The logging format has to be specified as the regex ``pattern``, it will then be
@@ -1882,8 +1882,6 @@ class Logger:
                         return
                 enabled[name] = True
 
-        current_datetime = aware_now()
-
         if level_id is None:
             level_icon = " "
             level_no = static_level_no
@@ -1896,6 +1894,8 @@ class Logger:
 
         if level_no < core.min_level:
             return
+
+        current_datetime = aware_now()
 
         code = frame.f_code
         file_path = code.co_filename
