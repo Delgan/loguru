@@ -347,7 +347,8 @@ class ExceptionFormatter:
             yield frame
 
     def _format_exception(self, value, tb, *, seen=None, is_first=False, from_decorator=False):
-        # Implemented from built-in traceback module: https://git.io/fhHKw
+        # Implemented from built-in traceback module:
+        # https://github.com/python/cpython/blob/a5b76167/Lib/traceback.py#L468
         exc_type, exc_value, exc_traceback = type(value), value, tb
 
         if seen is None:

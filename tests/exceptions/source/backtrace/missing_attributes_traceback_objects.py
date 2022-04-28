@@ -18,8 +18,8 @@ def foo():
     div(a, b)
 
 
-# See Twisted: https://git.io/fjJ48
-# See Billiard: https://git.io/fjJ44
+# See Twisted: https://github.com/twisted/twisted/blob/29cbe/src/twisted/python/failure.py#L175-L181
+# See Billiard: https://github.com/celery/billiard/blob/529a3/billiard/einfo.py#L11-L26
 fake_code = namedtuple("fake_code", ("co_filename", "co_name"))
 fake_frame = namedtuple("fake_frame", ("f_back", "f_code", "f_globals", "f_lineno", "f_locals"))
 fake_traceback = namedtuple("fake_traceback", ("tb_frame", "tb_lasti", "tb_lineno", "tb_next"))
