@@ -220,7 +220,6 @@ class FileSink:
         if is_rotating:
             file = open(new_path, **self._kwargs)
             set_ctime(new_path, datetime.now().timestamp())
-
             self._file_path = new_path
             self._file = file
 

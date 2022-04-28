@@ -400,6 +400,21 @@ For convenience, one can assign a new logging function which automatically uses 
 The new method need to be added only once and will be usable across all your files importing the ``logger``. Assigning the method to ``logger.__class__`` rather than ``logger`` directly ensures that it stays available even after calling ``logger.bind()``, ``logger.patch()`` and ``logger.opt()`` (because these functions return a new ``logger`` instance).
 
 
+Setting permissions on created log files
+---------------------------------------------------
+
+To set desired permissions on created log files, use the ``opener`` argument to pass in a custom opener with permissions octal::
+
+    os.umask(0)  # Update the current umask (it's value is masked out from "os.open()" permissions)
+
+    def opener(file, flags):
+        return os.open(file, flags, 0o777)
+
+    logger.add("foo.log", rotation="100 kB", opener=opener)
+
+When using an opener argument, all created log files including ones created during rotation will use the initially provided opener.
+
+
 Preserving an ``opt()`` parameter for the whole module
 ------------------------------------------------------
 
