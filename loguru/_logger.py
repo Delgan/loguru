@@ -95,7 +95,13 @@ from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
 from ._locks_machinery import create_logger_lock
-from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
+from ._recattrs import (
+    RecordException,
+    RecordFile,
+    RecordLevel,
+    RecordProcess,
+    RecordThread,
+)
 from ._simple_sinks import AsyncSink, CallableSink, StandardSink, StreamSink
 
 if sys.version_info >= (3, 6):
@@ -209,9 +215,9 @@ class Logger:
     You should not instantiate a |Logger| by yourself, use ``from loguru import logger`` instead.
     """
 
-    def __init__(self, core, exception, depth, record, lazy, colors, raw, capture, patcher, extra):
+    def __init__(self, core, exception, depth, record, lazy, colors, raw, capture, patchers, extra):
         self._core = core
-        self._options = (exception, depth, record, lazy, colors, raw, capture, patcher, extra)
+        self._options = (exception, depth, record, lazy, colors, raw, capture, patchers, extra)
 
     def __repr__(self):
         return "<loguru.logger handlers=%r>" % list(self._core.handlers.values())
@@ -1426,6 +1432,9 @@ class Logger:
         ``record`` dict itself, as some values are used internally by `Loguru`, and modify them may
         produce unexpected results.
 
+        The logger can be patched multiple times. In this case, the functions are called in the
+        same order as they are added.
+
         Parameters
         ----------
         patcher: |callable|_
@@ -1457,8 +1466,8 @@ class Logger:
         ...     level, message = record["level"], record["message"]
         ...     logger.patch(lambda r: r.update(record)).log(level, message)
         """
-        *options, _, extra = self._options
-        return Logger(self._core, *options, patcher, extra)
+        *options, patchers, extra = self._options
+        return Logger(self._core, *options, patchers + [patcher], extra)
 
     def level(self, name, no=None, color=None, icon=None):
         """Add, update or retrieve a logging level.
@@ -1853,7 +1862,7 @@ class Logger:
         if not core.handlers:
             return
 
-        (exception, depth, record, lazy, colors, raw, capture, patcher, extra) = options
+        (exception, depth, record, lazy, colors, raw, capture, patchers, extra) = options
 
         frame = get_frame(depth + 2)
 
@@ -1961,7 +1970,7 @@ class Logger:
         if core.patcher:
             core.patcher(log_record)
 
-        if patcher:
+        for patcher in patchers:
             patcher(log_record)
 
         for handler in core.handlers.values():

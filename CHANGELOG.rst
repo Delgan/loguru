@@ -1,3 +1,9 @@
+`Unreleased`_
+=============
+
+- Make ``patch()`` calls cumulative instead of overriding the possibly existing patching function (`#462 <https://github.com/Delgan/loguru/issues/462>`_).
+
+
 `0.6.0`_ (2022-01-29)
 =====================
 

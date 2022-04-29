@@ -8,9 +8,8 @@ import time
 import traceback
 import warnings
 
-import pytest
-
 import loguru
+import pytest
 
 if sys.version_info < (3, 5, 3):
 
@@ -83,7 +82,7 @@ def reset_logger():
     def reset():
         loguru.logger.remove()
         loguru.logger.__init__(
-            loguru._logger.Core(), None, 0, False, False, False, False, True, None, {}
+            loguru._logger.Core(), None, 0, False, False, False, False, True, [], {}
         )
         loguru._logger.context.set({})
 

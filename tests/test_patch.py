@@ -67,3 +67,19 @@ def test_override_configured(writer):
     logger2.debug("!")
 
     assert writer.read() == "456 678 !\n"
+
+
+def test_multiple_patches(writer):
+    def patch_1(record):
+        record["extra"]["a"] = 5
+
+    def patch_2(record):
+        record["extra"]["a"] += 1
+
+    def patch_3(record):
+        record["extra"]["a"] *= 2
+
+    logger.add(writer, format="{extra[a]} {message}")
+    logger.patch(patch_1).patch(patch_2).patch(patch_3).info("Test")
+
+    assert writer.read() == "12 Test\n"
