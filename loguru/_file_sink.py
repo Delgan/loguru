@@ -6,6 +6,7 @@ import os
 import shutil
 import string
 from functools import partial
+from stat import ST_DEV, ST_INO
 
 from . import _string_parsers as string_parsers
 from ._ctime_functions import get_ctime, set_ctime
@@ -144,6 +145,7 @@ class FileSink:
         retention=None,
         compression=None,
         delay=False,
+        watch=False,
         mode="a",
         buffering=1,
         encoding="utf8",
@@ -162,40 +164,92 @@ class FileSink:
         self._file = None
         self._file_path = None
 
+        self._watch = watch
+        self._file_dev = -1
+        self._file_ino = -1
+
         if not delay:
-            self._initialize_file()
+            path = self._create_path()
+            self._create_dirs(path)
+            self._create_file(path)
 
     def write(self, message):
         if self._file is None:
-            self._initialize_file()
+            path = self._create_path()
+            self._create_dirs(path)
+            self._create_file(path)
+
+        if self._watch:
+            self._reopen_if_needed()
 
         if self._rotation_function is not None and self._rotation_function(message, self._file):
             self._terminate_file(is_rotating=True)
 
         self._file.write(message)
 
-    def _prepare_new_path(self):
+    def stop(self):
+        if self._watch:
+            self._reopen_if_needed()
+
+        self._terminate_file(is_rotating=False)
+
+    async def complete(self):
+        pass
+
+    def _create_path(self):
         path = self._path.format_map({"time": FileDateFormatter()})
-        path = os.path.abspath(path)
+        return os.path.abspath(path)
+
+    def _create_dirs(self, path):
         dirname = os.path.dirname(path)
         os.makedirs(dirname, exist_ok=True)
-        return path
 
-    def _initialize_file(self):
-        path = self._prepare_new_path()
+    def _create_file(self, path):
         self._file = open(path, **self._kwargs)
         self._file_path = path
+
+        if self._watch:
+            fileno = self._file.fileno()
+            result = os.fstat(fileno)
+            self._file_dev = result[ST_DEV]
+            self._file_ino = result[ST_INO]
+
+    def _close_file(self):
+        self._file.flush()
+        self._file.close()
+
+        self._file = None
+        self._file_path = None
+        self._file_dev = -1
+        self._file_ino = -1
+
+    def _reopen_if_needed(self):
+        # Implemented based on standard library:
+        # https://github.com/python/cpython/blob/cb589d1b/Lib/logging/handlers.py#L486
+        if not self._file:
+            return
+
+        filepath = self._file_path
+
+        try:
+            result = os.stat(filepath)
+        except FileNotFoundError:
+            result = None
+
+        if not result or result[ST_DEV] != self._file_dev or result[ST_INO] != self._file_ino:
+            self._close_file()
+            self._create_dirs(filepath)
+            self._create_file(filepath)
 
     def _terminate_file(self, *, is_rotating=False):
         old_path = self._file_path
 
         if self._file is not None:
-            self._file.close()
-            self._file = None
-            self._file_path = None
+            self._close_file()
 
         if is_rotating:
-            new_path = self._prepare_new_path()
+            new_path = self._create_path()
+            self._create_dirs(new_path)
 
             if new_path == old_path:
                 creation_time = get_ctime(old_path)
@@ -218,16 +272,8 @@ class FileSink:
                 self._retention_function(list(logs))
 
         if is_rotating:
-            file = open(new_path, **self._kwargs)
+            self._create_file(new_path)
             set_ctime(new_path, datetime.now().timestamp())
-            self._file_path = new_path
-            self._file = file
-
-    def stop(self):
-        self._terminate_file(is_rotating=False)
-
-    async def complete(self):
-        pass
 
     @staticmethod
     def _make_glob_patterns(path):

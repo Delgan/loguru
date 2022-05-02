@@ -1,6 +1,7 @@
 `Unreleased`_
 =============
 
+- Add a new ``watch`` optional argument to file sinks in order to automatically re-create possibly deleted or changed file (`#471 <https://github.com/Delgan/loguru/issues/471>`_).
 - Make ``patch()`` calls cumulative instead of overriding the possibly existing patching function (`#462 <https://github.com/Delgan/loguru/issues/462>`_).
 
 

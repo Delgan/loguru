@@ -302,6 +302,9 @@ class Logger:
         delay : |bool|, optional
             Whether the file should be created as soon as the sink is configured, or delayed until
             first logged message. It defaults to ``False``.
+        watch : |bool|, optional
+            Whether or not the file should be watched and re-opened when deleted or changed (based
+            on its device and inode properties) by an external program. It defaults to ``False``.
         mode : |str|, optional
             The opening mode as for built-in |open| function. It defaults to ``"a"`` (open the
             file in appending mode).
