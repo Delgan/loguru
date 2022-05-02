@@ -5,7 +5,6 @@ import sysconfig
 import types
 
 import pytest
-
 from loguru import logger
 
 
@@ -428,3 +427,19 @@ def test_default_with_coroutine():
         return 1 / 0
 
     assert asyncio.run(foo()) == 42
+
+
+def test_error_when_decorating_class_without_parentheses():
+    with pytest.raises(TypeError):
+
+        @logger.catch
+        class Foo:
+            pass
+
+
+def test_error_when_decorating_class_with_parentheses():
+    with pytest.raises(TypeError):
+
+        @logger.catch()
+        class Foo:
+            pass

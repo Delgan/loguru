@@ -1215,6 +1215,12 @@ class Logger:
                 return not reraise
 
             def __call__(_, function):
+                if isclass(function):
+                    raise TypeError(
+                        "Invalid object decorated with 'catch()', it must be a function, "
+                        "not a class (tried to wrap '%s')" % function.__name__
+                    )
+
                 catcher = Catcher(True)
 
                 if iscoroutinefunction(function):
