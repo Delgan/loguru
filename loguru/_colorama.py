@@ -6,20 +6,26 @@ def should_colorize(stream):
     if stream is None:
         return False
 
-    try:
-        import ipykernel
-        import IPython
+    if stream is sys.stdout or stream is sys.stderr:
+        try:
+            import ipykernel
+            import IPython
 
-        ipython = IPython.get_ipython()
-        is_jupyter_stream = isinstance(stream, ipykernel.iostream.OutStream)
-        is_jupyter_shell = isinstance(ipython, ipykernel.zmqshell.ZMQInteractiveShell)
-    except Exception:
-        pass
-    else:
-        if is_jupyter_stream and is_jupyter_shell:
-            return True
+            ipython = IPython.get_ipython()
+            is_jupyter_stream = isinstance(stream, ipykernel.iostream.OutStream)
+            is_jupyter_shell = isinstance(ipython, ipykernel.zmqshell.ZMQInteractiveShell)
+        except Exception:
+            pass
+        else:
+            if is_jupyter_stream and is_jupyter_shell:
+                return True
 
     if stream is sys.__stdout__ or stream is sys.__stderr__:
+        if "CI" in os.environ and any(
+            ci in os.environ
+            for ci in ["TRAVIS", "CIRCLECI", "APPVEYOR", "GITLAB_CI", "GITHUB_ACTIONS"]
+        ):
+            return True
         if "PYCHARM_HOSTED" in os.environ:
             return True
         if os.name == "nt" and "TERM" in os.environ:

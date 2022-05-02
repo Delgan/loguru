@@ -170,6 +170,7 @@ def test_jupyter_fixed(monkeypatch):
 
     monkeypatch.setitem(sys.modules, "IPython", ipython)
     monkeypatch.setitem(sys.modules, "ipykernel", ipykernel)
+    monkeypatch.setattr(sys, "stdout", stream)
 
     assert not stream.isatty()
     assert loguru._colorama.should_colorize(stream)
@@ -193,7 +194,24 @@ def test_jupyter_ignored(monkeypatch, stream):
 
     monkeypatch.setitem(sys.modules, "IPython", ipython)
     monkeypatch.setitem(sys.modules, "ipykernel", ipykernel)
+    monkeypatch.setattr(sys, "stdout", stream)
 
+    assert not loguru._colorama.should_colorize(stream)
+
+
+@pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
+def test_github_actions_fixed(monkeypatch, stream):
+    monkeypatch.setitem(os.environ, "CI", "1")
+    monkeypatch.setitem(os.environ, "GITHUB_ACTIONS", "1")
+    monkeypatch.setattr(stream, "isatty", lambda: False)
+    assert not stream.isatty()
+    assert loguru._colorama.should_colorize(stream)
+
+
+@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
+def test_github_actions_ignored(monkeypatch, stream):
+    monkeypatch.setitem(os.environ, "CI", "1")
+    monkeypatch.setitem(os.environ, "GITHUB_ACTIONS", "1")
     assert not loguru._colorama.should_colorize(stream)
 
 
