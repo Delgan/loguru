@@ -275,8 +275,21 @@ This is done by overriding the |caplog|_ fixture to capture its handler. In your
             format="{message}",
             level=0,
             filter=lambda record: record["level"].no >= caplog.handler.level,
+            enqueue=False,  # Set to 'True' if your test is spawning child processes.
         )
         yield caplog
         logger.remove(handler_id)
 
 Run your tests and things should all be working as expected. Additional information can be found in `GH#59`_ and `GH#474`_. You can also install and use the |pytest-loguru|_ package created by `@mcarans`_.
+
+Note that if you want Loguru logs to be propagated to Pytest terminal reporter, you can do so by overriding the ``reportlog`` fixture as follows::
+
+    import pytest
+    from loguru import logger
+
+    @pytest.fixture
+    def reportlog(pytestconfig):
+        logging_plugin = pytestconfig.pluginmanager.getplugin("logging-plugin")
+        handler_id = logger.add(logging_plugin.report_handler, format="{message}")
+        yield
+        logger.remove(handler_id)
