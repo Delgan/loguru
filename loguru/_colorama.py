@@ -6,6 +6,19 @@ def should_colorize(stream):
     if stream is None:
         return False
 
+    try:
+        import ipykernel
+        import IPython
+
+        ipython = IPython.get_ipython()
+        is_jupyter_stream = isinstance(stream, ipykernel.iostream.OutStream)
+        is_jupyter_shell = isinstance(ipython, ipykernel.zmqshell.ZMQInteractiveShell)
+    except Exception:
+        pass
+    else:
+        if is_jupyter_stream and is_jupyter_shell:
+            return True
+
     if stream is sys.__stdout__ or stream is sys.__stderr__:
         if "PYCHARM_HOSTED" in os.environ:
             return True

@@ -2,9 +2,8 @@ import os
 import sys
 from unittest.mock import MagicMock
 
-import pytest
-
 import loguru
+import pytest
 from loguru import logger
 
 from .conftest import parse
@@ -148,6 +147,53 @@ def test_pycharm_fixed(monkeypatch, stream):
 @pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
 def test_pycharm_ignored(monkeypatch, stream):
     monkeypatch.setitem(os.environ, "PYCHARM_HOSTED", "1")
+    assert not loguru._colorama.should_colorize(stream)
+
+
+def test_jupyter_fixed(monkeypatch):
+    class Shell:
+        pass
+
+    class Out:
+        pass
+
+    stream = MagicMock()
+    stream.__class__ = Out
+    stream.isatty.return_value = False
+    ipython = MagicMock()
+    ipykernel = MagicMock()
+    instance = MagicMock()
+    instance.__class__ = Shell
+    ipython.get_ipython.return_value = instance
+    ipykernel.zmqshell.ZMQInteractiveShell = Shell
+    ipykernel.iostream.OutStream = Out
+
+    monkeypatch.setitem(sys.modules, "IPython", ipython)
+    monkeypatch.setitem(sys.modules, "ipykernel", ipykernel)
+
+    assert not stream.isatty()
+    assert loguru._colorama.should_colorize(stream)
+
+
+@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
+def test_jupyter_ignored(monkeypatch, stream):
+    class Shell:
+        pass
+
+    class Out:
+        pass
+
+    ipython = MagicMock()
+    ipykernel = MagicMock()
+    instance = MagicMock()
+    instance.__class__ = Shell
+    ipython.get_ipython.return_value = instance
+    ipykernel.zmqshell.ZMQInteractiveShell = Shell
+    ipykernel.iostream.OutStream = Out
+
+    monkeypatch.setitem(sys.modules, "IPython", ipython)
+    monkeypatch.setitem(sys.modules, "ipykernel", ipykernel)
+
     assert not loguru._colorama.should_colorize(stream)
 
 
