@@ -5,6 +5,7 @@
 - Make ``patch()`` calls cumulative instead of overriding the possibly existing patching function (`#462 <https://github.com/Delgan/loguru/issues/462>`_).
 - Fix logs colorization not automatically enabled for Jupyter Notebook and Google Colab (`#494 <https://github.com/Delgan/loguru/issues/494>`_).
 - Fix logs colorization not automatically enabled for Github Actions and others CI platforms (`#604 <https://github.com/Delgan/loguru/issues/604>`_).
+- Fix ``logger.complete()`` possibly hanging forever when ``enqueue=True`` and ``catch=False`` if internal thread killed due to ``Exception`` raised by sink (`#647 <https://github.com/Delgan/loguru/issues/647>`_).
 - Raise exception if ``logger.catch()`` is used to wrap a class instead of a function to avoid unexpected behavior (`#623 <https://github.com/Delgan/loguru/issues/623>`_).
 
 

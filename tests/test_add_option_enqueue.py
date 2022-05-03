@@ -4,7 +4,6 @@ import sys
 import time
 
 import pytest
-
 from loguru import logger
 
 from .conftest import default_threading_excepthook
@@ -171,6 +170,37 @@ def test_not_caught_exception_sink_write(capsys):
     assert out == "It's fine\n"
     assert lines[0].startswith("Exception")
     assert lines[-1] == "RuntimeError: You asked me to fail..."
+
+
+def test_not_caught_exception_sink_write_then_complete(capsys):
+    logger.add(NotWritable(), enqueue=True, catch=False, format="{message}")
+
+    with default_threading_excepthook():
+        logger.bind(fail=True).info("Bye bye...")
+        logger.complete()
+        logger.remove()
+
+    out, err = capsys.readouterr()
+    lines = err.strip().splitlines()
+    assert out == ""
+    assert lines[0].startswith("Exception")
+    assert lines[-1] == "RuntimeError: You asked me to fail..."
+
+
+def test_not_caught_exception_queue_get_then_complete(writer, capsys):
+    logger.add(writer, enqueue=True, catch=False, format="{message}")
+
+    with default_threading_excepthook():
+        logger.bind(broken=NotUnpicklable()).info("Bye bye...")
+        logger.complete()
+        logger.remove()
+
+    out, err = capsys.readouterr()
+    lines = err.strip().splitlines()
+    assert writer.read() == ""
+    assert out == ""
+    assert lines[0].startswith("Exception")
+    assert lines[-1].endswith("UnpicklingError: You shall not de-serialize me!")
 
 
 def test_wait_for_all_messages_enqueued(capsys):

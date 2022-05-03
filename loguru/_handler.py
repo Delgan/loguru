@@ -273,6 +273,7 @@ class Handler:
             except Exception:
                 with lock:
                     if not self._error_interceptor.should_catch():
+                        self._confirmation_event.set()
                         raise
                     self._error_interceptor.print(None)
                 continue
@@ -289,6 +290,7 @@ class Handler:
                     self._sink.write(message)
                 except Exception:
                     if not self._error_interceptor.should_catch():
+                        self._confirmation_event.set()
                         raise
                     self._error_interceptor.print(message.record)
 
