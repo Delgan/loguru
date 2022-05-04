@@ -7,7 +7,9 @@ import threading
 import time
 import traceback
 import warnings
+from collections import namedtuple
 
+import freezegun
 import loguru
 import pytest
 
@@ -118,41 +120,56 @@ def sink_with_logger():
 
 
 @pytest.fixture
-def monkeypatch_date(monkeypatch):
+def freeze_time(monkeypatch):
+    @contextlib.contextmanager
+    def freeze_time(date, timezone=("UTC", 0), *, include_tm_zone=True):
+        zone, offset = timezone
+        fix_struct = os.name == "nt" and sys.version_info < (3, 6)
 
-    fix_struct = os.name == "nt" and sys.version_info < (3, 6)
+        struct_time_attributes = [
+            "tm_year",
+            "tm_mon",
+            "tm_mday",
+            "tm_hour",
+            "tm_min",
+            "tm_sec",
+            "tm_wday",
+            "tm_yday",
+            "tm_isdst",
+            "tm_zone",
+            "tm_gmtoff",
+        ]
 
-    def monkeypatch_date(year, month, day, hour, minute, second, microsecond, zone="UTC", offset=0):
-        dt = loguru._datetime.datetime(year, month, day, hour, minute, second, microsecond)
-
-        if fix_struct:
-
-            class StructTime:
-                def __init__(self, struct, tm_zone, tm_gmtoff):
-                    self._struct = struct
-                    self.tm_zone = tm_zone
-                    self.tm_gmtoff = tm_gmtoff
-
-                def __getattr__(self, name):
-                    return getattr(self._struct, name)
-
-                def __iter__(self):
-                    return iter(self._struct)
-
-            struct = StructTime(time.struct_time([*dt.timetuple()]), zone, offset)
+        if not include_tm_zone:
+            struct_time_attributes.remove("tm_zone")
+            struct_time_attributes.remove("tm_gmtoff")
+            struct_time = namedtuple("struct_time", struct_time_attributes)._make
+        elif fix_struct:
+            struct_time = namedtuple("struct_time", struct_time_attributes)._make
         else:
-            struct = time.struct_time([*dt.timetuple()] + [zone, offset])
+            struct_time = time.struct_time
 
-        def patched_now(tz=None):
-            return dt
+        freezegun_localtime = freezegun.api.fake_localtime
 
-        def patched_localtime(t):
-            return struct
+        def fake_localtime(t=None):
+            struct = freezegun_localtime(t)
+            override = {"tm_zone": zone, "tm_gmtoff": offset}
+            attributes = []
+            for attribute in struct_time_attributes:
+                if attribute in override:
+                    value = override[attribute]
+                else:
+                    value = getattr(struct, attribute)
+                attributes.append(value)
+            return struct_time(attributes)
 
-        monkeypatch.setattr(loguru._datetime.datetime, "now", patched_now)
-        monkeypatch.setattr(loguru._datetime, "localtime", patched_localtime)
+        # Freezegun does not permit to override timezone name.
+        monkeypatch.setattr(freezegun.api, "fake_localtime", fake_localtime)
 
-    return monkeypatch_date
+        with freezegun.freeze_time(date) as frozen:
+            yield frozen
+
+    return freeze_time
 
 
 @contextlib.contextmanager

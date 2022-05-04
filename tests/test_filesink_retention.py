@@ -2,12 +2,11 @@ import datetime
 import os
 
 import pytest
-
 from loguru import logger
 
 
 @pytest.mark.parametrize("retention", ["1 hour", "1H", " 1 h ", datetime.timedelta(hours=1)])
-def test_retention_time(monkeypatch_date, tmpdir, retention):
+def test_retention_time(freeze_time, tmpdir, retention):
     i = logger.add(str(tmpdir.join("test.log.x")), retention=retention)
     logger.debug("test")
     logger.remove(i)
@@ -15,22 +14,13 @@ def test_retention_time(monkeypatch_date, tmpdir, retention):
     assert len(tmpdir.listdir()) == 1
 
     future = datetime.datetime.now() + datetime.timedelta(days=1)
-    monkeypatch_date(
-        future.year,
-        future.month,
-        future.day,
-        future.hour,
-        future.minute,
-        future.second,
-        future.microsecond,
-    )
+    with freeze_time(future):
+        i = logger.add(str(tmpdir.join("test.log")), retention=retention)
+        logger.debug("test")
 
-    i = logger.add(str(tmpdir.join("test.log")), retention=retention)
-    logger.debug("test")
-
-    assert len(tmpdir.listdir()) == 2
-    logger.remove(i)
-    assert len(tmpdir.listdir()) == 0
+        assert len(tmpdir.listdir()) == 2
+        logger.remove(i)
+        assert len(tmpdir.listdir()) == 0
 
 
 @pytest.mark.parametrize("retention", [0, 1, 10])
@@ -163,34 +153,35 @@ def test_directories_ignored(tmpdir):
     assert len(tmpdir.listdir()) == len(others)
 
 
-def test_manage_formatted_files(monkeypatch_date, tmpdir):
-    monkeypatch_date(2018, 1, 1, 0, 0, 0, 0)
+def test_manage_formatted_files(freeze_time, tmpdir):
+    with freeze_time("2018-01-01 00:00:00"):
+        f1 = tmpdir.join("temp/2018/file.log")
+        f2 = tmpdir.join("temp/file2018.log")
+        f3 = tmpdir.join("temp/d2018/f2018.2018.log")
 
-    f1 = tmpdir.join("temp/2018/file.log")
-    f2 = tmpdir.join("temp/file2018.log")
-    f3 = tmpdir.join("temp/d2018/f2018.2018.log")
+        a = logger.add(str(tmpdir.join("temp/{time:YYYY}/file.log")), retention=0)
+        b = logger.add(str(tmpdir.join("temp/file{time:YYYY}.log")), retention=0)
+        c = logger.add(
+            str(tmpdir.join("temp/d{time:YYYY}/f{time:YYYY}.{time:YYYY}.log")), retention=0
+        )
 
-    a = logger.add(str(tmpdir.join("temp/{time:YYYY}/file.log")), retention=0)
-    b = logger.add(str(tmpdir.join("temp/file{time:YYYY}.log")), retention=0)
-    c = logger.add(str(tmpdir.join("temp/d{time:YYYY}/f{time:YYYY}.{time:YYYY}.log")), retention=0)
+        logger.debug("test")
 
-    logger.debug("test")
+        assert f1.check(exists=1)
+        assert f2.check(exists=1)
+        assert f3.check(exists=1)
 
-    assert f1.check(exists=1)
-    assert f2.check(exists=1)
-    assert f3.check(exists=1)
+        logger.remove(a)
+        logger.remove(b)
+        logger.remove(c)
 
-    logger.remove(a)
-    logger.remove(b)
-    logger.remove(c)
-
-    assert f1.check(exists=0)
-    assert f2.check(exists=0)
-    assert f3.check(exists=0)
+        assert f1.check(exists=0)
+        assert f2.check(exists=0)
+        assert f3.check(exists=0)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support '*' in filename")
-def test_date_with_dot_after_extension(monkeypatch_date, tmpdir):
+def test_date_with_dot_after_extension(tmpdir):
     file = tmpdir.join("file.{time:YYYY.MM}_log")
 
     i = logger.add(str(tmpdir.join("file*.log")), retention=0, catch=False)

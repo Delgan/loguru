@@ -1,4 +1,4 @@
-import datetime as datetime_
+import datetime
 import decimal
 import glob
 import numbers
@@ -10,11 +10,11 @@ from stat import ST_DEV, ST_INO
 
 from . import _string_parsers as string_parsers
 from ._ctime_functions import get_ctime, set_ctime
-from ._datetime import aware_now, datetime
+from ._datetime import aware_now
 
 
 def generate_rename_path(root, ext, creation_time):
-    creation_datetime = datetime.fromtimestamp(creation_time)
+    creation_datetime = datetime.datetime.fromtimestamp(creation_time)
     date = FileDateFormatter(creation_datetime)
 
     renamed_path = "{}.{}{}".format(root, date, ext)
@@ -78,7 +78,7 @@ class Retention:
 
     @staticmethod
     def retention_age(logs, seconds):
-        t = datetime.now().timestamp()
+        t = datetime.datetime.now().timestamp()
         for log in logs:
             if os.stat(log).st_mtime <= t - seconds:
                 os.remove(log)
@@ -87,12 +87,12 @@ class Retention:
 class Rotation:
     @staticmethod
     def forward_day(t):
-        return t + datetime_.timedelta(days=1)
+        return t + datetime.timedelta(days=1)
 
     @staticmethod
     def forward_weekday(t, weekday):
         while True:
-            t += datetime_.timedelta(days=1)
+            t += datetime.timedelta(days=1)
             if t.weekday() == weekday:
                 return t
 
@@ -116,7 +116,7 @@ class Rotation:
                 filepath = os.path.realpath(file.name)
                 creation_time = get_ctime(filepath)
                 set_ctime(filepath, creation_time)
-                start_time = limit = datetime.fromtimestamp(creation_time)
+                start_time = limit = datetime.datetime.fromtimestamp(creation_time)
                 if self._time_init is not None:
                     limit = limit.replace(
                         hour=self._time_init.hour,
@@ -273,7 +273,7 @@ class FileSink:
 
         if is_rotating:
             self._create_file(new_path)
-            set_ctime(new_path, datetime.now().timestamp())
+            set_ctime(new_path, datetime.datetime.now().timestamp())
 
     @staticmethod
     def _make_glob_patterns(path):
@@ -308,15 +308,15 @@ class FileSink:
                 if day is None:
                     return FileSink._make_rotation_function(time)
                 if time is None:
-                    time = datetime_.time(0, 0, 0)
+                    time = datetime.time(0, 0, 0)
                 step_forward = partial(Rotation.forward_weekday, weekday=day)
                 return Rotation.RotationTime(step_forward, time)
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         elif isinstance(rotation, (numbers.Real, decimal.Decimal)):
             return partial(Rotation.rotation_size, size_limit=rotation)
-        elif isinstance(rotation, datetime_.time):
+        elif isinstance(rotation, datetime.time):
             return Rotation.RotationTime(Rotation.forward_day, rotation)
-        elif isinstance(rotation, datetime_.timedelta):
+        elif isinstance(rotation, datetime.timedelta):
             step_forward = partial(Rotation.forward_interval, interval=rotation)
             return Rotation.RotationTime(step_forward)
         elif callable(rotation):
@@ -337,7 +337,7 @@ class FileSink:
             return FileSink._make_retention_function(interval)
         elif isinstance(retention, int):
             return partial(Retention.retention_count, number=retention)
-        elif isinstance(retention, datetime_.timedelta):
+        elif isinstance(retention, datetime.timedelta):
             return partial(Retention.retention_age, seconds=retention.total_seconds())
         elif callable(retention):
             return retention

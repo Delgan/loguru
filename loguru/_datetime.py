@@ -79,7 +79,7 @@ class datetime(datetime_):
 
 
 def aware_now():
-    now = datetime.now()
+    now = datetime_.now()
     timestamp = now.timestamp()
     local = localtime(timestamp)
 
@@ -87,9 +87,10 @@ def aware_now():
         seconds = local.tm_gmtoff
         zone = local.tm_zone
     except AttributeError:
-        offset = datetime.fromtimestamp(timestamp) - datetime.utcfromtimestamp(timestamp)
+        offset = datetime_.fromtimestamp(timestamp) - datetime_.utcfromtimestamp(timestamp)
         seconds = offset.total_seconds()
         zone = strftime("%Z")
 
     tzinfo = timezone(timedelta(seconds=seconds), zone)
-    return now.replace(tzinfo=tzinfo)
+
+    return datetime.combine(now.date(), now.time().replace(tzinfo=tzinfo))

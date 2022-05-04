@@ -60,6 +60,7 @@ setup(
             "colorama>=0.3.4",
             "docutils==0.16",
             "flake8>=3.7.7",
+            "freezegun==1.1.0",
             "isort>=5.1.1 ; python_version>='3.6'",
             "tox>=3.9.0",
             "pytest>=4.6.2",
