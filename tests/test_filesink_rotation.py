@@ -48,8 +48,8 @@ def monkeypatch_filesystem(monkeypatch):
                     return self._timestamp
                 return getattr(self._wrapped, name)
 
-        def patched_stat(filepath):
-            stat = __stat__(filepath)
+        def patched_stat(filepath, *args, **kwargs):
+            stat = __stat__(filepath, *args, **kwargs)
             wrapped = StatWrapper(stat, filesystem.get(os.path.abspath(filepath)))
             return wrapped
 

@@ -406,14 +406,14 @@ Want to intercept standard `logging` messages toward your `Loguru` sinks?
 
     class InterceptHandler(logging.Handler):
         def emit(self, record):
-            # Get corresponding Loguru level if it exists
+            # Get corresponding Loguru level if it exists.
             try:
                 level = logger.level(record.levelname).name
             except ValueError:
                 level = record.levelno
 
-            # Find caller from where originated the logged message
-            frame, depth = logging.currentframe(), 2
+            # Find caller from where originated the logged message.
+            frame, depth = sys._getframe(6), 6
             while frame and frame.f_code.co_filename == logging.__file__:
                 frame = frame.f_back
                 depth += 1

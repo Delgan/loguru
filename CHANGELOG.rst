@@ -1,6 +1,7 @@
 `Unreleased`_
 =============
 
+- Update ``InterceptHandler`` recipe to make it compatible with Python 3.11 (`#654 <https://github.com/Delgan/loguru/issues/654>`_).
 - Add a new ``watch`` optional argument to file sinks in order to automatically re-create possibly deleted or changed file (`#471 <https://github.com/Delgan/loguru/issues/471>`_).
 - Make ``patch()`` calls cumulative instead of overriding the possibly existing patching function (`#462 <https://github.com/Delgan/loguru/issues/462>`_).
 - Fix logs colorization not automatically enabled for Jupyter Notebook and Google Colab (`#494 <https://github.com/Delgan/loguru/issues/494>`_).

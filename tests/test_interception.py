@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from loguru import logger
 
@@ -7,14 +8,14 @@ from .conftest import make_logging_logger
 
 class InterceptHandler(logging.Handler):
     def emit(self, record):
-        # Get corresponding Loguru level if it exists
+        # Get corresponding Loguru level if it exists.
         try:
             level = logger.level(record.levelname).name
         except ValueError:
             level = record.levelno
 
-        # Find caller from where originated the logged message
-        frame, depth = logging.currentframe(), 2
+        # Find caller from where originated the logged message.
+        frame, depth = sys._getframe(6), 6
         while frame and frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back
             depth += 1
@@ -30,7 +31,7 @@ def test_formatting(writer):
 
     expected = (
         "tests.test_interception - test_interception.py - test_formatting - DEBUG - "
-        "10 - 38 - test_interception - This is the message\n"
+        "10 - 39 - test_interception - This is the message\n"
     )
 
     with make_logging_logger("tests", InterceptHandler()) as logging_logger:
@@ -157,4 +158,4 @@ def test_using_logging_function(writer):
         logging.warning("ABC")
 
     result = writer.read()
-    assert result == "test_using_logging_function 157 test_interception test_interception.py ABC\n"
+    assert result == "test_using_logging_function 158 test_interception test_interception.py ABC\n"
