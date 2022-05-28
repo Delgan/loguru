@@ -14,7 +14,7 @@ Switching from standard ``logging`` to ``loguru``
 .. |logger.setLevel| replace:: :meth:`~logging.Logger.setLevel`
 .. |logger.addFilter| replace:: :meth:`~logging.Logger.addFilter`
 .. |makeRecord| replace:: :meth:`~logging.Logger.makeRecord`
-.. |disable| replace:: :meth:`~logging.Logger.disable`
+.. |disable| replace:: :func:`~logging.disable`
 .. |propagate| replace:: :attr:`~logging.Logger.propagate`
 .. |addHandler| replace:: :meth:`~logging.Logger.addHandler`
 .. |removeHandler| replace:: :meth:`~logging.Logger.removeHandler`
@@ -76,7 +76,7 @@ As for standard logging, the ``name`` attribute can then be used to format and f
 Replacing ``Logger`` objects
 ----------------------------
 
-Loguru replaces the standard |Logger| configuration by a proper :ref:`sink <sink>` definition. Instead of configuring a logger, you should |add| and parametrize your handlers. The |logger.setLevel| and |logger.addFilter| are suppressed by the configured sink ``level`` and ``filter`` parameters. The |propagate| attribute and |disable| method can be replaced by the ``filter`` option too. The |makeRecord| method can be replaced using the ``record["extra"]`` dict.
+Loguru replaces the standard |Logger| configuration by a proper :ref:`sink <sink>` definition. Instead of configuring a logger, you should |add| and parametrize your handlers. The |logger.setLevel| and |logger.addFilter| are suppressed by the configured sink ``level`` and ``filter`` parameters. The |propagate| attribute and |disable| function can be replaced by the ``filter`` option too. The |makeRecord| method can be replaced using the ``record["extra"]`` dict.
 
 Sometimes, more fine-grained control is required over a particular logger. In such case, Loguru provides the |bind| method which can be in particular used to generate a specifically named logger.
 

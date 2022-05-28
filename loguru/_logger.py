@@ -16,6 +16,7 @@
 .. |enable| replace:: :meth:`~Logger.enable()`
 .. |disable| replace:: :meth:`~Logger.disable()`
 
+.. |Any| replace:: :obj:`~typing.Any`
 .. |str| replace:: :class:`str`
 .. |int| replace:: :class:`int`
 .. |bool| replace:: :class:`bool`
@@ -1131,7 +1132,7 @@ class Logger:
         exclude : |Exception|, optional
             A type of exception (or a tuple of types) that will be purposely ignored and hence
             propagated to the caller without being logged.
-        default : optional
+        default : |Any|, optional
             The value to be returned by the decorated function if an error occurred without being
             re-raised.
         message : |str|, optional
