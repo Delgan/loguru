@@ -272,6 +272,8 @@ Would result in:
 
     ZeroDivisionError: division by zero
 
+Note that this feature won't work on default Python REPL due to unavailable frame data.
+
 
 Structured logging as needed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
