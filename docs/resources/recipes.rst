@@ -39,6 +39,9 @@ Code snippets and recipes for ``loguru``
 
 .. _`unicode`: https://docs.python.org/3/howto/unicode.html
 
+.. |if-name-equals-main| replace:: ``if __name__ == "__main__":``
+.. _if-name-equals-main: https://docs.python.org/3/library/__main__.html#idiomatic-usage
+
 .. |stackprinter| replace:: ``stackprinter``
 .. _stackprinter: https://github.com/cknd/stackprinter
 
@@ -186,6 +189,55 @@ Finally, more advanced control over handler's level can be achieved by using a c
 
     my_filter.level = "DEBUG"
     logger.debug("OK")
+
+
+Configuring Loguru to be used by a library or an application
+------------------------------------------------------------
+
+A clear distinction must be made between the use of Loguru within a library or an application.
+
+In case of an application, you can add handlers from anywhere in your code. It's advised though to configure the logger from within a |if-name-equals-main|_ block inside the entry file of your script.
+
+However, if your work is intended to be used as a library, you usually should not add any handler. This is user responsibility to configure logging according to its preferences, and it's better not to interfere with that. Indeed, since Loguru is based on a single common logger, handlers added by a library will also receive user logs, which is generally not desirable.
+
+By default, a third-library should not emit logs except if specifically requested. For this reason, there exist the |disable| and |enable| methods. Make sure to first call ``logger.disable("mylib")``. This avoids library logs to be mixed with those of the user. The user can always call ``logger.enable("mylib")`` if he wants to access the logs of your library.
+
+If you would like to ease logging configuration for your library users, it is advised to provide a function like ``configure_logger()`` in charge of adding the desired handlers. This will allow the user to activate the logging only if he needs to.
+
+To summarize, let's look at this hypothetical package (none of the listed files are required, it all depends on how you plan your project to be used):
+
+.. code:: text
+
+    mypackage
+    ├── __init__.py
+    ├── __main__.py
+    ├── main.py
+    └── mymodule.py
+
+Files relate to Loguru as follows:
+
+* File ``__init__.py``:
+
+    * It is the entry point when your project is used as a library (``import mypackage``).
+    * It should contain ``logger.disable("mypackage")`` unconditionally at the top level.
+    * It should not call ``logger.add()`` as it modifies handlers configuration.
+
+* File ``__main__.py``:
+
+    * It is the entry point when your project is used as an application (``python -m mypackage``).
+    * It can contain logging configuration unconditionally at the top level.
+
+* File ``main.py``:
+
+    * It is the entry point when your project is used as a script (``python mypackage/main.py``).
+    * It can contain logging configuration inside an ``if __name__ == "__main__":`` block.
+    
+* File ``mymodule.py``:
+
+    * It is an internal module used by your project.
+    * It can use the ``logger`` simply by importing it.
+    * It does not need to configure anything.
+
 
 
 Sending and receiving log messages across network or processes
@@ -401,7 +453,7 @@ The new method need to be added only once and will be usable across all your fil
 
 
 Setting permissions on created log files
----------------------------------------------------
+----------------------------------------
 
 To set desired permissions on created log files, use the ``opener`` argument to pass in a custom opener with permissions octal::
 
