@@ -75,6 +75,9 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 
+# Warn about all references where the target cannot be found.
+nitpicky = True
+
 
 # -- Options for HTML output -------------------------------------------------
 
