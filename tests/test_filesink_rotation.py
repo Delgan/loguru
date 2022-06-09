@@ -3,15 +3,14 @@ import datetime
 import os
 import pathlib
 import re
-import sys
 import tempfile
 import time
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
 import loguru
+import loguru._ctime_functions as loguru_ctime_functions
 import pytest
 from loguru import logger
-from loguru._ctime_functions import load_ctime_functions
 
 
 @pytest.fixture
@@ -22,108 +21,22 @@ def tmpdir_local(reset_logger):
         logger.remove()  # Deleting file not possible if still in use by Loguru
 
 
-def reload_filesink_ctime_functions(monkeypatch):
-    get_ctime, set_ctime = load_ctime_functions()
-    monkeypatch.setattr(loguru._file_sink, "get_ctime", get_ctime)
-    monkeypatch.setattr(loguru._file_sink, "set_ctime", set_ctime)
-
-
 @pytest.fixture
-def monkeypatch_filesystem(monkeypatch):
-    def monkeypatch_filesystem(raising=None, crtime=None, patch_xattr=False, patch_win32=False):
-        filesystem = {}
-        __open__ = open
-        __stat_result__ = os.stat_result
-        __stat__ = os.stat
+def monkeypatch_ctime_functions(monkeypatch):
+    ctimes = {}
 
-        class StatWrapper:
-            def __init__(self, wrapped, timestamp=None):
-                self._wrapped = wrapped
-                self._timestamp = timestamp
+    __open__ = builtins.open
 
-            def __getattr__(self, name):
-                if name == raising:
-                    raise AttributeError
-                if name == crtime:
-                    return self._timestamp
-                return getattr(self._wrapped, name)
+    def patched_open(filepath, *args, **kwargs):
+        if not os.path.exists(filepath):
+            ctimes[filepath] = datetime.datetime.now().timestamp()
+        return __open__(filepath, *args, **kwargs)
 
-        def patched_stat(filepath, *args, **kwargs):
-            stat = __stat__(filepath, *args, **kwargs)
-            wrapped = StatWrapper(stat, filesystem.get(os.path.abspath(filepath)))
-            return wrapped
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", ctimes.__getitem__)
+    monkeypatch.setattr(loguru._file_sink, "set_ctime", ctimes.__setitem__)
+    monkeypatch.setattr(builtins, "open", patched_open)
 
-        def patched_open(filepath, *args, **kwargs):
-            if not os.path.exists(filepath):
-                filesystem[os.path.abspath(filepath)] = datetime.datetime.now().timestamp()
-            return __open__(filepath, *args, **kwargs)
-
-        def patched_setxattr(filepath, attr, val, *arg, **kwargs):
-            filesystem[(os.path.abspath(filepath), attr)] = val
-
-        def patched_getxattr(filepath, attr, *args, **kwargs):
-            try:
-                return filesystem[(os.path.abspath(filepath), attr)]
-            except KeyError:
-                raise OSError
-
-        def patched_setctime(filepath, timestamp):
-            filesystem[os.path.abspath(filepath)] = timestamp
-
-        monkeypatch.setattr(os, "stat_result", StatWrapper(__stat_result__))
-        monkeypatch.setattr(os, "stat", patched_stat)
-        monkeypatch.setattr(builtins, "open", patched_open)
-
-        if patch_xattr:
-            monkeypatch.setattr(os, "setxattr", patched_setxattr, raising=False)
-            monkeypatch.setattr(os, "getxattr", patched_getxattr, raising=False)
-
-        if patch_win32:
-            win32_setctime = MagicMock(SUPPORTED=True, setctime=patched_setctime)
-            monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
-
-        reload_filesink_ctime_functions(monkeypatch)
-
-    return monkeypatch_filesystem
-
-
-@pytest.fixture
-def windows_filesystem(monkeypatch, monkeypatch_filesystem):
-    monkeypatch.setattr(os, "name", "nt")
-    monkeypatch_filesystem(raising="st_birthtime", crtime="st_ctime", patch_win32=True)
-
-
-@pytest.fixture
-def darwin_filesystem(monkeypatch, monkeypatch_filesystem):
-    monkeypatch.setattr(os, "name", "posix")
-    monkeypatch.delattr(os, "setxattr", raising=False)
-    monkeypatch.delattr(os, "getxattr", raising=False)
-    monkeypatch_filesystem(crtime="st_birthtime")
-
-
-@pytest.fixture
-def linux_filesystem(monkeypatch, monkeypatch_filesystem):
-    monkeypatch.setattr(os, "name", "posix")
-    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime", patch_xattr=True)
-
-
-@pytest.fixture
-def linux_xattr_oserror_filesystem(monkeypatch, monkeypatch_filesystem):
-    def raising(*args, **kwargs):
-        raise OSError
-
-    monkeypatch.setattr(os, "name", "posix")
-    monkeypatch.setattr(os, "setxattr", raising, raising=False)
-    monkeypatch.setattr(os, "getxattr", raising, raising=False)
-    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
-
-
-@pytest.fixture
-def linux_xattr_attributeerror_filesystem(monkeypatch, monkeypatch_filesystem):
-    monkeypatch.setattr(os, "name", "posix")
-    monkeypatch.delattr(os, "setxattr", raising=False)
-    monkeypatch.delattr(os, "getxattr", raising=False)
-    monkeypatch_filesystem(raising="st_birthtime", crtime="st_mtime")
+    yield ctimes
 
 
 def test_renaming(tmpdir):
@@ -232,7 +145,7 @@ def test_size_rotation(freeze_time, tmpdir, size):
         ("Yearly ", [100, 24 * 7 * 30, 24 * 300, 24 * 100, 24 * 400]),
     ],
 )
-def test_time_rotation(freeze_time, darwin_filesystem, tmpdir, when, hours):
+def test_time_rotation(freeze_time, monkeypatch_ctime_functions, tmpdir, when, hours):
     with freeze_time("2017-06-18 12:00:00") as frozen:  # Sunday
         i = logger.add(
             str(tmpdir.join("test_{time}.log")),
@@ -249,7 +162,7 @@ def test_time_rotation(freeze_time, darwin_filesystem, tmpdir, when, hours):
         assert [f.read() for f in sorted(tmpdir.listdir())] == ["a\n", "b\nc\n", "d\n", "e\n"]
 
 
-def test_time_rotation_dst(freeze_time, darwin_filesystem, tmpdir):
+def test_time_rotation_dst(freeze_time, monkeypatch_ctime_functions, tmpdir):
     with freeze_time("2018-10-27 05:00:00", ("CET", 3600)):
         i = logger.add(str(tmpdir.join("test_{time}.log")), format="{message}", rotation="1 day")
         logger.debug("First")
@@ -304,124 +217,118 @@ def test_time_rotation_reopening_native(tmpdir_local, delay):
     assert (tmpdir_local / "test.log").read_text() == "6\n"
 
 
-def rotation_reopening(tmpdir, freeze_time, delay):
-    with freeze_time("2018-10-27 05:00:00") as frozen:
-        filepath = tmpdir.join("test.log")
-        i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 h")
-        logger.info("1")
+@pytest.mark.parametrize("delay", [False, True])
+@pytest.mark.skipif(
+    os.name == "nt"
+    or hasattr(os.stat_result, "st_birthtime")
+    or not hasattr(os, "setxattr")
+    or not hasattr(os, "getxattr"),
+    reason="Testing implementation specific to Linux",
+)
+def test_time_rotation_reopening_xattr_attributeerror(tmpdir_local, monkeypatch, delay):
+    monkeypatch.delattr(os, "setxattr")
+    monkeypatch.delattr(os, "getxattr")
+    get_ctime, set_ctime = loguru_ctime_functions.load_ctime_functions()
 
-        frozen.tick(delta=datetime.timedelta(hours=1, minutes=30))
-        logger.info("2")
-        logger.remove(i)
-        i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 h")
-        logger.info("3")
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", get_ctime)
+    monkeypatch.setattr(loguru._file_sink, "set_ctime", set_ctime)
 
-        assert len(tmpdir.listdir()) == 1
-        assert filepath.read() == "1\n2\n3\n"
-
-        frozen.tick(delta=datetime.timedelta(hours=1))
-        logger.info("4")
-
-        assert len(tmpdir.listdir()) == 2
-        assert filepath.read() == "4\n"
-
-        logger.remove(i)
-        frozen.tick(delta=datetime.timedelta(hours=1))
-
-        i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 h")
-        logger.info("5")
-
-        assert len(tmpdir.listdir()) == 2
-        assert filepath.read() == "4\n5\n"
-
-        frozen.tick(delta=datetime.timedelta(hours=1, minutes=30))
-        logger.info("6")
-        logger.remove(i)
-
-        assert len(tmpdir.listdir()) == 3
-        assert filepath.read() == "6\n"
+    filepath = str(tmpdir_local / "test.log")
+    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    time.sleep(1)
+    logger.info("1")
+    logger.remove(i)
+    time.sleep(1.5)
+    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    logger.info("2")
+    logger.remove(i)
+    assert len(list(tmpdir_local.iterdir())) == 1
+    assert (tmpdir_local / "test.log").read_text() == "1\n2\n"
+    time.sleep(2.5)
+    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    logger.info("3")
+    logger.remove(i)
+    assert len(list(tmpdir_local.iterdir())) == 2
+    assert (tmpdir_local / "test.log").read_text() == "3\n"
 
 
 @pytest.mark.parametrize("delay", [False, True])
-def test_time_rotation_reopening_windows(tmpdir, freeze_time, windows_filesystem, delay):
-    rotation_reopening(tmpdir, freeze_time, delay)
+@pytest.mark.skipif(
+    os.name == "nt"
+    or hasattr(os.stat_result, "st_birthtime")
+    or not hasattr(os, "setxattr")
+    or not hasattr(os, "getxattr"),
+    reason="Testing implementation specific to Linux",
+)
+def test_time_rotation_reopening_xattr_oserror(tmpdir_local, monkeypatch, delay):
+    monkeypatch.setattr(os, "setxattr", MagicMock(side_effect=OSError))
+    monkeypatch.setattr(os, "getxattr", MagicMock(side_effect=OSError))
+    get_ctime, set_ctime = loguru_ctime_functions.load_ctime_functions()
+
+    monkeypatch.setattr(loguru._file_sink, "get_ctime", get_ctime)
+    monkeypatch.setattr(loguru._file_sink, "set_ctime", set_ctime)
+
+    filepath = str(tmpdir_local / "test.log")
+    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    time.sleep(1)
+    logger.info("1")
+    logger.remove(i)
+    time.sleep(1.5)
+    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    logger.info("2")
+    logger.remove(i)
+    assert len(list(tmpdir_local.iterdir())) == 1
+    assert (tmpdir_local / "test.log").read_text() == "1\n2\n"
+    time.sleep(2.5)
+    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    logger.info("3")
+    logger.remove(i)
+    assert len(list(tmpdir_local.iterdir())) == 2
+    assert (tmpdir_local / "test.log").read_text() == "3\n"
 
 
-@pytest.mark.parametrize("delay", [False, True])
-def test_time_rotation_reopening_darwin(tmpdir, freeze_time, darwin_filesystem, delay):
-    rotation_reopening(tmpdir, freeze_time, delay)
+@pytest.mark.skipif(os.name != "nt", reason="Testing implementation specific to Windows")
+def test_time_rotation_windows_no_setctime(tmpdir, monkeypatch):
+    import win32_setctime
 
+    monkeypatch.setattr(win32_setctime, "SUPPORTED", False)
+    monkeypatch.setattr(win32_setctime, "setctime", MagicMock())
 
-@pytest.mark.parametrize("delay", [False, True])
-def test_time_rotation_reopening_linux(tmpdir, freeze_time, linux_filesystem, delay):
-    rotation_reopening(tmpdir, freeze_time, delay)
+    filepath = tmpdir / "test.log"
+    logger.add(str(filepath), format="{message}", rotation="2 s")
+    logger.info("1")
+    time.sleep(1.5)
+    logger.info("2")
+    assert len(tmpdir.listdir()) == 1
+    assert filepath.read_text(encoding="utf8") == "1\n2\n"
+    time.sleep(1)
+    logger.info("3")
+    assert len(tmpdir.listdir()) == 2
+    assert filepath.read_text(encoding="utf8") == "3\n"
 
-
-@pytest.mark.parametrize("delay", [False, True])
-def test_time_rotation_reopening_linux_xattr_oserror(
-    tmpdir, freeze_time, linux_xattr_oserror_filesystem, delay
-):
-    rotation_reopening(tmpdir, freeze_time, delay)
-
-
-@pytest.mark.parametrize("delay", [False, True])
-def test_time_rotation_reopening_linux_xattr_attributeerror(
-    tmpdir, freeze_time, linux_xattr_attributeerror_filesystem, delay
-):
-    rotation_reopening(tmpdir, freeze_time, delay)
-
-
-def test_time_rotation_windows_no_setctime(tmpdir, windows_filesystem, monkeypatch, freeze_time):
-    SUPPORTED = PropertyMock(return_value=False)
-    win32_setctime = MagicMock()
-    type(win32_setctime).SUPPORTED = SUPPORTED
-    monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
-
-    reload_filesink_ctime_functions(monkeypatch)
-
-    with freeze_time("2018-10-27 05:00:00") as frozen:
-        logger.add(str(tmpdir.join("test.{time}.log")), format="{message}", rotation="2 h")
-        logger.info("1")
-        frozen.tick(datetime.timedelta(hours=1, minutes=30))
-        logger.info("2")
-        assert len(tmpdir.listdir()) == 1
-        frozen.tick(datetime.timedelta(hours=1))
-        logger.info("3")
-        assert len(tmpdir.listdir()) == 2
-        assert tmpdir.join("test.2018-10-27_05-00-00_000000.log").read() == "1\n2\n"
-        assert tmpdir.join("test.2018-10-27_07-30-00_000000.log").read() == "3\n"
-        assert SUPPORTED.called
-        assert not win32_setctime.setctime.called
+    assert not win32_setctime.setctime.called
 
 
 @pytest.mark.parametrize("exception", [ValueError, OSError])
-def test_time_rotation_windows_setctime_exception(
-    tmpdir, windows_filesystem, monkeypatch, freeze_time, exception
-):
-    setctime_called = False
+@pytest.mark.skipif(os.name != "nt", reason="Testing implementation specific to Windows")
+def test_time_rotation_windows_setctime_exception(tmpdir, monkeypatch, exception):
+    import win32_setctime
 
-    def raising_setctime(filepath, timestamp):
-        nonlocal setctime_called
-        setctime_called = True
-        raise exception("Setctime error")
+    monkeypatch.setattr(win32_setctime, "setctime", MagicMock(side_effect=exception))
 
-    win32_setctime = MagicMock(SUPPORTED=True, setctime=raising_setctime)
-    monkeypatch.setitem(sys.modules, "win32_setctime", win32_setctime)
+    filepath = tmpdir / "test.log"
+    logger.add(str(filepath), format="{message}", rotation="2 s")
+    logger.info("1")
+    time.sleep(1.5)
+    logger.info("2")
+    assert len(tmpdir.listdir()) == 1
+    assert filepath.read_text(encoding="utf8") == "1\n2\n"
+    time.sleep(1)
+    logger.info("3")
+    assert len(tmpdir.listdir()) == 2
+    assert filepath.read_text(encoding="utf8") == "3\n"
 
-    reload_filesink_ctime_functions(monkeypatch)
-
-    with freeze_time("2018-10-27 05:00:00") as frozen:
-        logger.add(str(tmpdir.join("test.{time}.log")), format="{message}", rotation="2 h")
-        logger.info("1")
-        frozen.tick(datetime.timedelta(hours=1, minutes=30))
-        logger.info("2")
-        assert len(tmpdir.listdir()) == 1
-        frozen.tick(datetime.timedelta(hours=1))
-        logger.info("3")
-        assert len(tmpdir.listdir()) == 2
-        assert tmpdir.join("test.2018-10-27_05-00-00_000000.log").read() == "1\n2\n"
-        assert tmpdir.join("test.2018-10-27_07-30-00_000000.log").read() == "3\n"
-        assert setctime_called
+    assert win32_setctime.setctime.called
 
 
 def test_function_rotation(freeze_time, tmpdir):

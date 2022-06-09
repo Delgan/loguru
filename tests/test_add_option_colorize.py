@@ -73,12 +73,13 @@ def patch_colorama(monkeypatch):
 @pytest.mark.parametrize("colorize", [True, False, None])
 @pytest.mark.parametrize("tty", [True, False])
 @pytest.mark.parametrize("replace_original", [True, False])
-def test_colorize_stream(patch_colorama, monkeypatch, colorize, tty, replace_original):
+@pytest.mark.skipif(os.name == "nt", reason="Colorama is required on Windows")
+def test_colorize_stream_linux(patch_colorama, monkeypatch, colorize, tty, replace_original):
     stream = Stream(tty)
 
     monkeypatch.delenv("TERM", raising=False)
     monkeypatch.delenv("PYCHARM_HOSTED", raising=False)
-    monkeypatch.setattr(os, "name", "unix")
+
     if replace_original:
         monkeypatch.setattr(sys, "__stdout__", stream)
 
@@ -100,12 +101,13 @@ def test_colorize_stream(patch_colorama, monkeypatch, colorize, tty, replace_ori
 @pytest.mark.parametrize("colorize", [True, False, None])
 @pytest.mark.parametrize("tty", [True, False])
 @pytest.mark.parametrize("replace_original", [True, False])
+@pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
 def test_colorize_stream_windows(patch_colorama, monkeypatch, colorize, tty, replace_original):
     stream = Stream(tty)
 
     monkeypatch.delenv("TERM", raising=False)
     monkeypatch.delenv("PYCHARM_HOSTED", raising=False)
-    monkeypatch.setattr(os, "name", "nt")
+
     if replace_original:
         monkeypatch.setattr(sys, "__stdout__", stream)
 
@@ -124,8 +126,7 @@ def test_colorize_stream_windows(patch_colorama, monkeypatch, colorize, tty, rep
 
 
 @pytest.mark.parametrize("colorize", [True, False, None])
-def test_isatty_error(monkeypatch, colorize):
-    monkeypatch.setattr(os, "name", "posix")
+def test_isatty_error(colorize):
     stream = Stream(None)
     logger.add(stream, format="<blue>{message}</blue>", colorize=colorize)
     logger.debug("Message")
@@ -216,24 +217,17 @@ def test_github_actions_ignored(monkeypatch, stream):
 
 
 @pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
+@pytest.mark.skipif(os.name != "nt", reason="The fix is applied only on Windows")
 def test_mintty_fixed_windows(monkeypatch, stream):
-    monkeypatch.setattr(os, "name", "nt")
     monkeypatch.setitem(os.environ, "TERM", "xterm")
     monkeypatch.setattr(stream, "isatty", lambda: False)
     assert not stream.isatty()
     assert loguru._colorama.should_colorize(stream)
 
 
-@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
-def test_mintty_ignored_windows(monkeypatch, stream):
-    monkeypatch.setattr(os, "name", "nt")
-    monkeypatch.setitem(os.environ, "TERM", "xterm")
-    assert not loguru._colorama.should_colorize(stream)
-
-
 @pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
+@pytest.mark.skipif(os.name == "nt", reason="The fix will be applied on Windows")
 def test_mintty_not_fixed_linux(monkeypatch, stream):
-    monkeypatch.setattr(os, "name", "posix")
     monkeypatch.setitem(os.environ, "TERM", "xterm")
     monkeypatch.setattr(stream, "isatty", lambda: False)
     assert not stream.isatty()
@@ -241,7 +235,6 @@ def test_mintty_not_fixed_linux(monkeypatch, stream):
 
 
 @pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
-def test_mintty_ignored_linux(monkeypatch, stream):
-    monkeypatch.setattr(os, "name", "posix")
+def test_mintty_ignored(monkeypatch, stream):
     monkeypatch.setitem(os.environ, "TERM", "xterm")
     assert not loguru._colorama.should_colorize(stream)
