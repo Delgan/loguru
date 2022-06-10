@@ -8,9 +8,9 @@ import time
 from unittest.mock import MagicMock
 
 import loguru
-import loguru._ctime_functions as loguru_ctime_functions
 import pytest
 from loguru import logger
+from loguru._ctime_functions import load_ctime_functions
 
 
 @pytest.fixture
@@ -183,38 +183,52 @@ def test_time_rotation_dst(freeze_time, monkeypatch_ctime_functions, tmpdir):
 
 @pytest.mark.parametrize("delay", [False, True])
 def test_time_rotation_reopening_native(tmpdir_local, delay):
-    filepath = str(tmpdir_local / "test.log")
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="1 s")
+
+    with tempfile.TemporaryDirectory(dir=str(tmpdir_local)) as test_dir:
+        get_ctime, set_ctime = load_ctime_functions()
+        test_file = pathlib.Path(test_dir) / "test.txt"
+        test_file.touch()
+        timestamp_in = 946681200
+        set_ctime(str(test_file), timestamp_in)
+        timestamp_out = get_ctime(str(test_file))
+        if timestamp_in != timestamp_out:
+            pytest.skip(
+                "The current system does not support getting and setting file creation dates, "
+                "the test can't be run."
+            )
+
+    filepath = tmpdir_local / "test.log"
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 s")
     logger.info("1")
-    time.sleep(0.75)
+    time.sleep(1.5)
     logger.info("2")
     logger.remove(i)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="1 s")
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 s")
     logger.info("3")
 
     assert len(list(tmpdir_local.iterdir())) == 1
-    assert (tmpdir_local / "test.log").read_text() == "1\n2\n3\n"
+    assert filepath.read_text() == "1\n2\n3\n"
 
-    time.sleep(0.5)
+    time.sleep(1)
     logger.info("4")
 
     assert len(list(tmpdir_local.iterdir())) == 2
-    assert (tmpdir_local / "test.log").read_text() == "4\n"
+    assert filepath.read_text() == "4\n"
 
     logger.remove(i)
-    time.sleep(0.5)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="1 s")
+    time.sleep(1)
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 s")
     logger.info("5")
 
     assert len(list(tmpdir_local.iterdir())) == 2
-    assert (tmpdir_local / "test.log").read_text() == "4\n5\n"
+    assert filepath.read_text() == "4\n5\n"
 
-    time.sleep(0.75)
+    time.sleep(1.5)
     logger.info("6")
     logger.remove(i)
 
     assert len(list(tmpdir_local.iterdir())) == 3
-    assert (tmpdir_local / "test.log").read_text() == "6\n"
+    assert filepath.read_text() == "6\n"
 
 
 @pytest.mark.parametrize("delay", [False, True])
@@ -228,28 +242,28 @@ def test_time_rotation_reopening_native(tmpdir_local, delay):
 def test_time_rotation_reopening_xattr_attributeerror(tmpdir_local, monkeypatch, delay):
     monkeypatch.delattr(os, "setxattr")
     monkeypatch.delattr(os, "getxattr")
-    get_ctime, set_ctime = loguru_ctime_functions.load_ctime_functions()
+    get_ctime, set_ctime = load_ctime_functions()
 
     monkeypatch.setattr(loguru._file_sink, "get_ctime", get_ctime)
     monkeypatch.setattr(loguru._file_sink, "set_ctime", set_ctime)
 
-    filepath = str(tmpdir_local / "test.log")
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    filepath = tmpdir_local / "test.log"
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 s")
     time.sleep(1)
     logger.info("1")
     logger.remove(i)
     time.sleep(1.5)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 s")
     logger.info("2")
     logger.remove(i)
     assert len(list(tmpdir_local.iterdir())) == 1
-    assert (tmpdir_local / "test.log").read_text() == "1\n2\n"
+    assert filepath.read_text() == "1\n2\n"
     time.sleep(2.5)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 s")
     logger.info("3")
     logger.remove(i)
     assert len(list(tmpdir_local.iterdir())) == 2
-    assert (tmpdir_local / "test.log").read_text() == "3\n"
+    assert filepath.read_text() == "3\n"
 
 
 @pytest.mark.parametrize("delay", [False, True])
@@ -263,28 +277,28 @@ def test_time_rotation_reopening_xattr_attributeerror(tmpdir_local, monkeypatch,
 def test_time_rotation_reopening_xattr_oserror(tmpdir_local, monkeypatch, delay):
     monkeypatch.setattr(os, "setxattr", MagicMock(side_effect=OSError))
     monkeypatch.setattr(os, "getxattr", MagicMock(side_effect=OSError))
-    get_ctime, set_ctime = loguru_ctime_functions.load_ctime_functions()
+    get_ctime, set_ctime = load_ctime_functions()
 
     monkeypatch.setattr(loguru._file_sink, "get_ctime", get_ctime)
     monkeypatch.setattr(loguru._file_sink, "set_ctime", set_ctime)
 
-    filepath = str(tmpdir_local / "test.log")
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    filepath = tmpdir_local / "test.log"
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 s")
     time.sleep(1)
     logger.info("1")
     logger.remove(i)
     time.sleep(1.5)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 s")
     logger.info("2")
     logger.remove(i)
     assert len(list(tmpdir_local.iterdir())) == 1
-    assert (tmpdir_local / "test.log").read_text() == "1\n2\n"
+    assert filepath.read_text() == "1\n2\n"
     time.sleep(2.5)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+    i = logger.add(str(filepath), format="{message}", delay=delay, rotation="2 s")
     logger.info("3")
     logger.remove(i)
     assert len(list(tmpdir_local.iterdir())) == 2
-    assert (tmpdir_local / "test.log").read_text() == "3\n"
+    assert filepath.read_text() == "3\n"
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Testing implementation specific to Windows")
