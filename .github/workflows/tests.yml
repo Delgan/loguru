@@ -45,3 +45,4 @@ jobs:
         with:
           flags: unittests
           verbose: true
+          fail_ci_if_error: true
