@@ -5,7 +5,6 @@ import pathlib
 import sys
 
 import pytest
-
 from loguru import logger
 
 message = "test message"
@@ -59,18 +58,18 @@ def test_devnull(rep):
     "sink_from_path",
     [str, pathlib.Path, lambda path: open(path, "a"), lambda path: pathlib.Path(path).open("a")],
 )
-def test_file_sink(rep, sink_from_path, tmpdir):
-    file = tmpdir.join("test.log")
+def test_file_sink(rep, sink_from_path, tmp_path):
+    file = tmp_path / "test.log"
     sink = sink_from_path(str(file))
     log(sink, rep)
-    assert file.read() == expected * rep
+    assert file.read_text() == expected * rep
 
 
 @repetitions
-def test_file_sink_folder_creation(rep, tmpdir):
-    file = tmpdir.join("some", "sub", "folder", "not", "existing", "test.log")
-    log(str(file), rep)
-    assert file.read() == expected * rep
+def test_file_sink_folder_creation(rep, tmp_path):
+    file = tmp_path.joinpath("some", "sub", "folder", "not", "existing", "test.log")
+    log(file, rep)
+    assert file.read_text() == expected * rep
 
 
 @repetitions
@@ -141,27 +140,25 @@ def test_flush(rep):
     assert flushed == [expected] * rep
 
 
-def test_file_sink_ascii_encoding(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(
-        str(file), encoding="ascii", format="{message}", errors="backslashreplace", catch=False
-    )
+def test_file_sink_ascii_encoding(tmp_path):
+    file = tmp_path / "test.log"
+    logger.add(file, encoding="ascii", format="{message}", errors="backslashreplace", catch=False)
     logger.info("天")
     logger.remove()
     assert file.read_text("ascii") == "\\u5929\n"
 
 
-def test_file_sink_utf8_encoding(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), encoding="utf8", format="{message}", errors="strict", catch=False)
+def test_file_sink_utf8_encoding(tmp_path):
+    file = tmp_path / "test.log"
+    logger.add(file, encoding="utf8", format="{message}", errors="strict", catch=False)
     logger.info("天")
     logger.remove()
     assert file.read_text("utf8") == "天\n"
 
 
-def test_file_sink_default_encoding(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="{message}", errors="strict", catch=False)
+def test_file_sink_default_encoding(tmp_path):
+    file = tmp_path / "test.log"
+    logger.add(file, format="{message}", errors="strict", catch=False)
     logger.info("天")
     logger.remove()
     assert file.read_text("utf8") == "天\n"

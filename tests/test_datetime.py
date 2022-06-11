@@ -129,14 +129,11 @@ def test_stdout_formatting(freeze_time, capsys):
         assert err == ""
 
 
-def test_file_formatting(freeze_time, tmpdir):
+def test_file_formatting(freeze_time, tmp_path):
     with freeze_time("2015-12-25 19:13:18", ("A", -5400)):
-        logger.add(str(tmpdir.join("{time:YYYY [MM] DD HHmmss ZZ}.log")))
+        logger.add(tmp_path / "{time:YYYY [MM] DD HHmmss ZZ}.log")
         logger.debug("Z")
-        files = tmpdir.listdir()
-        assert len(files) == 1
-        result = files[0].basename
-        assert result == "2015 MM 25 191318 -0130.log"
+        assert list(tmp_path.iterdir()) == [tmp_path / "2015 MM 25 191318 -0130.log"]
 
 
 def test_missing_struct_time_fields(writer, freeze_time):

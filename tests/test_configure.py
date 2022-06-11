@@ -1,15 +1,14 @@
 import sys
 
 import pytest
-
 from loguru import logger
 
 
-def test_handlers(capsys, tmpdir):
-    file = tmpdir.join("test.log")
+def test_handlers(capsys, tmp_path):
+    file = tmp_path / "test.log"
 
     handlers = [
-        {"sink": str(file), "format": "FileSink: {message}"},
+        {"sink": file, "format": "FileSink: {message}"},
         {"sink": sys.stdout, "format": "StdoutSink: {message}"},
     ]
 
@@ -18,7 +17,7 @@ def test_handlers(capsys, tmpdir):
 
     out, err = capsys.readouterr()
 
-    assert file.read() == "FileSink: test\n"
+    assert file.read_text() == "FileSink: test\n"
     assert out == "StdoutSink: test\n"
     assert err == ""
 

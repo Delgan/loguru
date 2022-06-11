@@ -63,9 +63,9 @@ def test_sink_encoding(writer, encoding):
     assert writer.output.endswith("ZeroDivisionError: division by zero\n")
 
 
-def test_file_sink_ascii_encoding(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="", encoding="ascii", errors="backslashreplace", catch=False)
+def test_file_sink_ascii_encoding(tmp_path):
+    file = tmp_path / "test.log"
+    logger.add(file, format="", encoding="ascii", errors="backslashreplace", catch=False)
     a = "天"
 
     try:
@@ -79,9 +79,9 @@ def test_file_sink_ascii_encoding(tmpdir):
     assert result.count("-> '\\u5929'") == 1
 
 
-def test_file_sink_utf8_encoding(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="", encoding="utf8", errors="strict", catch=False)
+def test_file_sink_utf8_encoding(tmp_path):
+    file = tmp_path / "test.log"
+    logger.add(file, format="", encoding="utf8", errors="strict", catch=False)
     a = "天"
 
     try:

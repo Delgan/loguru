@@ -261,10 +261,10 @@ def test_complete_stream_noop(capsys):
     assert err == "A\nB\nC\nD\n"
 
 
-def test_complete_file_noop(tmpdir):
-    filepath = tmpdir.join("test.log")
+def test_complete_file_noop(tmp_path):
+    filepath = tmp_path / "test.log"
 
-    logger.add(str(filepath), format="{message}", catch=False)
+    logger.add(filepath, format="{message}", catch=False)
     logger.info("A")
 
     async def worker():
@@ -276,7 +276,7 @@ def test_complete_file_noop(tmpdir):
 
     logger.info("D")
 
-    assert filepath.read() == "A\nB\nC\nD\n"
+    assert filepath.read_text() == "A\nB\nC\nD\n"
 
 
 def test_complete_function_noop():

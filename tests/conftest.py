@@ -1,7 +1,10 @@
 import asyncio
+import builtins
 import contextlib
+import datetime
 import logging
 import os
+import pathlib
 import sys
 import threading
 import time
@@ -35,6 +38,12 @@ elif sys.version_info < (3, 7):
 
     asyncio.run = run
 
+if sys.version_info < (3, 6):
+
+    @pytest.fixture
+    def tmp_path(tmp_path):
+        yield pathlib.Path(str(tmp_path))
+
 
 def parse(text, *, strip=False, strict=True):
     parser = loguru._colorizer.AnsiParser()
@@ -45,6 +54,19 @@ def parse(text, *, strip=False, strict=True):
         return parser.strip(tokens)
     else:
         return parser.colorize(tokens, "")
+
+
+def check_dir(dir, *, files=None, size=None):
+    actual_files = set(dir.iterdir())
+    if size is not None:
+        assert len(actual_files) == size
+    if files is not None:
+        assert len(actual_files) == len(files)
+        for name, content in files:
+            filepath = dir / name
+            assert filepath in actual_files
+            if content is not None:
+                assert filepath.read_text() == content
 
 
 @contextlib.contextmanager
@@ -166,7 +188,19 @@ def freeze_time(monkeypatch):
         # Freezegun does not permit to override timezone name.
         monkeypatch.setattr(freezegun.api, "fake_localtime", fake_localtime)
 
-        with freezegun.freeze_time(date) as frozen:
+        ctimes = {}
+
+        __open__ = builtins.open
+
+        def patched_open(filepath, *args, **kwargs):
+            if not os.path.exists(filepath):
+                ctimes[filepath] = datetime.datetime.now().timestamp()
+            return __open__(filepath, *args, **kwargs)
+
+        with freezegun.freeze_time(date) as frozen, monkeypatch.context() as context:
+            context.setattr(loguru._file_sink, "get_ctime", ctimes.__getitem__)
+            context.setattr(loguru._file_sink, "set_ctime", ctimes.__setitem__)
+            context.setattr(builtins, "open", patched_open)
             yield frozen
 
     return freeze_time

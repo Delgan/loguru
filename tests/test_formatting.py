@@ -1,7 +1,6 @@
 import re
 
 import pytest
-
 from loguru import logger
 
 
@@ -55,31 +54,31 @@ def test_log_formatters(format, validator, writer, use_log_function):
     ],
 )
 @pytest.mark.parametrize("part", ["file", "dir", "both"])
-def test_file_formatters(tmpdir, format, validator, part):
+def test_file_formatters(tmp_path, format, validator, part):
     if part == "file":
-        file = tmpdir.join(format)
+        file = tmp_path.joinpath(format)
     elif part == "dir":
-        file = tmpdir.join(format, "log.log")
+        file = tmp_path.joinpath(format, "log.log")
     elif part == "both":
-        file = tmpdir.join(format, format)
+        file = tmp_path.joinpath(format, format)
 
-    logger.add(str(file))
+    logger.add(file)
     logger.debug("Message")
 
-    files = [f for f in tmpdir.visit() if f.check(file=1)]
+    files = [f for f in tmp_path.glob("**/*") if f.is_file()]
 
     assert len(files) == 1
 
     file = files[0]
 
     if part == "file":
-        assert validator(file.basename)
+        assert validator(file.name)
     elif part == "dir":
-        assert file.basename == "log.log"
-        assert validator(file.dirpath().basename)
+        assert file.name == "log.log"
+        assert validator(file.parent.name)
     elif part == "both":
-        assert validator(file.basename)
-        assert validator(file.dirpath().basename)
+        assert validator(file.name)
+        assert validator(file.parent.name)
 
 
 @pytest.mark.parametrize(

@@ -1,164 +1,154 @@
-import datetime
 import os
 import sys
 import threading
 import time
+from unittest.mock import Mock
 
-import loguru
 import pytest
 from loguru import logger
+
+from .conftest import check_dir
 
 
 @pytest.mark.parametrize(
     "compression", ["gz", "bz2", "zip", "xz", "lzma", "tar", "tar.gz", "tar.bz2", "tar.xz"]
 )
-def test_compression_ext(tmpdir, compression):
-    i = logger.add(str(tmpdir.join("file.log")), compression=compression)
+def test_compression_ext(tmp_path, compression):
+    i = logger.add(tmp_path / "file.log", compression=compression)
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("file.log.%s" % compression).check(exists=1)
+    check_dir(tmp_path, files=[("file.log.%s" % compression, None)])
 
 
-def test_compression_function(tmpdir):
+def test_compression_function(tmp_path):
     def compress(file):
         os.replace(file, file + ".rar")
 
-    i = logger.add(str(tmpdir.join("file.log")), compression=compress)
+    i = logger.add(tmp_path / "file.log", compression=compress)
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("file.log.rar").check(exists=1)
+    check_dir(tmp_path, files=[("file.log.rar", None)])
 
 
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
-def test_compression_at_rotation(tmpdir, mode):
-    logger.add(
-        str(tmpdir.join("file.log")), format="{message}", rotation=0, compression="gz", mode=mode
+def test_compression_at_rotation(tmp_path, mode, freeze_time):
+    with freeze_time("2010-10-09 11:30:59"):
+        logger.add(
+            tmp_path / "file.log", format="{message}", rotation=0, compression="gz", mode=mode
+        )
+        logger.debug("After compression")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("file.2010-10-09_11-30-59_000000.log.gz", None),
+            ("file.log", "After compression\n"),
+        ],
     )
-    logger.debug("After compression")
 
-    files = sorted(tmpdir.listdir())
 
-    assert len(files) == 2
-    assert files[0].fnmatch(
-        "file.{0}-{1}-{1}_{1}-{1}-{1}_{2}.log.gz".format("[0-9]" * 4, "[0-9]" * 2, "[0-9]" * 6)
+@pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
+def test_compression_at_remove_without_rotation(tmp_path, mode):
+    i = logger.add(tmp_path / "file.log", compression="gz", mode=mode)
+    logger.debug("test")
+    logger.remove(i)
+
+    check_dir(tmp_path, files=[("file.log.gz", None)])
+
+
+@pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
+def test_no_compression_at_remove_with_rotation(tmp_path, mode):
+    i = logger.add(tmp_path / "test.log", compression="gz", rotation="100 MB", mode=mode)
+    logger.debug("test")
+    logger.remove(i)
+
+    check_dir(tmp_path, files=[("test.log", None)])
+
+
+def test_rename_existing_with_creation_time(tmp_path, freeze_time):
+    with freeze_time("2018-01-01") as frozen:
+        i = logger.add(tmp_path / "test.log", compression="tar.gz")
+        logger.debug("test")
+        logger.remove(i)
+        frozen.tick()
+        j = logger.add(tmp_path / "test.log", compression="tar.gz")
+        logger.debug("test")
+        logger.remove(j)
+
+    check_dir(
+        tmp_path,
+        files=[("test.2018-01-01_00-00-00_000000.log.tar.gz", None), ("test.log.tar.gz", None)],
     )
-    assert files[1].basename == "file.log"
-    assert files[1].read() == "After compression\n"
 
 
-@pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
-def test_compression_at_remove_without_rotation(tmpdir, mode):
-    i = logger.add(str(tmpdir.join("file.log")), compression="gz", mode=mode)
-    logger.debug("test")
-    logger.remove(i)
-
-    assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("file.log.gz").check(exists=1)
-
-
-@pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
-def test_no_compression_at_remove_with_rotation(tmpdir, mode):
-    i = logger.add(str(tmpdir.join("test.log")), compression="gz", rotation="100 MB", mode=mode)
-    logger.debug("test")
-    logger.remove(i)
-
-    assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("test.log").check(exists=1)
-
-
-def test_rename_existing_with_creation_time(monkeypatch, tmpdir):
-    def creation_time(filepath):
-        assert os.path.isfile(filepath)
-        assert os.path.basename(filepath) == "test.log.tar.gz"
-        return datetime.datetime(2018, 1, 1, 0, 0, 0, 0).timestamp()
-
-    i = logger.add(str(tmpdir.join("test.log")), compression="tar.gz")
-    logger.debug("test")
-    logger.remove(i)
-    j = logger.add(str(tmpdir.join("test.log")), compression="tar.gz")
-    logger.debug("test")
-
-    monkeypatch.setattr(loguru._file_sink, "get_ctime", creation_time)
-
-    logger.remove(j)
-
-    assert len(tmpdir.listdir()) == 2
-    assert tmpdir.join("test.log.tar.gz").check(exists=1)
-    assert tmpdir.join("test.2018-01-01_00-00-00_000000.log.tar.gz").check(exists=1)
-
-
-def test_renaming_compression_dest_exists(monkeypatch, freeze_time, tmpdir):
+def test_renaming_compression_dest_exists(freeze_time, tmp_path):
     with freeze_time("2019-01-02 03:04:05.000006"):
-        timestamp = datetime.datetime.now().timestamp()
-        monkeypatch.setattr(loguru._file_sink, "get_ctime", lambda _: timestamp)
-
         for i in range(4):
-            logger.add(str(tmpdir.join("rotate.log")), compression=".tar.gz", format="{message}")
+            logger.add(tmp_path / "rotate.log", compression=".tar.gz", format="{message}")
             logger.info(str(i))
             logger.remove()
 
-        assert len(tmpdir.listdir()) == 4
-        assert tmpdir.join("rotate.log.tar.gz").check(exists=1)
-        assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.log.tar.gz").check(exists=1)
-        assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.2.log.tar.gz").check(exists=1)
-        assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.3.log.tar.gz").check(exists=1)
+    check_dir(
+        tmp_path,
+        files=[
+            ("rotate.log.tar.gz", None),
+            ("rotate.2019-01-02_03-04-05_000006.log.tar.gz", None),
+            ("rotate.2019-01-02_03-04-05_000006.2.log.tar.gz", None),
+            ("rotate.2019-01-02_03-04-05_000006.3.log.tar.gz", None),
+        ],
+    )
 
 
-def test_renaming_compression_dest_exists_with_time(monkeypatch, freeze_time, tmpdir):
+def test_renaming_compression_dest_exists_with_time(freeze_time, tmp_path):
     with freeze_time("2019-01-02 03:04:05.000006"):
-        timestamp = datetime.datetime.now().timestamp()
-        monkeypatch.setattr(loguru._file_sink, "get_ctime", lambda _: timestamp)
-
         for i in range(4):
-            logger.add(
-                str(tmpdir.join("rotate.{time}.log")), compression=".tar.gz", format="{message}"
-            )
+            logger.add(tmp_path / "rotate.{time}.log", compression=".tar.gz", format="{message}")
             logger.info(str(i))
             logger.remove()
 
-        assert len(tmpdir.listdir()) == 4
-        assert tmpdir.join("rotate.2019-01-02_03-04-05_000006.log.tar.gz").check(exists=1)
-        assert tmpdir.join(
-            "rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.log.tar.gz"
-        ).check(exists=1)
-        assert tmpdir.join(
-            "rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.2.log.tar.gz"
-        ).check(exists=1)
-        assert tmpdir.join(
-            "rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.3.log.tar.gz"
-        ).check(exists=1)
+    check_dir(
+        tmp_path,
+        files=[
+            ("rotate.2019-01-02_03-04-05_000006.log.tar.gz", None),
+            ("rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.log.tar.gz", None),
+            ("rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.2.log.tar.gz", None),
+            ("rotate.2019-01-02_03-04-05_000006.2019-01-02_03-04-05_000006.3.log.tar.gz", None),
+        ],
+    )
 
 
-def test_compression_use_renamed_file_after_rotation(tmpdir):
-    compressed_file = None
-
-    def compression(filepath):
-        nonlocal compressed_file
-        compressed_file = filepath
-
+def test_compression_use_renamed_file_after_rotation(tmp_path, freeze_time):
     def rotation(message, _):
         return message.record["extra"].get("rotate", False)
 
-    filepath = tmpdir.join("test.log")
-    logger.add(str(filepath), format="{message}", compression=compression, rotation=rotation)
+    compression = Mock()
 
-    logger.info("Before")
-    logger.bind(rotate=True).info("Rotation")
-    logger.info("After")
+    with freeze_time("2020-01-02"):
+        logger.add(
+            tmp_path / "test.log", format="{message}", compression=compression, rotation=rotation
+        )
 
-    assert compressed_file != str(filepath)
-    assert open(compressed_file, "r").read() == "Before\n"
-    assert filepath.read() == "Rotation\nAfter\n"
+        logger.info("Before")
+        logger.bind(rotate=True).info("Rotation")
+        logger.info("After")
+
+    compression.assert_called_once_with(str(tmp_path / "test.2020-01-02_00-00-00_000000.log"))
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-02_00-00-00_000000.log", "Before\n"),
+            ("test.log", "Rotation\nAfter\n"),
+        ],
+    )
 
 
-def test_threaded_compression_after_rotation(tmpdir):
+def test_threaded_compression_after_rotation(tmp_path):
     thread = None
 
     def rename(filepath):
         time.sleep(1)
-        os.rename(filepath, str(tmpdir.join("test.log.mv")))
+        os.rename(filepath, str(tmp_path / "test.log.mv"))
 
     def compression(filepath):
         nonlocal thread
@@ -169,7 +159,7 @@ def test_threaded_compression_after_rotation(tmpdir):
         return message.record["extra"].get("rotate", False)
 
     logger.add(
-        str(tmpdir.join("test.log")), format="{message}", compression=compression, rotation=rotation
+        tmp_path / "test.log", format="{message}", compression=compression, rotation=rotation
     )
 
     logger.info("Before")
@@ -178,85 +168,81 @@ def test_threaded_compression_after_rotation(tmpdir):
 
     thread.join()
 
-    assert tmpdir.join("test.log").read() == "Rotation\nAfter\n"
-    assert tmpdir.join("test.log.mv").read() == "Before\n"
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.log", "Rotation\nAfter\n"),
+            ("test.log.mv", "Before\n"),
+        ],
+    )
 
 
 @pytest.mark.parametrize("delay", [True, False])
-def test_exception_during_compression_at_rotation(tmpdir, capsys, delay):
-    raising = True
+def test_exception_during_compression_at_rotation(freeze_time, tmp_path, capsys, delay):
+    with freeze_time("2017-07-01") as frozen:
+        logger.add(
+            tmp_path / "test.log",
+            format="{message}",
+            compression=Mock(side_effect=[Exception("Compression error"), None]),
+            rotation=0,
+            catch=True,
+            delay=delay,
+        )
+        logger.debug("AAA")
+        frozen.tick()
+        logger.debug("BBB")
 
-    def failing_compression(file):
-        nonlocal raising
-        if raising:
-            raising = False
-            raise Exception("Compression error")
-
-    logger.add(
-        str(tmpdir.join("test.log")),
-        format="{message}",
-        compression=failing_compression,
-        rotation=0,
-        catch=True,
-        delay=delay,
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2017-07-01_00-00-00_000000.log", ""),
+            ("test.2017-07-01_00-00-01_000000.log", ""),
+            ("test.log", "BBB\n"),
+        ],
     )
-    logger.debug("AAA")
-    logger.debug("BBB")
 
-    files = sorted(tmpdir.listdir())
     out, err = capsys.readouterr()
-
-    assert len(files) == 3
-    assert [file.read() for file in files] == ["", "", "BBB\n"]
     assert out == ""
     assert err.count("Logging error in Loguru Handler") == 1
     assert err.count("Exception: Compression error") == 1
 
 
 @pytest.mark.parametrize("delay", [True, False])
-def test_exception_during_compression_at_rotation_not_caught(tmpdir, capsys, delay):
-    raising = True
+def test_exception_during_compression_at_rotation_not_caught(freeze_time, tmp_path, capsys, delay):
+    with freeze_time("2017-07-01") as frozen:
+        logger.add(
+            tmp_path / "test.log",
+            format="{message}",
+            compression=Mock(side_effect=[Exception("Compression error"), None]),
+            rotation=0,
+            catch=False,
+            delay=delay,
+        )
+        with pytest.raises(Exception, match="Compression error"):
+            logger.debug("AAA")
 
-    def failing_compression(file):
-        nonlocal raising
-        if raising:
-            raising = False
-            raise Exception("Compression error")
+        frozen.tick()
+        logger.debug("BBB")
 
-    logger.add(
-        str(tmpdir.join("test.log")),
-        format="{message}",
-        compression=failing_compression,
-        rotation=0,
-        catch=False,
-        delay=delay,
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2017-07-01_00-00-00_000000.log", ""),
+            ("test.2017-07-01_00-00-01_000000.log", ""),
+            ("test.log", "BBB\n"),
+        ],
     )
-    with pytest.raises(Exception, match="Compression error"):
-        logger.debug("AAA")
-    logger.debug("BBB")
 
-    files = sorted(tmpdir.listdir())
     out, err = capsys.readouterr()
-
-    assert len(files) == 3
-    assert [file.read() for file in files] == ["", "", "BBB\n"]
     assert out == err == ""
 
 
 @pytest.mark.parametrize("delay", [True, False])
-def test_exception_during_compression_at_remove(tmpdir, capsys, delay):
-    raising = True
-
-    def failing_compression(file):
-        nonlocal raising
-        if raising:
-            raising = False
-            raise Exception("Compression error")
-
+def test_exception_during_compression_at_remove(tmp_path, capsys, delay):
     i = logger.add(
-        str(tmpdir.join("test.log")),
+        tmp_path / "test.log",
         format="{message}",
-        compression=failing_compression,
+        compression=Mock(side_effect=[Exception("Compression error"), None]),
         catch=True,
         delay=delay,
     )
@@ -267,11 +253,14 @@ def test_exception_during_compression_at_remove(tmpdir, capsys, delay):
 
     logger.debug("Nope")
 
-    files = sorted(tmpdir.listdir())
-    out, err = capsys.readouterr()
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.log", "AAA\n"),
+        ],
+    )
 
-    assert len(files) == 1
-    assert tmpdir.join("test.log").read() == "AAA\n"
+    out, err = capsys.readouterr()
     assert out == err == ""
 
 

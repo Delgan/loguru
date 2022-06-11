@@ -2,7 +2,6 @@ import sys
 from logging import FileHandler, Formatter, Handler, NullHandler, StreamHandler
 
 import pytest
-
 from loguru import logger
 
 
@@ -17,14 +16,14 @@ def test_stream_handler(capsys):
     assert err == "INFO test\n"
 
 
-def test_file_handler(tmpdir):
-    file = tmpdir.join("test.log")
+def test_file_handler(tmp_path):
+    file = tmp_path / "test.log"
     logger.add(FileHandler(str(file)), format="{message} {level.name}")
     logger.info("test")
     logger.remove()
     logger.warning("nope")
 
-    assert file.read() == "test INFO\n"
+    assert file.read_text() == "test INFO\n"
 
 
 def test_null_handler(capsys):
@@ -93,8 +92,8 @@ def test_exception(capsys):
     assert result is True
 
 
-def test_exception_formatting(tmpdir):
-    file = tmpdir.join("test.log")
+def test_exception_formatting(tmp_path):
+    file = tmp_path / "test.log"
     logger.add(FileHandler(str(file)), format="{message}")
 
     try:
@@ -102,7 +101,7 @@ def test_exception_formatting(tmpdir):
     except ZeroDivisionError:
         logger.exception("Error")
 
-    result = file.read()
+    result = file.read_text()
     lines = result.strip().splitlines()
 
     error = "ZeroDivisionError: division by zero"

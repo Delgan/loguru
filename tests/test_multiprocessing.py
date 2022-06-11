@@ -6,9 +6,8 @@ import sys
 import threading
 import time
 
-import pytest
-
 import loguru
+import pytest
 from loguru import logger
 
 
@@ -450,12 +449,12 @@ def test_await_complete_inheritance(capsys, fork_context):
     assert err == ""
 
 
-def test_not_picklable_sinks_spawn(spawn_context, tmpdir, capsys):
-    filepath = tmpdir.join("test.log")
+def test_not_picklable_sinks_spawn(spawn_context, tmp_path, capsys):
+    filepath = tmp_path / "test.log"
     stream = sys.stderr
     output = []
 
-    logger.add(str(filepath), format="{message}", enqueue=True, catch=False)
+    logger.add(filepath, format="{message}", enqueue=True, catch=False)
     logger.add(stream, format="{message}", enqueue=True)
     logger.add(lambda m: output.append(m), format="{message}", enqueue=True)
 
@@ -470,19 +469,19 @@ def test_not_picklable_sinks_spawn(spawn_context, tmpdir, capsys):
 
     out, err = capsys.readouterr()
 
-    assert filepath.read() == "Child\nMain\n"
+    assert filepath.read_text() == "Child\nMain\n"
     assert out == ""
     assert err == "Child\nMain\n"
     assert output == ["Child\n", "Main\n"]
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_not_picklable_sinks_fork(capsys, tmpdir, fork_context):
-    filepath = tmpdir.join("test.log")
+def test_not_picklable_sinks_fork(capsys, tmp_path, fork_context):
+    filepath = tmp_path / "test.log"
     stream = sys.stderr
     output = []
 
-    logger.add(str(filepath), format="{message}", enqueue=True, catch=False)
+    logger.add(filepath, format="{message}", enqueue=True, catch=False)
     logger.add(stream, format="{message}", enqueue=True, catch=False)
     logger.add(lambda m: output.append(m), format="{message}", enqueue=True, catch=False)
 
@@ -497,19 +496,19 @@ def test_not_picklable_sinks_fork(capsys, tmpdir, fork_context):
 
     out, err = capsys.readouterr()
 
-    assert filepath.read() == "Child\nMain\n"
+    assert filepath.read_text() == "Child\nMain\n"
     assert out == ""
     assert err == "Child\nMain\n"
     assert output == ["Child\n", "Main\n"]
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
-def test_not_picklable_sinks_inheritance(capsys, tmpdir, fork_context):
-    filepath = tmpdir.join("test.log")
+def test_not_picklable_sinks_inheritance(capsys, tmp_path, fork_context):
+    filepath = tmp_path / "test.log"
     stream = sys.stderr
     output = []
 
-    logger.add(str(filepath), format="{message}", enqueue=True, catch=False)
+    logger.add(filepath, format="{message}", enqueue=True, catch=False)
     logger.add(stream, format="{message}", enqueue=True, catch=False)
     logger.add(lambda m: output.append(m), format="{message}", enqueue=True, catch=False)
 
@@ -524,7 +523,7 @@ def test_not_picklable_sinks_inheritance(capsys, tmpdir, fork_context):
 
     out, err = capsys.readouterr()
 
-    assert filepath.read() == "Child\nMain\n"
+    assert filepath.read_text() == "Child\nMain\n"
     assert out == ""
     assert err == "Child\nMain\n"
     assert output == ["Child\n", "Main\n"]
@@ -534,13 +533,13 @@ def test_not_picklable_sinks_inheritance(capsys, tmpdir, fork_context):
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="No 'os.register_at_fork()' function")
 @pytest.mark.parametrize("enqueue", [True, False])
 @pytest.mark.parametrize("deepcopied", [True, False])
-def test_no_deadlock_if_internal_lock_in_use(tmpdir, enqueue, deepcopied, fork_context):
+def test_no_deadlock_if_internal_lock_in_use(tmp_path, enqueue, deepcopied, fork_context):
     if deepcopied:
         logger_ = copy.deepcopy(logger)
     else:
         logger_ = logger
 
-    output = tmpdir.join("stdout.txt")
+    output = tmp_path / "stdout.txt"
     stdout = output.open("w")
 
     def slow_sink(msg):
@@ -569,7 +568,7 @@ def test_no_deadlock_if_internal_lock_in_use(tmpdir, enqueue, deepcopied, fork_c
 
     logger_.remove()
 
-    assert output.read() in ("Main\nChild\n", "Child\nMain\n")
+    assert output.read_text() in ("Main\nChild\n", "Child\nMain\n")
 
 
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="No 'os.register_at_fork()' function")

@@ -4,7 +4,6 @@ import logging
 import pickle
 
 import pytest
-
 from loguru import logger
 
 from .conftest import parse
@@ -149,13 +148,13 @@ def test_pickling_standard_handler_root_logger_not_picklable(monkeypatch, capsys
     assert handler.written == "=> Ok"
 
 
-def test_pickling_file_handler(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="{level} - {function} - {message}", delay=True)
+def test_pickling_file_handler(tmp_path):
+    file = tmp_path / "test.log"
+    logger.add(file, format="{level} - {function} - {message}", delay=True)
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.debug("A message")
-    assert file.read() == "DEBUG - test_pickling_file_handler - A message\n"
+    assert file.read_text() == "DEBUG - test_pickling_file_handler - A message\n"
 
 
 @pytest.mark.parametrize(
@@ -171,39 +170,35 @@ def test_pickling_file_handler(tmpdir):
         rotation_function,
     ],
 )
-def test_pickling_file_handler_rotation(tmpdir, rotation):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="{level} - {function} - {message}", delay=True, rotation=rotation)
+def test_pickling_file_handler_rotation(tmp_path, rotation):
+    file = tmp_path / "test.log"
+    logger.add(file, format="{level} - {function} - {message}", delay=True, rotation=rotation)
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.debug("A message")
-    assert file.read() == "DEBUG - test_pickling_file_handler_rotation - A message\n"
+    assert file.read_text() == "DEBUG - test_pickling_file_handler_rotation - A message\n"
 
 
 @pytest.mark.parametrize(
     "retention", [1000, datetime.timedelta(hours=13), "10 days", retention_function]
 )
-def test_pickling_file_handler_retention(tmpdir, retention):
-    file = tmpdir.join("test.log")
-    logger.add(
-        str(file), format="{level} - {function} - {message}", delay=True, retention=retention
-    )
+def test_pickling_file_handler_retention(tmp_path, retention):
+    file = tmp_path / "test.log"
+    logger.add(file, format="{level} - {function} - {message}", delay=True, retention=retention)
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.debug("A message")
-    assert file.read() == "DEBUG - test_pickling_file_handler_retention - A message\n"
+    assert file.read_text() == "DEBUG - test_pickling_file_handler_retention - A message\n"
 
 
 @pytest.mark.parametrize("compression", ["zip", "gz", "tar", compression_function])
-def test_pickling_file_handler_compression(tmpdir, compression):
-    file = tmpdir.join("test.log")
-    logger.add(
-        str(file), format="{level} - {function} - {message}", delay=True, compression=compression
-    )
+def test_pickling_file_handler_compression(tmp_path, compression):
+    file = tmp_path / "test.log"
+    logger.add(file, format="{level} - {function} - {message}", delay=True, compression=compression)
     pickled = pickle.dumps(logger)
     unpickled = pickle.loads(pickled)
     unpickled.debug("A message")
-    assert file.read() == "DEBUG - test_pickling_file_handler_compression - A message\n"
+    assert file.read_text() == "DEBUG - test_pickling_file_handler_compression - A message\n"
 
 
 def test_pickling_no_handler(writer):

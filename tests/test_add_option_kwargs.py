@@ -1,33 +1,32 @@
 import io
 
 import pytest
-
 from loguru import logger
 
 
-def test_file_mode_a(tmpdir):
-    file = tmpdir.join("test.log")
-    file.write("base\n")
-    logger.add(str(file), format="{message}", mode="a")
+def test_file_mode_a(tmp_path):
+    file = tmp_path / "test.log"
+    file.write_text("base\n")
+    logger.add(file, format="{message}", mode="a")
     logger.debug("msg")
-    assert file.read() == "base\nmsg\n"
+    assert file.read_text() == "base\nmsg\n"
 
 
-def test_file_mode_w(tmpdir):
-    file = tmpdir.join("test.log")
-    file.write("base\n")
-    logger.add(str(file), format="{message}", mode="w")
+def test_file_mode_w(tmp_path):
+    file = tmp_path / "test.log"
+    file.write_text("base\n")
+    logger.add(file, format="{message}", mode="w")
     logger.debug("msg")
-    assert file.read() == "msg\n"
+    assert file.read_text() == "msg\n"
 
 
-def test_file_buffering(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="{message}", buffering=-1)
+def test_file_buffering(tmp_path):
+    file = tmp_path / "test.log"
+    logger.add(file, format="{message}", buffering=-1)
     logger.debug("x" * (io.DEFAULT_BUFFER_SIZE // 2))
-    assert file.read() == ""
+    assert file.read_text() == ""
     logger.debug("x" * (io.DEFAULT_BUFFER_SIZE * 2))
-    assert file.read() != ""
+    assert file.read_text() != ""
 
 
 def test_invalid_function_kwargs():

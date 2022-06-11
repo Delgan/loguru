@@ -43,21 +43,21 @@ def test_stdout():
     assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=<stdout>)]>"
 
 
-def test_file_object(tmpdir):
-    path = str(tmpdir.join("test.log"))
+def test_file_object(tmp_path):
+    path = str(tmp_path / "test.log")
     file = open(path, "w")
     logger.add(file)
     assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=%s)]>" % path
 
 
-def test_file_str(tmpdir):
-    path = str(tmpdir.join("test.log"))
+def test_file_str(tmp_path):
+    path = str(tmp_path / "test.log")
     logger.add(path)
     assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink='%s')]>" % path
 
 
-def test_file_pathlib(tmpdir):
-    path = str(tmpdir.join("test.log"))
+def test_file_pathlib(tmp_path):
+    path = str(tmp_path / "test.log")
     logger.add(pathlib.Path(path))
     assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink='%s')]>" % path
 

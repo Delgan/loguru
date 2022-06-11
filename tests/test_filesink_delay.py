@@ -1,111 +1,117 @@
-import re
+import datetime
 import time
 
 from loguru import logger
 
+from .conftest import check_dir
 
-def test_file_not_delayed(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="{message}", delay=False)
-    assert file.check(exists=1)
-    assert file.read() == ""
+
+def test_file_not_delayed(tmp_path):
+    file = tmp_path / "test.log"
+    logger.add(file, format="{message}", delay=False)
+    assert file.read_text() == ""
     logger.debug("Not delayed")
-    assert file.read() == "Not delayed\n"
+    assert file.read_text() == "Not delayed\n"
 
 
-def test_file_delayed(tmpdir):
-    file = tmpdir.join("test.log")
-    logger.add(str(file), format="{message}", delay=True)
-    assert file.check(exists=0)
+def test_file_delayed(tmp_path):
+    file = tmp_path / "test.log"
+    logger.add(file, format="{message}", delay=True)
+    assert not file.exists()
     logger.debug("Delayed")
-    assert file.read() == "Delayed\n"
+    assert file.read_text() == "Delayed\n"
 
 
-def test_compression(tmpdir):
-    i = logger.add(str(tmpdir.join("file.log")), compression="gz", delay=True)
+def test_compression(tmp_path):
+    i = logger.add(tmp_path / "file.log", compression="gz", delay=True)
     logger.debug("a")
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("file.log.gz").check(exists=1)
+    check_dir(tmp_path, files=[("file.log.gz", None)])
 
 
-def test_compression_early_remove(tmpdir):
-    i = logger.add(str(tmpdir.join("file.log")), compression="gz", delay=True)
+def test_compression_early_remove(tmp_path):
+    i = logger.add(tmp_path / "file.log", compression="gz", delay=True)
     logger.remove(i)
-    assert len(tmpdir.listdir()) == 0
+    check_dir(tmp_path, size=0)
 
 
-def test_retention(tmpdir):
+def test_retention(tmp_path):
     for i in range(5):
-        tmpdir.join("test.2020-01-01_01-01-%d_000001.log" % i).write("test")
+        tmp_path.joinpath("test.2020-01-01_01-01-%d_000001.log" % i).write_text("test")
 
-    i = logger.add(str(tmpdir.join("test.log")), retention=0, delay=True)
+    i = logger.add(tmp_path / "test.log", retention=0, delay=True)
     logger.debug("a")
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 0
+    check_dir(tmp_path, size=0)
 
 
-def test_retention_early_remove(tmpdir):
+def test_retention_early_remove(tmp_path):
     for i in range(5):
-        tmpdir.join("test.2020-01-01_01-01-%d_000001.log" % i).write("test")
+        tmp_path.joinpath("test.2020-01-01_01-01-%d_000001.log" % i).write_text("test")
 
-    i = logger.add(str(tmpdir.join("test.log")), retention=0, delay=True)
+    i = logger.add(tmp_path / "test.log", retention=0, delay=True)
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 0
+    check_dir(tmp_path, size=0)
 
 
-def test_rotation(tmpdir):
-    i = logger.add(str(tmpdir.join("file.log")), rotation=0, delay=True, format="{message}")
-    logger.debug("a")
+def test_rotation(tmp_path, freeze_time):
+    with freeze_time("2001-02-03"):
+        i = logger.add(tmp_path / "file.log", rotation=0, delay=True, format="{message}")
+        logger.debug("a")
+        logger.remove(i)
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("file.2001-02-03_00-00-00_000000.log", ""),
+            ("file.log", "a\n"),
+        ],
+    )
+
+
+def test_rotation_early_remove(tmp_path):
+    i = logger.add(tmp_path / "file.log", rotation=0, delay=True, format="{message}")
     logger.remove(i)
 
-    files = sorted(tmpdir.listdir())
-
-    assert len(files) == 2
-    assert re.match(r"file\.[0-9-_]+\.log", files[0].basename)
-    assert files[1].basename == "file.log"
-    assert files[0].read() == ""
-    assert files[1].read() == "a\n"
+    check_dir(tmp_path, size=0)
 
 
-def test_rotation_early_remove(tmpdir):
-    i = logger.add(str(tmpdir.join("file.log")), rotation=0, delay=True, format="{message}")
-    logger.remove(i)
+def test_rotation_and_retention(freeze_time, tmp_path):
+    with freeze_time("1999-12-12") as frozen:
+        filepath = tmp_path / "file.log"
+        logger.add(filepath, rotation=30, retention=2, delay=True, format="{message}")
+        for i in range(1, 10):
+            time.sleep(0.05)  # Retention is based on mtime.
+            frozen.tick(datetime.timedelta(seconds=0.05))
+            logger.info(str(i) * 20)
 
-    assert len(tmpdir.listdir()) == 0
-
-
-def test_rotation_and_retention(tmpdir):
-    filepath = str(tmpdir.join("file.log"))
-    logger.add(filepath, rotation=30, retention=2, delay=True, format="{message}")
-    for i in range(1, 10):
-        time.sleep(0.02)
-        logger.info(str(i) * 20)
-
-    files = sorted(tmpdir.listdir())
-
-    assert len(files) == 3
-    assert all(re.match(r"file\.[0-9-_]+\.log", f.basename) for f in files[:2])
-    assert files[2].basename == "file.log"
-    assert files[0].read() == "7" * 20 + "\n"
-    assert files[1].read() == "8" * 20 + "\n"
-    assert files[2].read() == "9" * 20 + "\n"
+    check_dir(
+        tmp_path,
+        files=[
+            ("file.1999-12-12_00-00-00_350000.log", "7" * 20 + "\n"),
+            ("file.1999-12-12_00-00-00_400000.log", "8" * 20 + "\n"),
+            ("file.log", "9" * 20 + "\n"),
+        ],
+    )
 
 
-def test_rotation_and_retention_timed_file(tmpdir):
-    filepath = str(tmpdir.join("file.{time}.log"))
-    logger.add(filepath, rotation=30, retention=2, delay=True, format="{message}")
-    for i in range(1, 10):
-        time.sleep(0.02)
-        logger.info(str(i) * 20)
+def test_rotation_and_retention_timed_file(freeze_time, tmp_path):
+    with freeze_time("1999-12-12") as frozen:
+        filepath = tmp_path / "file.{time}.log"
+        logger.add(filepath, rotation=30, retention=2, delay=True, format="{message}")
+        for i in range(1, 10):
+            time.sleep(0.05)  # Retention is based on mtime.
+            frozen.tick(datetime.timedelta(seconds=0.05))
+            logger.info(str(i) * 20)
 
-    files = sorted(tmpdir.listdir())
-
-    assert len(files) == 3
-    assert all(re.match(r"file\.[0-9-_]+\.log", f.basename) for f in files)
-    assert files[0].read() == "7" * 20 + "\n"
-    assert files[1].read() == "8" * 20 + "\n"
-    assert files[2].read() == "9" * 20 + "\n"
+    check_dir(
+        tmp_path,
+        files=[
+            ("file.1999-12-12_00-00-00_350000.log", "7" * 20 + "\n"),
+            ("file.1999-12-12_00-00-00_400000.log", "8" * 20 + "\n"),
+            ("file.1999-12-12_00-00-00_450000.log", "9" * 20 + "\n"),
+        ],
+    )

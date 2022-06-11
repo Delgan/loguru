@@ -1,60 +1,67 @@
 import datetime
 import os
+from unittest.mock import Mock
 
 import pytest
 from loguru import logger
 
+from .conftest import check_dir
+
 
 @pytest.mark.parametrize("retention", ["1 hour", "1H", " 1 h ", datetime.timedelta(hours=1)])
-def test_retention_time(freeze_time, tmpdir, retention):
-    i = logger.add(str(tmpdir.join("test.log.x")), retention=retention)
+def test_retention_time(freeze_time, tmp_path, retention):
+    i = logger.add(tmp_path / "test.log.x", retention=retention)
     logger.debug("test")
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 1
+    check_dir(tmp_path, size=1)
 
     future = datetime.datetime.now() + datetime.timedelta(days=1)
     with freeze_time(future):
-        i = logger.add(str(tmpdir.join("test.log")), retention=retention)
+        i = logger.add(tmp_path / "test.log", retention=retention)
         logger.debug("test")
 
-        assert len(tmpdir.listdir()) == 2
+        check_dir(tmp_path, size=2)
         logger.remove(i)
-        assert len(tmpdir.listdir()) == 0
+        check_dir(tmp_path, size=0)
 
 
 @pytest.mark.parametrize("retention", [0, 1, 10])
-def test_retention_count(tmpdir, retention):
-    file = tmpdir.join("test.log")
+def test_retention_count(tmp_path, retention):
+    file = tmp_path / "test.log"
 
     for i in range(retention):
-        tmpdir.join("test.2011-01-01_01-01-%d_000001.log" % i).write("test")
+        tmp_path.joinpath("test.2011-01-01_01-01-%d_000001.log" % i).write_text("test")
 
-    i = logger.add(str(file), retention=retention)
+    i = logger.add(file, retention=retention)
     logger.debug("test")
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == retention
+    check_dir(tmp_path, size=retention)
 
 
-def test_retention_function(tmpdir):
+def test_retention_function(tmp_path):
     def func(logs):
         for log in logs:
             os.rename(log, log + ".xyz")
 
-    tmpdir.join("test.log.1").write("")
-    tmpdir.join("test").write("")
+    tmp_path.joinpath("test.log.1").write_text("A")
+    tmp_path.joinpath("test").write_text("B")
 
-    i = logger.add(str(tmpdir.join("test.log")), retention=func)
+    i = logger.add(tmp_path / "test.log", retention=func)
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 3
-    assert tmpdir.join("test.log.1.xyz").check(exists=1)
-    assert tmpdir.join("test.log.xyz").check(exists=1)
-    assert tmpdir.join("test").check(exists=1)
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.log.1.xyz", "A"),
+            ("test", "B"),
+            ("test.log.xyz", ""),
+        ],
+    )
 
 
-def test_managed_files(tmpdir):
+def test_managed_files(tmp_path):
     others = {
         "test.log",
         "test.log.1",
@@ -74,15 +81,15 @@ def test_managed_files(tmpdir):
     }
 
     for other in others:
-        tmpdir.join(other).write(other)
+        tmp_path.joinpath(other).write_text(other)
 
-    i = logger.add(str(tmpdir.join("test.log")), retention=0, catch=False)
+    i = logger.add(tmp_path / "test.log", retention=0, catch=False)
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 0
+    check_dir(tmp_path, size=0)
 
 
-def test_not_managed_files(tmpdir):
+def test_not_managed_files(tmp_path):
     others = {
         "test_.log",
         "_test.log",
@@ -103,17 +110,16 @@ def test_not_managed_files(tmpdir):
         others.add("test.")
 
     for other in others:
-        tmpdir.join(other).write(other)
+        tmp_path.joinpath(other).write_text(other)
 
-    i = logger.add(str(tmpdir.join("test.log")), retention=0, catch=False)
+    i = logger.add(tmp_path / "test.log", retention=0, catch=False)
     logger.remove(i)
 
-    assert set(f.basename for f in tmpdir.listdir()) == others
+    assert set(f.name for f in tmp_path.iterdir()) == others
 
 
 @pytest.mark.parametrize("filename", ["test", "test.log"])
-def test_no_duplicates_in_listed_files(tmpdir, filename):
-    matching_files = None
+def test_no_duplicates_in_listed_files(tmp_path, filename):
     others = [
         "test.log",
         "test.log.log",
@@ -127,222 +133,200 @@ def test_no_duplicates_in_listed_files(tmpdir, filename):
         "test.log.a.log.b",
     ]
 
-    def retention(files):
-        nonlocal matching_files
-        matching_files = files
-
     for other in others:
-        tmpdir.join(other).write(other)
+        tmp_path.joinpath(other).write_text(other)
 
-    i = logger.add(str(tmpdir.join(filename)), retention=retention, catch=False)
+    retention = Mock()
+    i = logger.add(tmp_path / filename, retention=retention, catch=False)
     logger.remove(i)
 
-    assert matching_files is not None
-    assert len(matching_files) == len(set(matching_files))
+    assert retention.call_count == 1
+    assert len(retention.call_args.args[0]) == len(set(retention.call_args.args[0]))
 
 
-def test_directories_ignored(tmpdir):
+def test_directories_ignored(tmp_path):
     others = ["test.log.2", "test.123.log", "test.log.tar.gz", "test.archive"]
 
     for other in others:
-        tmpdir.join(other).mkdir()
+        tmp_path.joinpath(other).mkdir()
 
-    i = logger.add(str(tmpdir.join("test.log")), retention=0, catch=False)
+    i = logger.add(tmp_path / "test.log", retention=0, catch=False)
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == len(others)
+    check_dir(tmp_path, size=len(others))
 
 
-def test_manage_formatted_files(freeze_time, tmpdir):
+def test_manage_formatted_files(freeze_time, tmp_path):
     with freeze_time("2018-01-01 00:00:00"):
-        f1 = tmpdir.join("temp/2018/file.log")
-        f2 = tmpdir.join("temp/file2018.log")
-        f3 = tmpdir.join("temp/d2018/f2018.2018.log")
+        f1 = tmp_path / "temp/2018/file.log"
+        f2 = tmp_path / "temp/file2018.log"
+        f3 = tmp_path / "temp/d2018/f2018.2018.log"
 
-        a = logger.add(str(tmpdir.join("temp/{time:YYYY}/file.log")), retention=0)
-        b = logger.add(str(tmpdir.join("temp/file{time:YYYY}.log")), retention=0)
-        c = logger.add(
-            str(tmpdir.join("temp/d{time:YYYY}/f{time:YYYY}.{time:YYYY}.log")), retention=0
-        )
+        a = logger.add(tmp_path / "temp/{time:YYYY}/file.log", retention=0)
+        b = logger.add(tmp_path / "temp/file{time:YYYY}.log", retention=0)
+        c = logger.add(tmp_path / "temp/d{time:YYYY}/f{time:YYYY}.{time:YYYY}.log", retention=0)
 
         logger.debug("test")
 
-        assert f1.check(exists=1)
-        assert f2.check(exists=1)
-        assert f3.check(exists=1)
+        assert f1.exists()
+        assert f2.exists()
+        assert f3.exists()
 
         logger.remove(a)
         logger.remove(b)
         logger.remove(c)
 
-        assert f1.check(exists=0)
-        assert f2.check(exists=0)
-        assert f3.check(exists=0)
+        assert not f1.exists()
+        assert not f2.exists()
+        assert not f3.exists()
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support '*' in filename")
-def test_date_with_dot_after_extension(tmpdir):
-    file = tmpdir.join("file.{time:YYYY.MM}_log")
+def test_date_with_dot_after_extension(tmp_path):
+    file = tmp_path / "file.{time:YYYY.MM}_log"
 
-    i = logger.add(str(tmpdir.join("file*.log")), retention=0, catch=False)
+    i = logger.add(tmp_path / "file*.log", retention=0, catch=False)
     logger.remove(i)
 
-    assert file.check(exists=0)
+    assert not file.exists()
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support '*' in filename")
-def test_symbol_in_filename(tmpdir):
-    file = tmpdir.join("file123.log")
-    file.write("")
+def test_symbol_in_filename(tmp_path):
+    file = tmp_path / "file123.log"
+    file.touch()
 
-    i = logger.add(str(tmpdir.join("file*.log")), retention=0, catch=False)
+    i = logger.add(tmp_path / "file*.log", retention=0, catch=False)
     logger.remove(i)
 
-    assert file.check(exists=1)
+    assert file.exists()
 
 
-def test_manage_file_without_extension(tmpdir):
-    file = tmpdir.join("file")
+def test_manage_file_without_extension(tmp_path):
+    file = tmp_path / "file"
 
-    i = logger.add(str(file), retention=0)
+    i = logger.add(file, retention=0)
     logger.debug("?")
-
-    assert len(tmpdir.listdir()) == 1
-    assert file.check(exists=1)
+    check_dir(tmp_path, files=[("file", None)])
     logger.remove(i)
-    assert len(tmpdir.listdir()) == 0
-    assert file.check(exists=0)
+    check_dir(tmp_path, files=[])
 
 
-def test_manage_formatted_files_without_extension(tmpdir):
-    tmpdir.join("file_8").write("")
-    tmpdir.join("file_7").write("")
-    tmpdir.join("file_6").write("")
+def test_manage_formatted_files_without_extension(tmp_path):
+    tmp_path.joinpath("file_8").touch()
+    tmp_path.joinpath("file_7").touch()
+    tmp_path.joinpath("file_6").touch()
 
-    i = logger.add(str(tmpdir.join("file_{time}")), retention=0)
+    i = logger.add(tmp_path / "file_{time}", retention=0)
     logger.debug("1")
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 0
+    check_dir(tmp_path, size=0)
 
 
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
-def test_retention_at_rotation(tmpdir, mode):
-    tmpdir.join("test.log.1").write("")
-    tmpdir.join("test.log.2").write("")
-    tmpdir.join("test.log.3").write("")
+def test_retention_at_rotation(tmp_path, mode):
+    tmp_path.joinpath("test.log.1").touch()
+    tmp_path.joinpath("test.log.2").touch()
+    tmp_path.joinpath("test.log.3").touch()
 
-    logger.add(str(tmpdir.join("test.log")), retention=1, rotation=0, mode=mode)
+    logger.add(tmp_path / "test.log", retention=1, rotation=0, mode=mode)
     logger.debug("test")
 
-    assert len(tmpdir.listdir()) == 2
+    check_dir(tmp_path, size=2)
 
 
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
-def test_retention_at_remove_without_rotation(tmpdir, mode):
-    i = logger.add(str(tmpdir.join("file.log")), retention=0, mode=mode)
+def test_retention_at_remove_without_rotation(tmp_path, mode):
+    i = logger.add(tmp_path / "file.log", retention=0, mode=mode)
     logger.debug("1")
-    assert len(tmpdir.listdir()) == 1
+    check_dir(tmp_path, size=1)
     logger.remove(i)
-    assert len(tmpdir.listdir()) == 0
+    check_dir(tmp_path, size=0)
 
 
 @pytest.mark.parametrize("mode", ["w", "x", "a", "a+"])
-def test_no_retention_at_remove_with_rotation(tmpdir, mode):
-    i = logger.add(str(tmpdir.join("file.log")), retention=0, rotation="100 MB", mode=mode)
+def test_no_retention_at_remove_with_rotation(tmp_path, mode):
+    i = logger.add(tmp_path / "file.log", retention=0, rotation="100 MB", mode=mode)
     logger.debug("1")
-    assert len(tmpdir.listdir()) == 1
+    check_dir(tmp_path, size=1)
     logger.remove(i)
-    assert len(tmpdir.listdir()) == 1
+    check_dir(tmp_path, size=1)
 
 
-def test_no_renaming(tmpdir):
-    i = logger.add(str(tmpdir.join("test.log")), format="{message}", retention=10)
+def test_no_renaming(tmp_path):
+    i = logger.add(tmp_path / "test.log", format="{message}", retention=10)
     logger.debug("test")
     logger.remove(i)
 
-    assert len(tmpdir.listdir()) == 1
-    assert tmpdir.join("test.log").read() == "test\n"
+    check_dir(tmp_path, files=[("test.log", "test\n")])
 
 
 @pytest.mark.parametrize("delay", [True, False])
-def test_exception_during_retention_at_rotation(tmpdir, capsys, delay):
-    raising = True
+def test_exception_during_retention_at_rotation(freeze_time, tmp_path, capsys, delay):
+    with freeze_time("2022-02-22") as frozen:
+        logger.add(
+            tmp_path / "test.log",
+            format="{message}",
+            retention=Mock(side_effect=[Exception("Retention error"), None]),
+            rotation=0,
+            catch=True,
+            delay=delay,
+        )
+        logger.debug("AAA")
+        frozen.tick()
+        logger.debug("BBB")
 
-    def failing_retention(files):
-        nonlocal raising
-        if raising:
-            raising = False
-            raise Exception("Retention error")
-
-    logger.add(
-        str(tmpdir.join("test.log")),
-        format="{message}",
-        retention=failing_retention,
-        rotation=0,
-        catch=True,
-        delay=delay,
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2022-02-22_00-00-00_000000.log", ""),
+            ("test.2022-02-22_00-00-01_000000.log", ""),
+            ("test.log", "BBB\n"),
+        ],
     )
 
-    logger.debug("AAA")
-    logger.debug("BBB")
-
-    files = sorted(tmpdir.listdir())
     out, err = capsys.readouterr()
-
-    assert len(files) == 3
-    assert [file.read() for file in files] == ["", "", "BBB\n"]
     assert out == ""
     assert err.count("Logging error in Loguru Handler") == 1
     assert err.count("Exception: Retention error") == 1
 
 
 @pytest.mark.parametrize("delay", [True, False])
-def test_exception_during_retention_at_rotation_not_caught(tmpdir, capsys, delay):
-    raising = True
+def test_exception_during_retention_at_rotation_not_caught(freeze_time, tmp_path, capsys, delay):
+    with freeze_time("2022-02-22") as frozen:
+        logger.add(
+            tmp_path / "test.log",
+            format="{message}",
+            retention=Mock(side_effect=[Exception("Retention error"), None]),
+            rotation=0,
+            catch=False,
+            delay=delay,
+        )
+        with pytest.raises(Exception, match=r"Retention error"):
+            logger.debug("AAA")
+        frozen.tick()
+        logger.debug("BBB")
 
-    def failing_retention(files):
-        nonlocal raising
-        if raising:
-            raising = False
-            raise Exception("Retention error")
-
-    logger.add(
-        str(tmpdir.join("test.log")),
-        format="{message}",
-        retention=failing_retention,
-        rotation=0,
-        catch=False,
-        delay=delay,
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2022-02-22_00-00-00_000000.log", ""),
+            ("test.2022-02-22_00-00-01_000000.log", ""),
+            ("test.log", "BBB\n"),
+        ],
     )
 
-    with pytest.raises(Exception, match=r"Retention error"):
-        logger.debug("AAA")
-
-    logger.debug("BBB")
-
-    files = sorted(tmpdir.listdir())
     out, err = capsys.readouterr()
-
-    assert len(files) == 3
-    assert [file.read() for file in files] == ["", "", "BBB\n"]
     assert out == err == ""
 
 
 @pytest.mark.parametrize("delay", [True, False])
-def test_exception_during_retention_at_remove(tmpdir, capsys, delay):
-    raising = True
-
-    def failing_retention(files):
-        nonlocal raising
-        if raising:
-            raising = False
-            raise Exception("Retention error")
-
+def test_exception_during_retention_at_remove(tmp_path, capsys, delay):
     i = logger.add(
-        str(tmpdir.join("test.log")),
+        tmp_path / "test.log",
         format="{message}",
-        retention=failing_retention,
+        retention=Mock(side_effect=[Exception("Retention error"), None]),
         catch=False,
         delay=delay,
     )
@@ -353,11 +337,9 @@ def test_exception_during_retention_at_remove(tmpdir, capsys, delay):
 
     logger.debug("Nope")
 
-    files = sorted(tmpdir.listdir())
-    out, err = capsys.readouterr()
+    check_dir(tmp_path, files=[("test.log", "AAA\n")])
 
-    assert len(files) == 1
-    assert tmpdir.join("test.log").read() == "AAA\n"
+    out, err = capsys.readouterr()
     assert out == err == ""
 
 

@@ -2,7 +2,6 @@ import sys
 import time
 
 import pytest
-
 from loguru import logger
 
 
@@ -14,12 +13,12 @@ class StopSinkError:
         raise Exception("Stop error")
 
 
-def test_remove_all(tmpdir, writer, capsys):
-    file = tmpdir.join("test.log")
+def test_remove_all(tmp_path, writer, capsys):
+    file = tmp_path / "test.log"
 
     logger.debug("This shouldn't be printed.")
 
-    logger.add(str(file), format="{message}")
+    logger.add(file, format="{message}")
     logger.add(sys.stdout, format="{message}")
     logger.add(sys.stderr, format="{message}")
     logger.add(writer, format="{message}")
@@ -35,7 +34,7 @@ def test_remove_all(tmpdir, writer, capsys):
 
     out, err = capsys.readouterr()
 
-    assert file.read() == expected
+    assert file.read_text() == expected
     assert out == expected
     assert err == expected
     assert writer.read() == expected
@@ -58,12 +57,12 @@ def test_remove_enqueue(writer):
     assert writer.read() == "1\n"
 
 
-def test_remove_enqueue_filesink(tmpdir):
-    file = tmpdir.join("test.log")
-    i = logger.add(str(file), format="{message}", enqueue=True)
+def test_remove_enqueue_filesink(tmp_path):
+    file = tmp_path / "test.log"
+    i = logger.add(file, format="{message}", enqueue=True)
     logger.debug("1")
     logger.remove(i)
-    assert file.read() == "1\n"
+    assert file.read_text() == "1\n"
 
 
 def test_exception_in_stop_during_remove_one(capsys):

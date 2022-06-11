@@ -4,7 +4,6 @@ import re
 from datetime import datetime
 
 import pytest
-
 from loguru import logger
 
 TEXT = "This\nIs\nRandom\nText\n123456789\nABC!DEF\nThis Is The End\n"
@@ -16,23 +15,23 @@ def fileobj():
         yield file
 
 
-def test_parse_file(tmpdir):
-    file = tmpdir.join("test.log")
-    file.write(TEXT)
-    result, *_ = list(logger.parse(str(file), r"(?P<num>\d+)"))
+def test_parse_file(tmp_path):
+    file = tmp_path / "test.log"
+    file.write_text(TEXT)
+    result, *_ = list(logger.parse(file, r"(?P<num>\d+)"))
     assert result == dict(num="123456789")
 
 
-def test_parse_fileobj(tmpdir):
-    file = tmpdir.join("test.log")
-    file.write(TEXT)
+def test_parse_fileobj(tmp_path):
+    file = tmp_path / "test.log"
+    file.write_text(TEXT)
     result, *_ = list(logger.parse(open(str(file)), r"^(?P<t>\w+)"))
     assert result == dict(t="This")
 
 
-def test_parse_pathlib(tmpdir):
-    file = tmpdir.join("test.log")
-    file.write(TEXT)
+def test_parse_pathlib(tmp_path):
+    file = tmp_path / "test.log"
+    file.write_text(TEXT)
     result, *_ = list(logger.parse(pathlib.Path(str(file)), r"(?P<r>Random)"))
     assert result == dict(r="Random")
 
@@ -60,11 +59,11 @@ def test_parse_without_group(fileobj):
 
 def test_parse_bytes():
     with io.BytesIO(b"Testing bytes!") as fileobj:
-        result, *_ = list(logger.parse(fileobj, br"(?P<ponct>[?!:])"))
+        result, *_ = list(logger.parse(fileobj, rb"(?P<ponct>[?!:])"))
     assert result == dict(ponct=b"!")
 
 
-@pytest.mark.parametrize("chunk", [-1, 1, 2 ** 16])
+@pytest.mark.parametrize("chunk", [-1, 1, 2**16])
 def test_chunk(fileobj, chunk):
     result, *_ = list(logger.parse(fileobj, r"(?P<a>[ABC]+)", chunk=chunk))
     assert result == dict(a="ABC")
@@ -86,18 +85,18 @@ def test_greedy_pattern():
     assert result == [dict(a="a" * 100)] * 1000
 
 
-def test_cast_dict(tmpdir):
-    file = tmpdir.join("test.log")
-    file.write("[123] [1.1] [2017-03-29 11:11:11]\n")
+def test_cast_dict(tmp_path):
+    file = tmp_path / "test.log"
+    file.write_text("[123] [1.1] [2017-03-29 11:11:11]\n")
     regex = r"\[(?P<num>.*)\] \[(?P<val>.*)\] \[(?P<date>.*)\]"
     caster = dict(num=int, val=float, date=lambda d: datetime.strptime(d, "%Y-%m-%d %H:%M:%S"))
-    result = next(logger.parse(str(file), regex, cast=caster))
+    result = next(logger.parse(file, regex, cast=caster))
     assert result == dict(num=123, val=1.1, date=datetime(2017, 3, 29, 11, 11, 11))
 
 
-def test_cast_function(tmpdir):
-    file = tmpdir.join("test.log")
-    file.write("[123] [1.1] [2017-03-29 11:11:11]\n")
+def test_cast_function(tmp_path):
+    file = tmp_path / "test.log"
+    file.write_text("[123] [1.1] [2017-03-29 11:11:11]\n")
     regex = r"\[(?P<num>.*)\] \[(?P<val>.*)\] \[(?P<date>.*)\]"
 
     def caster(groups):
@@ -105,25 +104,25 @@ def test_cast_function(tmpdir):
         groups["val"] = float(groups["val"])
         groups["date"] = datetime.strptime(groups["date"], "%Y-%m-%d %H:%M:%S")
 
-    result = next(logger.parse(str(file), regex, cast=caster))
+    result = next(logger.parse(file, regex, cast=caster))
     assert result == dict(num=123, val=1.1, date=datetime(2017, 3, 29, 11, 11, 11))
 
 
-def test_cast_with_irrelevant_arg(tmpdir):
-    file = tmpdir.join("test.log")
-    file.write("[123] Blabla")
+def test_cast_with_irrelevant_arg(tmp_path):
+    file = tmp_path / "test.log"
+    file.write_text("[123] Blabla")
     regex = r"\[(?P<a>\d+)\] .*"
     caster = dict(a=int, b=float)
-    result = next(logger.parse(str(file), regex, cast=caster))
+    result = next(logger.parse(file, regex, cast=caster))
     assert result == dict(a=123)
 
 
-def test_cast_with_irrelevant_value(tmpdir):
-    file = tmpdir.join("test.log")
-    file.write("[123] Blabla")
+def test_cast_with_irrelevant_value(tmp_path):
+    file = tmp_path / "test.log"
+    file.write_text("[123] Blabla")
     regex = r"\[(?P<a>\d+)\] (?P<b>.*)"
     caster = dict(a=int)
-    result = next(logger.parse(str(file), regex, cast=caster))
+    result = next(logger.parse(file, regex, cast=caster))
     assert result == dict(a=123, b="Blabla")
 
 
