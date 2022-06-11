@@ -497,6 +497,53 @@ def test_exception_during_rotation_not_caught(tmp_path, capsys):
     assert out == err == ""
 
 
+def test_recipe_rotation_both_size_and_time(freeze_time, tmp_path):
+    class Rotator:
+        def __init__(self, *, size, at):
+            now = datetime.datetime.now()
+
+            self._size_limit = size
+            self._time_limit = now.replace(hour=at.hour, minute=at.minute, second=at.second)
+
+            if now >= self._time_limit:
+                # The current time is already past the target time so it would rotate already.
+                # Add one day to prevent an immediate rotation.
+                self._time_limit += datetime.timedelta(days=1)
+
+        def should_rotate(self, message, file):
+            file.seek(0, 2)
+            if file.tell() + len(message) > self._size_limit:
+                return True
+            excess = message.record["time"].timestamp() - self._time_limit.timestamp()
+            if excess >= 0:
+                elapsed_days = datetime.timedelta(seconds=excess).days
+                self._time_limit += datetime.timedelta(days=elapsed_days + 1)
+                return True
+            return False
+
+    with freeze_time("2020-01-01 20:00:00") as frozen:
+        rotator = Rotator(size=20, at=datetime.time(12, 0, 0))
+        logger.add(tmp_path / "file.log", rotation=rotator.should_rotate, format="{message}")
+        logger.info("A" * 15)
+        frozen.tick()
+        logger.info("B" * 10)
+        frozen.move_to("2020-01-02 13:00:00")
+        logger.info("C")
+        frozen.move_to("2020-01-10 13:10:00")
+        logger.info("D")
+        logger.info("E")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("file.2020-01-01_20-00-00_000000.log", "A" * 15 + "\n"),
+            ("file.2020-01-01_20-00-01_000000.log", "B" * 10 + "\n"),
+            ("file.2020-01-02_13-00-00_000000.log", "C\n"),
+            ("file.log", "D\nE\n"),
+        ],
+    )
+
+
 @pytest.mark.parametrize(
     "rotation", [object(), os, datetime.date(2017, 11, 11), datetime.datetime.now(), 1j]
 )

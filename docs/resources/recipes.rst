@@ -532,7 +532,6 @@ The ``rotation`` argument of file sinks accept size or time limits but not both 
     import datetime
 
     class Rotator:
-
         def __init__(self, *, size, at):
             now = datetime.datetime.now()
 
@@ -548,8 +547,10 @@ The ``rotation`` argument of file sinks accept size or time limits but not both 
             file.seek(0, 2)
             if file.tell() + len(message) > self._size_limit:
                 return True
-            if message.record["time"].timestamp() > self._time_limit.timestamp():
-                self._time_limit += datetime.timedelta(days=1)
+            excess = message.record["time"].timestamp() - self._time_limit.timestamp()
+            if excess >= 0:
+                elapsed_days = datetime.timedelta(seconds=excess).days
+                self._time_limit += datetime.timedelta(days=elapsed_days + 1)
                 return True
             return False
 
