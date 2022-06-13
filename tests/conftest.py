@@ -45,6 +45,14 @@ if sys.version_info < (3, 6):
         yield pathlib.Path(str(tmp_path))
 
 
+if sys.version_info >= (3, 6):
+
+    def pytest_configure(config):
+        assert hasattr(config.option, "mypy_ini_file")
+        dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config.option.mypy_ini_file = os.path.join(dirname, "tox.ini")
+
+
 def parse(text, *, strip=False, strict=True):
     parser = loguru._colorizer.AnsiParser()
     parser.feed(text)
@@ -79,7 +87,7 @@ def default_threading_excepthook():
         return
 
     # Pytest added "PytestUnhandledThreadExceptionWarning", we need to
-    # remove it temporarily for somes tests checking exceptions in threads.
+    # remove it temporarily for some tests checking exceptions in threads.
 
     def excepthook(args):
         print("Exception in thread:", file=sys.stderr, flush=True)

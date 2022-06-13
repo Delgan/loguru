@@ -1,2 +1,2 @@
 include LICENSE
-recursive-include tests *.py *.txt
+recursive-include tests *.py *.txt *.yml

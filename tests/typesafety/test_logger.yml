@@ -1,0 +1,280 @@
+- case: basic_logger_usage
+  parametrized:
+    - method: trace
+    - method: debug
+    - method: info
+    - method: success
+    - method: warning
+    - method: error
+    - method: exception
+    - method: critical
+  main: |
+    from loguru import logger
+    res = logger.{{method}}("Test")
+    reveal_type(logger)
+    reveal_type(res)
+  out: |
+    main:3: note: Revealed type is "loguru.Logger"
+    main:4: note: Revealed type is "None"
+
+- case: using_log_function
+  parametrized:
+    - level: "'INFO'"
+    - level: 30
+  main: |
+    from loguru import logger
+    logger.log({{level}}, "Test")
+
+- case: using_logging_arguments
+  main: |
+    from loguru import logger
+    logger.info("{0} + {1} = {result}", 1, 2, result=3)
+
+- case: logging_non_string
+  parametrized:
+    - message: 123
+    - message: dict(foo=456)
+    - message: object()
+  main: |
+    from loguru import logger
+    logger.info({{ message }})
+
+- case: add_sink
+  parametrized:
+    - sink: sys.stderr
+    - sink: "'test.txt'"
+    - sink: "Path('file.log')"
+    - sink: "lambda m: None"
+    - sink: StreamHandler()
+  main: |
+    import sys
+    from loguru import logger
+    from logging import StreamHandler
+    from pathlib import Path
+    id = logger.add({{ sink }})
+    reveal_type(id)
+  out: |
+    main:6: note: Revealed type is "builtins.int"
+
+- case: basic_sink_options
+  main: |
+    import sys
+    from loguru import logger
+    logger.add(
+      sys.stdout,
+      format="{message}",
+      filter=lambda r: True,
+      colorize=False,
+      serialize=True,
+      backtrace=True,
+      diagnose=False,
+      enqueue=True,
+      catch=False,
+    )
+
+- case: file_sink_options
+  main: |
+    from loguru import logger
+    logger.add(
+      "test.txt",
+      delay=True,
+      rotation="10:00",
+      retention=64,
+      compression="gz",
+      mode="w",
+      watch=True,
+      buffering=10,
+      encoding="ascii",
+      opener=None,
+    )
+
+- case: async_sink_options
+  main: |
+    from loguru import logger
+    import asyncio
+    async def sink(m):
+      pass
+    logger.add(
+      sink,
+      loop=asyncio.get_event_loop(),
+    )
+
+- case: remove_sink
+  main: |
+    from loguru import logger
+    logger.remove(0)
+
+- case: await_completion
+  main: |
+    from loguru import logger
+    awaitable = logger.complete()
+    async def func():
+      await awaitable
+    reveal_type(awaitable)
+  out: |
+    main:5: note: Revealed type is "typing.Awaitable[Any]"
+
+- case: catch_as_decorator_with_parentheses
+  main: |
+    from loguru import logger
+    @logger.catch()
+    def func(a: int, b: int) -> int:
+      return a + b
+    func(1, 2) + 3
+    reveal_type(func)
+  out: |
+    main:6: note: Revealed type is "def (a: builtins.int, b: builtins.int) -> builtins.int"
+
+- case: catch_as_decorator_without_parentheses
+  main: |
+    from loguru import logger
+    @logger.catch
+    def func(a: int, b: int) -> int:
+      return a + b
+    func(1, 2) + 3
+    reveal_type(func)
+  out: |
+    main:6: note: Revealed type is "def (a: builtins.int, b: builtins.int) -> builtins.int"
+
+- case: catch_as_context_manager
+  main: |
+    from loguru import logger
+    catcher = logger.catch()
+    with catcher:
+      pass
+    reveal_type(catcher)
+  out: |
+    main:5: note: Revealed type is "loguru.Catcher"
+
+- case: opt
+  main: |
+    from loguru import logger
+    logger = logger.opt(colors=True)
+    logger.info("Message")
+    reveal_type(logger)
+  out: |
+    main:4: note: Revealed type is "loguru.Logger"
+
+- case: bind
+  main: |
+    from loguru import logger
+    logger = logger.bind(arg=1)
+    logger.info("Message")
+    reveal_type(logger)
+  out: |
+    main:4: note: Revealed type is "loguru.Logger"
+
+- case: patch
+  main: |
+    from loguru import logger
+    logger = logger.patch(lambda r: None)
+    logger.info("Message")
+    reveal_type(logger)
+  out: |
+    main:4: note: Revealed type is "loguru.Logger"
+
+- case: contextualize
+  main: |
+    from loguru import logger
+    contextualizer = logger.contextualize(arg=1)
+    with contextualizer:
+      logger.info("Message")
+    reveal_type(contextualizer)
+  out: |
+    main:5: note: Revealed type is "loguru.Contextualizer"
+
+- case: level_get
+  main: |
+    from loguru import logger
+    import loguru
+    level = logger.level("INFO")
+    reveal_type(level)
+  out: |
+    main:4: note: Revealed type is "Tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
+
+- case: level_set
+  main: |
+    from loguru import logger
+    import loguru
+    level = logger.level("FOO", no=11, icon="!", color="<blue>")
+    reveal_type(level)
+  out: |
+    main:4: note: Revealed type is "Tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
+
+- case: level_update
+  main: |
+    from loguru import logger
+    import loguru
+    level = logger.level("INFO", color="<blue>")
+    reveal_type(level)
+  out: |
+    main:4: note: Revealed type is "Tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
+
+- case: enable_and_disable_logger
+  main: |
+    from loguru import logger
+    logger.enable("foo")
+    logger.disable("foo")
+
+- case: configure
+  main: |
+    from loguru import logger
+    import sys
+    ids = logger.configure(
+      handlers=[{"sink": sys.stderr}],
+      levels=[{"name": "FOO", "no": 11}],
+      extra={"bar": "baz"},
+      activation=[("module", False)],
+    )
+    reveal_type(ids)
+  out: |
+    main:9: note: Revealed type is "builtins.list[builtins.int]"
+
+- case: parse
+  main: |
+    from loguru import logger
+    iterator = logger.parse("file.log", r"(?P<lvl>[0-9]+): (?P<msg>.*)")
+    for match in iterator:
+      pass
+    reveal_type(iterator)
+    reveal_type(match)
+  out: |
+    main:5: note: Revealed type is "typing.Generator[builtins.dict[builtins.str, Any], None, None]"
+    main:6: note: Revealed type is "builtins.dict[builtins.str, Any]"
+
+- case: invalid_add_argument
+  main: |
+    from loguru import logger
+    logger.add(lambda m: None, foobar=123)
+  out: |
+    main:2: error: No overload variant of "add" of "Logger" matches argument types "Callable[[Any], None]", "int"
+    main:2: note: Possible overload variants:
+    main:2: note:     def add(self, sink: Union[TextIO, Writable, Callable[[Message], None], Handler], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ...) -> int
+    main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., loop: Optional[AbstractEventLoop] = ...) -> int
+    main:2: note:     def add(self, sink: Union[str, PathLike[str]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., rotation: Union[str, int, time, timedelta, Callable[[Message, TextIO], bool], None] = ..., retention: Union[str, int, timedelta, Callable[[List[str]], None], None] = ..., compression: Union[str, Callable[[str], None], None] = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., **kwargs: Any) -> int
+
+- case: invalid_logged_object_formatting
+  main: |
+    from loguru import logger
+    logger.info(123, foo=123)
+  out: |
+    main:2: error: No overload variant of "info" of "Logger" matches argument types "int", "int"
+    main:2: note: Possible overload variants:
+    main:2: note:     def info(__self, str, *args: Any, **kwargs: Any) -> None
+    main:2: note:     def info(__self, Any) -> None
+
+- case: invalid_configuration
+  main: |
+    from loguru import logger
+    logger.configure(
+      handlers=[{"x": "y"}],
+      levels=[{"baz": 1}],
+      patcher=123,
+      activation=[{"foo": "bar"}],
+      extra=[],
+    )
+  out: |
+    main:4: error: Extra key "baz" for TypedDict "LevelConfig"
+    main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Optional[Callable[[Record], None]]"
+    main:6: error: List item 0 has incompatible type "Dict[str, str]"; expected "Tuple[Optional[str], bool]"
+    main:7: error: Argument "extra" to "configure" of "Logger" has incompatible type "List[<nothing>]"; expected "Optional[Dict[Any, Any]]"

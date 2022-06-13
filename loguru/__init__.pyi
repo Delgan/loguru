@@ -101,6 +101,7 @@ from typing import (
     Generic,
     List,
     NamedTuple,
+    NewType,
     Optional,
     Pattern,
     Sequence,
@@ -145,8 +146,8 @@ class _GeneratorContextManager(ContextManager[_T], Generic[_T]):
         traceback: Optional[TracebackType],
     ) -> Optional[bool]: ...
 
-Catcher = _GeneratorContextManager[None]
-Contextualizer = _GeneratorContextManager[None]
+Catcher = NewType("Catcher", _GeneratorContextManager[None])
+Contextualizer = NewType("Contextualizer", _GeneratorContextManager[None])
 AwaitableCompleter = Awaitable
 
 class Level(NamedTuple):
