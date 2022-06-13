@@ -58,6 +58,7 @@ def parse(text, *, strip=False, strict=True):
 
 def check_dir(dir, *, files=None, size=None):
     actual_files = set(dir.iterdir())
+    seen = set()
     if size is not None:
         assert len(actual_files) == size
     if files is not None:
@@ -65,8 +66,10 @@ def check_dir(dir, *, files=None, size=None):
         for name, content in files:
             filepath = dir / name
             assert filepath in actual_files
+            assert filepath not in seen
             if content is not None:
                 assert filepath.read_text() == content
+            seen.add(filepath)
 
 
 @contextlib.contextmanager
