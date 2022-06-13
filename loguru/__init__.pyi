@@ -120,8 +120,10 @@ else:
 if sys.version_info >= (3, 6):
     from os import PathLike
     from typing import ContextManager
+
+    PathLikeStr = PathLike[str]
 else:
-    from pathlib import PurePath as PathLike
+    from pathlib import PurePath as PathLikeStr
 
     from typing_extensions import ContextManager
 
@@ -138,7 +140,7 @@ class _GeneratorContextManager(ContextManager[_T], Generic[_T]):
     def __call__(self, func: _F) -> _F: ...
     def __exit__(
         self,
-        typ: Optional[type[BaseException]],
+        typ: Optional[Type[BaseException]],
         value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> Optional[bool]: ...
@@ -210,7 +212,7 @@ CompressionFunction = Callable[[str], None]
 
 # Actually unusable because TypedDict can't allow extra keys: python/mypy#4617
 class _HandlerConfig(TypedDict, total=False):
-    sink: Union[str, PathLike[str], TextIO, Writable, Callable[[Message], None], Handler]
+    sink: Union[str, PathLikeStr, TextIO, Writable, Callable[[Message], None], Handler]
     level: Union[str, int]
     format: Union[str, FormatFunction]
     filter: Optional[Union[str, FilterFunction, FilterDict]]
@@ -264,7 +266,7 @@ class Logger:
     @overload
     def add(
         self,
-        sink: Union[str, PathLike[str]],
+        sink: Union[str, PathLikeStr],
         *,
         level: Union[str, int] = ...,
         format: Union[str, FormatFunction] = ...,
@@ -347,7 +349,7 @@ class Logger:
     @overload
     def parse(
         self,
-        file: Union[str, PathLike[str], TextIO],
+        file: Union[str, PathLikeStr, TextIO],
         pattern: Union[str, Pattern[str]],
         *,
         cast: Union[Dict[str, Callable[[str], Any]], Callable[[Dict[str, str]], None]] = ...,
