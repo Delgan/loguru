@@ -136,6 +136,12 @@ ExcInfo = Tuple[Optional[Type[BaseException]], Optional[BaseException], Optional
 
 class _GeneratorContextManager(ContextManager[_T], Generic[_T]):
     def __call__(self, func: _F) -> _F: ...
+    def __exit__(
+        self,
+        typ: Optional[type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> Optional[bool]: ...
 
 Catcher = _GeneratorContextManager[None]
 Contextualizer = _GeneratorContextManager[None]
