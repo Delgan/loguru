@@ -62,6 +62,7 @@ setup(
             "flake8>=3.7.7",
             "freezegun==1.1.0",
             "isort>=5.1.1 ; python_version>='3.6'",
+            "mypy>=v0.910",
             "tox>=3.9.0",
             "pytest>=4.6.2",
             "pytest-cov>=2.7.1",
