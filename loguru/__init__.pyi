@@ -281,6 +281,7 @@ class Logger:
         retention: Optional[Union[str, int, timedelta, RetentionFunction]] = ...,
         compression: Optional[Union[str, CompressionFunction]] = ...,
         delay: bool = ...,
+        watch: bool = ...,
         mode: str = ...,
         buffering: int = ...,
         encoding: str = ...,
