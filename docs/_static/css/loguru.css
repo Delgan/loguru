@@ -1,3 +1,5 @@
 .wy-nav-content {
-    padding: 2.05em;
+    /* By default it's hardcoded to 800px.
+    We increase it a bit so code source fits without horizontal scrolling. */
+    max-width: 850px;
 }

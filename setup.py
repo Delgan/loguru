@@ -56,20 +56,25 @@ setup(
     ],
     extras_require={
         "dev": [
-            "black>=19.10b0 ; python_version>='3.6'",
-            "colorama>=0.3.4",
-            "docutils==0.16",
-            "flake8>=3.7.7",
-            "freezegun==1.1.0",
-            "isort>=5.1.1 ; python_version>='3.6'",
-            "mypy>=v0.910",
+            # Setup.
             "tox>=3.9.0",
+            # Testing framework.
             "pytest>=4.6.2",
             "pytest-cov>=2.7.1",
             "pytest-mypy-plugins>=1.2.0 ; python_version>='3.6'",
-            "Sphinx>=4.1.1 ; python_version>='3.6'",
-            "sphinx-autobuild>=0.7.1 ; python_version>='3.6'",
-            "sphinx-rtd-theme>=0.4.3 ; python_version>='3.6'",
+            # Testing utils.
+            "colorama>=0.3.4",
+            "freezegun==1.1.0",
+            "mypy>=v0.910",
+            # Linting.
+            "black>=19.10b0 ; python_version>='3.6'",
+            "isort>=5.1.1 ; python_version>='3.6'",
+            "flake8>=3.7.7",
+            # Docs.
+            "Sphinx==5.0.1 ; python_version>='3.6'",
+            "sphinx-autobuild==2021.3.14 ; python_version>='3.6'",
+            "sphinx-rtd-theme==1.0.0 ; python_version>='3.6'",
+            "docutils==0.16",
         ]
     },
     python_requires=">=3.5",
