@@ -6,8 +6,9 @@ import sys
 import threading
 import time
 
-import loguru
 import pytest
+
+import loguru
 from loguru import logger
 
 

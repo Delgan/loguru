@@ -96,13 +96,7 @@ from ._file_sink import FileSink
 from ._get_frame import get_frame
 from ._handler import Handler
 from ._locks_machinery import create_logger_lock
-from ._recattrs import (
-    RecordException,
-    RecordFile,
-    RecordLevel,
-    RecordProcess,
-    RecordThread,
-)
+from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
 from ._simple_sinks import AsyncSink, CallableSink, StandardSink, StreamSink
 
 if sys.version_info >= (3, 6):
@@ -802,7 +796,9 @@ class Logger:
             encoding = getattr(sink, "encoding", None)
             terminator = ""
             exception_prefix = "\n"
-        elif iscoroutinefunction(sink) or iscoroutinefunction(getattr(sink, "__call__", None)):
+        elif iscoroutinefunction(sink) or iscoroutinefunction(
+            getattr(sink, "__call__", None)  # noqa: B004
+        ):
             name = getattr(sink, "__name__", None) or repr(sink)
 
             if colorize is None:
@@ -1084,10 +1080,12 @@ class Logger:
             for handler in handlers.values():
                 handler.complete_queue()
 
+        logger = self
+
         class AwaitableCompleter:
-            def __await__(self_):
-                with self._core.lock:
-                    handlers = self._core.handlers.copy()
+            def __await__(self):
+                with logger._core.lock:
+                    handlers = logger._core.handlers.copy()
                     for handler in handlers.values():
                         yield from handler.complete_async().__await__()
 
@@ -1183,14 +1181,16 @@ class Logger:
         ):
             return self.catch()(exception)
 
-        class Catcher:
-            def __init__(self_, from_decorator):
-                self_._from_decorator = from_decorator
+        logger = self
 
-            def __enter__(self_):
+        class Catcher:
+            def __init__(self, from_decorator):
+                self._from_decorator = from_decorator
+
+            def __enter__(self):
                 return None
 
-            def __exit__(self_, type_, value, traceback_):
+            def __exit__(self, type_, value, traceback_):
                 if type_ is None:
                     return
 
@@ -1200,22 +1200,24 @@ class Logger:
                 if exclude is not None and issubclass(type_, exclude):
                     return False
 
-                from_decorator = self_._from_decorator
-                _, depth, _, *options = self._options
+                from_decorator = self._from_decorator
+                _, depth, _, *options = logger._options
 
                 if from_decorator:
                     depth += 1
 
                 catch_options = [(type_, value, traceback_), depth, True] + options
-                level_id, static_level_no = self._dynamic_level(level)
-                self._log(level_id, static_level_no, from_decorator, catch_options, message, (), {})
+                level_id, static_level_no = logger._dynamic_level(level)
+                logger._log(
+                    level_id, static_level_no, from_decorator, catch_options, message, (), {}
+                )
 
                 if onerror is not None:
                     onerror(value)
 
                 return not reraise
 
-            def __call__(_, function):
+            def __call__(self, function):
                 if isclass(function):
                     raise TypeError(
                         "Invalid object decorated with 'catch()', it must be a function, "
@@ -1349,7 +1351,7 @@ class Logger:
         args = self._options[-2:]
         return Logger(self._core, exception, depth, record, lazy, colors, raw, capture, *args)
 
-    def bind(__self, **kwargs):
+    def bind(__self, **kwargs):  # noqa: N805
         """Bind attributes to the ``extra`` dict of each logged message record.
 
         This is used to add custom context to each logging call.
@@ -1386,7 +1388,7 @@ class Logger:
         return Logger(__self._core, *options, {**extra, **kwargs})
 
     @contextlib.contextmanager
-    def contextualize(__self, **kwargs):
+    def contextualize(__self, **kwargs):  # noqa: N805
         """Bind attributes to the context-local ``extra`` dict while inside the ``with`` block.
 
         Contrary to |bind| there is no ``logger`` returned, the ``extra`` dict is modified in-place
@@ -1757,7 +1759,7 @@ class Logger:
             self._core.enabled = enabled
 
     @staticmethod
-    def parse(file, pattern, *, cast={}, chunk=2**16):
+    def parse(file, pattern, *, cast={}, chunk=2**16):  # noqa: B006
         """Parse raw logs and extract each entry as a |dict|.
 
         The logging format has to be specified as the regex ``pattern``, it will then be
@@ -1986,40 +1988,40 @@ class Logger:
         for handler in core.handlers.values():
             handler.emit(log_record, level_id, from_decorator, raw, colored_message)
 
-    def trace(__self, __message, *args, **kwargs):
+    def trace(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
         __self._log("TRACE", None, False, __self._options, __message, args, kwargs)
 
-    def debug(__self, __message, *args, **kwargs):
+    def debug(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
         __self._log("DEBUG", None, False, __self._options, __message, args, kwargs)
 
-    def info(__self, __message, *args, **kwargs):
+    def info(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'INFO'``."""
         __self._log("INFO", None, False, __self._options, __message, args, kwargs)
 
-    def success(__self, __message, *args, **kwargs):
+    def success(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
         __self._log("SUCCESS", None, False, __self._options, __message, args, kwargs)
 
-    def warning(__self, __message, *args, **kwargs):
+    def warning(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
         __self._log("WARNING", None, False, __self._options, __message, args, kwargs)
 
-    def error(__self, __message, *args, **kwargs):
+    def error(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
         __self._log("ERROR", None, False, __self._options, __message, args, kwargs)
 
-    def critical(__self, __message, *args, **kwargs):
+    def critical(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
         __self._log("CRITICAL", None, False, __self._options, __message, args, kwargs)
 
-    def exception(__self, __message, *args, **kwargs):
+    def exception(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Convenience method for logging an ``'ERROR'`` with exception information."""
         options = (True,) + __self._options[1:]
         __self._log("ERROR", None, False, options, __message, args, kwargs)
 
-    def log(__self, __level, __message, *args, **kwargs):
+    def log(__self, __level, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``level``."""
         level_id, static_level_no = __self._dynamic_level(__level)
         __self._log(level_id, static_level_no, False, __self._options, __message, args, kwargs)

@@ -359,7 +359,7 @@ class Colorizer:
         return ColoredFormat(tokens, messages_color_tokens)
 
     @staticmethod
-    def prepare_message(string, args=(), kwargs={}):
+    def prepare_message(string, args=(), kwargs={}):  # noqa: B006
         tokens = Colorizer._parse_with_formatting(string, args, kwargs)
         return ColoredMessage(tokens)
 

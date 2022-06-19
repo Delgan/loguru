@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
   schedule:
-      - cron: 0 0 * * 0
+  - cron: 0 0 * * 0
 
 jobs:
   tests:
@@ -11,38 +11,38 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
+        - ubuntu-latest
         python-version:
-          - '3.5'
-          - '3.6'
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
-          - '3.11-dev'
-          - 'pypy-3.9'
+        - '3.5'
+        - '3.6'
+        - '3.7'
+        - '3.8'
+        - '3.9'
+        - '3.10'
+        - 3.11-dev
+        - pypy-3.9
         include:
-          - os: windows-latest
-            python-version: '3.10'
-          - os: macos-latest
-            python-version: '3.10'
+        - os: windows-latest
+          python-version: '3.10'
+        - os: macos-latest
+          python-version: '3.10'
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox
-      - name: Run tox
-        run: |
-          tox -e py
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          flags: ${{ matrix.os }}_${{ matrix.python-version }}
-          verbose: true
-          fail_ci_if_error: true
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install tox
+    - name: Run tox
+      run: |
+        tox -e py
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        flags: ${{ matrix.os }}_${{ matrix.python-version }}
+        verbose: true
+        fail_ci_if_error: true

@@ -2,8 +2,9 @@ import os
 import sys
 from unittest.mock import MagicMock
 
-import loguru
 import pytest
+
+import loguru
 from loguru import logger
 
 from .conftest import parse
@@ -60,11 +61,11 @@ def test_decolorized_format(format, message, expected, writer):
 
 @pytest.fixture
 def patch_colorama(monkeypatch):
-    AnsiToWin32_instance = MagicMock()
-    AnsiToWin32_class = MagicMock(return_value=AnsiToWin32_instance)
+    instance = MagicMock()
+    class_ = MagicMock(return_value=instance)
     winapi_test = MagicMock(return_value=True)
     win32 = MagicMock(winapi_test=winapi_test)
-    colorama = MagicMock(AnsiToWin32=AnsiToWin32_class, win32=win32)
+    colorama = MagicMock(AnsiToWin32=class_, win32=win32)
     monkeypatch.setitem(sys.modules, "colorama", colorama)
     monkeypatch.setitem(sys.modules, "colorama.win32", win32)
     yield colorama

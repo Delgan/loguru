@@ -4,6 +4,7 @@ import logging
 import pickle
 
 import pytest
+
 from loguru import logger
 
 from .conftest import parse
@@ -50,7 +51,7 @@ class StandardHandler(logging.Handler):
     def acquire(self):
         pass
 
-    def createLock(self):
+    def createLock(self):  # noqa: N802
         return None
 
 
@@ -130,10 +131,10 @@ def test_pickling_standard_handler():
 
 
 def test_pickling_standard_handler_root_logger_not_picklable(monkeypatch, capsys):
-    def __reduce__():
+    def reduce_protocol():
         raise TypeError("Not picklable")
 
-    monkeypatch.setattr(logging.getLogger(), "__reduce__", __reduce__, raising=False)
+    monkeypatch.setattr(logging.getLogger(), "__reduce__", reduce_protocol, raising=False)
 
     handler = StandardHandler(logging.NOTSET)
     logger.add(handler, format="=> {message}", catch=False)

@@ -13,8 +13,9 @@ import warnings
 from collections import namedtuple
 
 import freezegun
-import loguru
 import pytest
+
+import loguru
 
 if sys.version_info < (3, 5, 3):
 

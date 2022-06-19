@@ -5,6 +5,7 @@ import pathlib
 import sys
 
 import pytest
+
 from loguru import logger
 
 message = "test message"

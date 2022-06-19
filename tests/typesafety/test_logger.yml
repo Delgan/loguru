@@ -1,13 +1,13 @@
 - case: basic_logger_usage
   parametrized:
-    - method: trace
-    - method: debug
-    - method: info
-    - method: success
-    - method: warning
-    - method: error
-    - method: exception
-    - method: critical
+  - method: trace
+  - method: debug
+  - method: info
+  - method: success
+  - method: warning
+  - method: error
+  - method: exception
+  - method: critical
   main: |
     from loguru import logger
     res = logger.{{method}}("Test")
@@ -19,8 +19,8 @@
 
 - case: using_log_function
   parametrized:
-    - level: "'INFO'"
-    - level: 30
+  - level: "'INFO'"
+  - level: 30
   main: |
     from loguru import logger
     logger.log({{level}}, "Test")
@@ -32,20 +32,20 @@
 
 - case: logging_non_string
   parametrized:
-    - message: 123
-    - message: dict(foo=456)
-    - message: object()
+  - message: 123
+  - message: dict(foo=456)
+  - message: object()
   main: |
     from loguru import logger
     logger.info({{ message }})
 
 - case: add_sink
   parametrized:
-    - sink: sys.stderr
-    - sink: "'test.txt'"
-    - sink: "Path('file.log')"
-    - sink: "lambda m: None"
-    - sink: StreamHandler()
+  - sink: sys.stderr
+  - sink: "'test.txt'"
+  - sink: Path('file.log')
+  - sink: 'lambda m: None'
+  - sink: StreamHandler()
   main: |
     import sys
     from loguru import logger

@@ -5,8 +5,9 @@ import re
 import sys
 import threading
 
-import loguru
 import pytest
+
+import loguru
 from loguru import logger
 
 
@@ -505,7 +506,7 @@ def test_complete_from_another_loop(capsys, loop_is_none):
 
 def test_complete_from_multiple_threads_loop_is_none(capsys):
     async def worker(i):
-        for j in range(100):
+        for _ in range(100):
             await asyncio.sleep(0)
             logger.info("{:03}", i)
         await logger.complete()
@@ -533,7 +534,7 @@ def test_complete_from_multiple_threads_loop_is_none(capsys):
 
 def test_complete_from_multiple_threads_loop_is_not_none(capsys):
     async def worker(i):
-        for j in range(100):
+        for _ in range(100):
             await asyncio.sleep(0)
             logger.info("{:03}", i)
         await logger.complete()

@@ -5,8 +5,9 @@ import tempfile
 import time
 from unittest.mock import Mock
 
-import loguru
 import pytest
+
+import loguru
 from loguru import logger
 from loguru._ctime_functions import load_ctime_functions
 

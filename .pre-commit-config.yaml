@@ -25,6 +25,7 @@ repos:
   rev: 4.0.1
   hooks:
   - id: flake8
+    args: [--exclude, tests/exceptions/source]
     additional_dependencies:
     - flake8-bugbear
     - pep8-naming

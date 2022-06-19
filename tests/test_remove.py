@@ -2,6 +2,7 @@ import sys
 import time
 
 import pytest
+
 from loguru import logger
 
 

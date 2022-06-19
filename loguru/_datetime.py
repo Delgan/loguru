@@ -9,7 +9,7 @@ tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S{1,6}|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|
 pattern = re.compile(r"(?:{0})|\[(?:{0}|!UTC)\]".format(tokens))
 
 
-class datetime(datetime_):
+class datetime(datetime_):  # noqa: N801
     def __format__(self, spec):
         if spec.endswith("!UTC"):
             dt = self.astimezone(timezone.utc)

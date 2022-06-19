@@ -3,6 +3,7 @@ import os
 from unittest.mock import Mock
 
 import pytest
+
 from loguru import logger
 
 from .conftest import check_dir

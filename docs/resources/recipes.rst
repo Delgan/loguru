@@ -231,7 +231,7 @@ Files relate to Loguru as follows:
 
     * It is the entry point when your project is used as a script (``python mypackage/main.py``).
     * It can contain logging configuration inside an ``if __name__ == "__main__":`` block.
-    
+
 * File ``mymodule.py``:
 
     * It is an internal module used by your project.

@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 
 import pytest
+
 from loguru import logger
 
 TEXT = "This\nIs\nRandom\nText\n123456789\nABC!DEF\nThis Is The End\n"

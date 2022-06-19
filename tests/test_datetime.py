@@ -4,6 +4,7 @@ import sys
 
 import freezegun
 import pytest
+
 from loguru import logger
 
 if sys.version_info < (3, 6):
