@@ -14,7 +14,7 @@
 `0.6.0`_ (2022-01-29)
 =====================
 
-- Remove internal use of ``pickle.loads()`` considered as a security vulnerability referenced as `CVE-2022-0329 <https://nvd.nist.gov/vuln/detail/CVE-2022-0329>`_ (`#563 <https://github.com/Delgan/loguru/issues/563>`_).
+- Remove internal use of ``pickle.loads()`` to fix the (finally rejected) security vulnerability referenced as `CVE-2022-0329 <https://nvd.nist.gov/vuln/detail/CVE-2022-0329>`_ (`#563 <https://github.com/Delgan/loguru/issues/563>`_).
 - Modify coroutine sink to make it discard log messages when ``loop=None`` and no event loop is running (due to internally using ``asyncio.get_running_loop()`` in place of ``asyncio.get_event_loop()``).
 - Remove the possibility to add a coroutine sink with ``enqueue=True`` if ``loop=None`` and no event loop is running.
 - Change default encoding of file sink to be ``utf8`` instead of ``locale.getpreferredencoding()`` (`#339 <https://github.com/Delgan/loguru/issues/339>`_).

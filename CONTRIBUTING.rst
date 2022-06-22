@@ -41,7 +41,7 @@ Prefer using a relatively recent Python version as some dependencies required fo
 
 3. Activate your virtual environment::
 
-    $ python -m virtualenv env
+    $ python -m venv env
     $ source env/bin/activate
 
 4. Install `Loguru` in development mode::
@@ -61,7 +61,7 @@ Prefer using a relatively recent Python version as some dependencies required fo
 7. Implement the modifications wished. During the process of development, honor `PEP 8`_ as much as possible.
 8. Add unit tests (don't hesitate to be exhaustive!) and ensure none are failing using::
 
-    $ tox
+    $ tox -e tests
 
 9. Remember to update documentation if required.
 10. If your development modifies `Loguru` behavior, update the ``CHANGELOG.rst`` file with what you improved.

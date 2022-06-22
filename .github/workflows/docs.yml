@@ -7,14 +7,16 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -e .[dev]
+        python -m pip install tox
     - name: Build documentation
       run: |
-        sphinx-build -a -b html -W --keep-going docs/ docs/_build
+        tox -e docs
