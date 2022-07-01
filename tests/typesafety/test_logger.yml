@@ -90,9 +90,10 @@
 
 - case: async_sink_options
   main: |
+    import loguru
     from loguru import logger
     import asyncio
-    async def sink(m):
+    async def sink(m: loguru.Message) -> None:
       pass
     logger.add(
       sink,
@@ -108,11 +109,11 @@
   main: |
     from loguru import logger
     awaitable = logger.complete()
-    async def func():
+    async def func() -> None:
       await awaitable
     reveal_type(awaitable)
   out: |
-    main:5: note: Revealed type is "typing.Awaitable[Any]"
+    main:5: note: Revealed type is "typing.Awaitable[None]"
 
 - case: catch_as_decorator_with_parentheses
   main: |
