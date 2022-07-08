@@ -65,12 +65,8 @@ setup(
             "pytest-mypy-plugins>=1.2.0 ; python_version>='3.6'",
             # Testing utils.
             "colorama>=0.3.4",
-            "freezegun==1.1.0",
+            "freezegun>=1.1.0",
             "mypy>=v0.910",
-            # Linting.
-            "black>=19.10b0 ; python_version>='3.6'",
-            "isort>=5.1.1 ; python_version>='3.6'",
-            "flake8>=3.7.7",
             # Docs.
             "Sphinx==5.0.1 ; python_version>='3.6'",
             "sphinx-autobuild==2021.3.14 ; python_version>='3.6'",
