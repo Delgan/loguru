@@ -1,11 +1,12 @@
-# Please see the documentation for all configuration options:
-# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
-
 version: 2
 updates:
-  - package-ecosystem: "pip" # See documentation for possible values
-    directory: "/" # Location of package manifests
-    schedule:
-      interval: "daily"
-    allow: # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#allow
-      - dependency-type: "direct" 
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: monthly
+- package-ecosystem: pip
+  directory: /
+  schedule:
+    interval: monthly
+  allow:
+  - dependency-type: direct
