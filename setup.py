@@ -71,7 +71,7 @@ setup(
             "Sphinx==5.0.1 ; python_version>='3.6'",
             "sphinx-autobuild==2021.3.14 ; python_version>='3.6'",
             "sphinx-rtd-theme==1.0.0 ; python_version>='3.6'",
-            "docutils==0.16 ; python_version>='3.6'",
+            "docutils==0.19 ; python_version>='3.6'",
         ]
     },
     python_requires=">=3.5",
