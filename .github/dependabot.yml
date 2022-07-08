@@ -4,9 +4,13 @@ updates:
   directory: /
   schedule:
     interval: monthly
+  labels: []
 - package-ecosystem: pip
   directory: /
   schedule:
     interval: monthly
   allow:
   - dependency-type: direct
+  labels: []
+  ignore:
+  - dependency-name: docutils  # Sphinx requires docutils<019
