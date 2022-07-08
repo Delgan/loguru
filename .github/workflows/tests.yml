@@ -43,7 +43,7 @@ jobs:
       run: |
         tox -e tests
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         flags: ${{ matrix.os }}_${{ matrix.python-version }}
         verbose: true
