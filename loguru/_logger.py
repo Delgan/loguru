@@ -817,7 +817,7 @@ class Logger:
                 except RuntimeError as e:
                     raise ValueError(
                         "An event loop is required to add a coroutine sink with `enqueue=True`, "
-                        "but but none has been passed as argument and none is currently running."
+                        "but none has been passed as argument and none is currently running."
                     ) from e
 
             coro = sink if iscoroutinefunction(sink) else sink.__call__
