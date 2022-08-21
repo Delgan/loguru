@@ -228,7 +228,7 @@ class Handler:
             exception = {
                 "type": None if exception.type is None else exception.type.__name__,
                 "value": exception.value,
-                "traceback": bool(record["exception"].traceback),
+                "traceback": bool(exception.traceback),
             }
 
         serializable = {
