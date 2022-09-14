@@ -1287,7 +1287,8 @@ class Logger:
             contains.
         raw : |bool|, optional
             If ``True``, the formatting of each sink will be bypassed and the message will be sent
-            as is.
+            as is. Note that this opens up the vulnerability CWE-93: Improper Neutralization of CRLF
+            Sequences ('CRLF Injection')
         capture : |bool|, optional
             If ``False``, the ``**kwargs`` of logged message will not automatically populate
             the ``extra`` dict (although they are still used for formatting).
@@ -1935,6 +1936,15 @@ class Logger:
             exception = RecordException(type_, value, traceback)
         else:
             exception = None
+
+        clrf_save = not raw
+
+        if clrf_save:
+            try:
+                message = message.replace("\n", "\\n").replace("\r", "\\r")
+            except (AttributeError, TypeError):
+                # AttributeError if message is not a string, TypeError if it's a binary string
+                pass
 
         log_record = {
             "elapsed": elapsed,
