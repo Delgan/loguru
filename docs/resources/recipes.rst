@@ -93,7 +93,7 @@ You should also avoid logging a message that could be maliciously hand-crafted b
     logger.info(message, value=SomeValue(10))
 
 
-Another danger due to external input is the possibility of a log injection attack. Consider that you may need to escape user values before logging them: `Is your Python code vulnerable to log injection? <https://dev.arie.bovenberg.net/blog/is-your-python-code-vulnerable-to-log-injection/>`_
+Another danger due to external input is the possibility of a log injection attack. This can happen with the option `raw=True`. Consider that you may need to escape user values before logging them: `Is your Python code vulnerable to log injection? <https://dev.arie.bovenberg.net/blog/is-your-python-code-vulnerable-to-log-injection/>`_
 
 .. code::
 
@@ -101,7 +101,7 @@ Another danger due to external input is the possibility of a log injection attac
 
     # If value is "Josh logged in.\nINFO User James" then there will appear to be two log entries.
     username = external_data()
-    logger.info("User " + username + " logged in.")
+    logger.opt(raw=True).info("User " + username + " logged in.")
 
 
 Note that by default, Loguru will display the value of existing variables when an ``Exception`` is logged. This is very useful for debugging but could lead to credentials appearing in log files. Make sure to turn it off in production (or set the ``LOGURU_DIAGNOSE=NO`` environment variable).
