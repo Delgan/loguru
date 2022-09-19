@@ -145,7 +145,7 @@ The most straightforward workaround is to |remove| your handler and then re-|add
 
     ...
 
-    logger.remove(handler_id)
+    logger.remove(handler_id)  # For the default handler, it's actually '0'.
     logger.add(sys.stderr, level="DEBUG")
 
     logger.debug("Logging 'DEBUG' messages too")
