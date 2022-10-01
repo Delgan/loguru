@@ -62,7 +62,7 @@ setup(
             # Testing framework.
             "pytest>=4.6.2",
             "pytest-cov>=2.7.1",
-            "pytest-mypy-plugins>=1.2.0 ; python_version>='3.6'",
+            "pytest-mypy-plugins>=1.2.0 ; python_version>='3.6,<3.11'",
             # Testing utils.
             "colorama>=0.3.4",
             "freezegun>=1.1.0",

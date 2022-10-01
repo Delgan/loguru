@@ -291,7 +291,7 @@ class Logger:
     def remove(self, handler_id: Optional[int] = ...) -> None: ...
     def complete(self) -> AwaitableCompleter: ...
     @overload
-    def catch(
+    def catch(  # type: ignore[misc]
         self,
         exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]] = ...,
         *,
