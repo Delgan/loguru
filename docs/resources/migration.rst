@@ -29,8 +29,11 @@ Switching from standard ``logging`` to ``loguru``
 .. |isEnabledFor| replace:: :meth:`~logging.Logger.isEnabledFor`
 .. |dictConfig| replace:: :func:`~logging.config.dictConfig`
 .. |basicConfig| replace:: :func:`~logging.basicConfig`
+.. |captureWarnings| replace:: :func:`~logging.captureWarnings`
 .. |assertLogs| replace:: :meth:`~unittest.TestCase.assertLogs`
 .. |unittest| replace:: :mod:`unittest`
+.. |warnings| replace:: :mod:`warnings`
+.. |warnings.showwarning| replace:: :func:`warnings.showwarning`
 
 .. |add| replace:: :meth:`~loguru._logger.Logger.add()`
 .. |remove| replace:: :meth:`~loguru._logger.Logger.remove()`
@@ -223,6 +226,23 @@ Replacing ``basicConfig()`` and ``dictConfig()`` functions
 The |basicConfig| and |dictConfig| functions are replaced by the |configure| method.
 
 This does not accept ``config.ini`` files, though, so you have to handle that yourself using your favorite format.
+
+
+Replacing ``captureWarnings()`` function
+----------------------------------------
+
+The |captureWarnings| function which redirects alerts from the |warnings| module to the logging system can be implemented by simply replacing |warnings.showwarning| function as follow::
+
+    import warnings
+    from loguru import logger
+
+    showwarning_ = warnings.showwarning
+
+    def showwarning(message, *args, **kwargs):
+        logger.warning(message)
+        showwarning_(message, *args, **kwargs)
+
+    warnings.showwarning = showwarning
 
 
 Replacing ``assertLogs()`` method from ``unittest`` library
