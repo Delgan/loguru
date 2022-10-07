@@ -22,7 +22,8 @@ class _HandlerLockWrapper:
     def __enter__(self):
         if getattr(self._local, "acquired", False):
             raise HandlerLockNotReentrant(
-                "Tried to emit a log in the process of handling a log. Log handler is not re-entrant."
+                "Tried to emit a log in the process of handling a log. Log handler is not "
+                "re-entrant."
             )
         self._local.acquired = True
         self._lock.acquire()
