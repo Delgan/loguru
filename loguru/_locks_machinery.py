@@ -2,13 +2,44 @@ import os
 import threading
 import weakref
 
+
+class HandlerLockNotReentrant(RuntimeError):
+    pass
+
+
+class _HandlerLockWrapper:
+    """Lock wrapper for the handler.
+
+    This avoids deadlock by propagating an exception rather than waiting forever.
+    """
+
+    def __init__(self, lock):
+        self._lock = lock
+        self._local = threading.local()
+        self._local.acquired = False
+
+    def __enter__(self):
+        if getattr(self._local, "acquired", False):
+            raise HandlerLockNotReentrant(
+                "Tried to emit a log in the process of handling a log. Log handler is not re-entrant."
+            )
+        self._local.acquired = True
+        self._lock.acquire()
+        return
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._lock.release()
+        self._local.acquired = False
+        return
+
+
 if not hasattr(os, "register_at_fork"):
 
     def create_logger_lock():
         return threading.Lock()
 
     def create_handler_lock():
-        return threading.Lock()
+        return _HandlerLockWrapper(threading.Lock())
 
 else:
     # While forking, we need to sanitize all locks to make sure the child process doesn't run into
@@ -47,4 +78,4 @@ else:
     def create_handler_lock():
         lock = threading.Lock()
         handler_locks.add(lock)
-        return lock
+        return _HandlerLockWrapper(lock)

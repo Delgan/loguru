@@ -5,7 +5,7 @@ import os
 from threading import Thread
 
 from ._colorizer import Colorizer
-from ._locks_machinery import create_handler_lock
+from ._locks_machinery import HandlerLockNotReentrant, create_handler_lock
 
 
 def prepare_colored_format(format_, ansi_level):
@@ -175,7 +175,8 @@ class Handler:
                     self._queue.put(str_record)
                 else:
                     self._sink.write(str_record)
-
+        except HandlerLockNotReentrant:
+            self._error_interceptor.print(record)
         except Exception:
             if not self._error_interceptor.should_catch():
                 raise
