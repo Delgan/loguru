@@ -10,7 +10,8 @@ class HandlerLockNotReentrant(RuntimeError):
 class _HandlerLockWrapper:
     """Lock wrapper for the handler.
 
-    This avoids deadlock by propagating an exception rather than waiting forever.
+    This avoids thread-local deadlock by propagating an exception rather than waiting forever.
+    See: https://github.com/Delgan/loguru/issues/712
     """
 
     def __init__(self, lock):
