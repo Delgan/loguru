@@ -24,14 +24,18 @@ class CyclicReference:
         logger.info("tearing down")
 
 
+def perform_full_gc():
+    for generation in range(3):
+        gc.collect(generation=generation)
+
+
 @pytest.fixture()
 def _remove_cyclic_references():
     """Prevent cyclic isolate finalizers bleeding into other tests."""
     try:
         yield
     finally:
-        for generation in range(3):
-            gc.collect(generation=generation)
+        perform_full_gc()
 
 
 def test_no_deadlock_on_generational_garbage_collection(_remove_cyclic_references):
@@ -45,10 +49,10 @@ def test_no_deadlock_on_generational_garbage_collection(_remove_cyclic_reference
     output = []
 
     def sink(message):
-        # This simulates assigning some memory as part of log handling. Eventually this will
-        # trigger the generational garbage collector to take over here.
-        # You could replace it with `json.dumps(message.record)` to get the same effect.
-        _ = [dict() for _ in range(20)]
+        # The generational GC could be triggered here by any memory assignment, but we
+        # trigger it explicitly to avoid a flaky test.
+        # See https://github.com/Delgan/loguru/issues/712
+        perform_full_gc()
 
         # Actually write the message somewhere
         output.append(message)
