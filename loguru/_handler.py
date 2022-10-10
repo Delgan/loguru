@@ -2,6 +2,8 @@ import functools
 import json
 import multiprocessing
 import os
+import threading
+from contextlib import contextmanager
 from threading import Thread
 
 from ._colorizer import Colorizer
@@ -64,6 +66,7 @@ class Handler:
 
         self._stopped = False
         self._lock = create_handler_lock()
+        self._lock_acquired = threading.local()
         self._queue = None
         self._confirmation_event = None
         self._confirmation_lock = None
@@ -94,6 +97,24 @@ class Handler:
 
     def __repr__(self):
         return "(id=%d, level=%d, sink=%s)" % (self._id, self._levelno, self._name)
+
+    @contextmanager
+    def _protected_lock(self):
+        """Acquire the lock, but fail fast if its already acquired by the current thread."""
+        if getattr(self._lock_acquired, "acquired", False):
+            raise RuntimeError(
+                "Could not acquire internal lock because it was already in use (deadlock avoided). "
+                "This likely happened because the logger was re-used inside a sink, a signal "
+                "handler or a '__del__' method. This is not permitted because the logger and its "
+                "handlers are not re-entrant."
+            )
+        self._lock_acquired.acquired = True
+        try:
+            self._lock.acquire()
+            yield
+        finally:
+            self._lock.release()
+            self._lock_acquired.acquired = False
 
     def emit(self, record, level_id, from_decorator, is_raw, colored_message):
         try:
@@ -168,21 +189,20 @@ class Handler:
             str_record = Message(formatted)
             str_record.record = record
 
-            with self._lock:
+            with self._protected_lock():
                 if self._stopped:
                     return
                 if self._enqueue:
                     self._queue.put(str_record)
                 else:
                     self._sink.write(str_record)
-
         except Exception:
             if not self._error_interceptor.should_catch():
                 raise
             self._error_interceptor.print(record)
 
     def stop(self):
-        with self._lock:
+        with self._protected_lock():
             self._stopped = True
             if self._enqueue:
                 if self._owner_process_pid != os.getpid():
@@ -207,7 +227,7 @@ class Handler:
         if self._enqueue and self._owner_process_pid != os.getpid():
             return
 
-        with self._lock:
+        with self._protected_lock():
             await self._sink.complete()
 
     def update_format(self, level_id):
@@ -297,6 +317,7 @@ class Handler:
     def __getstate__(self):
         state = self.__dict__.copy()
         state["_lock"] = None
+        state["_lock_acquired"] = None
         state["_memoize_dynamic_format"] = None
         if self._enqueue:
             state["_sink"] = None
@@ -307,6 +328,7 @@ class Handler:
     def __setstate__(self, state):
         self.__dict__.update(state)
         self._lock = create_handler_lock()
+        self._lock_acquired = threading.local()
         if self._is_formatter_dynamic:
             if self._colorize:
                 self._memoize_dynamic_format = memoize(prepare_colored_format)
