@@ -317,6 +317,7 @@ class Handler:
     def __getstate__(self):
         state = self.__dict__.copy()
         state["_lock"] = None
+        state["_lock_acquired"] = None
         state["_memoize_dynamic_format"] = None
         if self._enqueue:
             state["_sink"] = None
@@ -327,6 +328,7 @@ class Handler:
     def __setstate__(self, state):
         self.__dict__.update(state)
         self._lock = create_handler_lock()
+        self._lock_acquired = threading.local()
         if self._is_formatter_dynamic:
             if self._colorize:
                 self._memoize_dynamic_format = memoize(prepare_colored_format)
