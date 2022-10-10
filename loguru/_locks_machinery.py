@@ -2,7 +2,6 @@ import os
 import threading
 import weakref
 
-
 if not hasattr(os, "register_at_fork"):
 
     def create_logger_lock():
