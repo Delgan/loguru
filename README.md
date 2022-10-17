@@ -1,100 +1,73 @@
 # loguru
-[![Build Status](https://travis-ci.org/delaran/loguru.svg?branch=master)](https://travis-ci.org/delgan/loguru)
 
+[![CircleCI](https://circleci.com/gh/Delgan/loguru.svg?style=svg)](https://circleci.com/gh/Delgan/loguru)
+[![Build Status](https://travis-ci.org/Delgan/loguru.svg?)](https://travis-ci.org/Delgan/loguru)
+[![PyPI](https://codeclimate.com/github/delgan/loguru/d107a4e049fd d'avant ver.4.3.0-b](https://codeclimate.com/github/delgan/loguru/supported-packages))
 
-Loguru is a logging framework based upon the [django project](http://django.org/).
+## What is loguru?
 
-## Dependencies
+`loguru` is a simple PSR-4 logger which writes to the logging file as text, HTML, CSS, ITL, JSON or as a PDF PDF. It also support debug messages, whiteboard graph and GPS directions.
 
-* [Sphinx](https://github.com/Sphinx-Sphinx/sphinx)
+## How to use loguru
 
-## Installation
+1. start loguru by python with `import loguru`.
 
-[re.python](https://github.com/re-python/re.python) is required to install this library. It installs it with pip.
-This means you first need to install [re.python](https://travis-ci.org/delgan/re.python) before
-installing loguru. There are more than one way to meet requirement. However, this is the two easiest:
-
-1. Clone repository: `git clone https://github.com/delan/loguru.git`
-2. Install package: `pip install re.python`
-
-## Usage
-
-Use logger inside your app. You are free to call other logger without any module dependencies:
+2. You can add all the code you need by adding an `include` block in your logFile.py
 
 ```python
-def log(level, message, __context = None):
-   logger.debug(message)
-```
+def logLogger(self, logfile='', isTemp=False):
+    """Performs logging from logfile (full path or filename).
 
-Or also call inside context:
-
-```python
-from loguru import VideoLog
-
-video_log = VideoLog()
-
-
-print video_log.get_playback_result()
-
-```
-
-You should take these settings of your logger:
-```python
-log_level = logging.DEBUG
-log_message = 'DEBUG, youtube'
-log_message_first_level = 'DEBUG, youtube'
-logger               = logging.getLogger()
-logger.addHandler(handler)
-           
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
+    :param logFile: full path of the logging file
+    :param isTemp: if true, this block is executed just for the $iast 
+    """
+    if logfile:
+        import sys
+        global logFile, filename
+        logFile, filename = os.path.split(logfile)
+        sys.stderr.write(line)
+        try:
+            sys.stderr.flush()
+            try:
+                exec(filename)
+            except Exception, e:
+                logFile.info("Exception in {0}".format(logFile), e)
+                logFile.off()  # and terminate
+                sys.stdout.write("{0} {1}".format(logFile, e))
+            sys.stdout.flush()
+        except:
+            logFile.die("Error when {1}".format(global sys.argv[0]), True)
 
 ```
 
-The **logging.Messages** can be also configured before:
+## Special thanks to [Delgan3r](//github/henrydelgan)
 
-```python
-logging.info('Information')
-logging.debug('Debug')
-logging.info('Instruction')
-logging.warning('Warning')
-```
+## Contributing support
 
-## Setting Default Configuration
+For contribution support just visit the discussion page [logurusupport@delgan.net](//github/logurusupport/tree). We'll handle any bug related to the Python version you have installed.
 
-#### Logger limits
+## Docstrings
 
-You can set a maximum of *log_level* logging levels. Example is **logging.INFO**, **logging.DEBUG** or **logging.WARNING**.
+Since we can get with the docstrings, we can make it easier for beginners who may find this a bit hard. You can rename it to ``logurodoc`` or ``logurodoc.scss``.
 
-re.data_path is the base path where all the files reside. You can use a different path for logging:
+## Acknowledgments
 
-```python
-re.data_path = 'c:\\Inventory\\Log'
-```
+Yay! It's back to the corridors. This is the first version I'm aware of. Tell me if you like it. If you don't you don't have to worry. :D
 
-login_dir is the base path where the login database is stored. To configure different login paths use
-different database path (if any).
+## How to build
 
-**Logging** is the class which extends the **sphinx.ext.i18n.web.sphinx_defaults** module:
+Go to the loguru.dist:
 
-Run your template with `loguru.sphinx.extensions.sphinx_defaultstemplate` which was just installed:
+``python loguru.dist -V``
+    
+## TODOs
 
-```python
-modname="Loguru"
-
-w = logging.getLogger()
+1. Add behaviours for logs to each platform:
+   * macOS: * logfile * json ** html ** css
+   * Windows: * logfile * html ** css
+   * Linux: xml * html
 
 
-def must_passe(*args, **kwargs):
-    webinit = json.loads(data)
+## License
 
-    ## Check for Cookie
-    w.config['cookie_secure'] = webinit['secure']
-    w.config['cookie_username'] = webinit['username']
-    w.config['cookie
+Copyright 2014, Michael Wright. Licensed under the MIT license.
