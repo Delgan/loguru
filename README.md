@@ -1,100 +1,87 @@
-# loguru
-[![Build Status](https://travis-ci.org/delaran/loguru.svg?branch=master)](https://travis-ci.org/delgan/loguru)
+# Loguru
+
+__Loguru__ is meant to be a generator of logs when processes are running. It stores them as sensitive files named zml, the suffix is a type of protection that protects objects that are not readable by others (in one case apache & nginx).
 
 
-Loguru is a logging framework based upon the [django project](http://django.org/).
+## Main goals:
 
-## Dependencies
+- detect fast catastrophic manipulation of log files (gzip archives, zip compressions)
+- Able to add Loguru-enabled actions to log files. The purpose is for the Loguru apps to be easy to add to new apps without the need to decode them afterwards.
+- Acts proxies less.
 
-* [Sphinx](https://github.com/Sphinx-Sphinx/sphinx)
+## Get started with Loguru:
 
-## Installation
+I've prepared a repository ([Loguru](https://github.com/Delgan/loguru) for you and if you find this useful, thanks for your hospitality!
 
-[re.python](https://github.com/re-python/re.python) is required to install this library. It installs it with pip.
-This means you first need to install [re.python](https://travis-ci.org/delgan/re.python) before
-installing loguru. There are more than one way to meet requirement. However, this is the two easiest:
+## Building Loguru:
 
-1. Clone repository: `git clone https://github.com/delan/loguru.git`
-2. Install package: `pip install re.python`
-
-## Usage
-
-Use logger inside your app. You are free to call other logger without any module dependencies:
+You can grab [loguru.py](https://github.com/Delgan/loguru.py) to download it and configure it in the following way:
 
 ```python
-def log(level, message, __context = None):
-   logger.debug(message)
+from loguru import app
+import logging
+
+APP = app(__name__)
+
+@APP
+def run():
+    logging.info("Happy holiday by Delgan")
 ```
 
-Or also call inside context:
+Then you should build loguru and install it using brew. When you get the installation, you can run loguru:
 
-```python
-from loguru import VideoLog
-
-video_log = VideoLog()
-
-
-print video_log.get_playback_result()
-
+```shell
+$ brew install loguru.builder
+$ loguru:build
 ```
 
-You should take these settings of your logger:
-```python
-log_level = logging.DEBUG
-log_message = 'DEBUG, youtube'
-log_message_first_level = 'DEBUG, youtube'
-logger               = logging.getLogger()
-logger.addHandler(handler)
-           
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
+This requires the python package [tokenize](http://gettokenize.org/?q=libpython-tokenize-1.7.0).
 
+After that, you should edit the config/local.example.cnf file.
+```python
+loguru:config=loguru.local.example.cnf
+loguru:filesize=252147483647,2,1,1 \
+loguru:encoding=utf-8
+loguru:compresslevel=logrus,9
 ```
 
-The **logging.Messages** can be also configured before:
+This will resave panes (writing them into the /tmp folder and overwriting new zml files).
+
+And invoke it:
+
+```shell
+$ loguru:run
+```
+To execute loguru, first, you should add it to `~/path/to/installation`.
+Then, just run loguru:run. You can warn me about it.
+
+## How to write loguru:
+
+Now, we create a new folder `config` in `src`. It should be named `loguru` or `config` for modern decision, don't hesitate and make sure it exists. Copy your [logru](https://github.com/Delgan/logru) folder as a this folder.
+
+Now, we call `configure.py`. It's a very easy way to configure logulu.
 
 ```python
-logging.info('Information')
-logging.debug('Debug')
-logging.info('Instruction')
-logging.warning('Warning')
+from loguru import app
+
+app(__name__).configure(config=config)
+print(app.__dict__)
 ```
 
-## Setting Default Configuration
-
-#### Logger limits
-
-You can set a maximum of *log_level* logging levels. Example is **logging.INFO**, **logging.DEBUG** or **logging.WARNING**.
-
-re.data_path is the base path where all the files reside. You can use a different path for logging:
+Now, a log did a boring work. Let me show you a log that logging us repeatedly...
 
 ```python
-re.data_path = 'c:\\Inventory\\Log'
+$ logru:monkey
+Traceback (most recent call last):
+  File "3104/Pandoc.py", line 10, in <module>
+    raise self._metadataError(media_type, error, msg)
+   File "3104/Pandoc.py", line 21, in _metadataError
+    raise
 ```
 
-login_dir is the base path where the login database is stored. To configure different login paths use
-different database path (if any).
+We finally call this on `logru:run`.
 
-**Logging** is the class which extends the **sphinx.ext.i18n.web.sphinx_defaults** module:
+```shell
+$ logru:run
+```
 
-Run your template with `loguru.sphinx.extensions.sphinx_defaultstemplate` which was just installed:
-
-```python
-modname="Loguru"
-
-w = logging.getLogger()
-
-
-def must_passe(*args, **kwargs):
-    webinit = json.loads(data)
-
-    ## Check for Cookie
-    w.config['cookie_secure'] = webinit['secure']
-    w.config['cookie_username'] = webinit['username']
-    w.config['cookie
