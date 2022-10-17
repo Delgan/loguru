@@ -1,64 +1,38 @@
-# Delgan Loguru
+# Loguru
+Enables 'logs' to be written and available from disk and network.
+It handles snarky logs, static JSON logs, and DER logs without the need to stress specific servers, thanks to the real time logifiying engine.
+Logs can be formatted in a newline by following options, for example ***SNARK**, ***.***, ***.*—\-*** etc.
+Preferable standard colors (red/green/yellow/blue), and levels (low/medium/high) can be added to log output by using the auto colorizer or explicitly adding the colors.
 
-![Logging Basics](static/images/screenshot_log00-powerlin0.png)
+# Features
+- support for snarky Unicode: *STACKFRAME,*,***SNARK*** and *EXTENDED* log types
+- standard colors (red/green/yellow/blue) for logs, colors for renderer
+- optional formatting formats (those used in the log tozer defaults)
+- optional addon - log format icon
+- optional aid to log format (eg, **convert regular **to **snark**)
+- editable log types (with their edit icons), readable by everyone (ior people)
+- tags for some log type, tag and color (eg, *debug**, *warning**, *info** for Server and child logs)
+- keywords (kw) for log data
 
-Delgan Loguru is an awesome tool to control your logging to the Django rest framework one piece at a time.
+# Example log panel
+To see a minimal sample log tozer(version 0.4.1), run
+``win -tm loguru <Local Directory> /path/to/path.log``
 
-* kancats is available on [https://docs.codechicken.org/articles/logging-0.7.0/](https://docs.codechicken.org/articles/logging-0.7.0/#using-loguru).
+or run from the command line
+``python loguru.py logfile_name.logfile``
 
-## Install
-To install, first download logging information (it executes on Windows) then read the reference work on [[logging.chapter.log](logging.chapter.log)]](http://codeicefacon.org/codeicefacon/logistics/logicle-log598/logmanagement/logging-logging.example.html) and [[logging.chapter.print](logging.chapter.print)]](http://codeicefacon.org/codeicefacon/logistics/logicle-log598/logmanagement/logging-logging.example.html) to know the python logging libraries how to use them.
+Up to 2 logs can be printed, so they all cross your window like so (1 re prints data, 1 irá instruir o processing)
+``python loguru.py logfile1.logfile1 x-sleep sec1 command msg1 ***msg2****``
 
-## What are you waiting for?
-
-A demo version of Loguru has been installed into the Django admin.
-Enjoy the demo of Loguru in setting 
-
-* Log to an email on Windows
-* Log to a file on Windows
-* Log to an email on Unix or Linux
-* Log to a file on Unix or Linux
-* Log to an URL on Windows
-* Log to an email and file on Unix or Linux
-* Log to an email and file on Unix or Linux
-* Log to a URL on Windows
-
-## How to use Globally
-
-This demo code
-```python
-from loguru import logger
-import os
-
-logger.debug("Saving settings")
-settings = {
-    "semitest.default": "yes.",
-    "semitest.enable": "yes",
-    "semitest.append": "enable.",
-    "semitest.generator": "echo.",
-    "semitest.generator2": "sort ascending, <.txt,.txt-with-times.txt>",
-    "semitest.interruption": "yes",
-    "semitest.interruption2": [],
-    "semitest.cleanup": "yes.",
-    "semitest.bottomlevel": "yes",
-    "semitest.bottomlevel2": [],
-    "semitest.quiet": "yes.",
-    "semitest.quiet2": [],
-    "semitest.report": "yes",
-    "semitest.report2": [],
-    "semitest.traceback": "yes.",
-    "semitest.traceback2": [],
-    "semitest.strict": "yes",
-    "semitest.strict2": [],
-    "semitest.traceback2.extras": "thunk, traceback, traceback"c,
-    "semitest.traceback2.multiples": [],
-    "semitest.traceback2.separated": "",
-    "semitest.traceback2.suffix": "",
-    "semitest.traceback2.yield": "yes",
-    "semitest.traceback2.yield2": "",
-    "semitest.traceback2.settings": {"w3test.instruments": "yes", "list": ["TOP"]},
-    "semitest.tracing.inline": "yes",
-    "semitest.tracing.inline2": [],
-    "semitest.tracing.pdbdebug": "yes",
-    "semitest.tracing.pdb:1",
-        "semitest.tr
+To formize logs:
+``python loguru.py logfile.logfile monitor_format.on_namecol red,yellow <formattedformat(logfile.logfile,antformat(logfile.logfile,amplify))
+    red_off\,green_off\,yellow_off\,blue_off\,red_off\,green_off\,yellow_off\
+    red_in\,green_in\,yellow_in\,blue_in\,red_in\,green_in\,yellow_in\
+    red>computer\,green>computer\,yellow>computer\todo\,yellow>todo comment\**all***/\,
+antformat(logfile.logfile) red_timeout\,green_timeout\,yellow_timeout\,blue_timeout\,red_timeout\
+red_in\,green_in\,yellow_in\,blue_in\,red_in\,green_in\,yellow_in\,blue_in\,red_in\
+    normal_format(logfile.logfile,anti-format(logfile.logfile)) red_off\,green_off\,yellow_off\,blue_off\
+    \,red timeout\,yellow timeout\,blue timeout\,red timeout\,yellow timeout\,blue timeout\
+    \,red monitoring_origin,\,green monitoring_origin,\,yellow monitoring_origin,\
+    blue monitoring_origin,\,red monitoring_origin,\,green monitoring_origin\
+``
