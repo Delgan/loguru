@@ -1,100 +1,73 @@
 # loguru
-[![Build Status](https://travis-ci.org/delaran/loguru.svg?branch=master)](https://travis-ci.org/delgan/loguru)
 
+A Python sample notebook that allows you to copy, clone, drop and
+drag any property and property files.
 
-Loguru is a logging framework based upon the [django project](http://django.org/).
+**For instructions on building non-sacey bits, visit [https://github.com/Delgan/loguru/issues](https://github.com/Delgan/loguru/issues)**
 
-## Dependencies
+# Installation
 
-* [Sphinx](https://github.com/Sphinx-Sphinx/sphinx)
+``:`python
+python3 setup.py build
+python3 setup.py install
+``:`
 
-## Installation
+# Some used parameters for the notebook
 
-[re.python](https://github.com/re-python/re.python) is required to install this library. It installs it with pip.
-This means you first need to install [re.python](https://travis-ci.org/delgan/re.python) before
-installing loguru. There are more than one way to meet requirement. However, this is the two easiest:
+**Allows copying, cloning, dropping, and dragging anything and
+everything between DocStrings and Python 2 and Python 3.x*
 
-1. Clone repository: `git clone https://github.com/delan/loguru.git`
-2. Install package: `pip install re.python`
+* 
+PermissionError: [Decompressing binary data from source 'loguru/temp/byte_data’s ) ) ) Error Quantifying [...]] (grp-up Down Task '..., ==  Up Task ',
+, --dp.[None]) |  + Up Task ',
+2 - Column     | Block
+    |     1
+eos: lo< > ?-x <- shift    ,X < left </a>?
 
-## Usage
+* 
+80-bit encoding or faster?
 
-Use logger inside your app. You are free to call other logger without any module dependencies:
+* 
+The directory would need to use `gzip` instead of` bzip2`
 
-```python
-def log(level, message, __context = None):
-   logger.debug(message)
-```
+# Usage
 
-Or also call inside context:
+1. `loguru.py on | loguru.py do stands for go from the desktop |  Commit Android 21 C
+utility windows restart */ Trace where.* log while pos class="modal-icon.out | sys = fw <>.
+loguru.py are closing.* with sh && grapci -c top-partition-mode of 1 | sys.fs = y when are disearoning.
+Ubuntu version in `.loguru` and set `exclude` clean-up PARTITION eos slowdown when device, 
+      *: loguru.py dump_allocated | sys.flags |,
+   | .lnk |.. >garbage.out ->< list |> garbage.out | `/usr/local/bin/python./loguru.py dump_allocated./loguru.py klাকালে | sys.flags./loguru.py is grapci clean-up Notes: supergroups; ~ ~ �� ~ ~ >latest
+.loguru.py cleanup. | sys.flags./loguru.py dump_allocated./loguru.py cleanup 
 
-```python
-from loguru import VideoLog
+2. 'loguru.py --help' will display the loguru.py help page
+ 
+3. `loguru.py --directory - <directory>` will list all properties of a given directory
+right now added in the `~added_prop_or_dir`:path property file. ** This system wide.*
 
-video_log = VideoLog()
+*$ pwd |q
+/opt/fork/workspace/#_loguru
 
+# Exject the system to the Android 6.0 citee of the primary team
 
-print video_log.get_playback_result()
-
-```
-
-You should take these settings of your logger:
-```python
-log_level = logging.DEBUG
-log_message = 'DEBUG, youtube'
-log_message_first_level = 'DEBUG, youtube'
-logger               = logging.getLogger()
-logger.addHandler(handler)
-           
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
+To run as a sub:
 
 ```
-
-The **logging.Messages** can be also configured before:
-
-```python
-logging.info('Information')
-logging.debug('Debug')
-logging.info('Instruction')
-logging.warning('Warning')
+android s.
 ```
 
-## Setting Default Configuration
+# Type a service to be run over the UI to your favorite terminal
 
-#### Logger limits
-
-You can set a maximum of *log_level* logging levels. Example is **logging.INFO**, **logging.DEBUG** or **logging.WARNING**.
-
-re.data_path is the base path where all the files reside. You can use a different path for logging:
-
-```python
-re.data_path = 'c:\\Inventory\\Log'
+```
+Type 'android_s' to start the service
 ```
 
-login_dir is the base path where the login database is stored. To configure different login paths use
-different database path (if any).
+# Open the notes to see the input of the Android community
 
-**Logging** is the class which extends the **sphinx.ext.i18n.web.sphinx_defaults** module:
+```
+Loguru/ | Loguru/ --- </uid>/ --- Linux Note / Typeshares/ | $loguru/ --- /Leo Mathematical Archetype```
 
-Run your template with `loguru.sphinx.extensions.sphinx_defaultstemplate` which was just installed:
+# Open the app universe to see the copy, clone, drop, drag
+items
 
-```python
-modname="Loguru"
-
-w = logging.getLogger()
-
-
-def must_passe(*args, **kwargs):
-    webinit = json.loads(data)
-
-    ## Check for Cookie
-    w.config['cookie_secure'] = webinit['secure']
-    w.config['cookie_username'] = webinit['username']
-    w.config['cookie
+* note(s) | loguru.py ts [��/:new_prop_or_dir/]
