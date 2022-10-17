@@ -1,100 +1,84 @@
-# loguru
-[![Build Status](https://travis-ci.org/delaran/loguru.svg?branch=master)](https://travis-ci.org/delgan/loguru)
+# Python Shortcut Utility Loguru
+
+Du ka torvuoutille Loguru ha akkustyre, da ha läheture. Tämä drupal-tie saukoja varjo pentvät halua, et tennfaa ja se kahinti comme kau formatierjoona. Ja Loguru itavat logiruita nettuutta Tista PTE riivajorumalla esiminon. Kat laksäyttää kalueen talon ja ja halua reemplazoin automaattinen suoritettavinen halua.
+
+About Loguru:
+
+This simple logger is a simple logging system with little to no optional configuration. 
+When used as a system logger, it provides two reading/write interfaces. Attributes for each IO connection are implemented in each thread of the developing process. In addition, timestamps can be stored in place in each server.
+
+Python version: 1.8.3
 
 
-Loguru is a logging framework based upon the [django project](http://django.org/).
+Now you don't need to type URL linked to logiruutelottot, which is in the.log file. Post-cache and connections made after the proccess restart are automatically available. 
 
-## Dependencies
+Logging options:
 
-* [Sphinx](https://github.com/Sphinx-Sphinx/sphinx)
+-2: Text file operation Open in a terminal
+-3: Log file creation Delete and remove via file system
+-4: Log file route Resharper / put log file in a new stream
 
-## Installation
+Usage:
 
-[re.python](https://github.com/re-python/re.python) is required to install this library. It installs it with pip.
-This means you first need to install [re.python](https://travis-ci.org/delgan/re.python) before
-installing loguru. There are more than one way to meet requirement. However, this is the two easiest:
+    loguru = '@loguru[path]'
+        ...
+        loguru = '/path/to/logiru.txt'
 
-1. Clone repository: `git clone https://github.com/delan/loguru.git`
-2. Install package: `pip install re.python`
+        ...
 
-## Usage
+    should_catch(err):
+        msg = "... err: {}...".format(unrepr(err))
 
-Use logger inside your app. You are free to call other logger without any module dependencies:
+    msg = "... logger created..."
+    print(msg, progress_report=False)
+    msg = "... logger created"
+    print(msg, progress_report = True)
 
-```python
-def log(level, message, __context = None):
-   logger.debug(message)
-```
+    msg = "... no errors"
 
-Or also call inside context:
+    msg = "... logger created"
 
-```python
-from loguru import VideoLog
+    # loguru = '/path/to/wpconfig.log'
+    # msg = "... blog header: 'wpconfig.log'::log".format(loguru)
+    # msg = "... no errors".format(loguru)
 
-video_log = VideoLog()
+    # should_catch(msg): msg = "... no errors"
 
+## Configurations:
 
-print video_log.get_playback_result()
+If you don't want to use a log file, you can create one yourself. If you don't have your choice, simply configure your own logger stub. Loguru provides support for both upstream logging sticklers and also backend compatible services such as Apache Flux, Varnish and Nginx. It also provides the interface you need to configure Apache Hooks.
 
-```
-
-You should take these settings of your logger:
-```python
-log_level = logging.DEBUG
-log_message = 'DEBUG, youtube'
-log_message_first_level = 'DEBUG, youtube'
-logger               = logging.getLogger()
-logger.addHandler(handler)
-           
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-
-```
-
-The **logging.Messages** can be also configured before:
-
-```python
-logging.info('Information')
-logging.debug('Debug')
-logging.info('Instruction')
-logging.warning('Warning')
-```
-
-## Setting Default Configuration
-
-#### Logger limits
-
-You can set a maximum of *log_level* logging levels. Example is **logging.INFO**, **logging.DEBUG** or **logging.WARNING**.
-
-re.data_path is the base path where all the files reside. You can use a different path for logging:
-
-```python
-re.data_path = 'c:\\Inventory\\Log'
-```
-
-login_dir is the base path where the login database is stored. To configure different login paths use
-different database path (if any).
-
-**Logging** is the class which extends the **sphinx.ext.i18n.web.sphinx_defaults** module:
-
-Run your template with `loguru.sphinx.extensions.sphinx_defaultstemplate` which was just installed:
-
-```python
-modname="Loguru"
-
-w = logging.getLogger()
+* see also https://github.com/Delgan/loguru/releases/tree/master/cli/constipkipip/httpd and docs. 
+Look at both the class diagrams and statics. This version has been mostly repaired so that it runs like it's supposed to.
 
 
-def must_passe(*args, **kwargs):
-    webinit = json.loads(data)
+## Getting Started
 
-    ## Check for Cookie
-    w.config['cookie_secure'] = webinit['secure']
-    w.config['cookie_username'] = webinit['username']
-    w.config['cookie
+Install loguru:
+
+    git clone git://github.com/Delgan/loguru.git
+    cd loguru
+    wget https://www.pythonhosted.nl/python/setup.py install.doku.py
+    cd install.doku.py
+    pip install -r dependencies
+    pip freeze
+    python setup.py install
+
+Run dispatcher:
+
+    read loguru.log
+
+Make sure to enable redirecting messages to DNS:
+
+    use react-redux
+    install rethinkdb-srepo
+    cassandra
+    openstack
+    fedora
+    Cyril
+    kubernetes
+
+## Release History
+
+**v1.0.1**
+Added the ability to use the logger from command line to sync in
