@@ -253,8 +253,24 @@
     main:2: note:     def add(self, sink: Union[TextIO, Writable, Callable[[Message], None], Handler], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ...) -> int
     main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., loop: Optional[AbstractEventLoop] = ...) -> int
     main:2: note:     def add(self, sink: Union[str, PathLike[str]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., rotation: Union[str, int, time, timedelta, Callable[[Message, TextIO], bool], None] = ..., retention: Union[str, int, timedelta, Callable[[List[str]], None], None] = ..., compression: Union[str, Callable[[str], None], None] = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., **kwargs: Any) -> int
+  mypy_config: |
+    show_error_codes = false
 
 - case: invalid_logged_object_formatting
+  skip: sys.version_info < (3, 7)
+  main: |
+    from loguru import logger
+    logger.info(123, foo=123)
+  out: |
+    main:2: error: No overload variant of "info" of "Logger" matches argument types "int", "int"
+    main:2: note: Possible overload variants:
+    main:2: note:     def info(__self, str, /, *args: Any, **kwargs: Any) -> None
+    main:2: note:     def info(__self, Any, /) -> None
+  mypy_config: |
+    show_error_codes = false
+
+- case: invalid_logged_object_formatting_py36
+  skip: sys.version_info >= (3, 6)
   main: |
     from loguru import logger
     logger.info(123, foo=123)
@@ -263,6 +279,8 @@
     main:2: note: Possible overload variants:
     main:2: note:     def info(__self, str, *args: Any, **kwargs: Any) -> None
     main:2: note:     def info(__self, Any) -> None
+  mypy_config: |
+    show_error_codes = false
 
 - case: invalid_configuration
   main: |
@@ -279,3 +297,5 @@
     main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Optional[Callable[[Record], None]]"
     main:6: error: List item 0 has incompatible type "Dict[str, str]"; expected "Tuple[Optional[str], bool]"
     main:7: error: Argument "extra" to "configure" of "Logger" has incompatible type "List[<nothing>]"; expected "Optional[Dict[Any, Any]]"
+  mypy_config: |
+    show_error_codes = false
