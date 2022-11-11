@@ -110,10 +110,9 @@ class Handler:
             )
         self._lock_acquired.acquired = True
         try:
-            self._lock.acquire()
-            yield
+            with self._lock:
+                yield
         finally:
-            self._lock.release()
             self._lock_acquired.acquired = False
 
     def emit(self, record, level_id, from_decorator, is_raw, colored_message):
