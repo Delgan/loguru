@@ -58,15 +58,21 @@ setup(
         "dev": [
             # Setup.
             "pre-commit==2.20.0 ; python_version>='3.7'",
-            "tox>=3.9.0",
+            "tox==3.27.0",
             # Testing framework.
-            "pytest>=4.6.2",
-            "pytest-cov>=2.7.1",
-            "pytest-mypy-plugins>=1.2.0 ; python_version>='3.6'",
+            "pytest==6.1.2 ; python_version<'3.7'",
+            "pytest==7.2.0 ; python_version>='3.7'",
+            "pytest-cov==2.12.1 ; python_version<'3.7'",
+            "pytest-cov==4.0.0 ; python_version>='3.7'",
+            "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.7'",
+            "pytest-mypy-plugins==1.10.1 ; python_version>='3.7'",
             # Testing utils.
-            "colorama>=0.3.4",
-            "freezegun>=1.1.0",
-            "mypy>=v0.910",
+            "colorama==0.4.5",
+            "freezegun==1.1.0",
+            # Type checking.
+            "mypy==v0.910 ; python_version<'3.6'",
+            "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",
+            "mypy==v0.990 ; python_version>='3.7'",
             # Docs.
             "Sphinx==5.3.0 ; python_version>='3.6'",
             "sphinx-autobuild==2021.3.14 ; python_version>='3.6'",
