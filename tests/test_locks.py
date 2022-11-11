@@ -24,18 +24,13 @@ class CyclicReference:
         logger.info("tearing down")
 
 
-def perform_full_gc():
-    for generation in range(3):
-        gc.collect(generation=generation)
-
-
 @pytest.fixture()
 def _remove_cyclic_references():
     """Prevent cyclic isolate finalizers bleeding into other tests."""
     try:
         yield
     finally:
-        perform_full_gc()
+        gc.collect()
 
 
 def test_no_deadlock_on_generational_garbage_collection(_remove_cyclic_references):
@@ -52,7 +47,7 @@ def test_no_deadlock_on_generational_garbage_collection(_remove_cyclic_reference
         # The generational GC could be triggered here by any memory assignment, but we
         # trigger it explicitly to avoid a flaky test.
         # See https://github.com/Delgan/loguru/issues/712
-        perform_full_gc()
+        gc.collect()
 
         # Actually write the message somewhere
         output.append(message)
@@ -61,7 +56,7 @@ def test_no_deadlock_on_generational_garbage_collection(_remove_cyclic_reference
 
     # WHEN there are cyclic isolates in memory which log on GC
     # AND logs are produced long enough to trigger generational GC
-    for _ in range(1000):
+    for _ in range(10):
         CyclicReference()
         logger.info("test")
 
