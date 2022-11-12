@@ -180,62 +180,77 @@ def test_assign_custom_level_method(writer):
     )
 
 
-def test_updating_level_no_not_allowed():
-    with pytest.raises(TypeError, match=r".*can't update its severity"):
+def test_updating_level_no_not_allowed_default():
+    with pytest.raises(TypeError, match="can't update its severity"):
         logger.level("DEBUG", 100)
 
 
-@pytest.mark.parametrize("level", [3.4, object()])
-def test_log_invalid_level(writer, level):
+def test_updating_level_no_not_allowed_custom():
+    logger.level("foobar", no=33)
+    with pytest.raises(TypeError, match="can't update its severity"):
+        logger.level("foobar", 100)
+
+
+@pytest.mark.parametrize("level", [3.4, object(), set()])
+def test_log_invalid_level_type(writer, level):
     logger.add(writer)
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Invalid level, it should be an integer or a string"):
         logger.log(level, "test")
 
 
-@pytest.mark.parametrize("level", ["foo", "debug", -1])
+@pytest.mark.parametrize("level", [-1, -999])
+def test_log_invalid_level_value(writer, level):
+    logger.add(writer)
+    with pytest.raises(ValueError, match="Invalid level value, it should be a positive integer"):
+        logger.log(level, "test")
+
+
+@pytest.mark.parametrize("level", ["foo", "debug"])
 def test_log_unknown_level(writer, level):
     logger.add(writer)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Level '[^']+' does not exist"):
         logger.log(level, "test")
 
 
-@pytest.mark.parametrize("level_name", [10, object()])
+@pytest.mark.parametrize("level_name", [10, object(), set()])
 def test_add_invalid_level_name(level_name):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Invalid level name, it should be a string"):
         logger.level(level_name, 11)
 
 
-@pytest.mark.parametrize("level_value", ["1", object(), 3.4])
+@pytest.mark.parametrize("level_value", ["1", object(), 3.4, set()])
 def test_add_invalid_level_type(level_value):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Invalid level no, it should be an integer"):
         logger.level("test", level_value)
 
 
-def test_add_invalid_level_value():
-    with pytest.raises(ValueError):
-        logger.level("test", -1)
+@pytest.mark.parametrize("level_value", [-1, -999])
+def test_add_invalid_level_value(level_value):
+    with pytest.raises(ValueError, match="Invalid level no, it should be a positive integer"):
+        logger.level("test", level_value)
 
 
-@pytest.mark.parametrize("level", [10, object()])
+@pytest.mark.parametrize("level", [10, object(), set()])
 def test_get_invalid_level(level):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Invalid level name, it should be a string"):
         logger.level(level)
 
 
 def test_get_unknown_level():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Level '[^']+' does not exist"):
         logger.level("foo")
 
 
-@pytest.mark.parametrize("level", [10, object()])
+@pytest.mark.parametrize("level", [10, object(), set()])
 def test_edit_invalid_level(level):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Invalid level name, it should be a string"):
         logger.level(level, icon="?")
 
 
-def test_edit_unknown_level():
-    with pytest.raises(ValueError):
-        logger.level("foo", icon="?")
+@pytest.mark.parametrize("level_name", ["foo", "debug"])
+def test_edit_unknown_level(level_name):
+    with pytest.raises(ValueError, match=r"Level '[^']+' does not exist"):
+        logger.level(level_name, icon="?")
 
 
 @pytest.mark.parametrize("color", ["</>", "<foo>", "</red>", "<lvl>", " <level> "])
