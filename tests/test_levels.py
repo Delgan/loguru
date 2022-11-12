@@ -69,18 +69,18 @@ def test_add_malicious_level(writer):
 
 
 def test_add_existing_level(writer):
-    logger.level("INFO", color="<red>")
+    logger.level("DEBUG", color="<red>")
     fmt = "{level.icon} + <level>{level.name}</level> + {level.no} = {message}"
     logger.add(writer, format=fmt, colorize=True)
 
-    logger.info("a")
-    logger.log("INFO", "b")
+    logger.debug("a")
+    logger.log("DEBUG", "b")
     logger.log(10, "c")
     logger.log(20, "d")
 
     assert writer.read() == parse(
-        "ℹ️ + <red>INFO</red> + 20 = a\n"
-        "ℹ️ + <red>INFO</red> + 20 = b\n"
+        "🐞 + <red>DEBUG</red> + 10 = a\n"
+        "🐞 + <red>DEBUG</red> + 10 = b\n"
         "  + Level 10\x1b[0m + 10 = c\n"
         "  + Level 20\x1b[0m + 20 = d\n"
     )
