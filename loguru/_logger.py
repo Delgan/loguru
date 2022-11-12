@@ -1990,31 +1990,51 @@ class Logger:
 
     def trace(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
-        __self._log("TRACE", _defaults.LOGURU_TRACE_NO, False, __self._options, __message, args, kwargs)
+        __self._log(
+            "TRACE", _defaults.LOGURU_TRACE_NO, False, __self._options, __message, args, kwargs
+        )
 
     def debug(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
-        __self._log("DEBUG", _defaults.LOGURU_DEBUG_NO, False, __self._options, __message, args, kwargs)
+        __self._log(
+            "DEBUG", _defaults.LOGURU_DEBUG_NO, False, __self._options, __message, args, kwargs
+        )
 
     def info(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'INFO'``."""
-        __self._log("INFO", _defaults.LOGURU_INFO_NO, False, __self._options, __message, args, kwargs)
+        __self._log(
+            "INFO", _defaults.LOGURU_INFO_NO, False, __self._options, __message, args, kwargs
+        )
 
     def success(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
-        __self._log("SUCCESS", _defaults.LOGURU_SUCCESS_NO, False, __self._options, __message, args, kwargs)
+        __self._log(
+            "SUCCESS", _defaults.LOGURU_SUCCESS_NO, False, __self._options, __message, args, kwargs
+        )
 
     def warning(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
-        __self._log("WARNING", _defaults.LOGURU_WARNING_NO, False, __self._options, __message, args, kwargs)
+        __self._log(
+            "WARNING", _defaults.LOGURU_WARNING_NO, False, __self._options, __message, args, kwargs
+        )
 
     def error(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
-        __self._log("ERROR", _defaults.LOGURU_ERROR_NO, False, __self._options, __message, args, kwargs)
+        __self._log(
+            "ERROR", _defaults.LOGURU_ERROR_NO, False, __self._options, __message, args, kwargs
+        )
 
     def critical(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
-        __self._log("CRITICAL", _defaults.LOGURU_CRITICAL_NO, False, __self._options, __message, args, kwargs)
+        __self._log(
+            "CRITICAL",
+            _defaults.LOGURU_CRITICAL_NO,
+            False,
+            __self._options,
+            __message,
+            args,
+            kwargs,
+        )
 
     def exception(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Convenience method for logging an ``'ERROR'`` with exception information."""
