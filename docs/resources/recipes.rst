@@ -1026,3 +1026,54 @@ The |multiprocessing| library is also commonly used to start a pool of workers u
         logger.info("Done")
 
 Independently of the operating system, note that the process in which a handler is added with ``enqueue=True`` is in charge of the queue internally used. This means that you should avoid to ``.remove()`` such handler from the parent process is any child is likely to continue using it. More importantly, note that a |Thread| is started internally to consume the queue. Therefore, it is recommended to call |complete| before leaving |Process| to make sure the queue is left in a stable state.
+
+Another thing to keep in mind when dealing with multiprocessing is the fact that handlers created with ``enqueue=True`` create a queue internally in the current multiprocessing context. If they are passed through to a subprocesses instantiated within a different context (e.g. with :code:`multiprocessing.get_context("spawn")` on linux, where the default context is :code:`"fork"`) it will most likely result in crashing the subprocess. This is also noted in the `python multiprocessing docs <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
+
+So, running this on linux where the default context is ``fork`` this will not work since the handler is added in a different context:
+
+
+.. code::
+
+    # main.py
+    import multiprocessing
+    from loguru import logger
+    import workers_a
+    import workers_b
+
+    if __name__ == "__main__":
+        logger.remove()
+        logger.add("file.log", enqueue=True)
+
+        worker = workers_a.Worker()
+        with multiprocessing.get_context("spawn").Pool(4, initializer=worker.set_logger, initargs=(logger, )) as pool:
+            results = pool.map(worker.work, [1, 10, 100])
+
+        with multiprocessing.get_context("spawn").Pool(4, initializer=workers_b.set_logger, initargs=(logger, )) as pool:
+            results = pool.map(workers_b.work, [1, 10, 100])
+
+        logger.info("Done")
+
+To fix this you can set the multiprocessing context globally so that the handler is created in the same context as the subprocesses run in:
+
+.. code::
+
+    # main.py
+    import multiprocessing
+    from loguru import logger
+    import workers_a
+    import workers_b
+
+    if __name__ == "__main__":
+        multiprocessing.set_start_method("spawn")
+
+        logger.remove()
+        logger.add("file.log", enqueue=True)
+
+        worker = workers_a.Worker()
+        with multiprocessing.Pool(4, initializer=worker.set_logger, initargs=(logger, )) as pool:
+            results = pool.map(worker.work, [1, 10, 100])
+
+        with multiprocessing.Pool(4, initializer=workers_b.set_logger, initargs=(logger, )) as pool:
+            results = pool.map(workers_b.work, [1, 10, 100])
+
+        logger.info("Done")
