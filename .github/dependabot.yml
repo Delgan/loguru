@@ -13,4 +13,6 @@ updates:
   - dependency-type: direct
   labels: []
   ignore:
-  - dependency-name: docutils  # Sphinx requires docutils<019
+  # Old version required for Python 3.5
+  - dependency-name: freezegun
+  - dependency-name: colorama
