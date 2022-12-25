@@ -1988,7 +1988,10 @@ class Logger:
             log_record["message"] = colored_message.stripped
         elif args or kwargs:
             colored_message = None
-            log_record["message"] = message.format(*args, **kwargs)
+            try:
+                log_record["message"] = message.format(*args, **kwargs)
+            except (KeyError, ValueError):
+                log_record["message"] = message
         else:
             colored_message = None
 
