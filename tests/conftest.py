@@ -147,9 +147,13 @@ def sink_with_logger():
 
 @pytest.fixture
 def freeze_time(monkeypatch):
-    @contextlib.contextmanager
-    def freeze_time(date, timezone=("UTC", 0), *, include_tm_zone=True):
-        zone, offset = timezone
+    ctimes = {}
+    freezegun_localtime = freezegun.api.fake_localtime
+    builtins_open = builtins.open
+
+    fakes = {"zone": "UTC", "offset": 0, "include_tm_zone": True}
+
+    def fake_localtime(t=None):
         fix_struct = os.name == "nt" and sys.version_info < (3, 6)
 
         struct_time_attributes = [
@@ -166,7 +170,7 @@ def freeze_time(monkeypatch):
             "tm_gmtoff",
         ]
 
-        if not include_tm_zone:
+        if not fakes["include_tm_zone"]:
             struct_time_attributes.remove("tm_zone")
             struct_time_attributes.remove("tm_gmtoff")
             struct_time = namedtuple("struct_time", struct_time_attributes)._make
@@ -175,37 +179,61 @@ def freeze_time(monkeypatch):
         else:
             struct_time = time.struct_time
 
-        freezegun_localtime = freezegun.api.fake_localtime
+        struct = freezegun_localtime(t)
+        override = {"tm_zone": fakes["zone"], "tm_gmtoff": fakes["offset"]}
+        attributes = []
 
-        def fake_localtime(t=None):
-            struct = freezegun_localtime(t)
-            override = {"tm_zone": zone, "tm_gmtoff": offset}
-            attributes = []
-            for attribute in struct_time_attributes:
-                if attribute in override:
-                    value = override[attribute]
-                else:
-                    value = getattr(struct, attribute)
-                attributes.append(value)
-            return struct_time(attributes)
+        for attribute in struct_time_attributes:
+            if attribute in override:
+                value = override[attribute]
+            else:
+                value = getattr(struct, attribute)
+            attributes.append(value)
 
-        # Freezegun does not permit to override timezone name.
-        monkeypatch.setattr(freezegun.api, "fake_localtime", fake_localtime)
+        return struct_time(attributes)
 
-        ctimes = {}
+    def patched_open(filepath, *args, **kwargs):
+        if not os.path.exists(filepath):
+            tz = datetime.timezone(datetime.timedelta(seconds=fakes["offset"]), name=fakes["zone"])
+            ctimes[filepath] = datetime.datetime.now().replace(tzinfo=tz).timestamp()
+        return builtins_open(filepath, *args, **kwargs)
 
-        __open__ = builtins.open
+    @contextlib.contextmanager
+    def freeze_time(date, timezone=("UTC", 0), *, include_tm_zone=True):
+        # Freezegun does not behave very well with UTC and timezones, see spulec/freezegun#348.
+        # In particular, "now(tz=utc)" does not return the converted datetime.
+        # For this reason, we re-implement date parsing here to properly handle aware date using
+        # the optional "tz_offset" argument.
+        if isinstance(date, str):
+            for accepted_format in ["%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f"]:
+                try:
+                    date = datetime.datetime.strptime(date, accepted_format)
+                    break
+                except ValueError:
+                    pass
 
-        def patched_open(filepath, *args, **kwargs):
-            if not os.path.exists(filepath):
-                ctimes[filepath] = datetime.datetime.now().timestamp()
-            return __open__(filepath, *args, **kwargs)
+        if not isinstance(date, datetime.datetime) or date.tzinfo is not None:
+            raise ValueError("Unsupported date provided")
 
-        with freezegun.freeze_time(date) as frozen, monkeypatch.context() as context:
+        zone, offset = timezone
+        tz_offset = datetime.timedelta(seconds=offset)
+        tzinfo = datetime.timezone(tz_offset, zone)
+        date = date.replace(tzinfo=tzinfo)
+
+        with monkeypatch.context() as context:
+            context.setitem(fakes, "zone", zone)
+            context.setitem(fakes, "offset", offset)
+            context.setitem(fakes, "include_tm_zone", include_tm_zone)
+
             context.setattr(loguru._file_sink, "get_ctime", ctimes.__getitem__)
             context.setattr(loguru._file_sink, "set_ctime", ctimes.__setitem__)
             context.setattr(builtins, "open", patched_open)
-            yield frozen
+
+            # Freezegun does not permit to override timezone name.
+            context.setattr(freezegun.api, "fake_localtime", fake_localtime)
+
+            with freezegun.freeze_time(date, tz_offset=tz_offset) as frozen:
+                yield frozen
 
     return freeze_time
 
