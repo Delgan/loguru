@@ -5,6 +5,7 @@
 - Add a new ``watch`` optional argument to file sinks in order to automatically re-create possibly deleted or changed file (`#471 <https://github.com/Delgan/loguru/issues/471>`_).
 - Make ``patch()`` calls cumulative instead of overriding the possibly existing patching function (`#462 <https://github.com/Delgan/loguru/issues/462>`_).
 - Avoid possible deadlocks caused by re-using the logger inside a sink, a signal handler or a ``__del__`` method. Since the logger is not re-entrant, such misuse will be detected and will now generate a ``RuntimeError`` (`#712 <https://github.com/Delgan/loguru/issues/712>`_, thanks `@jacksmith15 <https://github.com/jacksmith15>`_).
+- Fix file sink rotation using an aware ``datetime.time`` for which the timezone was ignored (`#697 <https://github.com/Delgan/loguru/issues/697>`_).
 - Fix logs colorization not automatically enabled for Jupyter Notebook and Google Colab (`#494 <https://github.com/Delgan/loguru/issues/494>`_).
 - Fix logs colorization not automatically enabled for Github Actions and others CI platforms (`#604 <https://github.com/Delgan/loguru/issues/604>`_).
 - Fix ``logger.complete()`` possibly hanging forever when ``enqueue=True`` and ``catch=False`` if internal thread killed due to ``Exception`` raised by sink (`#647 <https://github.com/Delgan/loguru/issues/647>`_).

@@ -112,23 +112,44 @@ class Rotation:
             self._limit = None
 
         def __call__(self, message, file):
+            record_time = message.record["time"]
+
             if self._limit is None:
                 filepath = os.path.realpath(file.name)
                 creation_time = get_ctime(filepath)
                 set_ctime(filepath, creation_time)
-                start_time = limit = datetime.datetime.fromtimestamp(creation_time)
-                if self._time_init is not None:
-                    limit = limit.replace(
-                        hour=self._time_init.hour,
-                        minute=self._time_init.minute,
-                        second=self._time_init.second,
-                        microsecond=self._time_init.microsecond,
-                    )
-                if limit <= start_time:
+                start_time = datetime.datetime.fromtimestamp(
+                    creation_time, tz=datetime.timezone.utc
+                )
+
+                time_init = self._time_init
+
+                if time_init is None:
+                    limit = start_time.astimezone(record_time.tzinfo).replace(tzinfo=None)
                     limit = self._step_forward(limit)
+                else:
+                    limit = datetime.datetime(
+                        start_time.year,
+                        start_time.month,
+                        start_time.day,
+                        time_init.hour,
+                        time_init.minute,
+                        time_init.second,
+                        time_init.microsecond,
+                        record_time.tzinfo if time_init.tzinfo is None else time_init.tzinfo,
+                    )
+
+                    if limit <= start_time:
+                        limit = self._step_forward(limit)
+
+                    if time_init.tzinfo is None:
+                        limit = limit.replace(tzinfo=None)
+
                 self._limit = limit
 
-            record_time = message.record["time"].replace(tzinfo=None)
+            if self._limit.tzinfo is None:
+                record_time = record_time.replace(tzinfo=None)
+
             if record_time >= self._limit:
                 while self._limit <= record_time:
                     self._limit = self._step_forward(self._limit)
