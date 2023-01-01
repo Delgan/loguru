@@ -74,7 +74,7 @@ setup(
             "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",
             "mypy==v0.990 ; python_version>='3.7'",
             # Docs.
-            "Sphinx==5.3.0 ; python_version>='3.7'",
+            "Sphinx==6.0.0 ; python_version>='3.7'",
             "sphinx-autobuild==2021.3.14 ; python_version>='3.7'",
             "sphinx-rtd-theme==1.1.1 ; python_version>='3.7'",
         ]
