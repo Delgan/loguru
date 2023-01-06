@@ -58,7 +58,8 @@ setup(
         "dev": [
             # Setup.
             "pre-commit==2.21.0 ; python_version>='3.7'",
-            "tox==3.27.1",
+            "tox==3.27.1 ; python_version<'3.7'",
+            "tox==4.2.4 ; python_version>='3.7'",
             # Testing framework.
             "pytest==6.1.2 ; python_version<'3.7'",
             "pytest==7.2.0 ; python_version>='3.7'",
@@ -67,8 +68,10 @@ setup(
             "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.7'",
             "pytest-mypy-plugins==1.10.1 ; python_version>='3.7'",
             # Testing utils.
-            "colorama==0.4.5",
-            "freezegun==1.1.0",
+            "colorama==0.4.5 ; python_version<'3.7'",
+            "colorama==0.4.6 ; python_version>='3.7'",
+            "freezegun==1.1.0 ; python_version<'3.7'",
+            "freezegun==1.2.2 ; python_version>='3.7'",
             # Type checking.
             "mypy==v0.910 ; python_version<'3.6'",
             "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",

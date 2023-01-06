@@ -12,7 +12,3 @@ updates:
   allow:
   - dependency-type: direct
   labels: []
-  ignore:
-  # Old version required for Python 3.5
-  - dependency-name: freezegun
-  - dependency-name: colorama
