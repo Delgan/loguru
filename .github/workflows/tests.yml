@@ -19,7 +19,7 @@ jobs:
         - '3.8'
         - '3.9'
         - '3.10'
-        - 3.11-dev
+        - '3.11'
         - pypy-3.9
         include:
         - os: ubuntu-20.04
@@ -27,9 +27,9 @@ jobs:
         - os: ubuntu-20.04
           python-version: '3.6'
         - os: windows-2022
-          python-version: '3.10'
+          python-version: '3.11'
         - os: macos-11
-          python-version: '3.10'
+          python-version: '3.11'
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout repository
