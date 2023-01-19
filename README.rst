@@ -361,7 +361,7 @@ The standard logging is bloated with arguments like ``datefmt`` or ``msecs``, ``
 Suitable for scripts and libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Using the logger in your scripts is easy, and you can |configure|_ it at start. To use `Loguru` from inside a library, remember to never call |add|_ but use |disable|_ instead so logging functions become no-op. If a developer wishes to see your library's logs, he can |enable|_ it again.
+Using the logger in your scripts is easy, and you can |configure|_ it at start. To use `Loguru` from inside a library, remember to never call |add|_ but use |disable|_ instead so logging functions become no-op. If a developer wishes to see your library's logs, they can |enable|_ it again.
 
 ::
 
