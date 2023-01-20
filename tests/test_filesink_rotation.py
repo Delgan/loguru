@@ -900,12 +900,12 @@ def test_exception_during_rotation(tmp_path, capsys):
 def test_exception_during_rotation_not_caught(tmp_path, capsys):
     logger.add(
         tmp_path / "test.log",
-        rotation=Mock(side_effect=[Exception("Rotation error"), False]),
+        rotation=Mock(side_effect=[OSError("Rotation error"), False]),
         format="{message}",
         catch=False,
     )
 
-    with pytest.raises(Exception, match=r"Rotation error"):
+    with pytest.raises(OSError, match=r"Rotation error"):
         logger.info("A")
 
     logger.info("B")

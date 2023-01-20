@@ -299,12 +299,12 @@ def test_exception_during_retention_at_rotation_not_caught(freeze_time, tmp_path
         logger.add(
             tmp_path / "test.log",
             format="{message}",
-            retention=Mock(side_effect=[Exception("Retention error"), None]),
+            retention=Mock(side_effect=[OSError("Retention error"), None]),
             rotation=0,
             catch=False,
             delay=delay,
         )
-        with pytest.raises(Exception, match=r"Retention error"):
+        with pytest.raises(OSError, match=r"Retention error"):
             logger.debug("AAA")
         frozen.tick()
         logger.debug("BBB")
@@ -327,13 +327,13 @@ def test_exception_during_retention_at_remove(tmp_path, capsys, delay):
     i = logger.add(
         tmp_path / "test.log",
         format="{message}",
-        retention=Mock(side_effect=[Exception("Retention error"), None]),
+        retention=Mock(side_effect=[OSError("Retention error"), None]),
         catch=False,
         delay=delay,
     )
     logger.debug("AAA")
 
-    with pytest.raises(Exception, match=r"Retention error"):
+    with pytest.raises(OSError, match=r"Retention error"):
         logger.remove(i)
 
     logger.debug("Nope")

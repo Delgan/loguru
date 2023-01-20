@@ -10,7 +10,7 @@ from .conftest import default_threading_excepthook
 
 
 def broken_sink(m):
-    raise Exception("Error!")
+    raise ValueError("Error!")
 
 
 def test_catch_is_true(capsys):
@@ -23,7 +23,7 @@ def test_catch_is_true(capsys):
 
 def test_catch_is_false(capsys):
     logger.add(broken_sink, catch=False)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="Error!"):
         logger.debug("Fail")
     out, err = capsys.readouterr()
     assert out == err == ""
@@ -101,7 +101,7 @@ def test_broken_sink_message(capsys, enqueue):
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert re.match(r"Record was: \{.*Oops.*\}", lines[1])
-    assert lines[-2].startswith("Exception: Error!")
+    assert lines[-2].startswith("ValueError: Error!")
     assert lines[-1] == "--- End of logging error ---"
 
 

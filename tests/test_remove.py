@@ -11,7 +11,7 @@ class StopSinkError:
         print(message, end="")
 
     def stop(self):
-        raise Exception("Stop error")
+        raise OSError("Stop error")
 
 
 def test_remove_all(tmp_path, writer, capsys):
@@ -69,7 +69,7 @@ def test_remove_enqueue_filesink(tmp_path):
 def test_exception_in_stop_during_remove_one(capsys):
     i = logger.add(StopSinkError(), catch=False, format="{message}")
     logger.info("A")
-    with pytest.raises(Exception, match=r"Stop error"):
+    with pytest.raises(OSError, match=r"Stop error"):
         logger.remove(i)
     logger.info("Nope")
 
@@ -83,12 +83,12 @@ def test_exception_in_stop_not_caught_during_remove_all(capsys):
     logger.add(StopSinkError(), catch=False, format="{message}")
     logger.add(StopSinkError(), catch=False, format="{message}")
 
-    with pytest.raises(Exception, match=r"Stop error"):
+    with pytest.raises(OSError, match=r"Stop error"):
         logger.remove()
 
     logger.info("A")
 
-    with pytest.raises(Exception, match=r"Stop error"):
+    with pytest.raises(OSError, match=r"Stop error"):
         logger.remove()
 
     logger.info("Nope")

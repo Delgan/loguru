@@ -214,12 +214,12 @@ def test_exception_during_compression_at_rotation_not_caught(freeze_time, tmp_pa
         logger.add(
             tmp_path / "test.log",
             format="{message}",
-            compression=Mock(side_effect=[Exception("Compression error"), None]),
+            compression=Mock(side_effect=[OSError("Compression error"), None]),
             rotation=0,
             catch=False,
             delay=delay,
         )
-        with pytest.raises(Exception, match="Compression error"):
+        with pytest.raises(OSError, match="Compression error"):
             logger.debug("AAA")
 
         frozen.tick()
@@ -243,13 +243,13 @@ def test_exception_during_compression_at_remove(tmp_path, capsys, delay):
     i = logger.add(
         tmp_path / "test.log",
         format="{message}",
-        compression=Mock(side_effect=[Exception("Compression error"), None]),
+        compression=Mock(side_effect=[OSError("Compression error"), None]),
         catch=True,
         delay=delay,
     )
     logger.debug("AAA")
 
-    with pytest.raises(Exception, match=r"Compression error"):
+    with pytest.raises(OSError, match=r"Compression error"):
         logger.remove(i)
 
     logger.debug("Nope")
