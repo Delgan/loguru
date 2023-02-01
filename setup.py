@@ -58,29 +58,29 @@ setup(
     extras_require={
         "dev": [
             # Setup.
-            "pre-commit==2.21.0 ; python_version>='3.7'",
-            "tox==3.27.1 ; python_version<'3.7'",
-            "tox==4.2.5 ; python_version>='3.7'",
+            "pre-commit==2.21.0 ; python_version>='3.8'",
+            "tox==3.27.1 ; python_version<'3.8'",
+            "tox==4.2.5 ; python_version>='3.8'",
             # Testing framework.
-            "pytest==6.1.2 ; python_version<'3.7'",
-            "pytest==7.2.0 ; python_version>='3.7'",
-            "pytest-cov==2.12.1 ; python_version<'3.7'",
-            "pytest-cov==4.0.0 ; python_version>='3.7'",
-            "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.7'",
-            "pytest-mypy-plugins==1.10.1 ; python_version>='3.7'",
+            "pytest==6.1.2 ; python_version<'3.8'",
+            "pytest==7.2.0 ; python_version>='3.8'",
+            "pytest-cov==2.12.1 ; python_version<'3.8'",
+            "pytest-cov==4.0.0 ; python_version>='3.8'",
+            "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.8'",
+            "pytest-mypy-plugins==1.10.1 ; python_version>='3.8'",
             # Testing utils.
-            "colorama==0.4.5 ; python_version<'3.7'",
-            "colorama==0.4.6 ; python_version>='3.7'",
-            "freezegun==1.1.0 ; python_version<'3.7'",
-            "freezegun==1.2.2 ; python_version>='3.7'",
+            "colorama==0.4.5 ; python_version<'3.8'",
+            "colorama==0.4.6 ; python_version>='3.8'",
+            "freezegun==1.1.0 ; python_version<'3.8'",
+            "freezegun==1.2.2 ; python_version>='3.8'",
             # Type checking.
             "mypy==v0.910 ; python_version<'3.6'",
-            "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",
-            "mypy==v0.990 ; python_version>='3.7'",
+            "mypy==v0.971 ; python_version>='3.6' and python_version<'3.8'",
+            "mypy==v0.990 ; python_version>='3.8'",
             # Docs.
-            "Sphinx==5.3.0 ; python_version>='3.7'",
-            "sphinx-autobuild==2021.3.14 ; python_version>='3.7'",
-            "sphinx-rtd-theme==1.1.1 ; python_version>='3.7'",
+            "Sphinx==5.3.0 ; python_version>='3.8'",
+            "sphinx-autobuild==2021.3.14 ; python_version>='3.8'",
+            "sphinx-rtd-theme==1.1.1 ; python_version>='3.8'",
         ]
     },
     python_requires=">=3.5",
