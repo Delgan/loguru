@@ -607,7 +607,6 @@ def test_time_rotation_when_timezone_changes_backward_rename_file(freeze_time, t
 
 @pytest.mark.parametrize("delay", [False, True])
 def test_time_rotation_reopening_native(tmp_path_local, delay):
-
     with tempfile.TemporaryDirectory(dir=str(tmp_path_local)) as test_dir:
         get_ctime, set_ctime = load_ctime_functions()
         test_file = pathlib.Path(test_dir) / "test.txt"

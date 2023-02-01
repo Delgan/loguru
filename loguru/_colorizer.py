@@ -69,7 +69,6 @@ class TokenType:
 
 
 class AnsiParser:
-
     _style = ansi_escape(
         {
             "b": Style.BOLD,

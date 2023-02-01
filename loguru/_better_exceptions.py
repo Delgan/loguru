@@ -12,7 +12,6 @@ import traceback
 
 
 class SyntaxHighlighter:
-
     _default_style = {
         "comment": "\x1b[30m\x1b[1m{}\x1b[0m",
         "keyword": "\x1b[35m\x1b[1m{}\x1b[0m",
@@ -94,7 +93,6 @@ class SyntaxHighlighter:
 
 
 class ExceptionFormatter:
-
     _default_theme = {
         "introduction": "\x1b[33m\x1b[1m{}\x1b[0m",
         "cause": "\x1b[1m{}\x1b[0m",
