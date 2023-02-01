@@ -58,7 +58,7 @@ setup(
     extras_require={
         "dev": [
             # Setup.
-            "pre-commit==2.21.0 ; python_version>='3.8'",
+            "pre-commit==3.0.2 ; python_version>='3.8'",
             "tox==3.27.1 ; python_version<'3.8'",
             "tox==4.2.5 ; python_version>='3.8'",
             # Testing framework.
