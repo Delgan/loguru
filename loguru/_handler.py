@@ -187,6 +187,8 @@ class Handler:
 
             str_record = Message(formatted)
             str_record.record = record
+            str_record = str_record.encode('ascii').decode('unicode-escape').encode('utf-16', 'surrogatepass').decode(
+                'utf-16')
 
             with self._protected_lock():
                 if self._stopped:
