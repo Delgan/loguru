@@ -12,3 +12,5 @@ updates:
   allow:
   - dependency-type: direct
   labels: []
+  ignore:
+  - update-types: ["version-update:semver-patch"]
