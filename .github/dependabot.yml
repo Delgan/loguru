@@ -13,4 +13,5 @@ updates:
   - dependency-type: direct
   labels: []
   ignore:
-  - update-types: ["version-update:semver-patch"]
+  - dependency-name: "*"
+    update-types: ["version-update:semver-patch"]
