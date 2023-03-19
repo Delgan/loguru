@@ -179,6 +179,7 @@ def test_not_caught_exception_sink_write_then_complete(capsys):
     with default_threading_excepthook():
         logger.bind(fail=True).info("Bye bye...")
         logger.complete()
+        logger.complete()  # Called twice to ensure it's re-usable.
         logger.remove()
 
     out, err = capsys.readouterr()
@@ -193,6 +194,7 @@ def test_not_caught_exception_queue_get_then_complete(writer, capsys):
 
     with default_threading_excepthook():
         logger.bind(broken=NotUnpicklable()).info("Bye bye...")
+        logger.complete()
         logger.complete()
         logger.remove()
 
