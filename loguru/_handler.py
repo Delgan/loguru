@@ -72,7 +72,6 @@ class Handler:
         self._confirmation_lock = None
         self._owner_process_pid = None
         self._thread = None
-        self._is_thread_dead = None
 
         if self._is_formatter_dynamic:
             if self._colorize:
@@ -91,7 +90,6 @@ class Handler:
             self._confirmation_event = multiprocessing.Event()
             self._confirmation_lock = multiprocessing.Lock()
             self._owner_process_pid = os.getpid()
-            self._is_thread_dead = multiprocessing.Event()
             self._thread = Thread(
                 target=self._queued_writer, daemon=True, name="loguru-writer-%d" % self._id
             )
@@ -220,8 +218,6 @@ class Handler:
             return
 
         with self._confirmation_lock:
-            if self._is_thread_dead.is_set():
-                return
             self._queue.put(True)
             self._confirmation_event.wait()
             self._confirmation_event.clear()
@@ -295,10 +291,6 @@ class Handler:
                 message = queue.get()
             except Exception:
                 with lock:
-                    if not self._error_interceptor.should_catch():
-                        self._is_thread_dead.set()
-                        self._confirmation_event.set()
-                        raise
                     self._error_interceptor.print(None)
                 continue
 
@@ -313,10 +305,6 @@ class Handler:
                 try:
                     self._sink.write(message)
                 except Exception:
-                    if not self._error_interceptor.should_catch():
-                        self._is_thread_dead.set()
-                        self._confirmation_event.set()
-                        raise
                     self._error_interceptor.print(message.record)
 
     def __getstate__(self):
