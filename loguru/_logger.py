@@ -267,7 +267,7 @@ class Logger:
             Whether the exception trace should display the variables values to eases the debugging.
             This should be set to ``False`` in production to avoid leaking sensitive data.
         enqueue : |bool|, optional
-            Whether the messages to be logged should first pass through a multiprocess-safe queue
+            Whether the messages to be logged should first pass through a multiprocessing-safe queue
             before reaching the sink. This is useful while logging to a file through multiple
             processes. This also has the advantage of making logging calls non-blocking.
         catch : |bool|, optional

@@ -146,15 +146,17 @@ def test_not_caught_exception_queue_get(writer, capsys):
     with default_threading_excepthook():
         logger.info("It's fine")
         logger.bind(broken=NotUnpicklable()).info("Bye bye...")
-        logger.info("It's not fine")
+        logger.info("It's fine again")
         logger.remove()
 
     out, err = capsys.readouterr()
     lines = err.strip().splitlines()
-    assert writer.read() == "It's fine\n"
+    assert writer.read() == "It's fine\nIt's fine again\n"
     assert out == ""
-    assert lines[0].startswith("Exception")
-    assert lines[-1].endswith("UnpicklingError: You shall not de-serialize me!")
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
+    assert lines[1] == "Record was: None"
+    assert lines[-2].endswith("UnpicklingError: You shall not de-serialize me!")
+    assert lines[-1] == "--- End of logging error ---"
 
 
 def test_not_caught_exception_sink_write(capsys):
@@ -163,14 +165,16 @@ def test_not_caught_exception_sink_write(capsys):
     with default_threading_excepthook():
         logger.info("It's fine")
         logger.bind(fail=True).info("Bye bye...")
-        logger.info("It's not fine")
+        logger.info("It's fine again")
         logger.remove()
 
     out, err = capsys.readouterr()
     lines = err.strip().splitlines()
-    assert out == "It's fine\n"
-    assert lines[0].startswith("Exception")
-    assert lines[-1] == "RuntimeError: You asked me to fail..."
+    assert out == "It's fine\nIt's fine again\n"
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
+    assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
+    assert lines[-2] == "RuntimeError: You asked me to fail..."
+    assert lines[-1] == "--- End of logging error ---"
 
 
 def test_not_caught_exception_sink_write_then_complete(capsys):
@@ -185,8 +189,10 @@ def test_not_caught_exception_sink_write_then_complete(capsys):
     out, err = capsys.readouterr()
     lines = err.strip().splitlines()
     assert out == ""
-    assert lines[0].startswith("Exception")
-    assert lines[-1] == "RuntimeError: You asked me to fail..."
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
+    assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
+    assert lines[-2] == "RuntimeError: You asked me to fail..."
+    assert lines[-1] == "--- End of logging error ---"
 
 
 def test_not_caught_exception_queue_get_then_complete(writer, capsys):
@@ -202,8 +208,10 @@ def test_not_caught_exception_queue_get_then_complete(writer, capsys):
     lines = err.strip().splitlines()
     assert writer.read() == ""
     assert out == ""
-    assert lines[0].startswith("Exception")
-    assert lines[-1].endswith("UnpicklingError: You shall not de-serialize me!")
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
+    assert lines[1] == "Record was: None"
+    assert lines[-2].endswith("UnpicklingError: You shall not de-serialize me!")
+    assert lines[-1] == "--- End of logging error ---"
 
 
 def test_wait_for_all_messages_enqueued(capsys):

@@ -140,4 +140,4 @@ def test_broken_sink_not_caught_enqueue():
         logger.info("B")
         time.sleep(0.1)
 
-    assert called == 1
+    assert called == 2
