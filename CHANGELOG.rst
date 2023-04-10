@@ -1,5 +1,5 @@
-`Unreleased`_
-=============
+`0.7.0`_ (2023-04-10)
+=====================
 
 - Update ``InterceptHandler`` recipe to make it compatible with Python 3.11 (`#654 <https://github.com/Delgan/loguru/issues/654>`_).
 - Add a new ``watch`` optional argument to file sinks in order to automatically re-create possibly deleted or changed file (`#471 <https://github.com/Delgan/loguru/issues/471>`_).
@@ -199,7 +199,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.6.0...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.0...master
+.. _0.7.0: https://github.com/delgan/loguru/releases/tag/0.7.0
 .. _0.6.0: https://github.com/delgan/loguru/releases/tag/0.6.0
 .. _0.5.3: https://github.com/delgan/loguru/releases/tag/0.5.3
 .. _0.5.2: https://github.com/delgan/loguru/releases/tag/0.5.2
