@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import multiprocessing
 import os
 import platform
 import sys
@@ -8,26 +9,17 @@ import time
 
 import pytest
 
-import loguru
 from loguru import logger
 
 
 @pytest.fixture
-def fork_context(monkeypatch):
-    import multiprocessing
-
-    context = multiprocessing.get_context("fork")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", context)
-    yield context
+def fork_context():
+    yield multiprocessing.get_context("fork")
 
 
 @pytest.fixture
-def spawn_context(monkeypatch):
-    import multiprocessing
-
-    context = multiprocessing.get_context("spawn")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", context)
-    yield context
+def spawn_context():
+    yield multiprocessing.get_context("spawn")
 
 
 def do_something(i):
@@ -105,7 +97,7 @@ class Writer:
 def test_apply_spawn(spawn_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=spawn_context, format="{message}", enqueue=True, catch=False)
 
     with spawn_context.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
@@ -123,7 +115,7 @@ def test_apply_spawn(spawn_context):
 def test_apply_fork(fork_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     with fork_context.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
@@ -141,7 +133,7 @@ def test_apply_fork(fork_context):
 def test_apply_inheritance(fork_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     with fork_context.Pool(1) as pool:
         for i in range(3):
@@ -158,7 +150,7 @@ def test_apply_inheritance(fork_context):
 def test_apply_async_spawn(spawn_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=spawn_context, format="{message}", enqueue=True, catch=False)
 
     with spawn_context.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
@@ -177,7 +169,7 @@ def test_apply_async_spawn(spawn_context):
 def test_apply_async_fork(fork_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     with fork_context.Pool(1, set_logger, [logger]) as pool:
         for i in range(3):
@@ -196,7 +188,7 @@ def test_apply_async_fork(fork_context):
 def test_apply_async_inheritance(fork_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     with fork_context.Pool(1) as pool:
         for i in range(3):
@@ -214,7 +206,7 @@ def test_apply_async_inheritance(fork_context):
 def test_process_spawn(spawn_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=spawn_context, format="{message}", enqueue=True, catch=False)
 
     process = spawn_context.Process(target=subworker, args=(logger,))
     process.start()
@@ -232,7 +224,7 @@ def test_process_spawn(spawn_context):
 def test_process_fork(fork_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     process = fork_context.Process(target=subworker, args=(logger,))
     process.start()
@@ -250,7 +242,7 @@ def test_process_fork(fork_context):
 def test_process_inheritance(fork_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     process = fork_context.Process(target=subworker_inheritance)
     process.start()
@@ -267,7 +259,7 @@ def test_process_inheritance(fork_context):
 def test_remove_in_child_process_spawn(spawn_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=spawn_context, format="{message}", enqueue=True, catch=False)
 
     process = spawn_context.Process(target=subworker_remove, args=(logger,))
     process.start()
@@ -285,7 +277,7 @@ def test_remove_in_child_process_spawn(spawn_context):
 def test_remove_in_child_process_fork(fork_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     process = fork_context.Process(target=subworker_remove, args=(logger,))
     process.start()
@@ -303,7 +295,7 @@ def test_remove_in_child_process_fork(fork_context):
 def test_remove_in_child_process_inheritance(fork_context):
     writer = Writer()
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     process = fork_context.Process(target=subworker_remove_inheritance)
     process.start()
@@ -324,7 +316,7 @@ def test_remove_in_main_process_spawn(spawn_context):
     writer = Writer()
     barrier = spawn_context.Barrier(2)
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=spawn_context, format="{message}", enqueue=True, catch=False)
 
     process = spawn_context.Process(target=subworker_barrier, args=(logger, barrier))
     process.start()
@@ -343,7 +335,7 @@ def test_remove_in_main_process_fork(fork_context):
     writer = Writer()
     barrier = fork_context.Barrier(2)
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     process = fork_context.Process(target=subworker_barrier, args=(logger, barrier))
     process.start()
@@ -362,7 +354,7 @@ def test_remove_in_main_process_inheritance(fork_context):
     writer = Writer()
     barrier = fork_context.Barrier(2)
 
-    logger.add(writer, format="{message}", enqueue=True, catch=False)
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
 
     process = fork_context.Process(target=subworker_barrier_inheritance, args=(barrier,))
     process.start()
@@ -382,7 +374,9 @@ def test_await_complete_spawn(capsys, spawn_context):
 
     loop = asyncio.new_event_loop()
 
-    logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
+    logger.add(
+        writer, context=spawn_context, format="{message}", loop=loop, enqueue=True, catch=False
+    )
 
     process = spawn_context.Process(target=subworker_complete, args=(logger,))
     process.start()
@@ -407,7 +401,9 @@ def test_await_complete_fork(capsys, fork_context):
 
     loop = asyncio.new_event_loop()
 
-    logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
+    logger.add(
+        writer, context=fork_context, format="{message}", loop=loop, enqueue=True, catch=False
+    )
 
     process = fork_context.Process(target=subworker_complete, args=(logger,))
     process.start()
@@ -432,7 +428,9 @@ def test_await_complete_inheritance(capsys, fork_context):
 
     loop = asyncio.new_event_loop()
 
-    logger.add(writer, format="{message}", loop=loop, enqueue=True, catch=False)
+    logger.add(
+        writer, context=fork_context, format="{message}", loop=loop, enqueue=True, catch=False
+    )
 
     process = fork_context.Process(target=subworker_complete_inheritance)
     process.start()
@@ -455,9 +453,9 @@ def test_not_picklable_sinks_spawn(spawn_context, tmp_path, capsys):
     stream = sys.stderr
     output = []
 
-    logger.add(filepath, format="{message}", enqueue=True, catch=False)
-    logger.add(stream, format="{message}", enqueue=True)
-    logger.add(lambda m: output.append(m), format="{message}", enqueue=True)
+    logger.add(filepath, context=spawn_context, format="{message}", enqueue=True, catch=False)
+    logger.add(stream, context=spawn_context, format="{message}", enqueue=True)
+    logger.add(lambda m: output.append(m), context=spawn_context, format="{message}", enqueue=True)
 
     process = spawn_context.Process(target=subworker, args=[logger])
     process.start()
@@ -482,9 +480,15 @@ def test_not_picklable_sinks_fork(capsys, tmp_path, fork_context):
     stream = sys.stderr
     output = []
 
-    logger.add(filepath, format="{message}", enqueue=True, catch=False)
-    logger.add(stream, format="{message}", enqueue=True, catch=False)
-    logger.add(lambda m: output.append(m), format="{message}", enqueue=True, catch=False)
+    logger.add(filepath, context=fork_context, format="{message}", enqueue=True, catch=False)
+    logger.add(stream, context=fork_context, format="{message}", enqueue=True, catch=False)
+    logger.add(
+        lambda m: output.append(m),
+        context=fork_context,
+        format="{message}",
+        enqueue=True,
+        catch=False,
+    )
 
     process = fork_context.Process(target=subworker, args=[logger])
     process.start()
@@ -509,9 +513,15 @@ def test_not_picklable_sinks_inheritance(capsys, tmp_path, fork_context):
     stream = sys.stderr
     output = []
 
-    logger.add(filepath, format="{message}", enqueue=True, catch=False)
-    logger.add(stream, format="{message}", enqueue=True, catch=False)
-    logger.add(lambda m: output.append(m), format="{message}", enqueue=True, catch=False)
+    logger.add(filepath, context=fork_context, format="{message}", enqueue=True, catch=False)
+    logger.add(stream, context=fork_context, format="{message}", enqueue=True, catch=False)
+    logger.add(
+        lambda m: output.append(m),
+        context=fork_context,
+        format="{message}",
+        enqueue=True,
+        catch=False,
+    )
 
     process = fork_context.Process(target=subworker_inheritance)
     process.start()
@@ -554,7 +564,7 @@ def test_no_deadlock_if_internal_lock_in_use(tmp_path, enqueue, deepcopied, fork
     def worker():
         logger_.info("Child")
 
-    logger_.add(slow_sink, format="{message}", enqueue=enqueue, catch=False)
+    logger_.add(slow_sink, context=fork_context, format="{message}", enqueue=enqueue, catch=False)
 
     thread = threading.Thread(target=main)
     thread.start()
@@ -577,7 +587,7 @@ def test_no_deadlock_if_internal_lock_in_use(tmp_path, enqueue, deepcopied, fork
 @pytest.mark.parametrize("enqueue", [True, False])
 def test_no_deadlock_if_external_lock_in_use(enqueue, capsys, fork_context):
     # Can't reproduce the bug on pytest (even if stderr is not wrapped), but let it anyway
-    logger.add(sys.stderr, enqueue=enqueue, catch=True, format="{message}")
+    logger.add(sys.stderr, context=fork_context, enqueue=enqueue, catch=True, format="{message}")
     num = 100
 
     for i in range(num):
@@ -597,7 +607,7 @@ def test_no_deadlock_if_external_lock_in_use(enqueue, capsys, fork_context):
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="PyPy is too slow")
 def test_complete_from_multiple_child_processes(capsys, fork_context):
-    logger.add(lambda _: None, enqueue=True, catch=False)
+    logger.add(lambda _: None, context=fork_context, enqueue=True, catch=False)
     num = 100
 
     barrier = fork_context.Barrier(num)

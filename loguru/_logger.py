@@ -37,6 +37,7 @@
 .. |logging| replace:: :mod:`logging`
 .. |signal| replace:: :mod:`signal`
 .. |contextvars| replace:: :mod:`contextvars`
+.. |multiprocessing| replace:: :mod:`multiprocessing`
 .. |Thread.run| replace:: :meth:`Thread.run()<threading.Thread.run()>`
 .. |Exception| replace:: :class:`Exception`
 .. |AbstractEventLoop| replace:: :class:`AbstractEventLoop<asyncio.AbstractEventLoop>`
@@ -62,6 +63,9 @@
 .. _coroutine function: https://docs.python.org/3/glossary.html#term-coroutine-function
 .. |re.Pattern| replace:: ``re.Pattern``
 .. _re.Pattern: https://docs.python.org/3/library/re.html#re-objects
+.. |multiprocessing.Context| replace:: ``multiprocessing.Context``
+.. _multiprocessing.Context:
+   https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 
 .. |better_exceptions| replace:: ``better_exceptions``
 .. _better_exceptions: https://github.com/Qix-/better-exceptions
@@ -82,7 +86,8 @@ import sys
 import warnings
 from collections import namedtuple
 from inspect import isclass, iscoroutinefunction, isgeneratorfunction
-from multiprocessing import current_process
+from multiprocessing import current_process, get_context
+from multiprocessing.context import BaseContext
 from os.path import basename, splitext
 from threading import current_thread
 
@@ -236,6 +241,7 @@ class Logger:
         backtrace=_defaults.LOGURU_BACKTRACE,
         diagnose=_defaults.LOGURU_DIAGNOSE,
         enqueue=_defaults.LOGURU_ENQUEUE,
+        context=_defaults.LOGURU_CONTEXT,
         catch=_defaults.LOGURU_CATCH,
         **kwargs
     ):
@@ -270,6 +276,10 @@ class Logger:
             Whether the messages to be logged should first pass through a multiprocessing-safe queue
             before reaching the sink. This is useful while logging to a file through multiple
             processes. This also has the advantage of making logging calls non-blocking.
+        context : |multiprocessing.Context| or |str|, optional
+            A context object or name that will be used for all tasks involving internally the
+            |multiprocessing| module, in particular when ``enqueue=True``. If ``None``, the default
+            context is used.
         catch : |bool|, optional
             Whether errors occurring while sink handles logs messages should be automatically
             caught. If ``True``, an exception message is displayed on |sys.stderr| but the exception
@@ -340,7 +350,7 @@ class Logger:
         The ``sink`` handles incoming log messages and proceed to their writing somewhere and
         somehow. A sink can take many forms:
 
-        - A |file-like object|_ like ``sys.stderr`` or ``open("somefile.log", "w")``. Anything with
+        - A |file-like object|_ like ``sys.stderr`` or ``open("file.log", "w")``. Anything with
           a ``.write()`` method is considered as a file-like object. Custom handlers may also
           implement ``flush()`` (called after each logged message), ``stop()`` (called at sink
           termination) and ``complete()`` (awaited by the eponymous method).
@@ -948,6 +958,14 @@ class Logger:
         if not isinstance(encoding, str):
             encoding = "ascii"
 
+        if context is None or isinstance(context, str):
+            context = get_context(context)
+        elif not isinstance(context, BaseContext):
+            raise TypeError(
+                "Invalid context, it should be a string or a multiprocessing context, "
+                "not: '%s'" % type(context).__name__
+            )
+
         with self._core.lock:
             exception_formatter = ExceptionFormatter(
                 colorize=colorize,
@@ -968,6 +986,7 @@ class Logger:
                 colorize=colorize,
                 serialize=serialize,
                 enqueue=enqueue,
+                multiprocessing_context=context,
                 id_=handler_id,
                 error_interceptor=error_interceptor,
                 exception_formatter=exception_formatter,
