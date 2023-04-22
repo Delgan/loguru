@@ -7,7 +7,6 @@ import threading
 
 import pytest
 
-import loguru
 from loguru import logger
 
 
@@ -590,14 +589,13 @@ class Writer:
 
 
 def test_complete_with_sub_processes(monkeypatch, capsys):
-    ctx = multiprocessing.get_context("spawn")
-    monkeypatch.setattr(loguru._handler, "multiprocessing", ctx)
+    spawn_context = multiprocessing.get_context("spawn")
 
     loop = asyncio.new_event_loop()
     writer = Writer()
-    logger.add(writer.write, format="{message}", enqueue=True, loop=loop)
+    logger.add(writer.write, context=spawn_context, format="{message}", enqueue=True, loop=loop)
 
-    process = ctx.Process(target=subworker, args=[logger])
+    process = spawn_context.Process(target=subworker, args=[logger])
     process.start()
     process.join()
 
