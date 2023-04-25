@@ -37,7 +37,7 @@
   - message: object()
   main: |
     from loguru import logger
-    logger.info({{ message }})
+    logger.info({{message}})
 
 - case: add_sink
   parametrized:
@@ -51,24 +51,33 @@
     from loguru import logger
     from logging import StreamHandler
     from pathlib import Path
-    id = logger.add({{ sink }})
+    id = logger.add({{sink}})
     reveal_type(id)
   out: |
     main:6: note: Revealed type is "builtins.int"
 
 - case: basic_sink_options
+  parametrized:
+  - format: "'{message}'"
+    filter: "'module'"
+    context: "'fork'"
+  - format: "lambda r: '{message}\\n'"
+    filter: 'lambda r: True'
+    context: get_context('fork')
   main: |
     import sys
+    from multiprocessing import get_context
     from loguru import logger
     logger.add(
       sys.stdout,
-      format="{message}",
-      filter=lambda r: True,
+      format={{format}},
+      filter={{filter}},
       colorize=False,
       serialize=True,
       backtrace=True,
       diagnose=False,
       enqueue=True,
+      context={{context}},
       catch=False,
     )
 

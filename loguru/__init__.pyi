@@ -91,6 +91,7 @@ import sys
 from asyncio import AbstractEventLoop
 from datetime import datetime, time, timedelta
 from logging import Handler
+from multiprocessing.context import BaseContext
 from types import TracebackType
 from typing import (
     Any,
@@ -246,6 +247,7 @@ class Logger:
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
+        context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...
     ) -> int: ...
     @overload
@@ -261,6 +263,7 @@ class Logger:
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
+        context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...,
         loop: Optional[AbstractEventLoop] = ...
     ) -> int: ...
@@ -277,6 +280,7 @@ class Logger:
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
+        context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...,
         rotation: Optional[Union[str, int, time, timedelta, RotationFunction]] = ...,
         retention: Optional[Union[str, int, timedelta, RetentionFunction]] = ...,
