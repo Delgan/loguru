@@ -31,7 +31,7 @@ LOGURU_AUTOINIT = env("LOGURU_AUTOINIT", bool, True)
 LOGURU_FORMAT = env(
     "LOGURU_FORMAT",
     str,
-    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS Z}</green> | "
     "<level>{level: <8}</level> | "
     "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
 )
