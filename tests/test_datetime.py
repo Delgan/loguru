@@ -158,9 +158,9 @@ def test_freezegun_mocking(writer):
 
 
 @pytest.mark.parametrize(
-    "format", ["ss.SSSSSSS", "SS.SSSSSSSS.SS", "HH:mm:ss.SSSSSSSSS", "SSSSSSSSSS"]
+    "time_format", ["ss.SSSSSSS", "SS.SSSSSSSS.SS", "HH:mm:ss.SSSSSSSSS", "SSSSSSSSSS"]
 )
-def test_invalid_time_format(writer, format):
-    logger.add(writer, format=f"{{time:{format}}} {{message}}", catch=False)
+def test_invalid_time_format(writer, time_format):
+    logger.add(writer, format="{time:%s} {message}" % time_format, catch=False)
     with pytest.raises(ValueError, match="Invalid time format"):
         logger.info("Test")
