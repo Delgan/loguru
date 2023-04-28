@@ -82,7 +82,9 @@ else:
         ("[YYYY] MM [DD]", "2018-02-03 11:09:00.000002", ("UTC", 0), "YYYY 02 DD"),
         ("[YYYY MM DD]", "2018-01-03 11:03:04.000002", ("UTC", 0), "[2018 01 03]"),
         ("[[YY]]", "2018-01-03 11:03:04.000002", ("UTC", 0), "[YY]"),
-        ("[]", "2018-01-03 11:03:04.000002", ("UTC", 0), "[]"),
+        ("[]", "2018-01-03 11:03:04.000002", ("UTC", 0), ""),
+        ("[[]]", "2018-01-03 11:03:04.000002", ("UTC", 0), "[]"),
+        ("SSSSSS[]SSS[]SSSSSS", "2018-01-03 11:03:04.100002", ("UTC", 0), "100002100100002"),
         ("[HHmmss", "2018-01-03 11:03:04.000002", ("UTC", 0), "[110304"),
         ("HHmmss]", "2018-01-03 11:03:04.000002", ("UTC", 0), "110304]"),
         ("HH:mm:ss!UTC", "2018-01-01 11:30:00.0", ("A", 7200), "09:30:00"),
@@ -153,3 +155,12 @@ def test_freezegun_mocking(writer):
         logger.info("Frozen")
 
     assert writer.read() == "[2000 01 01 18:00:05] Frozen\n"
+
+
+@pytest.mark.parametrize(
+    "format", ["ss.SSSSSSS", "SS.SSSSSSSS.SS", "HH:mm:ss.SSSSSSSSS", "SSSSSSSSSS"]
+)
+def test_invalid_time_format(writer, format):
+    logger.add(writer, format=f"{{time:{format}}} {{message}}", catch=False)
+    with pytest.raises(ValueError, match="Invalid time format"):
+        logger.info("Test")

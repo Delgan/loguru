@@ -2,6 +2,7 @@
 =============
 
 - Add a new ``context`` optional argument to ``logger.add()`` specifying ``multiprocessing`` context (like ``"spawn"`` or ``"fork"``) to be used internally instead of the default one (`#851 <https://github.com/Delgan/loguru/issues/851>`_).
+- Raise ``ValueError`` if an attempt to use nanosecond precision for time formatting is detected (`#855 <https://github.com/Delgan/loguru/issues/855>`_).
 
 
 `0.7.0`_ (2023-04-10)
