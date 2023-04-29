@@ -8,6 +8,7 @@ from threading import Thread
 from ._colorizer import Colorizer
 from ._locks_machinery import create_handler_lock
 
+import logging 
 
 def prepare_colored_format(format_, ansi_level):
     colored = Colorizer.prepare_format(format_)
@@ -25,6 +26,16 @@ def memoize(function):
 
 class Message(str):
     __slots__ = ("record",)
+
+class TelegramHandler(logging.Handler):
+    def __init__(self, bot, chat_id):
+        super().__init__()
+        self.bot = bot
+        self.chat_id = chat_id
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.bot.send_message(chat_id=self.chat_id, text=log_entry)
 
 
 class Handler:
@@ -44,7 +55,8 @@ class Handler:
         error_interceptor,
         exception_formatter,
         id_,
-        levels_ansi_codes
+        levels_ansi_codes,
+        telegram_handler=None
     ):
         self._name = name
         self._sink = sink
@@ -73,6 +85,9 @@ class Handler:
         self._confirmation_lock = None
         self._owner_process_pid = None
         self._thread = None
+        
+          
+        self.telegram_handler = telegram_handler
 
         if self._is_formatter_dynamic:
             if self._colorize:
