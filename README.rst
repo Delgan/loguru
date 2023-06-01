@@ -375,7 +375,7 @@ Using the logger in your scripts is easy, and you can |configure|_ it at start. 
     }
     logger.configure(**config)
 
-    # For libraries
+    # For libraries, should be your library's `__name__`
     logger.disable("my_library")
     # or
     logger.disable(__name__)
