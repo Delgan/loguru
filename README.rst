@@ -377,6 +377,9 @@ Using the logger in your scripts is easy, and you can |configure|_ it at start. 
 
     # For libraries
     logger.disable("my_library")
+    # or
+    logger.disable(__name__)
+
     logger.info("No matter added sinks, this message is not displayed")
     logger.enable("my_library")
     logger.info("This message however is propagated to the sinks")
