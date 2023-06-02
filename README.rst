@@ -375,9 +375,11 @@ Using the logger in your scripts is easy, and you can |configure|_ it at start. 
     }
     logger.configure(**config)
 
-    # For libraries
+    # For libraries, should be your library's `__name__`
     logger.disable("my_library")
     logger.info("No matter added sinks, this message is not displayed")
+
+    # In your application, enable the logger in the library
     logger.enable("my_library")
     logger.info("This message however is propagated to the sinks")
 
