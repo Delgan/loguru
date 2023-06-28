@@ -71,7 +71,7 @@ class RecordException(namedtuple("RecordException", ("type", "value", "traceback
         # flagged as insecure by some security tools.
         try:
             pickle.dumps(self.value)
-        except pickle.PickleError:
+        except (pickle.PickleError, TypeError) as err:
             return (RecordException, (self.type, None, None))
         else:
             return (RecordException, (self.type, self.value, None))
