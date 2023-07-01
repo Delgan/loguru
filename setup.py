@@ -63,7 +63,7 @@ setup(
             "tox==4.5.1 ; python_version>='3.8'",
             # Testing framework.
             "pytest==6.1.2 ; python_version<'3.8'",
-            "pytest==7.3.1 ; python_version>='3.8'",
+            "pytest==7.4.0 ; python_version>='3.8'",
             "pytest-cov==2.12.1 ; python_version<'3.8'",
             "pytest-cov==4.1.0 ; python_version>='3.8'",
             "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.8'",
