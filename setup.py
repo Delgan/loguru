@@ -67,7 +67,7 @@ setup(
             "pytest-cov==2.12.1 ; python_version<'3.8'",
             "pytest-cov==4.1.0 ; python_version>='3.8'",
             "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.8'",
-            "pytest-mypy-plugins==1.11.1 ; python_version>='3.8'",
+            "pytest-mypy-plugins==2.0.0 ; python_version>='3.8'",
             # Testing utils.
             "colorama==0.4.5 ; python_version<'3.8'",
             "colorama==0.4.6 ; python_version>='3.8'",
@@ -76,7 +76,7 @@ setup(
             # Type checking.
             "mypy==v0.910 ; python_version<'3.6'",
             "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",
-            "mypy==v0.990 ; python_version>='3.7'",
+            "mypy==v1.4.1 ; python_version>='3.7'",
             # Docs.
             "Sphinx==5.3.0 ; python_version>='3.8'",
             "sphinx-autobuild==2021.3.14 ; python_version>='3.8'",
