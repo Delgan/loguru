@@ -70,12 +70,10 @@ class RecordException(namedtuple("RecordException", ("type", "value", "traceback
         # dumped value during unpickling, but this requires using "pickle.loads()" which is
         # flagged as insecure by some security tools.
         # __reduce__ function does not alway raise PickleError. Multidict, for example, raise
-        # TypeError. In those cases, we need to catch TypeError exception.
+        # TypeError. To manage all the cases, we catch Exception.
         try:
             pickle.dumps(self.value)
-        except pickle.PickleError:
-            return (RecordException, (self.type, None, None))
-        except TypeError:
+        except Exception:
             return (RecordException, (self.type, None, None))
         else:
             return (RecordException, (self.type, self.value, None))
