@@ -593,7 +593,8 @@ class Logger:
 
         If the sink is a |str| or a |Path|, the corresponding file will be opened for writing logs.
         The path can also contain a special ``"{time}"`` field that will be formatted with the
-        current date at file creation.
+        current date at file creation. The file is closed at sink stop, i.e. when the application
+        ends or the handler is removed.
 
         The ``rotation`` check is made before logging each message. If there is already an existing
         file with the same name that the file to be created, then the existing file is renamed by
@@ -610,11 +611,13 @@ class Logger:
           logged message and the file object, and it should return ``True`` if the rotation should
           happen now, ``False`` otherwise.
 
-        The ``retention`` occurs at rotation or at sink stop if rotation is ``None``. Files are
-        selected if they match the pattern ``"basename(.*).ext(.*)"`` (possible time fields are
-        beforehand replaced with ``.*``) based on the sink file. This parameter accepts:
+        The ``retention`` occurs at rotation or at sink stop if rotation is ``None``. Files
+        resulting from previous sessions or rotations are automatically collected from disk. A file
+        is selected if it matches the pattern ``"basename(.*).ext(.*)"`` (possible time fields are
+        beforehand replaced with ``.*``) based on the configured sink. Afterwards, the list is
+        processed to determine files to be retained. This parameter accepts:
 
-        - an |int| which indicates the number of log files to keep, while older files are removed.
+        - an |int| which indicates the number of log files to keep, while older files are deleted.
         - a |timedelta| which specifies the maximum age of files to keep.
         - a |str| for human-friendly parametrization of the maximum age of files to keep.
           Examples: ``"1 week, 3 days"``, ``"2 months"``, ...
