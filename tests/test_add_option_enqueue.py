@@ -12,12 +12,7 @@ from .conftest import default_threading_excepthook
 
 class NotPicklable:
     def __getstate__(self):
-        raise Exception(
-            [
-                TypeError("You shall not serialize me!"),
-                pickle.PicklingError("You shall not serialize me!"),
-            ],
-        )
+        raise pickle.PicklingError("You shall not serialize me!")
 
     def __setstate__(self, state):
         pass
@@ -90,7 +85,7 @@ def test_caught_exception_queue_put(writer, capsys):
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
-    assert len(re.findall(r"You shall not serialize me!", err)) == 2
+    assert lines[-2].endswith("PicklingError: You shall not serialize me!")
     assert lines[-1] == "--- End of logging error ---"
 
 
@@ -134,7 +129,7 @@ def test_not_caught_exception_queue_put(writer, capsys):
 
     logger.info("It's fine")
 
-    with pytest.raises(Exception, match=r"You shall not serialize me!"):
+    with pytest.raises(pickle.PicklingError, match=r"You shall not serialize me!"):
         logger.bind(broken=NotPicklable()).info("Bye bye...")
 
     logger.remove()
