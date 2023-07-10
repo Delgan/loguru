@@ -69,9 +69,11 @@ class RecordException(namedtuple("RecordException", ("type", "value", "traceback
         # we remove the value in case or error. As an optimization, we could have re-used the
         # dumped value during unpickling, but this requires using "pickle.loads()" which is
         # flagged as insecure by some security tools.
+        # __reduce__ function does not alway raise PickleError. Multidict, for example, raise
+        # TypeError. To manage all the cases, we catch Exception.
         try:
             pickle.dumps(self.value)
-        except pickle.PickleError:
+        except Exception:
             return (RecordException, (self.type, None, None))
         else:
             return (RecordException, (self.type, self.value, None))
