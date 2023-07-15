@@ -128,6 +128,9 @@ Take the tour
 .. |better_exceptions| replace:: ``better_exceptions``
 .. _better_exceptions: https://github.com/Qix-/better-exceptions
 
+.. |loguru-config| replace:: ``loguru-config``
+.. _loguru-config: https://github.com/erezinman/loguru-config
+
 .. |notifiers| replace:: ``notifiers``
 .. _notifiers: https://github.com/notifiers/notifiers
 
@@ -383,6 +386,7 @@ Using the logger in your scripts is easy, and you can |configure|_ it at start. 
     logger.enable("my_library")
     logger.info("This message however is propagated to the sinks")
 
+For additional convenience, you can also use the |loguru-config|_ library to setup the ``logger`` directly from a configuration file.
 
 Entirely compatible with standard logging
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

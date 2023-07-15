@@ -70,9 +70,15 @@
 .. |better_exceptions| replace:: ``better_exceptions``
 .. _better_exceptions: https://github.com/Qix-/better-exceptions
 
+.. |loguru-config| replace:: ``loguru-config``
+.. _loguru-config: https://github.com/erezinman/loguru-config
+
 .. _Pendulum: https://pendulum.eustace.io/docs/#tokens
-.. _@sdispater: https://github.com/sdispater
+
 .. _@Qix-: https://github.com/Qix-
+.. _@erezinman: https://github.com/erezinman
+.. _@sdispater: https://github.com/sdispater
+
 .. _formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
 .. _reentrant: https://en.wikipedia.org/wiki/Reentrancy_(computing)
 """
@@ -1663,6 +1669,9 @@ class Logger:
 
         It should be noted that ``extra`` values set using this function are available across all
         modules, so this is the best way to set overall default values.
+
+        To load the configuration directly from a file, such as JSON or YAML, it is also possible to
+        use the |loguru-config|_ library developed by `@erezinman`_.
 
         Parameters
         ----------
