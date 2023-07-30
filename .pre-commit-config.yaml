@@ -6,7 +6,7 @@ repos:
   - id: trailing-whitespace
   - id: check-added-large-files
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.6.0
+  rev: v2.10.0
   hooks:
   - id: pretty-format-ini
     args: [--autofix]
@@ -17,12 +17,12 @@ repos:
   hooks:
   - id: isort
 - repo: https://github.com/ambv/black
-  rev: 23.1.0
+  rev: 23.7.0
   hooks:
   - id: black
     args: [-l, '100', --target-version, py35]
 - repo: https://github.com/pycqa/flake8
-  rev: 6.0.0
+  rev: 6.1.0
   hooks:
   - id: flake8
     args: [--exclude, tests/exceptions/source]
