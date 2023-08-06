@@ -67,7 +67,7 @@ setup(
             "pytest-cov==2.12.1 ; python_version<'3.8'",
             "pytest-cov==4.1.0 ; python_version>='3.8'",
             "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.8'",
-            "pytest-mypy-plugins==2.0.0 ; python_version>='3.8'",
+            "pytest-mypy-plugins==3.0.0 ; python_version>='3.8'",
             # Testing utils.
             "colorama==0.4.5 ; python_version<'3.8'",
             "colorama==0.4.6 ; python_version>='3.8'",
