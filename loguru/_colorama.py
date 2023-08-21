@@ -62,4 +62,4 @@ def should_wrap(stream):
 def wrap(stream):
     from colorama import AnsiToWin32
 
-    return AnsiToWin32(stream, convert=True, strip=False, autoreset=False).stream
+    return AnsiToWin32(stream, convert=True, strip=True, autoreset=False).stream
