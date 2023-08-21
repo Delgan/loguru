@@ -44,6 +44,16 @@ def should_wrap(stream):
     if stream is not sys.__stdout__ and stream is not sys.__stderr__:
         return False
 
+    try:
+        from colorama.winterm import enable_vt_processing
+
+        has_native_ansi = enable_vt_processing(stream.fileno())
+    except Exception:
+        has_native_ansi = False
+
+    if has_native_ansi:
+        return False
+
     from colorama.win32 import winapi_test
 
     return winapi_test()
