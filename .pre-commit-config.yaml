@@ -12,20 +12,13 @@ repos:
     args: [--autofix]
   - id: pretty-format-yaml
     args: [--autofix, --indent, '2']
-- repo: https://github.com/pycqa/isort
-  rev: 5.12.0
-  hooks:
-  - id: isort
 - repo: https://github.com/ambv/black
   rev: 23.7.0
   hooks:
   - id: black
     args: [-l, '100', --target-version, py35]
-- repo: https://github.com/pycqa/flake8
-  rev: 6.1.0
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.0.286
   hooks:
-  - id: flake8
-    args: [--exclude, tests/exceptions/source]
-    additional_dependencies:
-    - flake8-bugbear==23.1.20
-    - pep8-naming==0.13.3
+  - id: ruff
+    args: [--fix, --exit-non-zero-on-fix]

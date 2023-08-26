@@ -1,0 +1,4 @@
+# Enforce isort (I), bugbears (B), and pep8-naming (N) rules
+select = ["E", "F", "I", "B", "N"]
+line-length = 100
+exclude = ["tests/exceptions/source"]
