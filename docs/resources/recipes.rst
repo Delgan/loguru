@@ -457,10 +457,8 @@ Setting permissions on created log files
 
 To set desired permissions on created log files, use the ``opener`` argument to pass in a custom opener with permissions octal::
 
-    os.umask(0)  # Update the current umask (it's value is masked out from "os.open()" permissions)
-
     def opener(file, flags):
-        return os.open(file, flags, 0o777)
+        return os.open(file, flags, 0o600)  # read/write by owner only
 
     logger.add("foo.log", rotation="100 kB", opener=opener)
 
