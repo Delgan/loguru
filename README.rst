@@ -239,7 +239,8 @@ Logging exceptions that occur in your code is important to track bugs, but it's 
 
 The code::
 
-    logger.add("out.log", backtrace=True, diagnose=True)  # Caution, may leak sensitive data in prod
+    # Caution, diagnose=True is the default and may leak sensitive data in prod
+    logger.add("out.log", backtrace=True, diagnose=True)
 
     def func(a, b):
         return a / b
@@ -277,6 +278,7 @@ Would result in:
 
 Note that this feature won't work on default Python REPL due to unavailable frame data.
 
+See `Security considerations when using Loguru <https://loguru.readthedocs.io/en/stable/resources/recipes.html#security-considerations-when-using-loguru>`_
 
 Structured logging as needed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
