@@ -2,6 +2,7 @@ import asyncio
 import builtins
 import contextlib
 import datetime
+import io
 import logging
 import os
 import pathlib
@@ -71,6 +72,21 @@ def check_dir(dir, *, files=None, size=None):
             if content is not None:
                 assert filepath.read_text() == content
             seen.add(filepath)
+
+
+class StreamIsattyTrue(io.StringIO):
+    def isatty(self):
+        return True
+
+
+class StreamIsattyFalse(io.StringIO):
+    def isatty(self):
+        return False
+
+
+class StreamIsattyException(io.StringIO):
+    def isatty(self):
+        raise RuntimeError
 
 
 @contextlib.contextmanager
