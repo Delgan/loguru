@@ -7,7 +7,12 @@ import pytest
 from loguru import logger
 from loguru._colorama import should_colorize, should_wrap
 
-from .conftest import StreamIsattyException, StreamIsattyFalse, StreamIsattyTrue
+from .conftest import (
+    StreamFilenoException,
+    StreamIsattyException,
+    StreamIsattyFalse,
+    StreamIsattyTrue,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -22,21 +27,36 @@ def clear_environment():
 def patch_colorama(monkeypatch):
     ansi_to_win32_class = MagicMock()
     winapi_test = MagicMock(return_value=True)
+    enable_vt_processing = MagicMock(return_value=False)
     win32 = MagicMock(winapi_test=winapi_test)
-    colorama = MagicMock(AnsiToWin32=ansi_to_win32_class, win32=win32)
+    winterm = MagicMock(enable_vt_processing=enable_vt_processing)
+    colorama = MagicMock(AnsiToWin32=ansi_to_win32_class, win32=win32, winterm=winterm)
     monkeypatch.setitem(sys.modules, "colorama", colorama)
     monkeypatch.setitem(sys.modules, "colorama.win32", win32)
+    monkeypatch.setitem(sys.modules, "colorama.winterm", winterm)
     yield colorama
 
 
 @pytest.mark.parametrize("patched", ["__stdout__", "__stderr__"])
 @pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
-def test_stream_wrapped_on_windows(patched, monkeypatch, patch_colorama):
+def test_stream_wrapped_on_windows_if_no_vt_support(patched, monkeypatch, patch_colorama):
     stream = StreamIsattyTrue()
     monkeypatch.setattr(sys, patched, stream, raising=False)
     patch_colorama.win32.winapi_test.return_value = True
+    patch_colorama.winterm.enable_vt_processing.return_value = False
     logger.add(stream, colorize=True)
     assert patch_colorama.AnsiToWin32.called
+
+
+@pytest.mark.parametrize("patched", ["__stdout__", "__stderr__"])
+@pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
+def test_stream_not_wrapped_on_windows_if_vt_support(patched, monkeypatch, patch_colorama):
+    stream = StreamIsattyTrue()
+    monkeypatch.setattr(sys, patched, stream, raising=False)
+    patch_colorama.win32.winapi_test.return_value = True
+    patch_colorama.winterm.enable_vt_processing.return_value = True
+    logger.add(stream, colorize=True)
+    assert not patch_colorama.AnsiToWin32.called
 
 
 def test_stream_is_none():
@@ -170,7 +190,7 @@ def test_dont_wrap_on_linux(monkeypatch, patched, patch_colorama):
 
 @pytest.mark.parametrize("patched", ["stdout", "stderr", ""])
 @pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
-def test_dont_wrap_if_not_stdout_or_stderr(monkeypatch, patched, patch_colorama):
+def test_dont_wrap_if_not_original_stdout_or_stderr(monkeypatch, patched, patch_colorama):
     stream = StreamIsattyTrue()
     monkeypatch.setattr(sys, patched, stream, raising=False)
     assert not should_wrap(stream)
@@ -179,19 +199,67 @@ def test_dont_wrap_if_not_stdout_or_stderr(monkeypatch, patched, patch_colorama)
 
 @pytest.mark.parametrize("patched", ["__stdout__", "__stderr__"])
 @pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
+def test_dont_wrap_if_terminal_has_vt_support(monkeypatch, patched, patch_colorama):
+    stream = StreamIsattyTrue()
+    monkeypatch.setattr(sys, patched, stream, raising=False)
+    patch_colorama.win32.winapi_test.return_value = True
+    patch_colorama.winterm.enable_vt_processing.return_value = True
+    assert not should_wrap(stream)
+    assert patch_colorama.winterm.enable_vt_processing.called
+
+
+@pytest.mark.parametrize("patched", ["__stdout__", "__stderr__"])
+@pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
 def test_dont_wrap_if_winapi_false(monkeypatch, patched, patch_colorama):
     stream = StreamIsattyTrue()
     monkeypatch.setattr(sys, patched, stream, raising=False)
     patch_colorama.win32.winapi_test.return_value = False
+    patch_colorama.winterm.enable_vt_processing.return_value = False
     assert not should_wrap(stream)
     assert patch_colorama.win32.winapi_test.called
 
 
 @pytest.mark.parametrize("patched", ["__stdout__", "__stderr__"])
 @pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
-def test_wrap_if_winapi_true(monkeypatch, patched, patch_colorama):
+def test_wrap_if_winapi_true_and_no_vt_support(monkeypatch, patched, patch_colorama):
     stream = StreamIsattyTrue()
     monkeypatch.setattr(sys, patched, stream, raising=False)
     patch_colorama.win32.winapi_test.return_value = True
+    patch_colorama.winterm.enable_vt_processing.return_value = False
+    assert should_wrap(stream)
+    assert patch_colorama.winterm.enable_vt_processing.called
+    assert patch_colorama.win32.winapi_test.called
+
+
+@pytest.mark.parametrize("patched", ["__stdout__", "__stderr__"])
+@pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
+def test_wrap_if_winapi_true_and_vt_check_fails(monkeypatch, patched, patch_colorama):
+    stream = StreamIsattyTrue()
+    monkeypatch.setattr(sys, patched, stream, raising=False)
+    patch_colorama.win32.winapi_test.return_value = True
+    patch_colorama.winterm.enable_vt_processing.side_effect = RuntimeError
+    assert should_wrap(stream)
+    assert patch_colorama.winterm.enable_vt_processing.called
+    assert patch_colorama.win32.winapi_test.called
+
+
+@pytest.mark.parametrize("patched", ["__stdout__", "__stderr__"])
+@pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
+def test_wrap_if_winapi_true_and_stream_has_no_fileno(monkeypatch, patched, patch_colorama):
+    stream = StreamFilenoException()
+    monkeypatch.setattr(sys, patched, stream, raising=False)
+    patch_colorama.win32.winapi_test.return_value = True
+    assert should_wrap(stream)
+    assert not patch_colorama.winterm.enable_vt_processing.called
+    assert patch_colorama.win32.winapi_test.called
+
+
+@pytest.mark.parametrize("patched", ["__stdout__", "__stderr__"])
+@pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
+def test_wrap_if_winapi_true_and_old_colorama_version(monkeypatch, patched, patch_colorama):
+    stream = StreamIsattyTrue()
+    monkeypatch.setattr(sys, patched, stream, raising=False)
+    patch_colorama.win32.winapi_test.return_value = True
+    del patch_colorama.winterm.enable_vt_processing
     assert should_wrap(stream)
     assert patch_colorama.win32.winapi_test.called
