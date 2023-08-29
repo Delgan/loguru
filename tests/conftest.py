@@ -74,18 +74,28 @@ def check_dir(dir, *, files=None, size=None):
             seen.add(filepath)
 
 
-class StreamIsattyTrue(io.StringIO):
+class StubStream(io.StringIO):
+    def fileno(self):
+        return 1
+
+
+class StreamIsattyTrue(StubStream):
     def isatty(self):
         return True
 
 
-class StreamIsattyFalse(io.StringIO):
+class StreamIsattyFalse(StubStream):
     def isatty(self):
         return False
 
 
-class StreamIsattyException(io.StringIO):
+class StreamIsattyException(StubStream):
     def isatty(self):
+        raise RuntimeError
+
+
+class StreamFilenoException(StreamIsattyTrue):
+    def fileno(self):
         raise RuntimeError
 
 

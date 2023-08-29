@@ -46,10 +46,21 @@ def should_wrap(stream):
 
     from colorama.win32 import winapi_test
 
-    return winapi_test()
+    if not winapi_test():
+        return False
+
+    try:
+        from colorama.winterm import enable_vt_processing
+    except ImportError:
+        return True
+
+    try:
+        return not enable_vt_processing(stream.fileno())
+    except Exception:
+        return True
 
 
 def wrap(stream):
     from colorama import AnsiToWin32
 
-    return AnsiToWin32(stream, convert=True, strip=False, autoreset=False).stream
+    return AnsiToWin32(stream, convert=True, strip=True, autoreset=False).stream

@@ -1,3 +1,4 @@
+import os
 import re
 
 import pytest
@@ -19,7 +20,7 @@ from loguru import logger
         ("{level.icon}", lambda r: r == "🐞"),
         ("{file}", lambda r: r == "test_formatting.py"),
         ("{file.name}", lambda r: r == "test_formatting.py"),
-        ("{file.path}", lambda r: r == __file__),
+        ("{file.path}", lambda r: os.path.normcase(r) == os.path.normcase(__file__)),
         ("{function}", lambda r: r == "test_log_formatters"),
         ("{module}", lambda r: r == "test_formatting"),
         ("{thread}", lambda r: re.fullmatch(r"\d+", r)),
