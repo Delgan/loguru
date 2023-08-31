@@ -605,6 +605,98 @@ def test_time_rotation_when_timezone_changes_backward_rename_file(freeze_time, t
     )
 
 
+@pytest.mark.parametrize(
+    "rotation",
+    [
+        "00:15",
+        datetime.time(0, 15, 0),
+        datetime.time(23, 15, 0, tzinfo=datetime.timezone.utc),
+        datetime.time(0, 15, 0, tzinfo=datetime.timezone(datetime.timedelta(seconds=+3600))),
+        datetime.time(22, 15, 0, tzinfo=datetime.timezone(datetime.timedelta(seconds=-3600))),
+    ],
+)
+def test_dont_rotate_earlier_when_utc_is_one_day_before(freeze_time, tmp_path, rotation):
+    with freeze_time("2018-10-24 00:30:00", ("CET", +3600)) as frozen:
+        logger.add(tmp_path / "test.log", format="{message}", rotation=rotation)
+        logger.info("First")
+        logger.remove()
+
+        frozen.tick(delta=datetime.timedelta(hours=1))
+        logger.add(tmp_path / "test.log", format="{message}", rotation=rotation)
+        logger.info("Second")
+        logger.remove()
+
+        frozen.tick(delta=datetime.timedelta(hours=23))
+        logger.add(tmp_path / "test.log", format="{message}", rotation=rotation)
+        logger.info("Third")
+        logger.remove()
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2018-10-24_00-30-00_000000.log", "First\nSecond\n"),
+            ("test.log", "Third\n"),
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    "rotation",
+    [
+        "23:45",
+        datetime.time(23, 45, 0),
+        datetime.time(0, 45, 0, tzinfo=datetime.timezone.utc),
+        datetime.time(1, 45, 0, tzinfo=datetime.timezone(datetime.timedelta(seconds=+3600))),
+        datetime.time(23, 45, 0, tzinfo=datetime.timezone(datetime.timedelta(seconds=-3600))),
+    ],
+)
+def test_dont_rotate_later_when_utc_is_one_day_after(freeze_time, tmp_path, rotation):
+    with freeze_time("2018-10-23 23:30:00", ("CET", -3600)) as frozen:
+        logger.add(tmp_path / "test.log", format="{message}", rotation=rotation)
+        logger.info("First")
+        logger.remove()
+
+        frozen.tick(delta=datetime.timedelta(hours=1))
+        logger.add(tmp_path / "test.log", format="{message}", rotation=rotation)
+        logger.info("Second")
+        logger.remove()
+
+        frozen.tick(delta=datetime.timedelta(hours=23))
+        logger.add(tmp_path / "test.log", format="{message}", rotation=rotation)
+        logger.info("Third")
+        logger.remove()
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2018-10-23_23-30-00_000000.log", "First\n"),
+            ("test.log", "Second\nThird\n"),
+        ],
+    )
+
+
+@pytest.mark.parametrize("timezone", [("CET", +3600), ("CET", -3600), ("UTC", 0)])
+def test_rotation_at_midnight_with_date_in_filename(freeze_time, tmp_path, timezone):
+    with freeze_time("2018-10-23 23:55:00", timezone) as frozen:
+        logger.add(tmp_path / "test.{time:YYYY-MM-DD}.log", format="{message}", rotation="00:00")
+        logger.info("First")
+        logger.remove()
+
+        frozen.tick(delta=datetime.timedelta(minutes=10))
+
+        logger.add(tmp_path / "test.{time:YYYY-MM-DD}.log", format="{message}", rotation="00:00")
+        logger.info("Second")
+        logger.remove()
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2018-10-23.log", "First\n"),
+            ("test.2018-10-24.log", "Second\n"),
+        ],
+    )
+
+
 @pytest.mark.parametrize("delay", [False, True])
 def test_time_rotation_reopening_native(tmp_path_local, delay):
     with tempfile.TemporaryDirectory(dir=str(tmp_path_local)) as test_dir:
