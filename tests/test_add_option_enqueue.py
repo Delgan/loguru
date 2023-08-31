@@ -34,6 +34,14 @@ class NotUnpicklable:
         raise pickle.UnpicklingError("You shall not de-serialize me!")
 
 
+class NotUnpicklableTypeError:
+    def __getstate__(self):
+        return "..."
+
+    def __setstate__(self, state):
+        raise TypeError("You shall not de-serialize me!")
+
+
 class NotWritable:
     def write(self, message):
         if "fail" in message.record["extra"]:
@@ -97,24 +105,6 @@ def test_caught_exception_queue_put(writer, capsys):
     assert lines[-1] == "--- End of logging error ---"
 
 
-def test_caught_exception_queue_put_typerror(writer, capsys):
-    logger.add(writer, enqueue=True, catch=True, format="{message}")
-
-    logger.info("It's fine")
-    logger.bind(broken=NotPicklableTypeError()).info("Bye bye...")
-    logger.info("It's fine again")
-    logger.remove()
-
-    out, err = capsys.readouterr()
-    lines = err.strip().splitlines()
-    assert writer.read() == "It's fine\nIt's fine again\n"
-    assert out == ""
-    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
-    assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
-    assert lines[-2].endswith("TypeError: You shall not serialize me!")
-    assert lines[-1] == "--- End of logging error ---"
-
-
 def test_caught_exception_queue_get(writer, capsys):
     logger.add(writer, enqueue=True, catch=True, format="{message}")
 
@@ -157,22 +147,6 @@ def test_not_caught_exception_queue_put(writer, capsys):
 
     with pytest.raises(pickle.PicklingError, match=r"You shall not serialize me!"):
         logger.bind(broken=NotPicklable()).info("Bye bye...")
-
-    logger.remove()
-
-    out, err = capsys.readouterr()
-    assert writer.read() == "It's fine\n"
-    assert out == ""
-    assert err == ""
-
-
-def test_not_caught_exception_queue_put_typeerror(writer, capsys):
-    logger.add(writer, enqueue=True, catch=False, format="{message}")
-
-    logger.info("It's fine")
-
-    with pytest.raises(TypeError, match=r"You shall not serialize me!"):
-        logger.bind(broken=NotPicklableTypeError()).info("Bye bye...")
 
     logger.remove()
 
@@ -274,7 +248,8 @@ def test_wait_for_all_messages_enqueued(capsys):
     assert err == "".join("%d\n" % i for i in range(10))
 
 
-def test_logging_not_picklable_exception():
+@pytest.mark.parametrize("exception_value", [NotPicklable(), NotPicklableTypeError()])
+def test_logging_not_picklable_exception(exception_value):
     exception = None
 
     def sink(message):
@@ -284,7 +259,7 @@ def test_logging_not_picklable_exception():
     logger.add(sink, enqueue=True, catch=False)
 
     try:
-        raise ValueError(NotPicklable())
+        raise ValueError(exception_value)
     except Exception:
         logger.exception("Oups")
 
@@ -296,8 +271,8 @@ def test_logging_not_picklable_exception():
     assert traceback_ is None
 
 
-@pytest.mark.skip(reason="No way to safely deserialize exception yet")
-def test_logging_not_unpicklable_exception():
+@pytest.mark.parametrize("exception_value", [NotUnpicklable(), NotUnpicklableTypeError()])
+def test_logging_not_unpicklable_exception(exception_value):
     exception = None
 
     def sink(message):
@@ -307,7 +282,7 @@ def test_logging_not_unpicklable_exception():
     logger.add(sink, enqueue=True, catch=False)
 
     try:
-        raise ValueError(NotUnpicklable())
+        raise ValueError(exception_value)
     except Exception:
         logger.exception("Oups")
 
