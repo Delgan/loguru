@@ -5,7 +5,8 @@
 - Add support for true colors on Windows using ANSI/VT console when available (`#934 <https://github.com/Delgan/loguru/issues/934>`_, thanks `@tunaflsh <https://github.com/tunaflsh>`_).
 - Fix file possibly rotating too early or too late when re-starting an application around midnight (`#894 <https://github.com/Delgan/loguru/issues/894>`_).
 - Fix inverted ``"<hide>"`` and ``"<strike>"`` color tags (`#943 <https://github.com/Delgan/loguru/pull/943>`_, thanks `@tunaflsh <https://github.com/tunaflsh>`_).
-- Fix possible errors raised by logging non-picklable ``Exception`` instances while using ``enqueue=True`` (`#342 <https://github.com/Delgan/loguru/issues/342>`_, thanks `@ncoudene <https://github.com/ncoudene>`_).
+- Fix possible untraceable errors raised when logging non-unpicklable ``Exception`` instances while using ``enqueue=True`` (`#329 <https://github.com/Delgan/loguru/issues/329>`_).
+- Fix possible errors raised when logging non-picklable ``Exception`` instances while using ``enqueue=True`` (`#342 <https://github.com/Delgan/loguru/issues/342>`_, thanks `@ncoudene <https://github.com/ncoudene>`_).
 - Fix missing seconds and microseconds when formatting timezone offset that requires such accuracy (`#961 <https://github.com/Delgan/loguru/issues/961>`_).
 - Raise ``ValueError`` if an attempt to use nanosecond precision for time formatting is detected (`#855 <https://github.com/Delgan/loguru/issues/855>`_).
 

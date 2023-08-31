@@ -64,16 +64,27 @@ class RecordException(namedtuple("RecordException", ("type", "value", "traceback
         return "(type=%r, value=%r, traceback=%r)" % (self.type, self.value, self.traceback)
 
     def __reduce__(self):
-        # The traceback is not picklable so we need to remove it. Also, some custom exception
-        # values aren't picklable either. For user convenience, we try first to serialize it and
-        # we remove the value in case or error. As an optimization, we could have re-used the
-        # dumped value during unpickling, but this requires using "pickle.loads()" which is
-        # flagged as insecure by some security tools.
-        # __reduce__ function does not alway raise PickleError. Multidict, for example, raise
-        # TypeError. To manage all the cases, we catch Exception.
+        # The traceback is not picklable, therefore it needs to be removed. Additionally, there's a
+        # possibility that the exception value is not picklable either. In such cases, we also need
+        # to remove it. This is done for user convenience, aiming to prevent error logging caused by
+        # custom exceptions from third-party libraries. If the serialization succeeds, we can reuse
+        # the pickled value later for optimization (so that it's not pickled twice). It's important
+        # to note that custom exceptions might not necessarily raise a PickleError, hence the
+        # generic Exception catch.
         try:
-            pickle.dumps(self.value)
+            pickled_value = pickle.dumps(self.value)
         except Exception:
             return (RecordException, (self.type, None, None))
         else:
-            return (RecordException, (self.type, self.value, None))
+            return (RecordException._from_pickled_value, (self.type, pickled_value, None))
+
+    @classmethod
+    def _from_pickled_value(cls, type_, pickled_value, traceback_):
+        try:
+            # It's safe to use "pickle.loads()" in this case because the pickled value is generated
+            # by the same code and is not coming from an untrusted source.
+            value = pickle.loads(pickled_value)
+        except Exception:
+            return cls(type_, None, traceback_)
+        else:
+            return cls(type_, value, traceback_)
