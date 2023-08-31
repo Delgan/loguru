@@ -27,7 +27,7 @@ class datetime(datetime_):  # noqa: N801
             raise ValueError(
                 "Invalid time format: the provided format string contains more than six successive "
                 "'S' characters. This may be due to an attempt to use nanosecond precision, which "
-                " not supported."
+                "is not supported."
             )
 
         year, month, day, hour, minute, second, weekday, yearday, _ = dt.timetuple()
