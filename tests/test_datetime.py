@@ -35,12 +35,6 @@ else:
             "2018-06-09 01-02-03 000045 EST -0500",
         ),
         (
-            "%Y-%m-%d %H-%M-%S %f %Z %z",
-            "2018-06-09 01:02:03.000045",
-            ("CET", 7230.099),
-            "2018-06-09 01-02-03 000045 CET +020030.099000",
-        ),
-        (
             "YYYY-MM-DD HH-mm-ss SSSSSS zz ZZ",
             "2018-06-09 01:02:03.000045",
             ("EST", -18000),
@@ -82,18 +76,6 @@ else:
             ("B", -1800),
             "1_001_1 5_6 2_02 PM 90 -0030",
         ),
-        (
-            "YYYY-MM-DD HH-mm-ss zz Z ZZ",
-            "2018-06-09 06:02:03.000045",
-            ("XYZ", 6543),
-            "2018-06-09 06-02-03 XYZ +01:49:03 +014903",
-        ),
-        (
-            "YYYY-MM-DD HH-mm-ss zz Z ZZ",
-            "2018-06-09 01:02:03.000045",
-            ("XYZ", -12345.06702),
-            "2018-06-09 01-02-03 XYZ -03:26:45.067020 -032645.067020",
-        ),
         ("hh A", "2018-01-01 00:01:02.000003", ("UTC", 0), "12 AM"),
         ("hh A", "2018-01-01 12:00:00.0", ("UTC", 0), "12 PM"),
         ("hh A", "2018-01-01 23:00:00.0", ("UTC", 0), "11 PM"),
@@ -129,6 +111,26 @@ def test_formatting(writer, freeze_time, time_format, date, timezone, expected):
     with freeze_time(date, timezone):
         logger.add(writer, format="{time:%s}" % time_format)
         logger.debug("X")
+        result = writer.read()
+        assert result == expected + "\n"
+
+
+@pytest.mark.parametrize(
+    "time_format, offset, expected",
+    [
+        ("%Y-%m-%d %H-%M-%S %f %Z %z", 7230.099, "2018-06-09 01-02-03 000000 ABC +020030.099000"),
+        ("YYYY-MM-DD HH-mm-ss zz Z ZZ", 6543, "2018-06-09 01-02-03 ABC +01:49:03 +014903"),
+        ("HH-mm-ss zz Z ZZ", -12345.06702, "01-02-03 ABC -03:26:45.067020 -032645.067020"),
+    ],
+)
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="Offset must be a whole number of minutes")
+def test_formatting_timezone_offset_down_to_the_second(
+    writer, freeze_time, time_format, offset, expected
+):
+    date = datetime.datetime(2018, 6, 9, 1, 2, 3)
+    with freeze_time(date, ("ABC", offset)):
+        logger.add(writer, format="{time:%s}" % time_format)
+        logger.debug("Test")
         result = writer.read()
         assert result == expected + "\n"
 
