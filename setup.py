@@ -80,7 +80,7 @@ setup(
             # Docs.
             "Sphinx==5.3.0 ; python_version>='3.8'",
             "sphinx-autobuild==2021.3.14 ; python_version>='3.8'",
-            "sphinx-rtd-theme==1.2.0 ; python_version>='3.8'",
+            "sphinx-rtd-theme==1.3.0 ; python_version>='3.8'",
         ]
     },
     python_requires=">=3.5",
