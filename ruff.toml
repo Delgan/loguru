@@ -1,6 +1,8 @@
 # Enforce isort (I), bugbears (B), and pep8-naming (N) rules
-select = ["E", "F", "I", "B", "N"]
+select = ["E", "F", "W", "I", "B", "N"]
 # Ignore these errors for now that are picked up by ruff but were not by flake8
 ignore = ["B904", "B033", "B028", "B018"]
 line-length = 100
 exclude = ["tests/exceptions/source", "loguru/__init__.pyi"]
+[pycodestyle]
+max-doc-length = 100
