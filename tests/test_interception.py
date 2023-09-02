@@ -101,7 +101,7 @@ def test_exception(writer):
         logger.add(writer, format="{message}")
 
         try:
-            1 / 0
+            1 / 0  # noqa: B018
         except Exception:
             logging_logger.exception("Oops...")
 

@@ -68,7 +68,7 @@ def test_no_exception():
     logger.add(NoExceptionHandler())
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.exception("Error")
 
@@ -86,7 +86,7 @@ def test_exception(capsys):
     logger.add(ExceptionHandler())
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.exception("Error")
 
@@ -98,7 +98,7 @@ def test_exception_formatting(tmp_path):
     logger.add(FileHandler(str(file)), format="{message}")
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.exception("Error")
 

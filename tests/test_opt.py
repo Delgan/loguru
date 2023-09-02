@@ -58,7 +58,7 @@ def test_exception_boolean(writer):
     logger.add(writer, format="{level.name}: {message}")
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except Exception:
         logger.opt(exception=True).debug("Error {0} {record}", 1, record="test")
 
@@ -72,7 +72,7 @@ def test_exception_exc_info(writer):
     logger.add(writer, format="{message}")
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except Exception:
         exc_info = sys.exc_info()
 
@@ -88,7 +88,7 @@ def test_exception_class(writer):
     logger.add(writer, format="{message}")
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except Exception:
         _, exc_class, _ = sys.exc_info()
 
@@ -104,7 +104,7 @@ def test_exception_log_funcion(writer):
     logger.add(writer, format="{level.no} {message}")
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except Exception:
         logger.opt(exception=True).log(50, "Error")
 
