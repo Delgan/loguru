@@ -211,8 +211,8 @@ class FileSink:
 
         self._terminate_file(is_rotating=False)
 
-    async def complete(self):
-        pass
+    def tasks_to_complete(self):
+        return []
 
     def _create_path(self):
         path = self._path.format_map({"time": FileDateFormatter()})

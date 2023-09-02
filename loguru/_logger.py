@@ -1109,20 +1109,18 @@ class Logger:
         >>> process.join()
         Message sent from the child
         """
+        tasks = []
 
         with self._core.lock:
             handlers = self._core.handlers.copy()
             for handler in handlers.values():
                 handler.complete_queue()
-
-        logger = self
+                tasks.extend(handler.tasks_to_complete())
 
         class AwaitableCompleter:
             def __await__(self):
-                with logger._core.lock:
-                    handlers = logger._core.handlers.copy()
-                    for handler in handlers.values():
-                        yield from handler.complete_async().__await__()
+                for task in tasks:
+                    yield from task.__await__()
 
         return AwaitableCompleter()
 

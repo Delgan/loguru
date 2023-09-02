@@ -565,6 +565,67 @@ def test_complete_from_multiple_threads_loop_is_not_none(capsys):
     assert err == ""
 
 
+def test_complete_and_sink_write_concurrency():
+    count = 1000
+    n = 0
+
+    async def sink(message):
+        nonlocal n
+        n += 1
+
+    async def some_task():
+        for _ in range(count):
+            logger.info("Message")
+            await asyncio.sleep(0)
+
+    async def another_task():
+        for _ in range(count):
+            await logger.complete()
+            await asyncio.sleep(0)
+
+    async def main():
+        logger.remove()
+        logger.add(sink, catch=False)
+
+        await asyncio.gather(some_task(), another_task())
+
+    asyncio.run(main())
+
+    assert n == count
+
+
+def test_complete_and_contextualize_concurrency():
+    called = False
+
+    async def main():
+        logging_event = asyncio.Event()
+        contextualize_event = asyncio.Event()
+
+        async def sink(message):
+            nonlocal called
+            logging_event.set()
+            await contextualize_event.wait()
+            called = True
+
+        async def logging_task():
+            logger.info("Message")
+            await logger.complete()
+
+        async def contextualize_task():
+            with logger.contextualize():
+                contextualize_event.set()
+                await logging_event.wait()
+
+        logger.remove()
+        logger.add(sink, catch=False)
+
+        await asyncio.gather(logging_task(), contextualize_task())
+
+    asyncio.run(main())
+
+    assert called
+
+
 async def async_subworker(logger_):
     logger_.info("Child")
     await logger_.complete()
@@ -588,7 +649,7 @@ class Writer:
         self.output += message
 
 
-def test_complete_with_sub_processes(monkeypatch, capsys):
+def test_complete_with_sub_processes(capsys):
     spawn_context = multiprocessing.get_context("spawn")
 
     loop = asyncio.new_event_loop()

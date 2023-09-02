@@ -21,9 +21,10 @@ class StreamSink:
         if self._stoppable:
             self._stream.stop()
 
-    async def complete(self):
-        if self._completable:
-            await self._stream.complete()
+    def tasks_to_complete(self):
+        if not self._completable:
+            return []
+        return [self._stream.complete()]
 
 
 class StandardSink:
@@ -52,8 +53,8 @@ class StandardSink:
     def stop(self):
         self._handler.close()
 
-    async def complete(self):
-        pass
+    def tasks_to_complete(self):
+        return []
 
 
 class AsyncSink:
@@ -86,14 +87,22 @@ class AsyncSink:
         for task in self._tasks:
             task.cancel()
 
-    async def complete(self):
+    def tasks_to_complete(self):
+        # To avoid errors due to "self._tasks" being mutated while iterated, the
+        # "tasks_to_complete()" method must be protected by the same lock as "write()" (which
+        # happens to be the handler lock). However, the tasks must not be awaited while the lock is
+        # acquired as this could lead to a deadlock. Therefore, we first need to collect the tasks
+        # to complete, then return them so that they can be awaited outside of the lock.
+        return [self._complete_task(task) for task in self._tasks]
+
+    async def _complete_task(self, task):
         loop = get_running_loop()
-        for task in self._tasks:
-            if get_task_loop(task) is loop:
-                try:
-                    await task
-                except Exception:
-                    pass  # Handled in "check_exception()"
+        if get_task_loop(task) is not loop:
+            return
+        try:
+            await task
+        except Exception:
+            pass  # Handled in "check_exception()"
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -115,5 +124,5 @@ class CallableSink:
     def stop(self):
         pass
 
-    async def complete(self):
-        pass
+    def tasks_to_complete(self):
+        return []
