@@ -1378,7 +1378,7 @@ class Logger:
             warnings.warn(
                 "The 'ansi' parameter is deprecated, please use 'colors' instead",
                 DeprecationWarning,
-                stacklevel=1,
+                stacklevel=2,
             )
 
         args = self._options[-2:]
@@ -2082,7 +2082,7 @@ class Logger:
         warnings.warn(
             "The 'start()' method is deprecated, please use 'add()' instead",
             DeprecationWarning,
-            stacklevel=1,
+            stacklevel=2,
         )
         return self.add(*args, **kwargs)
 
@@ -2098,6 +2098,6 @@ class Logger:
         warnings.warn(
             "The 'stop()' method is deprecated, please use 'remove()' instead",
             DeprecationWarning,
-            stacklevel=1,
+            stacklevel=2,
         )
         return self.remove(*args, **kwargs)
