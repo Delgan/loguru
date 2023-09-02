@@ -890,11 +890,11 @@ class Logger:
                 elif isinstance(level_, str):
                     try:
                         levelno_ = self.level(level_).no
-                    except ValueError:
+                    except ValueError as err:
                         raise ValueError(
                             "The filter dict contains a module '%s' associated to a level name "
                             "which does not exist: '%s'" % (module, level_)
-                        )
+                        ) from err
                 elif isinstance(level_, int):
                     levelno_ = level_
                 else:
