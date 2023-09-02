@@ -128,6 +128,7 @@ def check_env_variables():
                 "A Loguru environment variable has been detected "
                 "and may interfere with the tests: '%s'" % var,
                 RuntimeWarning,
+                stacklevel=1,
             )
 
 

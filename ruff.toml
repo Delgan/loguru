@@ -1,7 +1,7 @@
 # Enforce pyflakes(F), pycodestyle(E, W), isort (I), bugbears (B), and pep8-naming (N) rules
 select = ["F", "E", "W", "I", "B", "N"]
 # Ignore these errors for now that are picked up by ruff but were not by flake8
-ignore = ["B904", "B033", "B028"]
+ignore = ["B904", "B033"]
 line-length = 100
 exclude = ["tests/exceptions/source"]
 [pycodestyle]
