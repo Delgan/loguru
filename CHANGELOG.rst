@@ -3,6 +3,7 @@
 
 - Add a new ``context`` optional argument to ``logger.add()`` specifying ``multiprocessing`` context (like ``"spawn"`` or ``"fork"``) to be used internally instead of the default one (`#851 <https://github.com/Delgan/loguru/issues/851>`_).
 - Add support for true colors on Windows using ANSI/VT console when available (`#934 <https://github.com/Delgan/loguru/issues/934>`_, thanks `@tunaflsh <https://github.com/tunaflsh>`_).
+- Fix possible deadlock when calling ``logger.complete()`` with concurrent logging of an asynchronous sink (`#906 <https://github.com/Delgan/loguru/issues/906>`_).
 - Fix file possibly rotating too early or too late when re-starting an application around midnight (`#894 <https://github.com/Delgan/loguru/issues/894>`_).
 - Fix inverted ``"<hide>"`` and ``"<strike>"`` color tags (`#943 <https://github.com/Delgan/loguru/pull/943>`_, thanks `@tunaflsh <https://github.com/tunaflsh>`_).
 - Fix possible untraceable errors raised when logging non-unpicklable ``Exception`` instances while using ``enqueue=True`` (`#329 <https://github.com/Delgan/loguru/issues/329>`_).
