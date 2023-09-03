@@ -42,7 +42,7 @@ def test_serialize_exception():
     logger.add(sink, format="{message}", serialize=True, catch=False)
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.exception("Error")
 
@@ -114,7 +114,7 @@ def test_serialize_with_catch_decorator():
 
     @logger.catch
     def foo():
-        1 / 0
+        1 / 0  # noqa: B018
 
     foo()
 

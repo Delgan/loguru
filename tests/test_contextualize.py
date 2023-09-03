@@ -204,7 +204,7 @@ def test_context_reset_despite_error(writer):
     try:
         with logger.contextualize(foobar=456):
             logger.info("Division")
-            1 / 0
+            1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.info("Error")
 

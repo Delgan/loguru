@@ -39,7 +39,7 @@ def test_progressive_format(writer):
 def test_function_format_without_exception(writer):
     logger.add(writer, format=lambda _: "{message}\n")
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.exception("Error!")
     assert writer.read() == "Error!\n"
@@ -48,7 +48,7 @@ def test_function_format_without_exception(writer):
 def test_function_format_with_exception(writer):
     logger.add(writer, format=lambda _: "{message}\n{exception}")
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.exception("Error!")
     lines = writer.read().splitlines()

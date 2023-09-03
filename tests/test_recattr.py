@@ -44,7 +44,7 @@ def test_patch_record_exception(writer):
 
     logger.add(writer, format="")
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.patch(patch).exception("Error")
 

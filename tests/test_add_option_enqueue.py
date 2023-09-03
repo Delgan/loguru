@@ -74,7 +74,7 @@ def test_enqueue_with_exception():
     logger.add(sink, format="{message}", enqueue=True)
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.exception("Error")
 

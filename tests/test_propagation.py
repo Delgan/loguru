@@ -85,7 +85,7 @@ def test_exception(capsys, use_opt):
         logger.add(PropagateHandler(), format="{message}")
 
         try:
-            1 / 0
+            1 / 0  # noqa: B018
         except Exception:
             if use_opt:
                 logger.opt(exception=True).error("Oops...")

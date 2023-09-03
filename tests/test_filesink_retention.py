@@ -68,7 +68,6 @@ def test_managed_files(tmp_path):
         "test.log.1",
         "test.log.1.gz",
         "test.log.rar",
-        "test.log",
         "test.2019-11-12_03-22-07_018985.log",
         "test.2019-11-12_03-22-07_018985.log.tar.gz",
         "test.2019-11-12_03-22-07_018985.2.log",

@@ -894,7 +894,7 @@ class Logger:
                         raise ValueError(
                             "The filter dict contains a module '%s' associated to a level name "
                             "which does not exist: '%s'" % (module, level_)
-                        )
+                        ) from None
                 elif isinstance(level_, int):
                     levelno_ = level_
                 else:
@@ -1378,6 +1378,7 @@ class Logger:
             warnings.warn(
                 "The 'ansi' parameter is deprecated, please use 'colors' instead",
                 DeprecationWarning,
+                stacklevel=2,
             )
 
         args = self._options[-2:]
@@ -2079,7 +2080,9 @@ class Logger:
           confusing name.
         """
         warnings.warn(
-            "The 'start()' method is deprecated, please use 'add()' instead", DeprecationWarning
+            "The 'start()' method is deprecated, please use 'add()' instead",
+            DeprecationWarning,
+            stacklevel=2,
         )
         return self.add(*args, **kwargs)
 
@@ -2093,6 +2096,8 @@ class Logger:
           confusing name.
         """
         warnings.warn(
-            "The 'stop()' method is deprecated, please use 'remove()' instead", DeprecationWarning
+            "The 'stop()' method is deprecated, please use 'remove()' instead",
+            DeprecationWarning,
+            stacklevel=2,
         )
         return self.remove(*args, **kwargs)
