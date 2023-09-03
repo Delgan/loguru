@@ -14,6 +14,7 @@ Code snippets and recipes for ``loguru``
 .. |contextlib.redirect_stdout| replace:: :func:`contextlib.redirect_stdout`
 .. |copy.deepcopy| replace:: :func:`copy.deepcopy`
 .. |os.fork| replace:: :func:`os.fork`
+.. |os.umask| replace:: :func:`os.umask`
 .. |multiprocessing| replace:: :mod:`multiprocessing`
 .. |pickle| replace:: :mod:`pickle`
 .. |traceback| replace:: :mod:`traceback`
@@ -463,6 +464,8 @@ To set desired permissions on created log files, use the ``opener`` argument to 
     logger.add("foo.log", rotation="100 kB", opener=opener)
 
 When using an opener argument, all created log files including ones created during rotation will use the initially provided opener.
+
+Note that the provided mode will be masked out by the OS `umask <https://en.wikipedia.org/wiki/Umask>`_ value (describing which bits are *not* to be set when creating a file or directory). This value is conventionally equals to ``0o022``, which means specifying a ``0o666`` mode will result in a ``0o666 - 0o022 = 0o644`` file permission in this case (which is actually the default). It is possible to change the umask value by first calling |os.umask|, but this needs to be done with careful consideration, as it changes the value globally and can cause security issues.
 
 
 Preserving an ``opt()`` parameter for the whole module
