@@ -1,5 +1,5 @@
-`Unreleased`_
-=============
+`0.7.1`_ (2023-09-04)
+=====================
 
 - Add a new ``context`` optional argument to ``logger.add()`` specifying ``multiprocessing`` context (like ``"spawn"`` or ``"fork"``) to be used internally instead of the default one (`#851 <https://github.com/Delgan/loguru/issues/851>`_).
 - Add support for true colors on Windows using ANSI/VT console when available (`#934 <https://github.com/Delgan/loguru/issues/934>`_, thanks `@tunaflsh <https://github.com/tunaflsh>`_).
@@ -213,7 +213,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.0...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.1...master
+.. _0.7.1: https://github.com/delgan/loguru/releases/tag/0.7.1
 .. _0.7.0: https://github.com/delgan/loguru/releases/tag/0.7.0
 .. _0.6.0: https://github.com/delgan/loguru/releases/tag/0.6.0
 .. _0.5.3: https://github.com/delgan/loguru/releases/tag/0.5.3
