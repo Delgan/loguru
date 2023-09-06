@@ -1,0 +1,85 @@
+
+  + Exception Group Traceback (most recent call last):
+  |   File "tests/exceptions/source/modern/grouped_max_length.py", line 15, in <module>
+  |     main()
+  |   File "tests/exceptions/source/modern/grouped_max_length.py", line 8, in main
+  |     raise ExceptionGroup("group", errors)
+  | ExceptionGroup: group (100 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | ValueError: 0
+    +---------------- 2 ----------------
+    | ValueError: 1
+    +---------------- 3 ----------------
+    | ValueError: 2
+    +---------------- 4 ----------------
+    | ValueError: 3
+    +---------------- 5 ----------------
+    | ValueError: 4
+    +---------------- 6 ----------------
+    | ValueError: 5
+    +---------------- 7 ----------------
+    | ValueError: 6
+    +---------------- 8 ----------------
+    | ValueError: 7
+    +---------------- 9 ----------------
+    | ValueError: 8
+    +---------------- 10 ---------------
+    | ValueError: 9
+    +---------------- 11 ---------------
+    | ValueError: 10
+    +---------------- 12 ---------------
+    | ValueError: 11
+    +---------------- 13 ---------------
+    | ValueError: 12
+    +---------------- 14 ---------------
+    | ValueError: 13
+    +---------------- 15 ---------------
+    | ValueError: 14
+    +--------------- ... ---------------
+    | and 85 more exceptions
+    +------------------------------------
+
+  + [33m[1mException Group Traceback (most recent call last):[0m
+  |
+  | > File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_max_length.py[0m", line [33m15[0m, in [35m<module>[0m
+  |     [1mmain[0m[1m([0m[1m)[0m
+  |     [36m└ [0m[36m[1m<function main at 0xDEADBEEF>[0m
+  |
+  |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_max_length.py[0m", line [33m8[0m, in [35mmain[0m
+  |     [35m[1mraise[0m [1mExceptionGroup[0m[1m([0m[36m"group"[0m[1m,[0m [1merrors[0m[1m)[0m
+  |     [36m                              └ [0m[36m[1m[ValueError(0), ValueError(1), ValueError(2), ValueError(3), ValueError(4), ValueError(5), ValueError(6), ValueError(7), Valu...[0m
+  |
+  | [31m[1mExceptionGroup[0m:[1m group (100 sub-exceptions)[0m
+  +-+---------------- 1 ----------------
+    | [31m[1mValueError[0m:[1m 0[0m
+    +---------------- 2 ----------------
+    | [31m[1mValueError[0m:[1m 1[0m
+    +---------------- 3 ----------------
+    | [31m[1mValueError[0m:[1m 2[0m
+    +---------------- 4 ----------------
+    | [31m[1mValueError[0m:[1m 3[0m
+    +---------------- 5 ----------------
+    | [31m[1mValueError[0m:[1m 4[0m
+    +---------------- 6 ----------------
+    | [31m[1mValueError[0m:[1m 5[0m
+    +---------------- 7 ----------------
+    | [31m[1mValueError[0m:[1m 6[0m
+    +---------------- 8 ----------------
+    | [31m[1mValueError[0m:[1m 7[0m
+    +---------------- 9 ----------------
+    | [31m[1mValueError[0m:[1m 8[0m
+    +---------------- 10 ---------------
+    | [31m[1mValueError[0m:[1m 9[0m
+    +---------------- 11 ---------------
+    | [31m[1mValueError[0m:[1m 10[0m
+    +---------------- 12 ---------------
+    | [31m[1mValueError[0m:[1m 11[0m
+    +---------------- 13 ---------------
+    | [31m[1mValueError[0m:[1m 12[0m
+    +---------------- 14 ---------------
+    | [31m[1mValueError[0m:[1m 13[0m
+    +---------------- 15 ---------------
+    | [31m[1mValueError[0m:[1m 14[0m
+    +--------------- ... ---------------
+    | and 85 more exceptions
+    +------------------------------------

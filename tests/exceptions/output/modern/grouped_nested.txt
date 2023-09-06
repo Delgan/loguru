@@ -1,0 +1,150 @@
+
+  + Exception Group Traceback (most recent call last):
+  |   File "tests/exceptions/source/modern/grouped_nested.py", line 40, in <module>
+  |     main()
+  |   File "tests/exceptions/source/modern/grouped_nested.py", line 33, in main
+  |     raise ExceptionGroup("group_2", [error_4, error_3]) from None
+  | ExceptionGroup: group_2 (2 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_nested.py", line 26, in main
+    |     raise ExceptionGroup("group_1", [error_1, error_2])
+    | ExceptionGroup: group_1 (2 sub-exceptions)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "tests/exceptions/source/modern/grouped_nested.py", line 17, in main
+      |     divide_by_zero()
+      |   File "tests/exceptions/source/modern/grouped_nested.py", line 6, in divide_by_zero
+      |     1 / 0
+      | ZeroDivisionError: division by zero
+      +---------------- 2 ----------------
+      | Traceback (most recent call last):
+      |   File "tests/exceptions/source/modern/grouped_nested.py", line 22, in main
+      |     raise_value_error(100)
+      |   File "tests/exceptions/source/modern/grouped_nested.py", line 10, in raise_value_error
+      |     raise ValueError(value)
+      | ValueError: 100
+      +------------------------------------
+    |
+    | During handling of the above exception, another exception occurred:
+    |
+    | Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_nested.py", line 29, in main
+    |     raise_value_error(-100)
+    |   File "tests/exceptions/source/modern/grouped_nested.py", line 10, in raise_value_error
+    |     raise ValueError(value)
+    | ValueError: -100
+    +---------------- 2 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_nested.py", line 26, in main
+    |     raise ExceptionGroup("group_1", [error_1, error_2])
+    | ExceptionGroup: group_1 (2 sub-exceptions)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "tests/exceptions/source/modern/grouped_nested.py", line 17, in main
+      |     divide_by_zero()
+      |   File "tests/exceptions/source/modern/grouped_nested.py", line 6, in divide_by_zero
+      |     1 / 0
+      | ZeroDivisionError: division by zero
+      +---------------- 2 ----------------
+      | Traceback (most recent call last):
+      |   File "tests/exceptions/source/modern/grouped_nested.py", line 22, in main
+      |     raise_value_error(100)
+      |   File "tests/exceptions/source/modern/grouped_nested.py", line 10, in raise_value_error
+      |     raise ValueError(value)
+      | ValueError: 100
+      +------------------------------------
+
+  + [33m[1mException Group Traceback (most recent call last):[0m
+  |
+  | > File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m40[0m, in [35m<module>[0m
+  |     [1mmain[0m[1m([0m[1m)[0m
+  |     [36m└ [0m[36m[1m<function main at 0xDEADBEEF>[0m
+  |
+  |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m33[0m, in [35mmain[0m
+  |     [35m[1mraise[0m [1mExceptionGroup[0m[1m([0m[36m"group_2"[0m[1m,[0m [1m[[0m[1merror_4[0m[1m,[0m [1merror_3[0m[1m][0m[1m)[0m [35m[1mfrom[0m [36m[1mNone[0m
+  |     [36m                                 └ [0m[36m[1mValueError(-100)[0m
+  |
+  | [31m[1mExceptionGroup[0m:[1m group_2 (2 sub-exceptions)[0m
+  +-+---------------- 1 ----------------
+    | [33m[1mException Group Traceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m26[0m, in [35mmain[0m
+    |     [35m[1mraise[0m [1mExceptionGroup[0m[1m([0m[36m"group_1"[0m[1m,[0m [1m[[0m[1merror_1[0m[1m,[0m [1merror_2[0m[1m][0m[1m)[0m
+    |     [36m                                 │        └ [0m[36m[1mValueError(100)[0m
+    |     [36m                                 └ [0m[36m[1mZeroDivisionError('division by zero')[0m
+    |
+    | [31m[1mExceptionGroup[0m:[1m group_1 (2 sub-exceptions)[0m
+    +-+---------------- 1 ----------------
+      | [33m[1mTraceback (most recent call last):[0m
+      |
+      |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m17[0m, in [35mmain[0m
+      |     [1mdivide_by_zero[0m[1m([0m[1m)[0m
+      |     [36m└ [0m[36m[1m<function divide_by_zero at 0xDEADBEEF>[0m
+      |
+      |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m6[0m, in [35mdivide_by_zero[0m
+      |     [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m
+      |
+      | [31m[1mZeroDivisionError[0m:[1m division by zero[0m
+      +---------------- 2 ----------------
+      | [33m[1mTraceback (most recent call last):[0m
+      |
+      |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m22[0m, in [35mmain[0m
+      |     [1mraise_value_error[0m[1m([0m[34m[1m100[0m[1m)[0m
+      |     [36m└ [0m[36m[1m<function raise_value_error at 0xDEADBEEF>[0m
+      |
+      |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m10[0m, in [35mraise_value_error[0m
+      |     [35m[1mraise[0m [1mValueError[0m[1m([0m[1mvalue[0m[1m)[0m
+      |     [36m                 └ [0m[36m[1m100[0m
+      |
+      | [31m[1mValueError[0m:[1m 100[0m
+      +------------------------------------
+    |
+    |
+    | [1mDuring handling of the above exception, another exception occurred:[0m
+    |
+    |
+    | [33m[1mTraceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m29[0m, in [35mmain[0m
+    |     [1mraise_value_error[0m[1m([0m[35m[1m-[0m[34m[1m100[0m[1m)[0m
+    |     [36m└ [0m[36m[1m<function raise_value_error at 0xDEADBEEF>[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m10[0m, in [35mraise_value_error[0m
+    |     [35m[1mraise[0m [1mValueError[0m[1m([0m[1mvalue[0m[1m)[0m
+    |     [36m                 └ [0m[36m[1m-100[0m
+    |
+    | [31m[1mValueError[0m:[1m -100[0m
+    +---------------- 2 ----------------
+    | [33m[1mException Group Traceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m26[0m, in [35mmain[0m
+    |     [35m[1mraise[0m [1mExceptionGroup[0m[1m([0m[36m"group_1"[0m[1m,[0m [1m[[0m[1merror_1[0m[1m,[0m [1merror_2[0m[1m][0m[1m)[0m
+    |     [36m                                 │        └ [0m[36m[1mValueError(100)[0m
+    |     [36m                                 └ [0m[36m[1mZeroDivisionError('division by zero')[0m
+    |
+    | [31m[1mExceptionGroup[0m:[1m group_1 (2 sub-exceptions)[0m
+    +-+---------------- 1 ----------------
+      | [33m[1mTraceback (most recent call last):[0m
+      |
+      |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m17[0m, in [35mmain[0m
+      |     [1mdivide_by_zero[0m[1m([0m[1m)[0m
+      |     [36m└ [0m[36m[1m<function divide_by_zero at 0xDEADBEEF>[0m
+      |
+      |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m6[0m, in [35mdivide_by_zero[0m
+      |     [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m
+      |
+      | [31m[1mZeroDivisionError[0m:[1m division by zero[0m
+      +---------------- 2 ----------------
+      | [33m[1mTraceback (most recent call last):[0m
+      |
+      |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m22[0m, in [35mmain[0m
+      |     [1mraise_value_error[0m[1m([0m[34m[1m100[0m[1m)[0m
+      |     [36m└ [0m[36m[1m<function raise_value_error at 0xDEADBEEF>[0m
+      |
+      |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_nested.py[0m", line [33m10[0m, in [35mraise_value_error[0m
+      |     [35m[1mraise[0m [1mValueError[0m[1m([0m[1mvalue[0m[1m)[0m
+      |     [36m                 └ [0m[36m[1m100[0m
+      |
+      | [31m[1mValueError[0m:[1m 100[0m
+      +------------------------------------
