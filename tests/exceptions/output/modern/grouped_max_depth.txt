@@ -1,0 +1,323 @@
+
+  + Exception Group Traceback (most recent call last):
+  |   File "tests/exceptions/source/modern/grouped_max_depth.py", line 26, in <module>
+  |     main()
+  |   File "tests/exceptions/source/modern/grouped_max_depth.py", line 19, in main
+  |     raise ExceptionGroup("group", [nesting_left, nesting_right, nesting_both])
+  | ExceptionGroup: group (3 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | ExceptionGroup: group (2 sub-exceptions)
+    +-+---------------- 1 ----------------
+      | ValueError: -99
+      +---------------- 2 ----------------
+      | ExceptionGroup: group (2 sub-exceptions)
+      +-+---------------- 1 ----------------
+        | ValueError: -98
+        +---------------- 2 ----------------
+        | ExceptionGroup: group (2 sub-exceptions)
+        +-+---------------- 1 ----------------
+          | ValueError: -97
+          +---------------- 2 ----------------
+          | ExceptionGroup: group (2 sub-exceptions)
+          +-+---------------- 1 ----------------
+            | ValueError: -96
+            +---------------- 2 ----------------
+            | ExceptionGroup: group (2 sub-exceptions)
+            +-+---------------- 1 ----------------
+              | ValueError: -95
+              +---------------- 2 ----------------
+              | ExceptionGroup: group (2 sub-exceptions)
+              +-+---------------- 1 ----------------
+                | ValueError: -94
+                +---------------- 2 ----------------
+                | ExceptionGroup: group (2 sub-exceptions)
+                +-+---------------- 1 ----------------
+                  | ValueError: -93
+                  +---------------- 2 ----------------
+                  | ExceptionGroup: group (2 sub-exceptions)
+                  +-+---------------- 1 ----------------
+                    | ValueError: -92
+                    +---------------- 2 ----------------
+                    | ExceptionGroup: group (2 sub-exceptions)
+                    +-+---------------- 1 ----------------
+                      | ValueError: -91
+                      +---------------- 2 ----------------
+                      | ... (max_group_depth is 10)
+                      +------------------------------------
+    +---------------- 2 ----------------
+    | ExceptionGroup: group (2 sub-exceptions)
+    +-+---------------- 1 ----------------
+      | ExceptionGroup: group (2 sub-exceptions)
+      +-+---------------- 1 ----------------
+        | ExceptionGroup: group (2 sub-exceptions)
+        +-+---------------- 1 ----------------
+          | ExceptionGroup: group (2 sub-exceptions)
+          +-+---------------- 1 ----------------
+            | ExceptionGroup: group (2 sub-exceptions)
+            +-+---------------- 1 ----------------
+              | ExceptionGroup: group (2 sub-exceptions)
+              +-+---------------- 1 ----------------
+                | ExceptionGroup: group (2 sub-exceptions)
+                +-+---------------- 1 ----------------
+                  | ExceptionGroup: group (2 sub-exceptions)
+                  +-+---------------- 1 ----------------
+                    | ExceptionGroup: group (2 sub-exceptions)
+                    +-+---------------- 1 ----------------
+                      | ... (max_group_depth is 10)
+                      +---------------- 2 ----------------
+                      | ValueError: 91
+                      +------------------------------------
+                    +---------------- 2 ----------------
+                    | ValueError: 92
+                    +------------------------------------
+                  +---------------- 2 ----------------
+                  | ValueError: 93
+                  +------------------------------------
+                +---------------- 2 ----------------
+                | ValueError: 94
+                +------------------------------------
+              +---------------- 2 ----------------
+              | ValueError: 95
+              +------------------------------------
+            +---------------- 2 ----------------
+            | ValueError: 96
+            +------------------------------------
+          +---------------- 2 ----------------
+          | ValueError: 97
+          +------------------------------------
+        +---------------- 2 ----------------
+        | ValueError: 98
+        +------------------------------------
+      +---------------- 2 ----------------
+      | ValueError: 99
+      +------------------------------------
+    +---------------- 3 ----------------
+    | ExceptionGroup: group (3 sub-exceptions)
+    +-+---------------- 1 ----------------
+      | ValueError: -99
+      +---------------- 2 ----------------
+      | ExceptionGroup: group (3 sub-exceptions)
+      +-+---------------- 1 ----------------
+        | ValueError: -98
+        +---------------- 2 ----------------
+        | ExceptionGroup: group (3 sub-exceptions)
+        +-+---------------- 1 ----------------
+          | ValueError: -97
+          +---------------- 2 ----------------
+          | ExceptionGroup: group (3 sub-exceptions)
+          +-+---------------- 1 ----------------
+            | ValueError: -96
+            +---------------- 2 ----------------
+            | ExceptionGroup: group (3 sub-exceptions)
+            +-+---------------- 1 ----------------
+              | ValueError: -95
+              +---------------- 2 ----------------
+              | ExceptionGroup: group (3 sub-exceptions)
+              +-+---------------- 1 ----------------
+                | ValueError: -94
+                +---------------- 2 ----------------
+                | ExceptionGroup: group (3 sub-exceptions)
+                +-+---------------- 1 ----------------
+                  | ValueError: -93
+                  +---------------- 2 ----------------
+                  | ExceptionGroup: group (3 sub-exceptions)
+                  +-+---------------- 1 ----------------
+                    | ValueError: -92
+                    +---------------- 2 ----------------
+                    | ExceptionGroup: group (3 sub-exceptions)
+                    +-+---------------- 1 ----------------
+                      | ValueError: -91
+                      +---------------- 2 ----------------
+                      | ... (max_group_depth is 10)
+                      +---------------- 3 ----------------
+                      | ValueError: 91
+                      +------------------------------------
+                    +---------------- 3 ----------------
+                    | ValueError: 92
+                    +------------------------------------
+                  +---------------- 3 ----------------
+                  | ValueError: 93
+                  +------------------------------------
+                +---------------- 3 ----------------
+                | ValueError: 94
+                +------------------------------------
+              +---------------- 3 ----------------
+              | ValueError: 95
+              +------------------------------------
+            +---------------- 3 ----------------
+            | ValueError: 96
+            +------------------------------------
+          +---------------- 3 ----------------
+          | ValueError: 97
+          +------------------------------------
+        +---------------- 3 ----------------
+        | ValueError: 98
+        +------------------------------------
+      +---------------- 3 ----------------
+      | ValueError: 99
+      +------------------------------------
+
+  + [33m[1mException Group Traceback (most recent call last):[0m
+  |
+  | > File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_max_depth.py[0m", line [33m26[0m, in [35m<module>[0m
+  |     [1mmain[0m[1m([0m[1m)[0m
+  |     [36m└ [0m[36m[1m<function main at 0xDEADBEEF>[0m
+  |
+  |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_max_depth.py[0m", line [33m19[0m, in [35mmain[0m
+  |     [35m[1mraise[0m [1mExceptionGroup[0m[1m([0m[36m"group"[0m[1m,[0m [1m[[0m[1mnesting_left[0m[1m,[0m [1mnesting_right[0m[1m,[0m [1mnesting_both[0m[1m][0m[1m)[0m
+  |     [36m                               │             │              └ [0m[36m[1mExceptionGroup('group', [ValueError(-99), ExceptionGroup('group', [ValueError(-98), ExceptionGroup('group', [ValueError(-97),...[0m
+  |     [36m                               │             └ [0m[36m[1mExceptionGroup('group', [ExceptionGroup('group', [ExceptionGroup('group', [ExceptionGroup('group', [ExceptionGroup('group', [...[0m
+  |     [36m                               └ [0m[36m[1mExceptionGroup('group', [ValueError(-99), ExceptionGroup('group', [ValueError(-98), ExceptionGroup('group', [ValueError(-97),...[0m
+  |
+  | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+  +-+---------------- 1 ----------------
+    | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+    +-+---------------- 1 ----------------
+      | [31m[1mValueError[0m:[1m -99[0m
+      +---------------- 2 ----------------
+      | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+      +-+---------------- 1 ----------------
+        | [31m[1mValueError[0m:[1m -98[0m
+        +---------------- 2 ----------------
+        | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+        +-+---------------- 1 ----------------
+          | [31m[1mValueError[0m:[1m -97[0m
+          +---------------- 2 ----------------
+          | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+          +-+---------------- 1 ----------------
+            | [31m[1mValueError[0m:[1m -96[0m
+            +---------------- 2 ----------------
+            | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+            +-+---------------- 1 ----------------
+              | [31m[1mValueError[0m:[1m -95[0m
+              +---------------- 2 ----------------
+              | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+              +-+---------------- 1 ----------------
+                | [31m[1mValueError[0m:[1m -94[0m
+                +---------------- 2 ----------------
+                | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+                +-+---------------- 1 ----------------
+                  | [31m[1mValueError[0m:[1m -93[0m
+                  +---------------- 2 ----------------
+                  | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+                  +-+---------------- 1 ----------------
+                    | [31m[1mValueError[0m:[1m -92[0m
+                    +---------------- 2 ----------------
+                    | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+                    +-+---------------- 1 ----------------
+                      | [31m[1mValueError[0m:[1m -91[0m
+                      +---------------- 2 ----------------
+                      | ... (max_group_depth is 10)
+                      +------------------------------------
+    +---------------- 2 ----------------
+    | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+    +-+---------------- 1 ----------------
+      | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+      +-+---------------- 1 ----------------
+        | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+        +-+---------------- 1 ----------------
+          | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+          +-+---------------- 1 ----------------
+            | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+            +-+---------------- 1 ----------------
+              | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+              +-+---------------- 1 ----------------
+                | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+                +-+---------------- 1 ----------------
+                  | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+                  +-+---------------- 1 ----------------
+                    | [31m[1mExceptionGroup[0m:[1m group (2 sub-exceptions)[0m
+                    +-+---------------- 1 ----------------
+                      | ... (max_group_depth is 10)
+                      +---------------- 2 ----------------
+                      | [31m[1mValueError[0m:[1m 91[0m
+                      +------------------------------------
+                    +---------------- 2 ----------------
+                    | [31m[1mValueError[0m:[1m 92[0m
+                    +------------------------------------
+                  +---------------- 2 ----------------
+                  | [31m[1mValueError[0m:[1m 93[0m
+                  +------------------------------------
+                +---------------- 2 ----------------
+                | [31m[1mValueError[0m:[1m 94[0m
+                +------------------------------------
+              +---------------- 2 ----------------
+              | [31m[1mValueError[0m:[1m 95[0m
+              +------------------------------------
+            +---------------- 2 ----------------
+            | [31m[1mValueError[0m:[1m 96[0m
+            +------------------------------------
+          +---------------- 2 ----------------
+          | [31m[1mValueError[0m:[1m 97[0m
+          +------------------------------------
+        +---------------- 2 ----------------
+        | [31m[1mValueError[0m:[1m 98[0m
+        +------------------------------------
+      +---------------- 2 ----------------
+      | [31m[1mValueError[0m:[1m 99[0m
+      +------------------------------------
+    +---------------- 3 ----------------
+    | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+    +-+---------------- 1 ----------------
+      | [31m[1mValueError[0m:[1m -99[0m
+      +---------------- 2 ----------------
+      | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+      +-+---------------- 1 ----------------
+        | [31m[1mValueError[0m:[1m -98[0m
+        +---------------- 2 ----------------
+        | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+        +-+---------------- 1 ----------------
+          | [31m[1mValueError[0m:[1m -97[0m
+          +---------------- 2 ----------------
+          | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+          +-+---------------- 1 ----------------
+            | [31m[1mValueError[0m:[1m -96[0m
+            +---------------- 2 ----------------
+            | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+            +-+---------------- 1 ----------------
+              | [31m[1mValueError[0m:[1m -95[0m
+              +---------------- 2 ----------------
+              | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+              +-+---------------- 1 ----------------
+                | [31m[1mValueError[0m:[1m -94[0m
+                +---------------- 2 ----------------
+                | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+                +-+---------------- 1 ----------------
+                  | [31m[1mValueError[0m:[1m -93[0m
+                  +---------------- 2 ----------------
+                  | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+                  +-+---------------- 1 ----------------
+                    | [31m[1mValueError[0m:[1m -92[0m
+                    +---------------- 2 ----------------
+                    | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+                    +-+---------------- 1 ----------------
+                      | [31m[1mValueError[0m:[1m -91[0m
+                      +---------------- 2 ----------------
+                      | ... (max_group_depth is 10)
+                      +---------------- 3 ----------------
+                      | [31m[1mValueError[0m:[1m 91[0m
+                      +------------------------------------
+                    +---------------- 3 ----------------
+                    | [31m[1mValueError[0m:[1m 92[0m
+                    +------------------------------------
+                  +---------------- 3 ----------------
+                  | [31m[1mValueError[0m:[1m 93[0m
+                  +------------------------------------
+                +---------------- 3 ----------------
+                | [31m[1mValueError[0m:[1m 94[0m
+                +------------------------------------
+              +---------------- 3 ----------------
+              | [31m[1mValueError[0m:[1m 95[0m
+              +------------------------------------
+            +---------------- 3 ----------------
+            | [31m[1mValueError[0m:[1m 96[0m
+            +------------------------------------
+          +---------------- 3 ----------------
+          | [31m[1mValueError[0m:[1m 97[0m
+          +------------------------------------
+        +---------------- 3 ----------------
+        | [31m[1mValueError[0m:[1m 98[0m
+        +------------------------------------
+      +---------------- 3 ----------------
+      | [31m[1mValueError[0m:[1m 99[0m
+      +------------------------------------

@@ -224,3 +224,21 @@ def test_exception_ownership(filename):
 )
 def test_exception_others(filename):
     compare_exception("others", filename)
+
+
+@pytest.mark.parametrize(
+    "filename, minimum_python_version",
+    [
+        ("grouped_simple", (3, 11)),
+        ("grouped_nested", (3, 11)),
+        ("grouped_with_cause_and_context", (3, 11)),
+        ("grouped_as_cause_and_context", (3, 11)),
+        ("grouped_max_length", (3, 11)),
+        ("grouped_max_depth", (3, 11)),
+    ],
+)
+def test_exception_modern(filename, minimum_python_version):
+    if sys.version_info < minimum_python_version:
+        pytest.skip("Feature not supported in this Python version")
+
+    compare_exception("modern", filename)

@@ -1,3 +1,9 @@
+`Unreleased`_
+=============
+
+- Add support for formatting of ``ExceptionGroup`` errors (`#805 <https://github.com/Delgan/loguru/issues/805>`_).
+
+
 `0.7.1`_ (2023-09-04)
 =====================
 
