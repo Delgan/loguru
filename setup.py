@@ -73,6 +73,7 @@ setup(
             "colorama==0.4.6 ; python_version>='3.8'",
             "freezegun==1.1.0 ; python_version<'3.8'",
             "freezegun==1.2.2 ; python_version>='3.8'",
+            "exceptiongroup==1.1.3 ; python_version>='3.7' and python_version<'3.11'",
             # Type checking.
             "mypy==v0.910 ; python_version<'3.6'",
             "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",

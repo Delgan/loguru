@@ -248,3 +248,21 @@ def test_exception_modern(filename, minimum_python_version):
         pytest.skip("Feature not supported in this Python version")
 
     compare_exception("modern", filename)
+
+
+@pytest.mark.skipif(
+    not (3, 7) <= sys.version_info < (3, 11), reason="No backport available or needed"
+)
+def test_group_exception_using_backport(writer):
+    from exceptiongroup import ExceptionGroup
+
+    from loguru import logger
+
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
+
+    try:
+        raise ExceptionGroup("Test", [ValueError(1), ValueError(2)])
+    except Exception:
+        logger.exception("")
+
+    assert writer.read().strip().startswith("+ Exception Group Traceback (most recent call last):")
