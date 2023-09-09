@@ -235,6 +235,7 @@ def test_exception_others(filename):
         ("walrus_operator", (3, 8)),
         ("match_statement", (3, 10)),
         ("exception_group_catch", (3, 11)),
+        ("notes", (3, 11)),
         ("grouped_simple", (3, 11)),
         ("grouped_nested", (3, 11)),
         ("grouped_with_cause_and_context", (3, 11)),

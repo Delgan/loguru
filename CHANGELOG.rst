@@ -2,6 +2,7 @@
 =============
 
 - Add support for formatting of ``ExceptionGroup`` errors (`#805 <https://github.com/Delgan/loguru/issues/805>`_).
+- Fix formatting of possible ``__notes__`` attached to an ``Exception`` (`#980 <https://github.com/Delgan/loguru/issues/980>`_).
 
 
 `0.7.1`_ (2023-09-04)
