@@ -1,23 +1,23 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m40[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m39[0m, in [35m<module>[0m
     [1mbug_1[0m[1m([0m[34m[1m10[0m[1m)[0m
     [36m└ [0m[36m[1m<function bug_1 at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m13[0m, in [35mbug_1[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m12[0m, in [35mbug_1[0m
     """ + n / 0)
 
 [31m[1mZeroDivisionError[0m:[1m division by zero[0m
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m46[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m45[0m, in [35m<module>[0m
     [1mbug_2[0m[1m([0m[34m[1m1[0m[1m,[0m [1mstring[0m[1m,[0m [34m[1m3[0m[1m)[0m
     [36m│        └ [0m[36m[1m'multi-lines\n'[0m
     [36m└ [0m[36m[1m<function bug_2 at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m17[0m, in [35mbug_2[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m16[0m, in [35mbug_2[0m
     [35m[1mreturn[0m [1m([0m[34m[1m1[0m [35m[1m/[0m [34m[1m0[0m [35m[1m+[0m [1ma[0m [35m[1m+[0m [1mb[0m [35m[1m+[0m \
     [36m                │   └ [0m[36m[1m'multi-lines\n'[0m
     [36m                └ [0m[36m[1m1[0m
@@ -26,12 +26,12 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m52[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m51[0m, in [35m<module>[0m
     [1mbug_3[0m[1m([0m[1mstring[0m[1m)[0m
     [36m│     └ [0m[36m[1m'multi-lines\n'[0m
     [36m└ [0m[36m[1m<function bug_3 at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m23[0m, in [35mbug_3[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m22[0m, in [35mbug_3[0m
     [1m,[0m [1mstring[0m[1m,[0m [34m[1m20[0m [35m[1m/[0m [34m[1m0[0m[1m)[0m
     [36m  └ [0m[36m[1m'multi-lines\n'[0m
 
@@ -39,11 +39,11 @@
 
 [33m[1mTraceback (most recent call last):[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m58[0m, in [35m<module>[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m57[0m, in [35m<module>[0m
     [1mbug_4[0m[1m([0m[1m)[0m
     [36m└ [0m[36m[1m<function bug_4 at 0xDEADBEEF>[0m
 
-  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m30[0m, in [35mbug_4[0m
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1msource_multilines.py[0m", line [33m29[0m, in [35mbug_4[0m
     [36m"bar"[0m[1m:[0m [1ma[0m [35m[1m/[0m [1mb[0m[1m,[0m
     [36m       │   └ [0m[36m[1m0[0m
     [36m       └ [0m[36m[1m1[0m
