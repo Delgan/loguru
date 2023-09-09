@@ -441,7 +441,17 @@ class ExceptionFormatter:
         )
         exception_only = traceback.format_exception_only(exc_type, exc_value)
 
-        error_message = exception_only[-1][:-1]  # Remove last new line temporarily
+        # Determining the correct index for the "Exception: message" part in the formatted exception
+        # is challenging. This is because it might be preceded by multiple lines specific to
+        # "SyntaxError" or followed by various notes. However, we can make an educated guess based
+        # on the indentation; the preliminary context for "SyntaxError" is always indented, while
+        # the Exception itself is not. This allows us to identify the correct index for the
+        # exception message.
+        for error_message_index, part in enumerate(exception_only):  # noqa: B007
+            if not part.startswith(" "):
+                break
+
+        error_message = exception_only[error_message_index][:-1]  # Remove last new line temporarily
 
         if self._colorize:
             if ":" in error_message:
@@ -460,7 +470,7 @@ class ExceptionFormatter:
 
             error_message = "\n" + error_message
 
-        exception_only[-1] = error_message + "\n"
+        exception_only[error_message_index] = error_message + "\n"
 
         if is_first:
             yield self._prefix

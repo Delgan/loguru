@@ -1,0 +1,117 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/modern/notes.py", line 13, in <module>
+    raise e
+ValueError: invalid value
+Note
+
+[33m[1mTraceback (most recent call last):[0m
+
+> File "[32mtests/exceptions/source/modern/[0m[32m[1mnotes.py[0m", line [33m13[0m, in [35m<module>[0m
+    [35m[1mraise[0m [1me[0m
+    [36m      └ [0m[36m[1mValueError('invalid value')[0m
+
+[31m[1mValueError[0m:[1m invalid value[0m
+Note
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/modern/notes.py", line 20, in <module>
+    raise e
+ValueError: invalid value
+Note1
+Note2
+Note3
+
+
+[33m[1mTraceback (most recent call last):[0m
+
+> File "[32mtests/exceptions/source/modern/[0m[32m[1mnotes.py[0m", line [33m20[0m, in [35m<module>[0m
+    [35m[1mraise[0m [1me[0m
+    [36m      └ [0m[36m[1mValueError('invalid value')[0m
+
+[31m[1mValueError[0m:[1m invalid value[0m
+Note1
+Note2
+Note3
+
+
+  + Exception Group Traceback (most recent call last):
+  |   File "tests/exceptions/source/modern/notes.py", line 27, in <module>
+  |     raise e
+  | ExceptionGroup: Grouped (2 sub-exceptions)
+  | Note 1
+  | Note 2
+  | Note 3
+  +-+---------------- 1 ----------------
+    | ValueError: 1
+    +---------------- 2 ----------------
+    | ValueError: 2
+    +------------------------------------
+
+  + [33m[1mException Group Traceback (most recent call last):[0m
+  |
+  | > File "[32mtests/exceptions/source/modern/[0m[32m[1mnotes.py[0m", line [33m27[0m, in [35m<module>[0m
+  |     [35m[1mraise[0m [1me[0m
+  |     [36m      └ [0m[36m[1mExceptionGroup('Grouped', [ValueError(1), ValueError(2)])[0m
+  |
+  | [31m[1mExceptionGroup[0m:[1m Grouped (2 sub-exceptions)[0m
+  | Note 1
+  | Note 2
+  | Note 3
+  +-+---------------- 1 ----------------
+    | [31m[1mValueError[0m:[1m 1[0m
+    +---------------- 2 ----------------
+    | [31m[1mValueError[0m:[1m 2[0m
+    +------------------------------------
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/modern/notes.py", line 32, in <module>
+    raise e
+TabError: tab error
+Note
+
+[33m[1mTraceback (most recent call last):[0m
+
+> File "[32mtests/exceptions/source/modern/[0m[32m[1mnotes.py[0m", line [33m32[0m, in [35m<module>[0m
+    [35m[1mraise[0m [1me[0m
+    [36m      └ [0m[36m[1mTabError('tab error')[0m
+
+[31m[1mTabError[0m:[1m tab error[0m
+Note
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/modern/notes.py", line 38, in <module>
+    raise e
+  File "<string>", line 1
+    a = 7 *
+           ^
+SyntaxError: syntax error
+Note 1
+Note 2
+
+[33m[1mTraceback (most recent call last):[0m
+
+> File "[32mtests/exceptions/source/modern/[0m[32m[1mnotes.py[0m", line [33m38[0m, in [35m<module>[0m
+    [35m[1mraise[0m [1me[0m
+    [36m      └ [0m[36m[1mSyntaxError('syntax error', ('<string>', 1, 8, 'a = 7 *\n', 1, 8))[0m
+
+  File "<string>", line 1
+    a = 7 *
+           ^
+
+[31m[1mSyntaxError[0m:[1m syntax error[0m
+Note 1
+Note 2
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/modern/notes.py", line 43, in <module>
+    raise e
+TypeError: type error
+
+[33m[1mTraceback (most recent call last):[0m
+
+> File "[32mtests/exceptions/source/modern/[0m[32m[1mnotes.py[0m", line [33m43[0m, in [35m<module>[0m
+    [35m[1mraise[0m [1me[0m
+    [36m      └ [0m[36m[1mTypeError('type error')[0m
+
+[31m[1mTypeError[0m:[1m type error[0m
