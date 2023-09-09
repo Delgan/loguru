@@ -1,6 +1,6 @@
 # Enforce pyflakes(F), pycodestyle(E, W), isort (I), bugbears (B), and pep8-naming (N) rules
 select = ["F", "E", "W", "I", "B", "N"]
 line-length = 100
-exclude = ["tests/exceptions/source"]
+exclude = ["tests/exceptions/source/*"]
 [pycodestyle]
 max-doc-length = 100

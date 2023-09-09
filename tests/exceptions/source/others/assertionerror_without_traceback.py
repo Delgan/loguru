@@ -1,4 +1,3 @@
-# flake8: noqa
 import sys
 
 from loguru import logger
