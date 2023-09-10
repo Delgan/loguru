@@ -85,7 +85,7 @@ class SyntaxHighlighter:
             _, end_column = end
 
             if start_row != row:
-                source = source[:column]
+                source = source[column:]
                 row, column = start_row, 0
 
             if type_ != tokenize.ENCODING:
