@@ -46,6 +46,12 @@ class SyntaxHighlighter:
     _builtins = set(dir(builtins))
     _constants = {"True", "False", "None"}
     _punctation = {"(", ")", "[", "]", "{", "}", ":", ",", ";"}
+    _strings = {tokenize.STRING}
+    _fstring_middle = None
+
+    if sys.version_info >= (3, 12):
+        _strings.update({tokenize.FSTRING_START, tokenize.FSTRING_MIDDLE, tokenize.FSTRING_END})
+        _fstring_middle = tokenize.FSTRING_MIDDLE
 
     def __init__(self, style=None):
         self._style = style or self._default_style
@@ -56,7 +62,12 @@ class SyntaxHighlighter:
         output = ""
 
         for token in self.tokenize(source):
-            type_, string, start, end, line = token
+            type_, string, (start_row, start_column), (_, end_column), line = token
+
+            if type_ == self._fstring_middle:
+                # When an f-string contains "{{" or "}}", they appear as "{" or "}" in the "string"
+                # attribute of the token. However, they do not count in the column position.
+                end_column += string.count("{") + string.count("}")
 
             if type_ == tokenize.NAME:
                 if string in self._constants:
@@ -74,15 +85,12 @@ class SyntaxHighlighter:
                     color = style["operator"]
             elif type_ == tokenize.NUMBER:
                 color = style["number"]
-            elif type_ == tokenize.STRING:
+            elif type_ in self._strings:
                 color = style["string"]
             elif type_ == tokenize.COMMENT:
                 color = style["comment"]
             else:
                 color = style["other"]
-
-            start_row, start_column = start
-            _, end_column = end
 
             if start_row != row:
                 source = source[column:]
@@ -90,7 +98,7 @@ class SyntaxHighlighter:
 
             if type_ != tokenize.ENCODING:
                 output += line[column:start_column]
-                output += color.format(string)
+                output += color.format(line[start_column:end_column])
 
             column = end_column
 
