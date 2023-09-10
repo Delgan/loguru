@@ -230,7 +230,6 @@ def test_exception_others(filename):
     "filename, minimum_python_version",
     [
         ("type_hints", (3, 6)),
-        ("f_string", (3, 6)),
         ("positional_only_argument", (3, 8)),
         ("walrus_operator", (3, 8)),
         ("match_statement", (3, 10)),
@@ -242,6 +241,7 @@ def test_exception_others(filename):
         ("grouped_as_cause_and_context", (3, 11)),
         ("grouped_max_length", (3, 11)),
         ("grouped_max_depth", (3, 11)),
+        ("f_string", (3, 12)),  # Available since 3.6 but in 3.12 the lexer for f-string changed.
     ],
 )
 def test_exception_modern(filename, minimum_python_version):
