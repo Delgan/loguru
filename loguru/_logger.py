@@ -85,7 +85,6 @@
 import builtins
 import contextlib
 import functools
-import itertools
 import logging
 import re
 import sys
@@ -182,7 +181,7 @@ class Core:
             name: (name, name, level.no, level.icon) for name, level in self.levels.items()
         }
 
-        self.handlers_count = itertools.count()
+        self.handlers_count = 0
         self.handlers = {}
 
         self.extra = {}
@@ -778,7 +777,8 @@ class Logger:
         >>> logger.add(stream_object, level="INFO")
         """
         with self._core.lock:
-            handler_id = next(self._core.handlers_count)
+            handler_id = self._core.handlers_count
+            self._core.handlers_count += 1
 
         error_interceptor = ErrorInterceptor(catch, handler_id)
 
