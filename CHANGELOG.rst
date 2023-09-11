@@ -1,5 +1,5 @@
-`Unreleased`_
-=============
+`0.7.2`_ (2023-09-11)
+=====================
 
 - Add support for formatting of ``ExceptionGroup`` errors (`#805 <https://github.com/Delgan/loguru/issues/805>`_).
 - Fix possible ``RuntimeError`` when using ``multiprocessing.set_start_method()`` after importing the ``logger`` (`#974 <https://github.com/Delgan/loguru/issues/974>`_)
@@ -221,7 +221,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.1...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.2...master
+.. _0.7.2: https://github.com/delgan/loguru/releases/tag/0.7.2
 .. _0.7.1: https://github.com/delgan/loguru/releases/tag/0.7.1
 .. _0.7.0: https://github.com/delgan/loguru/releases/tag/0.7.0
 .. _0.6.0: https://github.com/delgan/loguru/releases/tag/0.6.0
