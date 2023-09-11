@@ -967,9 +967,9 @@ class Logger:
         if not isinstance(encoding, str):
             encoding = "ascii"
 
-        if context is None or isinstance(context, str):
+        if isinstance(context, str):
             context = get_context(context)
-        elif not isinstance(context, BaseContext):
+        elif context is not None and not isinstance(context, BaseContext):
             raise TypeError(
                 "Invalid context, it should be a string or a multiprocessing context, "
                 "not: '%s'" % type(context).__name__

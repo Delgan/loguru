@@ -1,5 +1,6 @@
 import functools
 import json
+import multiprocessing
 import os
 import threading
 from contextlib import contextmanager
@@ -88,10 +89,15 @@ class Handler:
                 self._decolorized_format = self._formatter.strip()
 
         if self._enqueue:
-            self._queue = self._multiprocessing_context.SimpleQueue()
+            if self._multiprocessing_context is None:
+                self._queue = multiprocessing.SimpleQueue()
+                self._confirmation_event = multiprocessing.Event()
+                self._confirmation_lock = multiprocessing.Lock()
+            else:
+                self._queue = self._multiprocessing_context.SimpleQueue()
+                self._confirmation_event = self._multiprocessing_context.Event()
+                self._confirmation_lock = self._multiprocessing_context.Lock()
             self._queue_lock = create_handler_lock()
-            self._confirmation_event = self._multiprocessing_context.Event()
-            self._confirmation_lock = self._multiprocessing_context.Lock()
             self._owner_process_pid = os.getpid()
             self._thread = Thread(
                 target=self._queued_writer, daemon=True, name="loguru-writer-%d" % self._id
