@@ -1016,32 +1016,38 @@ class Logger:
                 "not: '%s'" % type(context).__name__
             )
 
-        with self._core.lock:
-            exception_formatter = ExceptionFormatter(
-                colorize=colorize,
-                encoding=encoding,
-                diagnose=diagnose,
-                backtrace=backtrace,
-                hidden_frames_filename=self.catch.__code__.co_filename,
-                prefix=exception_prefix,
-            )
+        exception_formatter = ExceptionFormatter(
+            colorize=colorize,
+            encoding=encoding,
+            diagnose=diagnose,
+            backtrace=backtrace,
+            hidden_frames_filename=self.catch.__code__.co_filename,
+            prefix=exception_prefix,
+        )
 
-            handler = Handler(
-                name=name,
-                sink=wrapped_sink,
-                levelno=levelno,
-                formatter=formatter,
-                is_formatter_dynamic=is_formatter_dynamic,
-                filter_=filter_func,
-                colorize=colorize,
-                serialize=serialize,
-                enqueue=enqueue,
-                multiprocessing_context=context,
-                id_=handler_id,
-                error_interceptor=error_interceptor,
-                exception_formatter=exception_formatter,
-                levels_ansi_codes=self._core.levels_ansi_codes,
-            )
+        handler = Handler(
+            name=name,
+            sink=wrapped_sink,
+            levelno=levelno,
+            formatter=formatter,
+            is_formatter_dynamic=is_formatter_dynamic,
+            filter_=filter_func,
+            colorize=colorize,
+            serialize=serialize,
+            enqueue=enqueue,
+            multiprocessing_context=context,
+            id_=handler_id,
+            error_interceptor=error_interceptor,
+            exception_formatter=exception_formatter,
+        )
+
+        with self._core.lock:
+            # For thread-safety reasons, the handler is updated under the lock as new levels could
+            # be added in parallel. Because the Handler uses the global "machinery_lock" during its
+            # initialization, it must not be created under the lock. That explains why the handler
+            # is updated this way instead of being created directly with the right levels.
+            for level_id, ansi_code in self._core.levels_ansi_codes.items():
+                handler.update_format(level_id, ansi_code)
 
             handlers = self._core.handlers.copy()
             handlers[handler_id] = handler
@@ -1695,7 +1701,7 @@ class Logger:
             self._core.levels_ansi_codes[name] = ansi
             self._core.levels_lookup[name] = (name, name, no, icon)
             for handler in self._core.handlers.values():
-                handler.update_format(name)
+                handler.update_format(name, ansi)
 
         return level
 

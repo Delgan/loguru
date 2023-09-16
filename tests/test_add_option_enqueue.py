@@ -1,6 +1,7 @@
 import pickle
 import re
 import sys
+import threading
 import time
 
 import pytest
@@ -144,16 +145,19 @@ def test_not_caught_exception_queue_put(writer, capsys):
     logger.add(writer, enqueue=True, catch=False, format="{message}")
 
     logger.info("It's fine")
-
-    with pytest.raises(pickle.PicklingError, match=r"You shall not serialize me!"):
-        logger.bind(broken=NotPicklable()).info("Bye bye...")
+    logger.bind(broken=NotPicklable()).info("Bye bye...")
+    logger.info("It's fine again")
 
     logger.remove()
 
     out, err = capsys.readouterr()
-    assert writer.read() == "It's fine\n"
+    lines = err.strip().splitlines()
+    assert writer.read() == "It's fine\nIt's fine again\n"
     assert out == ""
-    assert err == ""
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
+    assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
+    assert "PicklingError: You shall not serialize me!" in err
+    assert lines[-1] == "--- End of logging error ---"
 
 
 def test_not_caught_exception_queue_get(writer, capsys):
@@ -246,6 +250,39 @@ def test_wait_for_all_messages_enqueued(capsys):
 
     assert out == ""
     assert err == "".join("%d\n" % i for i in range(10))
+
+
+def test_complete_without_logging_any_message(writer):
+    logger.add(writer, enqueue=True, catch=False, format="{message}")
+    logger.complete()
+    assert writer.read() == ""
+
+
+def test_remove_without_logging_any_message(writer):
+    logger.add(writer, enqueue=True, catch=False, format="{message}")
+    logger.remove()
+    assert writer.read() == ""
+
+
+def test_main_thread_not_blocked(writer):
+    event = threading.Event()
+
+    def sink(message):
+        event.wait()
+        writer(message)
+
+    logger.add(sink, enqueue=True, catch=False, format=lambda r: "{message}")
+
+    # Pipes have default capacity of 65,536 bytes.
+    # If it's full, the logger must not block.
+    for _ in range(1000):
+        logger.info("." * 10000)
+
+    event.set()
+
+    logger.complete()
+
+    assert writer.read() == "." * 10000 * 1000
 
 
 @pytest.mark.parametrize("exception_value", [NotPicklable(), NotPicklableTypeError()])
