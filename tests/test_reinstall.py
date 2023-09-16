@@ -36,6 +36,9 @@ def subworker(logger):
 def poolworker(_):
     logger.info("Child")
     deeper_subworker()
+    # This is CRUCIAL to call "complete()" explicitly to avoid deadlocks.
+    # Unfortunately, the cleanup finalizers aren't called for Pool workers.
+    logger.complete()
 
 
 def deeper_subworker():
