@@ -12,6 +12,8 @@ repos:
     args: [--autofix]
   - id: pretty-format-yaml
     args: [--autofix, --indent, '2']
+  - id: pretty-format-toml
+    args: [--autofix]
 - repo: https://github.com/ambv/black
   rev: 23.7.0
   hooks:
