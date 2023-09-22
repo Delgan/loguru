@@ -30,24 +30,26 @@ def test_catch_is_false(capsys):
 
 
 def test_no_sys_stderr(capsys, monkeypatch):
-    monkeypatch.setattr(sys, "stderr", None)
-    logger.add(broken_sink, catch=True)
-    logger.debug("a")
+    with monkeypatch.context() as context:
+        context.setattr(sys, "stderr", None)
+        logger.add(broken_sink, catch=True)
+        logger.debug("a")
 
-    out, err = capsys.readouterr()
-    assert out == err == ""
+        out, err = capsys.readouterr()
+        assert out == err == ""
 
 
 def test_broken_sys_stderr(capsys, monkeypatch):
     def broken_write(*args, **kwargs):
         raise OSError
 
-    monkeypatch.setattr(sys.stderr, "write", broken_write)
-    logger.add(broken_sink, catch=True)
-    logger.debug("a")
+    with monkeypatch.context() as context:
+        context.setattr(sys.stderr, "write", broken_write)
+        logger.add(broken_sink, catch=True)
+        logger.debug("a")
 
-    out, err = capsys.readouterr()
-    assert out == err == ""
+        out, err = capsys.readouterr()
+        assert out == err == ""
 
 
 def test_encoding_error(capsys):

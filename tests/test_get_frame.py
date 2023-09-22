@@ -8,13 +8,15 @@ def test_with_sys_getframe(monkeypatch):
     def patched():
         return
 
-    monkeypatch.setattr(sys, "_getframe", patched())
-    assert load_get_frame_function() == patched()
+    with monkeypatch.context() as context:
+        context.setattr(sys, "_getframe", patched())
+        assert load_get_frame_function() == patched()
 
 
 def test_without_sys_getframe(monkeypatch):
-    monkeypatch.delattr(sys, "_getframe")
-    assert load_get_frame_function() == loguru._get_frame.get_frame_fallback
+    with monkeypatch.context() as context:
+        context.delattr(sys, "_getframe")
+        assert load_get_frame_function() == loguru._get_frame.get_frame_fallback
 
 
 def test_get_frame_fallback():

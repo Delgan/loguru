@@ -755,30 +755,31 @@ def test_time_rotation_reopening_native(tmp_path_local, delay):
     reason="Testing implementation specific to Linux",
 )
 def test_time_rotation_reopening_xattr_attributeerror(tmp_path_local, monkeypatch, delay):
-    monkeypatch.delattr(os, "setxattr")
-    monkeypatch.delattr(os, "getxattr")
-    get_ctime, set_ctime = load_ctime_functions()
+    with monkeypatch.context() as context:
+        context.delattr(os, "setxattr")
+        context.delattr(os, "getxattr")
+        get_ctime, set_ctime = load_ctime_functions()
 
-    monkeypatch.setattr(loguru._file_sink, "get_ctime", get_ctime)
-    monkeypatch.setattr(loguru._file_sink, "set_ctime", set_ctime)
+        context.setattr(loguru._file_sink, "get_ctime", get_ctime)
+        context.setattr(loguru._file_sink, "set_ctime", set_ctime)
 
-    filepath = tmp_path_local / "test.log"
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
-    time.sleep(1)
-    logger.info("1")
-    logger.remove(i)
-    time.sleep(1.5)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
-    logger.info("2")
-    logger.remove(i)
-    check_dir(tmp_path_local, size=1)
-    assert filepath.read_text() == "1\n2\n"
-    time.sleep(2.5)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
-    logger.info("3")
-    logger.remove(i)
-    check_dir(tmp_path_local, size=2)
-    assert filepath.read_text() == "3\n"
+        filepath = tmp_path_local / "test.log"
+        i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+        time.sleep(1)
+        logger.info("1")
+        logger.remove(i)
+        time.sleep(1.5)
+        i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+        logger.info("2")
+        logger.remove(i)
+        check_dir(tmp_path_local, size=1)
+        assert filepath.read_text() == "1\n2\n"
+        time.sleep(2.5)
+        i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+        logger.info("3")
+        logger.remove(i)
+        check_dir(tmp_path_local, size=2)
+        assert filepath.read_text() == "3\n"
 
 
 @pytest.mark.parametrize("delay", [False, True])
@@ -790,52 +791,54 @@ def test_time_rotation_reopening_xattr_attributeerror(tmp_path_local, monkeypatc
     reason="Testing implementation specific to Linux",
 )
 def test_time_rotation_reopening_xattr_oserror(tmp_path_local, monkeypatch, delay):
-    monkeypatch.setattr(os, "setxattr", Mock(side_effect=OSError))
-    monkeypatch.setattr(os, "getxattr", Mock(side_effect=OSError))
-    get_ctime, set_ctime = load_ctime_functions()
+    with monkeypatch.context() as context:
+        context.setattr(os, "setxattr", Mock(side_effect=OSError))
+        context.setattr(os, "getxattr", Mock(side_effect=OSError))
+        get_ctime, set_ctime = load_ctime_functions()
 
-    monkeypatch.setattr(loguru._file_sink, "get_ctime", get_ctime)
-    monkeypatch.setattr(loguru._file_sink, "set_ctime", set_ctime)
+        context.setattr(loguru._file_sink, "get_ctime", get_ctime)
+        context.setattr(loguru._file_sink, "set_ctime", set_ctime)
 
-    filepath = tmp_path_local / "test.log"
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
-    time.sleep(1)
-    logger.info("1")
-    logger.remove(i)
-    time.sleep(1.5)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
-    logger.info("2")
-    logger.remove(i)
-    check_dir(tmp_path_local, size=1)
-    assert filepath.read_text() == "1\n2\n"
-    time.sleep(2.5)
-    i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
-    logger.info("3")
-    logger.remove(i)
-    check_dir(tmp_path_local, size=2)
-    assert filepath.read_text() == "3\n"
+        filepath = tmp_path_local / "test.log"
+        i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+        time.sleep(1)
+        logger.info("1")
+        logger.remove(i)
+        time.sleep(1.5)
+        i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+        logger.info("2")
+        logger.remove(i)
+        check_dir(tmp_path_local, size=1)
+        assert filepath.read_text() == "1\n2\n"
+        time.sleep(2.5)
+        i = logger.add(filepath, format="{message}", delay=delay, rotation="2 s")
+        logger.info("3")
+        logger.remove(i)
+        check_dir(tmp_path_local, size=2)
+        assert filepath.read_text() == "3\n"
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Testing implementation specific to Windows")
 def test_time_rotation_windows_no_setctime(tmp_path, monkeypatch):
     import win32_setctime
 
-    monkeypatch.setattr(win32_setctime, "SUPPORTED", False)
-    monkeypatch.setattr(win32_setctime, "setctime", Mock())
+    with monkeypatch.context() as context:
+        context.setattr(win32_setctime, "SUPPORTED", False)
+        context.setattr(win32_setctime, "setctime", Mock())
 
-    filepath = tmp_path / "test.log"
-    logger.add(filepath, format="{message}", rotation="2 s")
-    logger.info("1")
-    time.sleep(1.5)
-    logger.info("2")
-    check_dir(tmp_path, size=1)
-    assert filepath.read_text() == "1\n2\n"
-    time.sleep(1)
-    logger.info("3")
-    check_dir(tmp_path, size=2)
-    assert filepath.read_text() == "3\n"
+        filepath = tmp_path / "test.log"
+        logger.add(filepath, format="{message}", rotation="2 s")
+        logger.info("1")
+        time.sleep(1.5)
+        logger.info("2")
+        check_dir(tmp_path, size=1)
+        assert filepath.read_text() == "1\n2\n"
+        time.sleep(1)
+        logger.info("3")
+        check_dir(tmp_path, size=2)
+        assert filepath.read_text() == "3\n"
 
-    assert not win32_setctime.setctime.called
+        assert not win32_setctime.setctime.called
 
 
 @pytest.mark.parametrize("exception", [ValueError, OSError])
@@ -843,21 +846,22 @@ def test_time_rotation_windows_no_setctime(tmp_path, monkeypatch):
 def test_time_rotation_windows_setctime_exception(tmp_path, monkeypatch, exception):
     import win32_setctime
 
-    monkeypatch.setattr(win32_setctime, "setctime", Mock(side_effect=exception))
+    with monkeypatch.context() as context:
+        context.setattr(win32_setctime, "setctime", Mock(side_effect=exception))
 
-    filepath = tmp_path / "test.log"
-    logger.add(filepath, format="{message}", rotation="2 s")
-    logger.info("1")
-    time.sleep(1.5)
-    logger.info("2")
-    check_dir(tmp_path, size=1)
-    assert filepath.read_text() == "1\n2\n"
-    time.sleep(1)
-    logger.info("3")
-    check_dir(tmp_path, size=2)
-    assert filepath.read_text() == "3\n"
+        filepath = tmp_path / "test.log"
+        logger.add(filepath, format="{message}", rotation="2 s")
+        logger.info("1")
+        time.sleep(1.5)
+        logger.info("2")
+        check_dir(tmp_path, size=1)
+        assert filepath.read_text() == "1\n2\n"
+        time.sleep(1)
+        logger.info("3")
+        check_dir(tmp_path, size=2)
+        assert filepath.read_text() == "3\n"
 
-    assert win32_setctime.setctime.called
+        assert win32_setctime.setctime.called
 
 
 def test_function_rotation(freeze_time, tmp_path):

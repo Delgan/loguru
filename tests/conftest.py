@@ -290,4 +290,6 @@ def f_globals_name_absent(monkeypatch):
         frame.f_globals.pop("__name__", None)
         return frame
 
-    monkeypatch.setattr(loguru._logger, "get_frame", patched_getframe)
+    with monkeypatch.context() as context:
+        context.setattr(loguru._logger, "get_frame", patched_getframe)
+        yield

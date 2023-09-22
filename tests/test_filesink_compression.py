@@ -279,34 +279,39 @@ def test_unknown_compression(compression):
 
 @pytest.mark.parametrize("ext", ["gz", "tar.gz"])
 def test_gzip_module_unavailable(ext, monkeypatch):
-    monkeypatch.setitem(sys.modules, "gzip", None)
-    with pytest.raises(ImportError):
-        logger.add("test.log", compression=ext)
+    with monkeypatch.context() as context:
+        context.setitem(sys.modules, "gzip", None)
+        with pytest.raises(ImportError):
+            logger.add("test.log", compression=ext)
 
 
 @pytest.mark.parametrize("ext", ["bz2", "tar.bz2"])
 def test_bz2_module_unavailable(ext, monkeypatch):
-    monkeypatch.setitem(sys.modules, "bz2", None)
-    with pytest.raises(ImportError):
-        logger.add("test.log", compression=ext)
+    with monkeypatch.context() as context:
+        context.setitem(sys.modules, "bz2", None)
+        with pytest.raises(ImportError):
+            logger.add("test.log", compression=ext)
 
 
 @pytest.mark.parametrize("ext", ["xz", "lzma", "tar.xz"])
 def test_lzma_module_unavailable(ext, monkeypatch):
-    monkeypatch.setitem(sys.modules, "lzma", None)
-    with pytest.raises(ImportError):
-        logger.add("test.log", compression=ext)
+    with monkeypatch.context() as context:
+        context.setitem(sys.modules, "lzma", None)
+        with pytest.raises(ImportError):
+            logger.add("test.log", compression=ext)
 
 
 @pytest.mark.parametrize("ext", ["tar", "tar.gz", "tar.bz2", "tar.xz"])
 def test_tarfile_module_unavailable(ext, monkeypatch):
-    monkeypatch.setitem(sys.modules, "tarfile", None)
-    with pytest.raises(ImportError):
-        logger.add("test.log", compression=ext)
+    with monkeypatch.context() as context:
+        context.setitem(sys.modules, "tarfile", None)
+        with pytest.raises(ImportError):
+            logger.add("test.log", compression=ext)
 
 
 @pytest.mark.parametrize("ext", ["zip"])
 def test_zipfile_module_unavailable(ext, monkeypatch):
-    monkeypatch.setitem(sys.modules, "zipfile", None)
-    with pytest.raises(ImportError):
-        logger.add("test.log", compression=ext)
+    with monkeypatch.context() as context:
+        context.setitem(sys.modules, "zipfile", None)
+        with pytest.raises(ImportError):
+            logger.add("test.log", compression=ext)

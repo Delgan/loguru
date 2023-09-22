@@ -97,99 +97,107 @@ def test_file_sink_utf8_encoding(tmp_path):
 
 
 def test_has_sys_real_prefix(writer, monkeypatch):
-    monkeypatch.setattr(sys, "real_prefix", "/foo/bar/baz", raising=False)
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+    with monkeypatch.context() as context:
+        context.setattr(sys, "real_prefix", "/foo/bar/baz", raising=False)
+        logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
-    try:
-        1 / 0  # noqa: B018
-    except ZeroDivisionError:
-        logger.exception("")
+        try:
+            1 / 0  # noqa: B018
+        except ZeroDivisionError:
+            logger.exception("")
 
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+        assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_no_sys_real_prefix(writer, monkeypatch):
-    monkeypatch.delattr(sys, "real_prefix", raising=False)
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+    with monkeypatch.context() as context:
+        context.delattr(sys, "real_prefix", raising=False)
+        logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
-    try:
-        1 / 0  # noqa: B018
-    except ZeroDivisionError:
-        logger.exception("")
+        try:
+            1 / 0  # noqa: B018
+        except ZeroDivisionError:
+            logger.exception("")
 
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+        assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_has_site_getsitepackages(writer, monkeypatch):
-    monkeypatch.setattr(site, "getsitepackages", lambda: ["foo", "bar", "baz"], raising=False)
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+    with monkeypatch.context() as context:
+        context.setattr(site, "getsitepackages", lambda: ["foo", "bar", "baz"], raising=False)
+        logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
-    try:
-        1 / 0  # noqa: B018
-    except ZeroDivisionError:
-        logger.exception("")
+        try:
+            1 / 0  # noqa: B018
+        except ZeroDivisionError:
+            logger.exception("")
 
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+        assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_no_site_getsitepackages(writer, monkeypatch):
-    monkeypatch.delattr(site, "getsitepackages", raising=False)
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+    with monkeypatch.context() as context:
+        context.delattr(site, "getsitepackages", raising=False)
+        logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
-    try:
-        1 / 0  # noqa: B018
-    except ZeroDivisionError:
-        logger.exception("")
+        try:
+            1 / 0  # noqa: B018
+        except ZeroDivisionError:
+            logger.exception("")
 
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+        assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_user_site_is_path(writer, monkeypatch):
-    monkeypatch.setattr(site, "USER_SITE", "/foo/bar/baz")
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+    with monkeypatch.context() as context:
+        context.setattr(site, "USER_SITE", "/foo/bar/baz")
+        logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
-    try:
-        1 / 0  # noqa: B018
-    except ZeroDivisionError:
-        logger.exception("")
+        try:
+            1 / 0  # noqa: B018
+        except ZeroDivisionError:
+            logger.exception("")
 
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+        assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_user_site_is_none(writer, monkeypatch):
-    monkeypatch.setattr(site, "USER_SITE", None)
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+    with monkeypatch.context() as context:
+        context.setattr(site, "USER_SITE", None)
+        logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
-    try:
-        1 / 0  # noqa: B018
-    except ZeroDivisionError:
-        logger.exception("")
+        try:
+            1 / 0  # noqa: B018
+        except ZeroDivisionError:
+            logger.exception("")
 
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+        assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_sysconfig_get_path_return_path(writer, monkeypatch):
-    monkeypatch.setattr(sysconfig, "get_path", lambda *a, **k: "/foo/bar/baz")
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+    with monkeypatch.context() as context:
+        context.setattr(sysconfig, "get_path", lambda *a, **k: "/foo/bar/baz")
+        logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
-    try:
-        1 / 0  # noqa: B018
-    except ZeroDivisionError:
-        logger.exception("")
+        try:
+            1 / 0  # noqa: B018
+        except ZeroDivisionError:
+            logger.exception("")
 
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+        assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_sysconfig_get_path_return_none(writer, monkeypatch):
-    monkeypatch.setattr(sysconfig, "get_path", lambda *a, **k: None)
-    logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
+    with monkeypatch.context() as context:
+        context.setattr(sysconfig, "get_path", lambda *a, **k: None)
+        logger.add(writer, backtrace=False, diagnose=True, colorize=False, format="")
 
-    try:
-        1 / 0  # noqa: B018
-    except ZeroDivisionError:
-        logger.exception("")
+        try:
+            1 / 0  # noqa: B018
+        except ZeroDivisionError:
+            logger.exception("")
 
-    assert writer.read().endswith("ZeroDivisionError: division by zero\n")
+        assert writer.read().endswith("ZeroDivisionError: division by zero\n")
 
 
 def test_no_exception(writer):

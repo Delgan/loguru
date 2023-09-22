@@ -134,19 +134,20 @@ def test_pickling_standard_handler_root_logger_not_picklable(monkeypatch, capsys
     def reduce_protocol():
         raise TypeError("Not picklable")
 
-    monkeypatch.setattr(logging.getLogger(), "__reduce__", reduce_protocol, raising=False)
+    with monkeypatch.context() as context:
+        context.setattr(logging.getLogger(), "__reduce__", reduce_protocol, raising=False)
 
-    handler = StandardHandler(logging.NOTSET)
-    logger.add(handler, format="=> {message}", catch=False)
+        handler = StandardHandler(logging.NOTSET)
+        logger.add(handler, format="=> {message}", catch=False)
 
-    pickled = pickle.dumps(logger)
-    pickle.loads(pickled)
+        pickled = pickle.dumps(logger)
+        pickle.loads(pickled)
 
-    logger.info("Ok")
-    out, err = capsys.readouterr()
-    assert out == ""
-    assert err == ""
-    assert handler.written == "=> Ok"
+        logger.info("Ok")
+        out, err = capsys.readouterr()
+        assert out == ""
+        assert err == ""
+        assert handler.written == "=> Ok"
 
 
 def test_pickling_file_handler(tmp_path):
