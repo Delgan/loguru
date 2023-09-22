@@ -1,0 +1,20 @@
+[tool.black]
+force-exclude = "tests/exceptions/source/modern/*"
+line-length = 100
+target-version = ["py35"]
+
+[tool.mypy]
+strict = true
+
+[tool.pytest.ini_options]
+addopts = "-l"
+testpaths = ["tests"]
+
+[tool.ruff]
+exclude = ["tests/exceptions/source/*"]
+line-length = 100
+# Enforce pyflakes(F), pycodestyle(E, W), isort (I), bugbears (B), and pep8-naming (N) rules.
+select = ["F", "E", "W", "I", "B", "N"]
+
+[tool.ruff.pycodestyle]
+max-doc-length = 100

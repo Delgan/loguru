@@ -18,7 +18,6 @@ repos:
   rev: 23.7.0
   hooks:
   - id: black
-    args: [-l, '100', --target-version, py35, --force-exclude, tests/exceptions/source/modern/*]
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.0.286
   hooks:
