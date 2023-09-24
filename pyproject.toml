@@ -8,6 +8,10 @@ strict = true
 
 [tool.pytest.ini_options]
 addopts = "-l"
+filterwarnings = [
+  # Mixing threads and "fork()" is deprecated, but we need to test it anyway.
+  'ignore:.*use of fork\(\) may lead to deadlocks in the child.*:DeprecationWarning'
+]
 testpaths = ["tests"]
 
 [tool.ruff]
