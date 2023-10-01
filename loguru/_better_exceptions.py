@@ -455,6 +455,7 @@ class ExceptionFormatter:
         # on the indentation; the preliminary context for "SyntaxError" is always indented, while
         # the Exception itself is not. This allows us to identify the correct index for the
         # exception message.
+        error_message_index = 0
         for error_message_index, part in enumerate(exception_only):  # noqa: B007
             if not part.startswith(" "):
                 break
@@ -504,6 +505,7 @@ class ExceptionFormatter:
         yield from self._indent("".join(frames_lines), group_nesting)
 
         if is_grouped:
+            exc = None
             for n, exc in enumerate(value.exceptions, start=1):
                 ruler = "+" + (" %s " % ("..." if n > 15 else n)).center(35, "-")
                 yield from self._indent(ruler, group_nesting, prefix="+-" if n == 1 else "  ")
