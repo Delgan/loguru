@@ -455,31 +455,31 @@ class ExceptionFormatter:
         # on the indentation; the preliminary context for "SyntaxError" is always indented, while
         # the Exception itself is not. This allows us to identify the correct index for the
         # exception message.
-        error_message_index = 0
-        for error_message_index, part in enumerate(exception_only):  # noqa: B007
-            if not part.startswith(" "):
-                break
+        no_indented_indexes = (i for i, p in enumerate(exception_only) if not p.startswith(" "))
+        error_message_index = next(no_indented_indexes, None)
 
-        error_message = exception_only[error_message_index][:-1]  # Remove last new line temporarily
+        if error_message_index is not None:
+            # Remove final new line temporarily.
+            error_message = exception_only[error_message_index][:-1]
 
-        if self._colorize:
-            if ":" in error_message:
-                exception_type, exception_value = error_message.split(":", 1)
-                exception_type = self._theme["exception_type"].format(exception_type)
-                exception_value = self._theme["exception_value"].format(exception_value)
-                error_message = exception_type + ":" + exception_value
-            else:
-                error_message = self._theme["exception_type"].format(error_message)
+            if self._colorize:
+                if ":" in error_message:
+                    exception_type, exception_value = error_message.split(":", 1)
+                    exception_type = self._theme["exception_type"].format(exception_type)
+                    exception_value = self._theme["exception_value"].format(exception_value)
+                    error_message = exception_type + ":" + exception_value
+                else:
+                    error_message = self._theme["exception_type"].format(error_message)
 
-        if self._diagnose and frames:
-            if issubclass(exc_type, AssertionError) and not str(exc_value) and final_source:
-                if self._colorize:
-                    final_source = self._syntax_highlighter.highlight(final_source)
-                error_message += ": " + final_source
+            if self._diagnose and frames:
+                if issubclass(exc_type, AssertionError) and not str(exc_value) and final_source:
+                    if self._colorize:
+                        final_source = self._syntax_highlighter.highlight(final_source)
+                    error_message += ": " + final_source
 
-            error_message = "\n" + error_message
+                error_message = "\n" + error_message
 
-        exception_only[error_message_index] = error_message + "\n"
+            exception_only[error_message_index] = error_message + "\n"
 
         if is_first:
             yield self._prefix

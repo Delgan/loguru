@@ -3,8 +3,12 @@ import platform
 import re
 import subprocess
 import sys
+import traceback
+from unittest.mock import MagicMock
 
 import pytest
+
+from loguru import logger
 
 
 def normalize(exception):
@@ -257,8 +261,6 @@ def test_exception_modern(filename, minimum_python_version):
 def test_group_exception_using_backport(writer):
     from exceptiongroup import ExceptionGroup
 
-    from loguru import logger
-
     logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
 
     try:
@@ -267,3 +269,38 @@ def test_group_exception_using_backport(writer):
         logger.exception("")
 
     assert writer.read().strip().startswith("+ Exception Group Traceback (most recent call last):")
+
+
+def test_invalid_format_exception_only_no_output(writer, monkeypatch):
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
+
+    with monkeypatch.context() as context:
+        context.setattr(traceback, "format_exception_only", lambda _e, _v: [])
+        error = ValueError(0)
+        logger.opt(exception=error).error("Error")
+
+        assert writer.read() == "\n"
+
+
+def test_invalid_format_exception_only_indented_error_message(writer, monkeypatch):
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
+
+    with monkeypatch.context() as context:
+        context.setattr(traceback, "format_exception_only", lambda _e, _v: ["    ValueError: 0\n"])
+        error = ValueError(0)
+        logger.opt(exception=error).error("Error")
+
+        assert writer.read() == "\n    ValueError: 0\n"
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="No builtin GroupedException")
+def test_invalid_grouped_exception_no_exceptions(writer):
+    error = MagicMock(spec=ExceptionGroup)
+    error.__cause__ = None
+    error.__context__ = None
+    error.__traceback__ = None
+
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
+    logger.opt(exception=error).error("Error")
+
+    assert writer.read().strip().startswith("| unittest.mock.MagicMock:")
