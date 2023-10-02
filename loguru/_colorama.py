@@ -6,7 +6,7 @@ def should_colorize(stream):
     if stream is None:
         return False
 
-    if stream is sys.stdout or stream is sys.stderr:
+    if "IPython" in sys.modules and (stream is sys.stdout or stream is sys.stderr):
         try:
             import ipykernel
             import IPython
