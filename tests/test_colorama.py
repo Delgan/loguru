@@ -179,6 +179,16 @@ def test_jupyter_fixed(monkeypatch, patched, out_class, expected):
     assert should_colorize(stream) is expected
 
 
+def test_jupyter_missing_lib(monkeypatch):
+    # Missing ipykernal so jupyter block will err, should handle gracefully
+    stream = StreamIsattyFalse()
+
+    monkeypatch.setitem(sys.modules, "IPython", MagicMock())
+    monkeypatch.setattr(sys, "stdout", stream)
+
+    assert should_colorize(stream) is False
+
+
 @pytest.mark.parametrize("patched", ["__stdout__", "__stderr__"])
 @pytest.mark.skipif(os.name == "nt", reason="Colorama is required on Windows")
 def test_dont_wrap_on_linux(monkeypatch, patched, patch_colorama):
