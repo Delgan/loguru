@@ -101,7 +101,7 @@ def test_using_another_event_loop(capsys):
     assert out == "A message\n"
 
 
-def test_run_mutiple_different_loops(capsys):
+def test_run_multiple_different_loops(capsys):
     async def worker(i):
         logger.debug("Message {}", i)
         await logger.complete()

@@ -100,7 +100,7 @@ def test_exception_class(writer):
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
 
-def test_exception_log_funcion(writer):
+def test_exception_log_function(writer):
     logger.add(writer, format="{level.no} {message}")
 
     try:

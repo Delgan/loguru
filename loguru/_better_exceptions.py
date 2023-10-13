@@ -45,7 +45,7 @@ class SyntaxHighlighter:
 
     _builtins = set(dir(builtins))
     _constants = {"True", "False", "None"}
-    _punctation = {"(", ")", "[", "]", "{", "}", ":", ",", ";"}
+    _punctuation = {"(", ")", "[", "]", "{", "}", ":", ",", ";"}
     _strings = {tokenize.STRING}
     _fstring_middle = None
 
@@ -79,7 +79,7 @@ class SyntaxHighlighter:
                 else:
                     color = style["identifier"]
             elif type_ == tokenize.OP:
-                if string in self._punctation:
+                if string in self._punctuation:
                     color = style["punctuation"]
                 else:
                     color = style["operator"]

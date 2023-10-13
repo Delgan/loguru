@@ -22,3 +22,9 @@ select = ["F", "E", "W", "I", "B", "N"]
 
 [tool.ruff.pycodestyle]
 max-doc-length = 100
+
+[tool.typos.default]
+extend-ignore-re = ["(?Rm)^.*# spellchecker: disable-line$"]
+
+[tool.typos.files]
+extend-exclude = ["tests/exceptions/output/**"]  # False positive due to ansi sequences.
