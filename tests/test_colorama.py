@@ -1,3 +1,4 @@
+import builtins
 import os
 import sys
 from unittest.mock import MagicMock
@@ -172,6 +173,7 @@ def test_jupyter_fixed(monkeypatch, patched, out_class, expected):
     ipykernel.zmqshell.ZMQInteractiveShell = Shell
     ipykernel.iostream.OutStream = out_class
 
+    monkeypatch.setattr(builtins, "__IPYTHON__", True, raising=False)
     monkeypatch.setitem(sys.modules, "IPython", ipython)
     monkeypatch.setitem(sys.modules, "ipykernel", ipykernel)
     monkeypatch.setattr(sys, patched, stream, raising=False)
@@ -183,7 +185,7 @@ def test_jupyter_missing_lib(monkeypatch):
     # Missing ipykernal so jupyter block will err, should handle gracefully
     stream = StreamIsattyFalse()
 
-    monkeypatch.setitem(sys.modules, "IPython", MagicMock())
+    monkeypatch.setattr(builtins, "__IPYTHON__", True, raising=False)
     monkeypatch.setattr(sys, "stdout", stream)
 
     assert should_colorize(stream) is False
