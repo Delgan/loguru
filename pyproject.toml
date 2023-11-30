@@ -18,7 +18,7 @@ testpaths = ["tests"]
 exclude = ["tests/exceptions/source/*"]
 line-length = 100
 # Enforce pyflakes(F), pycodestyle(E, W), isort (I), bugbears (B), and pep8-naming (N) rules.
-select = ["F", "E", "W", "I", "B", "N"]
+select = ["F", "E", "W", "I", "B", "N", "RET"]
 
 [tool.ruff.pycodestyle]
 max-doc-length = 100
