@@ -19,7 +19,7 @@ def load_ctime_functions():
 
         return get_ctime_windows, set_ctime_windows
 
-    elif hasattr(os.stat_result, "st_birthtime"):
+    if hasattr(os.stat_result, "st_birthtime"):
 
         def get_ctime_macos(filepath):
             return os.stat(filepath).st_birthtime
@@ -29,7 +29,7 @@ def load_ctime_functions():
 
         return get_ctime_macos, set_ctime_macos
 
-    elif hasattr(os, "getxattr") and hasattr(os, "setxattr"):
+    if hasattr(os, "getxattr") and hasattr(os, "setxattr"):
 
         def get_ctime_linux(filepath):
             try:

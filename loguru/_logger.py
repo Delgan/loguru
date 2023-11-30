@@ -1225,7 +1225,7 @@ class Logger:
 
             def __exit__(self, type_, value, traceback_):
                 if type_ is None:
-                    return
+                    return None
 
                 if not issubclass(type_, exception):
                     return False
@@ -1582,8 +1582,7 @@ class Logger:
                     "Level '%s' does not exist, you have to create it by specifying a level no"
                     % name
                 )
-            else:
-                old_color, old_icon = "", " "
+            old_color, old_icon = "", " "
         elif no is not None:
             raise TypeError("Level '%s' already exists, you can't update its severity no" % name)
         else:
