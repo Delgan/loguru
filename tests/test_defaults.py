@@ -50,3 +50,11 @@ def test_invalid_bool(value, monkeypatch):
         context.setenv(key, value)
         with pytest.raises(ValueError):
             env(key, bool)
+
+
+def test_invalid_type(monkeypatch):
+    with monkeypatch.context() as context:
+        key = "INVALID_TYPE"
+        context.setenv(key, 42.0)
+        with pytest.raises(ValueError):
+            env(key, float)

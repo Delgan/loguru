@@ -24,7 +24,7 @@ def env(key, type_, default=None):
             raise ValueError(
                 "Invalid environment variable '%s' (expected an integer): '%s'" % (key, val)
             ) from None
-    return None
+    raise ValueError("The requested type '%r' is not supported" % type_)
 
 
 LOGURU_AUTOINIT = env("LOGURU_AUTOINIT", bool, True)
