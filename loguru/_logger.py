@@ -1975,7 +1975,12 @@ class Logger:
                 type_, value, traceback = exception
             else:
                 type_, value, traceback = sys.exc_info()
-            exception = RecordException(type_, value, traceback)
+            formatted_exception = "".join(traceback.format_exception(
+                type_,
+                value,
+                traceback
+            ))
+            exception = RecordException(type_, value, traceback, formatted_exception)
         else:
             exception = None
 

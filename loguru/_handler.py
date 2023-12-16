@@ -8,6 +8,7 @@ from threading import Thread
 
 from ._colorizer import Colorizer
 from ._locks_machinery import create_handler_lock
+from ._recattrs import RecordException
 
 
 def prepare_colored_format(format_, ansi_level):
@@ -141,7 +142,7 @@ class Handler:
             if not record["exception"]:
                 formatter_record["exception"] = ""
             else:
-                type_, value, tb = record["exception"]
+                type_, value, tb, _ = record["exception"]
                 formatter = self._exception_formatter
                 lines = formatter.format_exception(type_, value, tb, from_decorator=from_decorator)
                 formatter_record["exception"] = "".join(lines)
