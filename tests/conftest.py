@@ -54,8 +54,7 @@ def parse(text, *, strip=False, strict=True):
 
     if strip:
         return parser.strip(tokens)
-    else:
-        return parser.colorize(tokens, "")
+    return parser.colorize(tokens, "")
 
 
 def check_dir(dir, *, files=None, size=None):

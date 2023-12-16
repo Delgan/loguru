@@ -51,9 +51,7 @@ def parse_size(size):
     u = "kmgtpezy".index(u.lower()) + 1 if u else 0
     i = 1024 if i else 1000
     b = {"b": 8, "B": 1}[b] if b else 1
-    size = s * i**u / b
-
-    return size
+    return s * i**u / b
 
 
 def parse_duration(duration):
@@ -118,7 +116,7 @@ def parse_day(day):
     day = day.strip().lower()
     if day in days:
         return days[day]
-    elif day.startswith("w") and day[1:].isdigit():
+    if day.startswith("w") and day[1:].isdigit():
         day = int(day[1:])
         if not 0 <= day < 7:
             raise ValueError("Invalid weekday value while parsing day (expected [0-6]): '%d'" % day)

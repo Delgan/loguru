@@ -115,8 +115,7 @@ def test_broken_sink_caught_keep_working(enqueue):
         nonlocal output
         if m.startswith("NOK"):
             raise ValueError("Broken!")
-        else:
-            output += m
+        output += m
 
     logger.add(half_broken_sink, format="{message}", enqueue=enqueue, catch=True)
     logger.info("A")
