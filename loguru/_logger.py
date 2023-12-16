@@ -88,6 +88,7 @@ import functools
 import logging
 import re
 import sys
+import traceback as traceback_module
 import warnings
 from collections import namedtuple
 from inspect import isclass, iscoroutinefunction, isgeneratorfunction
@@ -1975,7 +1976,7 @@ class Logger:
                 type_, value, traceback = exception
             else:
                 type_, value, traceback = sys.exc_info()
-            formatted_exception = "".join(traceback.format_exception(
+            formatted_exception = "".join(traceback_module.format_exception(
                 type_,
                 value,
                 traceback

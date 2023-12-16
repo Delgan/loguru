@@ -100,7 +100,7 @@ class RecordException(namedtuple("RecordException", ("type", "value", "traceback
                 # by the same code and is not coming from an untrusted source.
                 unpickled_value = pickle.loads(pickled_value)
             except Exception:
-                pass
+                unpickled_value = None
 
         unpickled_formatted_traceback_ = None
         if pickled_formatted_traceback_:
@@ -109,6 +109,6 @@ class RecordException(namedtuple("RecordException", ("type", "value", "traceback
                 # by the same code and is not coming from an untrusted source.
                 unpickled_formatted_traceback_ = pickle.loads(pickled_formatted_traceback_)
             except Exception:
-                pass
+                unpickled_formatted_traceback_ = None
 
         return cls(type_, unpickled_value, traceback_, unpickled_formatted_traceback_)
