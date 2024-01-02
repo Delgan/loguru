@@ -156,12 +156,12 @@ This ``dict`` is attached to each logged message through a special ``record`` at
 
     def simple_sink(message):
         # A simple sink can use "message" as a basic string and ignore the "record" attribute.
-        print(message, end="") 
+        print(message, end="")
 
     def advanced_sink(message):
         # An advanced sink can use the "record" attribute to access contextual information.
         record = message.record
-        
+
         if record["level"].no >= 50:
             file_path = record["file"].path
             print(f"Critical error in {file_path}", end="", file=sys.stderr)
@@ -301,18 +301,20 @@ It provides the list of logged messages for each of which you can access :ref:`t
             return 0
         return val * 2
 
-    def test_do_something_good():
-        with capture_logs() as output:
-            do_something(1)
-        assert output == []
 
-    def test_do_something_bad():
-        with capture_logs() as output:
-            do_something(-1)
-        assert len(output) == 1
-        message = output[0]
-        assert "Invalid value" in message
-        assert message.record["level"].name == "ERROR"
+    class TestDoSomething(unittest.TestCase):
+        def test_do_something_good(self):
+            with capture_logs() as output:
+                do_something(1)
+            self.assertEqual(output, [])
+
+        def test_do_something_bad(self):
+            with capture_logs() as output:
+                do_something(-1)
+            self.assertEqual(len(output), 1)
+            message = output[0]
+            self.assertIn("Invalid value", message)
+            self.assertEqual(message.record["level"].name, "ERROR")
 
 
 Replacing ``caplog`` fixture from ``pytest`` library
