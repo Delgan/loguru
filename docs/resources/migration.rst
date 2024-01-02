@@ -152,7 +152,7 @@ Replacing ``LogRecord`` objects
 
 In Loguru, the equivalence of a |LogRecord| instance is a simple ``dict`` which stores the details of a logged message. To find the correspondence with |LogRecord| attributes, please refer to :ref:`the "record dict" documentation <record>` which lists all available keys.
 
-This ``dict`` is attached to each logged message through a special ``record`` attribute of the ``str``-like object received by sinks. For example::
+This ``dict`` is attached to each :ref:`logged message <message>` through a special ``record`` attribute of the ``str``-like object received by sinks. For example::
 
     def simple_sink(message):
         # A simple sink can use "message" as a basic string and ignore the "record" attribute.
@@ -293,7 +293,7 @@ The |assertLogs| method defined in the |unittest| from standard library is used 
         yield output
         logger.remove(handler_id)
 
-It provides the list of logged messages for each of which you can access :ref:`the record attribute<record>`. Here is a usage example::
+It provides the list of :ref:`logged messages <message>` for each of which you can access :ref:`the record attribute<record>`. Here is a usage example::
 
     def do_something(val):
         if val < 0:
