@@ -118,6 +118,10 @@ class SyntaxHighlighter:
             return
 
 
+class ExceptionFormatterRecursionError(Exception):
+    pass
+
+
 class ExceptionFormatter:
     _default_theme = {
         "introduction": "\x1b[33m\x1b[1m{}\x1b[0m",

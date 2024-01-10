@@ -97,7 +97,7 @@ from os.path import basename, splitext
 from threading import current_thread
 
 from . import _asyncio_loop, _colorama, _defaults, _filters
-from ._better_exceptions import ExceptionFormatter
+from ._better_exceptions import ExceptionFormatter, ExceptionFormatterRecursionError
 from ._colorizer import Colorizer
 from ._contextvars import ContextVar
 from ._datetime import aware_now
@@ -1219,6 +1219,7 @@ class Logger:
         class Catcher:
             def __init__(self, from_decorator):
                 self._from_decorator = from_decorator
+                self._already_logging_exception = False
 
             def __enter__(self):
                 return None
@@ -1239,8 +1240,13 @@ class Logger:
                 if from_decorator:
                     depth += 1
 
-                catch_options = [(type_, value, traceback_), depth, True] + options
-                logger._log(level, from_decorator, catch_options, message, (), {})
+                if not self._already_logging_exception:
+                    self._already_logging_exception = True
+                    catch_options = [(type_, value, traceback_), depth, True] + options
+                    logger._log(level, from_decorator, catch_options, message, (), {})
+                    self._already_logging_exception = False
+                else:
+                    raise ExceptionFormatterRecursionError()
 
                 if onerror is not None:
                     onerror(value)
