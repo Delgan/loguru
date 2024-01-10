@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import datetime
 import logging
 import pickle
@@ -16,6 +17,16 @@ def print_(message):
 
 async def async_print(msg):
     print_(msg)
+
+
+@contextlib.contextmanager
+def copied_logger_though_pickle(logger):
+    pickled = pickle.dumps(logger)
+    unpickled = pickle.loads(pickled)
+    try:
+        yield unpickled
+    finally:
+        unpickled.remove()
 
 
 class StreamHandler:
@@ -81,9 +92,8 @@ def compression_function(path):
 
 def test_pickling_function_handler(capsys):
     logger.add(print_, format="{level} - {function} - {message}")
-    pickled = pickle.dumps(logger)
-    unpikcled = pickle.loads(pickled)
-    unpikcled.debug("A message")
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.debug("A message")
     out, err = capsys.readouterr()
     assert out == "DEBUG - test_pickling_function_handler - A message\n"
     assert err == ""
@@ -91,14 +101,14 @@ def test_pickling_function_handler(capsys):
 
 def test_pickling_coroutine_function_handler(capsys):
     logger.add(async_print, format="{level} - {function} - {message}")
-    pickled = pickle.dumps(logger)
-    unpikcled = pickle.loads(pickled)
 
-    async def async_debug():
-        unpikcled.debug("A message")
-        await unpikcled.complete()
+    with copied_logger_though_pickle(logger) as dupe_logger:
 
-    asyncio.run(async_debug())
+        async def async_debug():
+            dupe_logger.debug("A message")
+            await dupe_logger.complete()
+
+        asyncio.run(async_debug())
 
     out, err = capsys.readouterr()
     assert out == "DEBUG - async_debug - A message\n"
@@ -109,12 +119,10 @@ def test_pickling_coroutine_function_handler(capsys):
 @pytest.mark.parametrize("stoppable", [True, False])
 def test_pickling_stream_handler(flushable, stoppable):
     stream = StreamHandler(flushable, stoppable)
-    i = logger.add(stream, format="{level} - {function} - {message}")
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.debug("A message")
-    stream = next(iter(unpickled._core.handlers.values()))._sink._stream
-    unpickled.remove(i)
+    logger.add(stream, format="{level} - {function} - {message}")
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.debug("A message")
+        stream = next(iter(dupe_logger._core.handlers.values()))._sink._stream
     assert stream.wrote == "DEBUG - test_pickling_stream_handler - A message\n"
     assert stream.flushed == flushable
     assert stream.stopped == stoppable
@@ -123,11 +131,10 @@ def test_pickling_stream_handler(flushable, stoppable):
 def test_pickling_standard_handler():
     handler = StandardHandler(logging.NOTSET)
     logger.add(handler, format="{level} - {function} - {message}")
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.debug("A message")
-    handler = next(iter(unpickled._core.handlers.values()))._sink._handler
-    assert handler.written == "DEBUG - test_pickling_standard_handler - A message"
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.debug("A message")
+        handler = next(iter(dupe_logger._core.handlers.values()))._sink._handler
+        assert handler.written == "DEBUG - test_pickling_standard_handler - A message"
 
 
 def test_pickling_standard_handler_root_logger_not_picklable(monkeypatch, capsys):
@@ -140,23 +147,21 @@ def test_pickling_standard_handler_root_logger_not_picklable(monkeypatch, capsys
         handler = StandardHandler(logging.NOTSET)
         logger.add(handler, format="=> {message}", catch=False)
 
-        pickled = pickle.dumps(logger)
-        pickle.loads(pickled)
-
-        logger.info("Ok")
-        out, err = capsys.readouterr()
-        assert out == ""
-        assert err == ""
-        assert handler.written == "=> Ok"
+        with copied_logger_though_pickle(logger) as dupe_logger:
+            logger.info("Ok")
+            dupe_logger.info("Ok")
+            out, err = capsys.readouterr()
+            assert out == ""
+            assert err == ""
+            assert handler.written == "=> Ok"
 
 
 def test_pickling_file_handler(tmp_path):
     file = tmp_path / "test.log"
     logger.add(file, format="{level} - {function} - {message}", delay=True)
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.debug("A message")
-    assert file.read_text() == "DEBUG - test_pickling_file_handler - A message\n"
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.debug("A message")
+        assert file.read_text() == "DEBUG - test_pickling_file_handler - A message\n"
 
 
 @pytest.mark.parametrize(
@@ -175,10 +180,9 @@ def test_pickling_file_handler(tmp_path):
 def test_pickling_file_handler_rotation(tmp_path, rotation):
     file = tmp_path / "test.log"
     logger.add(file, format="{level} - {function} - {message}", delay=True, rotation=rotation)
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.debug("A message")
-    assert file.read_text() == "DEBUG - test_pickling_file_handler_rotation - A message\n"
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.debug("A message")
+        assert file.read_text() == "DEBUG - test_pickling_file_handler_rotation - A message\n"
 
 
 @pytest.mark.parametrize(
@@ -187,28 +191,25 @@ def test_pickling_file_handler_rotation(tmp_path, rotation):
 def test_pickling_file_handler_retention(tmp_path, retention):
     file = tmp_path / "test.log"
     logger.add(file, format="{level} - {function} - {message}", delay=True, retention=retention)
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.debug("A message")
-    assert file.read_text() == "DEBUG - test_pickling_file_handler_retention - A message\n"
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.debug("A message")
+        assert file.read_text() == "DEBUG - test_pickling_file_handler_retention - A message\n"
 
 
 @pytest.mark.parametrize("compression", ["zip", "gz", "tar", compression_function])
 def test_pickling_file_handler_compression(tmp_path, compression):
     file = tmp_path / "test.log"
     logger.add(file, format="{level} - {function} - {message}", delay=True, compression=compression)
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.debug("A message")
-    assert file.read_text() == "DEBUG - test_pickling_file_handler_compression - A message\n"
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.debug("A message")
+        assert file.read_text() == "DEBUG - test_pickling_file_handler_compression - A message\n"
 
 
 def test_pickling_no_handler(writer):
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.add(writer, format="{level} - {function} - {message}")
-    unpickled.debug("A message")
-    assert writer.read() == "DEBUG - test_pickling_no_handler - A message\n"
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.add(writer, format="{level} - {function} - {message}")
+        dupe_logger.debug("A message")
+        assert writer.read() == "DEBUG - test_pickling_no_handler - A message\n"
 
 
 def test_pickling_handler_not_serializable():
@@ -219,10 +220,9 @@ def test_pickling_handler_not_serializable():
 
 def test_pickling_filter_function(capsys):
     logger.add(print_, format="{message}", filter=filter_function)
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.info("Nope")
-    unpickled.info("[PASS] Yes")
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.info("Nope")
+        dupe_logger.info("[PASS] Yes")
     out, err = capsys.readouterr()
     assert out == "[PASS] Yes\n"
     assert err == ""
@@ -231,9 +231,8 @@ def test_pickling_filter_function(capsys):
 @pytest.mark.parametrize("filter", ["", "tests"])
 def test_pickling_filter_name(capsys, filter):
     logger.add(print_, format="{message}", filter=filter)
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.info("A message")
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.info("A message")
     out, err = capsys.readouterr()
     assert out == "A message\n"
     assert err == ""
@@ -242,9 +241,8 @@ def test_pickling_filter_name(capsys, filter):
 @pytest.mark.parametrize("colorize", [True, False])
 def test_pickling_format_string(capsys, colorize):
     logger.add(print_, format="-> <red>{message}</red>", colorize=colorize)
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.info("The message")
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.info("The message")
     out, err = capsys.readouterr()
     assert out == parse("-> <red>The message</red>\n", strip=not colorize)
     assert err == ""
@@ -253,9 +251,8 @@ def test_pickling_format_string(capsys, colorize):
 @pytest.mark.parametrize("colorize", [True, False])
 def test_pickling_format_function(capsys, colorize):
     logger.add(print_, format=format_function, colorize=colorize)
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.info("The message")
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.info("The message")
     out, err = capsys.readouterr()
     assert out == parse("-> <red>The message</red>", strip=not colorize)
     assert err == ""
@@ -275,29 +272,26 @@ def test_pickling_format_function_not_serializable():
 
 def test_pickling_bound_logger(writer):
     bound_logger = logger.bind(foo="bar")
-    pickled = pickle.dumps(bound_logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.add(writer, format="{extra[foo]}")
-    unpickled.info("Test")
-    assert writer.read() == "bar\n"
+    with copied_logger_though_pickle(bound_logger) as dupe_logger:
+        dupe_logger.add(writer, format="{extra[foo]}")
+        dupe_logger.info("Test")
+        assert writer.read() == "bar\n"
 
 
 def test_pickling_patched_logger(writer):
     patched_logger = logger.patch(patch_function)
-    pickled = pickle.dumps(patched_logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.add(writer, format="{extra[foo]}")
-    unpickled.info("Test")
-    assert writer.read() == "bar\n"
+    with copied_logger_though_pickle(patched_logger) as dupe_logger:
+        dupe_logger.add(writer, format="{extra[foo]}")
+        dupe_logger.info("Test")
+        assert writer.read() == "bar\n"
 
 
 def test_remove_after_pickling(capsys):
     i = logger.add(print_, format="{message}")
     logger.info("A")
-    pickled = pickle.dumps(logger)
-    unpickled = pickle.loads(pickled)
-    unpickled.remove(i)
-    unpickled.info("B")
+    with copied_logger_though_pickle(logger) as dupe_logger:
+        dupe_logger.remove(i)
+        dupe_logger.info("B")
     out, err = capsys.readouterr()
     assert out == "A\n"
     assert err == ""
