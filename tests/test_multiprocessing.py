@@ -551,33 +551,36 @@ def test_no_deadlock_if_internal_lock_in_use(tmp_path, enqueue, deepcopied, fork
         logger_ = logger
 
     output = tmp_path / "stdout.txt"
-    stdout = output.open("w")
 
-    def slow_sink(msg):
-        time.sleep(0.5)
-        stdout.write(msg)
-        stdout.flush()
+    with output.open("w") as stdout:
 
-    def main():
-        logger_.info("Main")
+        def slow_sink(msg):
+            time.sleep(0.5)
+            stdout.write(msg)
+            stdout.flush()
 
-    def worker():
-        logger_.info("Child")
+        def main():
+            logger_.info("Main")
 
-    logger_.add(slow_sink, context=fork_context, format="{message}", enqueue=enqueue, catch=False)
+        def worker():
+            logger_.info("Child")
 
-    thread = threading.Thread(target=main)
-    thread.start()
+        logger_.add(
+            slow_sink, context=fork_context, format="{message}", enqueue=enqueue, catch=False
+        )
 
-    process = fork_context.Process(target=worker)
-    process.start()
+        thread = threading.Thread(target=main)
+        thread.start()
 
-    thread.join()
-    process.join(2)
+        process = fork_context.Process(target=worker)
+        process.start()
 
-    assert process.exitcode == 0
+        thread.join()
+        process.join(2)
 
-    logger_.remove()
+        assert process.exitcode == 0
+
+        logger_.remove()
 
     assert output.read_text() in ("Main\nChild\n", "Child\nMain\n")
 

@@ -22,9 +22,9 @@ def test_stdout():
 
 def test_file_object(tmp_path):
     path = str(tmp_path / "test.log")
-    file = open(path, "w")
-    logger.add(file)
-    assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=%s)]>" % path
+    with open(path, "w") as file:
+        logger.add(file)
+        assert repr(logger) == "<loguru.logger handlers=[(id=0, level=10, sink=%s)]>" % path
 
 
 def test_file_str(tmp_path):
