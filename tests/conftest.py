@@ -47,6 +47,24 @@ if sys.version_info < (3, 6):
         yield pathlib.Path(str(tmp_path))
 
 
+@contextlib.contextmanager
+def new_event_loop_context():
+    loop = asyncio.new_event_loop()
+    try:
+        yield loop
+    finally:
+        loop.close()
+
+
+@contextlib.contextmanager
+def set_event_loop_context(loop):
+    asyncio.set_event_loop(loop)
+    try:
+        yield
+    finally:
+        asyncio.set_event_loop(None)
+
+
 def parse(text, *, strip=False, strict=True):
     parser = loguru._colorizer.AnsiParser()
     parser.feed(text)
