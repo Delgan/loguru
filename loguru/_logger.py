@@ -1841,11 +1841,18 @@ class Logger:
         ...         print(log["date"], log["something_else"])
         """
         if isinstance(file, (str, PathLike)):
-            should_close = True
-            fileobj = open(str(file))
+
+            @contextlib.contextmanager
+            def opener():
+                with open(str(file)) as fileobj:
+                    yield fileobj
+
         elif hasattr(file, "read") and callable(file.read):
-            should_close = False
-            fileobj = file
+
+            @contextlib.contextmanager
+            def opener():
+                yield file
+
         else:
             raise TypeError(
                 "Invalid file, it should be a string path or a file object, not: '%s'"
@@ -1874,21 +1881,19 @@ class Logger:
                 % type(pattern).__name__
             ) from None
 
-        matches = Logger._find_iter(fileobj, regex, chunk)
+        with opener() as fileobj:
+            matches = Logger._find_iter(fileobj, regex, chunk)
 
-        for match in matches:
-            groups = match.groupdict()
-            cast_function(groups)
-            yield groups
-
-        if should_close:
-            fileobj.close()
+            for match in matches:
+                groups = match.groupdict()
+                cast_function(groups)
+                yield groups
 
     @staticmethod
     def _find_iter(fileobj, regex, chunk):
         buffer = fileobj.read(0)
 
-        while 1:
+        while True:
             text = fileobj.read(chunk)
             buffer += text
             matches = list(regex.finditer(buffer))
