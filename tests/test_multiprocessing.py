@@ -36,6 +36,16 @@ def subworker(logger_):
     logger_.info("Child")
 
 
+def subworker_spawn(logger_):
+    logger_.reinstall()
+    logger.info("Child")
+    deeper_subworker()
+
+
+def deeper_subworker():
+    logger.info("Grandchild")
+
+
 def subworker_inheritance():
     logger.info("Child")
 
@@ -209,7 +219,7 @@ def test_process_spawn(spawn_context):
 
     logger.add(writer, context=spawn_context, format="{message}", enqueue=True, catch=False)
 
-    process = spawn_context.Process(target=subworker, args=(logger,))
+    process = spawn_context.Process(target=subworker_spawn, args=(logger,))
     process.start()
     process.join()
 
@@ -218,7 +228,7 @@ def test_process_spawn(spawn_context):
     logger.info("Main")
     logger.remove()
 
-    assert writer.read() == "Child\nMain\n"
+    assert writer.read() == "Child\nGrandchild\nMain\n"
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
