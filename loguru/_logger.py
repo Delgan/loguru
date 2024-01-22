@@ -86,7 +86,6 @@ import builtins
 import contextlib
 import functools
 import logging
-import os
 import re
 import sys
 import warnings
@@ -231,7 +230,6 @@ class Logger:
     def __init__(self, core, exception, depth, record, lazy, colors, raw, capture, patchers, extra):
         self._core = core
         self._options = (exception, depth, record, lazy, colors, raw, capture, patchers, extra)
-        self._own_pid = os.getpid()
 
     def __repr__(self):
         return "<loguru.logger handlers=%r>" % list(self._core.handlers.values())
@@ -1754,20 +1752,17 @@ class Logger:
 
         return [self.add(**params) for params in handlers]
 
-    def _replace_core(self, core: Core):
-        self._core = core
-
     def reinstall(self):
         """Reinstall the core of logger.
 
         When using multiprocessing, you can pass logger as a parameter to the target of
-        ``multiprocessing.Process``, and run this method once, thus you don't need to pass logger to every
-        function you called in the same process with spawn multiprocessing.
+        ``multiprocessing.Process``, and run this method once, thus you don't need to pass
+        logger to every function you called in the same process with spawn multiprocessing.
 
         Examples
         --------
-        >>> def subworker(logger_):
-        ...     logger_.reinstall()
+        >>> def subworker(logger):
+        ...     logger.reinstall()
         ...     logger.info("Child")
         ...     deeper_subworker()
 
@@ -1787,12 +1782,9 @@ class Logger:
         ...     logger.info("Main")
         ...     logger.remove()
         """
-        if self._own_pid == os.getpid():  # same process
-            return
         from loguru import logger
 
-        logger._replace_core(self._core)
-
+        logger._core = self._core
 
     def _change_activation(self, name, status):
         if not (name is None or isinstance(name, str)):
