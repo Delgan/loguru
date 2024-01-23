@@ -121,6 +121,7 @@ def _pickle_sink(message):
     if message.record["extra"].get("clone", False):
         new_logger = pickle.loads(pickle.dumps(logger))
         new_logger.bind(clone=False).info("From clone")
+        new_logger.remove()
 
 
 def test_pickled_logger_does_not_inherit_acquired_local(capsys):

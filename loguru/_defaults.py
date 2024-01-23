@@ -9,7 +9,7 @@ def env(key, type_, default=None):
 
     if type_ == str:
         return val
-    elif type_ == bool:
+    if type_ == bool:
         if val.lower() in ["1", "true", "yes", "y", "ok", "on"]:
             return True
         if val.lower() in ["0", "false", "no", "n", "nok", "off"]:
@@ -17,13 +17,14 @@ def env(key, type_, default=None):
         raise ValueError(
             "Invalid environment variable '%s' (expected a boolean): '%s'" % (key, val)
         )
-    elif type_ == int:
+    if type_ == int:
         try:
             return int(val)
         except ValueError:
             raise ValueError(
                 "Invalid environment variable '%s' (expected an integer): '%s'" % (key, val)
             ) from None
+    raise ValueError("The requested type '%r' is not supported" % type_)
 
 
 LOGURU_AUTOINIT = env("LOGURU_AUTOINIT", bool, True)

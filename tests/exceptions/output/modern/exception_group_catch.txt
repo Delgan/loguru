@@ -1,0 +1,30 @@
+
+  + [33m[1mException Group Traceback (most recent call last):[0m
+  |
+  |   File "[32mtests/exceptions/source/modern/[0m[32m[1mexception_group_catch.py[0m", line [33m14[0m, in [35ma[0m
+  |     [35m[1mraise[0m [1mExceptionGroup[0m[1m([0m[36m"group"[0m[1m,[0m [1m[[0m[1mValueError[0m[1m([0m[34m[1m1[0m[1m)[0m[1m][0m[1m)[0m
+  |
+  | [31m[1mExceptionGroup[0m:[1m group (1 sub-exception)[0m
+  +-+---------------- 1 ----------------
+    | [31m[1mValueError[0m:[1m 1[0m
+    +------------------------------------
+
+
+[1mDuring handling of the above exception, another exception occurred:[0m
+
+
+[33m[1mTraceback (most recent call last):[0m
+
+  File "[32mtests/exceptions/source/modern/[0m[32m[1mexception_group_catch.py[0m", line [33m25[0m, in [35m<module>[0m
+    [1mb[0m[1m([0m[1m)[0m
+    [36m└ [0m[36m[1m<function b at 0xDEADBEEF>[0m
+
+  File "[32mtests/exceptions/source/modern/[0m[32m[1mexception_group_catch.py[0m", line [33m21[0m, in [35mb[0m
+    [35m[1mexcept[0m[35m[1m*[0m [1mTypeError[0m[1m:[0m [1ma[0m[1m([0m[1m)[0m
+    [36m                   └ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+
+  File "[32mtests/exceptions/source/modern/[0m[32m[1mexception_group_catch.py[0m", line [33m15[0m, in [35ma[0m
+    [35m[1mexcept[0m[35m[1m*[0m [1mx[0m [35m[1mas[0m [1me[0m[1m:[0m [35m[1mraise[0m [1mValueError[0m[1m([0m[34m[1m2[0m[1m)[0m
+    [36m        └ [0m[36m[1m<class 'ValueError'>[0m
+
+[31m[1mValueError[0m:[1m 2[0m

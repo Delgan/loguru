@@ -23,7 +23,7 @@ from loguru import logger
         {"tests.test_add_option_filter.": False},
     ],
 )
-def test_filterd_in(filter, writer):
+def test_filtered_in(filter, writer):
     logger.add(writer, filter=filter, format="{message}")
     logger.debug("Test Filter")
     assert writer.read() == "Test Filter\n"

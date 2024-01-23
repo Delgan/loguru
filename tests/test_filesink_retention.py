@@ -68,7 +68,6 @@ def test_managed_files(tmp_path):
         "test.log.1",
         "test.log.1.gz",
         "test.log.rar",
-        "test.log",
         "test.2019-11-12_03-22-07_018985.log",
         "test.2019-11-12_03-22-07_018985.log.tar.gz",
         "test.2019-11-12_03-22-07_018985.2.log",
@@ -354,6 +353,6 @@ def test_invalid_retention(retention):
     "retention",
     ["W5", "monday at 14:00", "sunday", "nope", "5 MB", "3 hours 2 dayz", "d", "H", "__dict__"],
 )
-def test_unkown_retention(retention):
+def test_unknown_retention(retention):
     with pytest.raises(ValueError):
         logger.add("test.log", retention=retention)

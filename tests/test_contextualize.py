@@ -204,7 +204,7 @@ def test_context_reset_despite_error(writer):
     try:
         with logger.contextualize(foobar=456):
             logger.info("Division")
-            1 / 0
+            1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.info("Error")
 
@@ -215,6 +215,7 @@ def test_context_reset_despite_error(writer):
 # verifying third-library is properly imported to reach 100% coverage.
 def test_contextvars_fallback_352(monkeypatch):
     mock_module = MagicMock()
-    monkeypatch.setattr(sys, "version_info", (3, 5, 2))
-    monkeypatch.setitem(sys.modules, "contextvars", mock_module)
-    assert load_contextvar_class() == mock_module.ContextVar
+    with monkeypatch.context() as context:
+        context.setattr(sys, "version_info", (3, 5, 2))
+        context.setitem(sys.modules, "contextvars", mock_module)
+        assert load_contextvar_class() == mock_module.ContextVar

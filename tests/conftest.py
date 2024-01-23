@@ -2,6 +2,7 @@ import asyncio
 import builtins
 import contextlib
 import datetime
+import io
 import logging
 import os
 import pathlib
@@ -46,6 +47,24 @@ if sys.version_info < (3, 6):
         yield pathlib.Path(str(tmp_path))
 
 
+@contextlib.contextmanager
+def new_event_loop_context():
+    loop = asyncio.new_event_loop()
+    try:
+        yield loop
+    finally:
+        loop.close()
+
+
+@contextlib.contextmanager
+def set_event_loop_context(loop):
+    asyncio.set_event_loop(loop)
+    try:
+        yield
+    finally:
+        asyncio.set_event_loop(None)
+
+
 def parse(text, *, strip=False, strict=True):
     parser = loguru._colorizer.AnsiParser()
     parser.feed(text)
@@ -53,8 +72,7 @@ def parse(text, *, strip=False, strict=True):
 
     if strip:
         return parser.strip(tokens)
-    else:
-        return parser.colorize(tokens, "")
+    return parser.colorize(tokens, "")
 
 
 def check_dir(dir, *, files=None, size=None):
@@ -71,6 +89,31 @@ def check_dir(dir, *, files=None, size=None):
             if content is not None:
                 assert filepath.read_text() == content
             seen.add(filepath)
+
+
+class StubStream(io.StringIO):
+    def fileno(self):
+        return 1
+
+
+class StreamIsattyTrue(StubStream):
+    def isatty(self):
+        return True
+
+
+class StreamIsattyFalse(StubStream):
+    def isatty(self):
+        return False
+
+
+class StreamIsattyException(StubStream):
+    def isatty(self):
+        raise RuntimeError
+
+
+class StreamFilenoException(StreamIsattyTrue):
+    def fileno(self):
+        raise RuntimeError
 
 
 @contextlib.contextmanager
@@ -102,6 +145,7 @@ def check_env_variables():
                 "A Loguru environment variable has been detected "
                 "and may interfere with the tests: '%s'" % var,
                 RuntimeWarning,
+                stacklevel=1,
             )
 
 
@@ -263,4 +307,6 @@ def f_globals_name_absent(monkeypatch):
         frame.f_globals.pop("__name__", None)
         return frame
 
-    monkeypatch.setattr(loguru._logger, "get_frame", patched_getframe)
+    with monkeypatch.context() as context:
+        context.setattr(loguru._logger, "get_frame", patched_getframe)
+        yield

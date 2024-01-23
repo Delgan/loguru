@@ -9,6 +9,8 @@ import pytest
 
 from loguru import logger
 
+from .conftest import new_event_loop_context, set_event_loop_context
+
 
 async def async_writer(msg):
     await asyncio.sleep(0.01)
@@ -90,18 +92,17 @@ def test_using_another_event_loop(capsys):
         logger.debug("A message")
         await logger.complete()
 
-    loop = asyncio.new_event_loop()
+    with new_event_loop_context() as loop:
+        logger.add(async_writer, format="{message}", loop=loop)
 
-    logger.add(async_writer, format="{message}", loop=loop)
-
-    loop.run_until_complete(worker())
+        loop.run_until_complete(worker())
 
     out, err = capsys.readouterr()
     assert err == ""
     assert out == "A message\n"
 
 
-def test_run_mutiple_different_loops(capsys):
+def test_run_multiple_different_loops(capsys):
     async def worker(i):
         logger.debug("Message {}", i)
         await logger.complete()
@@ -122,12 +123,11 @@ def test_run_multiple_same_loop(capsys):
         logger.debug("Message {}", i)
         await logger.complete()
 
-    loop = asyncio.new_event_loop()
+    with new_event_loop_context() as loop:
+        logger.add(async_writer, format="{message}", loop=loop)
 
-    logger.add(async_writer, format="{message}", loop=loop)
-
-    loop.run_until_complete(worker(1))
-    loop.run_until_complete(worker(2))
+        loop.run_until_complete(worker(1))
+        loop.run_until_complete(worker(2))
 
     out, err = capsys.readouterr()
     assert err == ""
@@ -135,14 +135,13 @@ def test_run_multiple_same_loop(capsys):
 
 
 def test_using_sink_without_running_loop_not_none(capsys):
-    loop = asyncio.new_event_loop()
+    with new_event_loop_context() as loop:
+        logger.add(sys.stderr, format="=> {message}")
+        logger.add(async_writer, format="{message}", loop=loop)
 
-    logger.add(sys.stderr, format="=> {message}")
-    logger.add(async_writer, format="{message}", loop=loop)
+        logger.info("A message")
 
-    logger.info("A message")
-
-    loop.run_until_complete(logger.complete())
+        loop.run_until_complete(logger.complete())
 
     out, err = capsys.readouterr()
     assert err == "=> A message\n"
@@ -150,14 +149,13 @@ def test_using_sink_without_running_loop_not_none(capsys):
 
 
 def test_using_sink_without_running_loop_none(capsys):
-    loop = asyncio.new_event_loop()
+    with new_event_loop_context() as loop:
+        logger.add(sys.stderr, format="=> {message}")
+        logger.add(async_writer, format="{message}", loop=None)
 
-    logger.add(sys.stderr, format="=> {message}")
-    logger.add(async_writer, format="{message}", loop=None)
+        logger.info("A message")
 
-    logger.info("A message")
-
-    loop.run_until_complete(logger.complete())
+        loop.run_until_complete(logger.complete())
 
     out, err = capsys.readouterr()
     assert err == "=> A message\n"
@@ -165,15 +163,14 @@ def test_using_sink_without_running_loop_none(capsys):
 
 
 def test_global_loop_not_used(capsys):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    with new_event_loop_context() as loop:
+        with set_event_loop_context(loop):
+            logger.add(sys.stderr, format="=> {message}")
+            logger.add(async_writer, format="{message}", loop=None)
 
-    logger.add(sys.stderr, format="=> {message}")
-    logger.add(async_writer, format="{message}", loop=None)
+            logger.info("A message")
 
-    logger.info("A message")
-
-    loop.run_until_complete(logger.complete())
+            loop.run_until_complete(logger.complete())
 
     out, err = capsys.readouterr()
     assert err == "=> A message\n"
@@ -189,12 +186,11 @@ def test_complete_in_another_run(capsys):
         logger.debug("B")
         await logger.complete()
 
-    loop = asyncio.new_event_loop()
+    with new_event_loop_context() as loop:
+        logger.add(async_writer, format="{message}", loop=loop)
 
-    logger.add(async_writer, format="{message}", loop=loop)
-
-    loop.run_until_complete(worker_1())
-    loop.run_until_complete(worker_2())
+        loop.run_until_complete(worker_1())
+        loop.run_until_complete(worker_2())
 
     out, err = capsys.readouterr()
     assert out == "A\nB\n"
@@ -421,14 +417,14 @@ def test_exception_in_coroutine_during_complete_not_caught(capsys, caplog):
 
 @pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
 def test_enqueue_coroutine_loop(capsys):
-    loop = asyncio.new_event_loop()
-    logger.add(async_writer, enqueue=True, loop=loop, format="{message}", catch=False)
+    with new_event_loop_context() as loop:
+        logger.add(async_writer, enqueue=True, loop=loop, format="{message}", catch=False)
 
-    async def worker():
-        logger.info("A")
-        await logger.complete()
+        async def worker():
+            logger.info("A")
+            await logger.complete()
 
-    loop.run_until_complete(worker())
+        loop.run_until_complete(worker())
 
     out, err = capsys.readouterr()
     assert out == "A\n"
@@ -436,14 +432,14 @@ def test_enqueue_coroutine_loop(capsys):
 
 
 def test_enqueue_coroutine_from_inside_coroutine_without_loop(capsys):
-    loop = asyncio.new_event_loop()
+    with new_event_loop_context() as loop:
 
-    async def worker():
-        logger.add(async_writer, enqueue=True, loop=None, format="{message}", catch=False)
-        logger.info("A")
-        await logger.complete()
+        async def worker():
+            logger.add(async_writer, enqueue=True, loop=None, format="{message}", catch=False)
+            logger.info("A")
+            await logger.complete()
 
-    loop.run_until_complete(worker())
+        loop.run_until_complete(worker())
 
     out, err = capsys.readouterr()
     assert out == "A\n"
@@ -478,25 +474,23 @@ def test_custom_complete_function(capsys):
 @pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
 @pytest.mark.parametrize("loop_is_none", [True, False])
 def test_complete_from_another_loop(capsys, loop_is_none):
-    main_loop = asyncio.new_event_loop()
-    second_loop = asyncio.new_event_loop()
+    with new_event_loop_context() as main_loop, new_event_loop_context() as second_loop:
+        loop = None if loop_is_none else main_loop
+        logger.add(async_writer, loop=loop, format="{message}")
 
-    loop = None if loop_is_none else main_loop
-    logger.add(async_writer, loop=loop, format="{message}")
+        async def worker_1():
+            logger.info("A")
 
-    async def worker_1():
-        logger.info("A")
+        async def worker_2():
+            await logger.complete()
 
-    async def worker_2():
-        await logger.complete()
+        main_loop.run_until_complete(worker_1())
+        second_loop.run_until_complete(worker_2())
 
-    main_loop.run_until_complete(worker_1())
-    second_loop.run_until_complete(worker_2())
+        out, err = capsys.readouterr()
+        assert out == err == ""
 
-    out, err = capsys.readouterr()
-    assert out == err == ""
-
-    main_loop.run_until_complete(worker_2())
+        main_loop.run_until_complete(worker_2())
 
     out, err = capsys.readouterr()
     assert out == "A\n"
@@ -544,25 +538,86 @@ def test_complete_from_multiple_threads_loop_is_not_none(capsys):
     def worker_(i):
         asyncio.run(worker(i))
 
-    loop = asyncio.new_event_loop()
-    logger.add(sink, catch=False, format="{message}", loop=loop)
+    with new_event_loop_context() as loop:
+        logger.add(sink, catch=False, format="{message}", loop=loop)
 
-    threads = [threading.Thread(target=worker_, args=(i,)) for i in range(10)]
+        threads = [threading.Thread(target=worker_, args=(i,)) for i in range(10)]
 
-    for t in threads:
-        t.start()
+        for t in threads:
+            t.start()
 
-    for t in threads:
-        t.join()
+        for t in threads:
+            t.join()
 
-    async def complete():
-        await logger.complete()
+        async def complete():
+            await logger.complete()
 
-    loop.run_until_complete(complete())
+        loop.run_until_complete(complete())
 
     out, err = capsys.readouterr()
     assert sorted(out.splitlines()) == ["{:03}".format(i) for i in range(10) for _ in range(100)]
     assert err == ""
+
+
+def test_complete_and_sink_write_concurrency():
+    count = 1000
+    n = 0
+
+    async def sink(message):
+        nonlocal n
+        n += 1
+
+    async def some_task():
+        for _ in range(count):
+            logger.info("Message")
+            await asyncio.sleep(0)
+
+    async def another_task():
+        for _ in range(count):
+            await logger.complete()
+            await asyncio.sleep(0)
+
+    async def main():
+        logger.remove()
+        logger.add(sink, catch=False)
+
+        await asyncio.gather(some_task(), another_task())
+
+    asyncio.run(main())
+
+    assert n == count
+
+
+def test_complete_and_contextualize_concurrency():
+    called = False
+
+    async def main():
+        logging_event = asyncio.Event()
+        contextualize_event = asyncio.Event()
+
+        async def sink(message):
+            nonlocal called
+            logging_event.set()
+            await contextualize_event.wait()
+            called = True
+
+        async def logging_task():
+            logger.info("Message")
+            await logger.complete()
+
+        async def contextualize_task():
+            with logger.contextualize():
+                contextualize_event.set()
+                await logging_event.wait()
+
+        logger.remove()
+        logger.add(sink, catch=False)
+
+        await asyncio.gather(logging_task(), contextualize_task())
+
+    asyncio.run(main())
+
+    assert called
 
 
 async def async_subworker(logger_):
@@ -576,8 +631,8 @@ async def async_mainworker(logger_):
 
 
 def subworker(logger_):
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(async_subworker(logger_))
+    with new_event_loop_context() as loop:
+        loop.run_until_complete(async_subworker(logger_))
 
 
 class Writer:
@@ -588,21 +643,21 @@ class Writer:
         self.output += message
 
 
-def test_complete_with_sub_processes(monkeypatch, capsys):
+def test_complete_with_sub_processes(capsys):
     spawn_context = multiprocessing.get_context("spawn")
 
-    loop = asyncio.new_event_loop()
-    writer = Writer()
-    logger.add(writer.write, context=spawn_context, format="{message}", enqueue=True, loop=loop)
+    with new_event_loop_context() as loop:
+        writer = Writer()
+        logger.add(writer.write, context=spawn_context, format="{message}", enqueue=True, loop=loop)
 
-    process = spawn_context.Process(target=subworker, args=[logger])
-    process.start()
-    process.join()
+        process = spawn_context.Process(target=subworker, args=[logger])
+        process.start()
+        process.join()
 
-    async def complete():
-        await logger.complete()
+        async def complete():
+            await logger.complete()
 
-    loop.run_until_complete(complete())
+        loop.run_until_complete(complete())
 
     out, err = capsys.readouterr()
     assert out == err == ""

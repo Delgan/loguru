@@ -46,6 +46,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Programming Language :: Python :: Implementation :: CPython",
@@ -58,29 +59,31 @@ setup(
     extras_require={
         "dev": [
             # Setup.
-            "pre-commit==3.2.1 ; python_version>='3.8'",
+            "pre-commit==3.6.0 ; python_version>='3.9'",
             "tox==3.27.1 ; python_version<'3.8'",
-            "tox==4.4.6 ; python_version>='3.8'",
+            "tox==4.11.0 ; python_version>='3.8'",
             # Testing framework.
             "pytest==6.1.2 ; python_version<'3.8'",
-            "pytest==7.2.1 ; python_version>='3.8'",
+            "pytest==7.4.0 ; python_version>='3.8'",
             "pytest-cov==2.12.1 ; python_version<'3.8'",
-            "pytest-cov==4.0.0 ; python_version>='3.8'",
+            "pytest-cov==4.1.0 ; python_version>='3.8'",
             "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.8'",
-            "pytest-mypy-plugins==1.10.1 ; python_version>='3.8'",
+            "pytest-mypy-plugins==3.0.0 ; python_version>='3.8'",
             # Testing utils.
             "colorama==0.4.5 ; python_version<'3.8'",
             "colorama==0.4.6 ; python_version>='3.8'",
             "freezegun==1.1.0 ; python_version<'3.8'",
-            "freezegun==1.2.2 ; python_version>='3.8'",
+            "freezegun==1.4.0 ; python_version>='3.8'",
+            "exceptiongroup==1.1.3 ; python_version>='3.7' and python_version<'3.11'",
             # Type checking.
             "mypy==v0.910 ; python_version<'3.6'",
             "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",
-            "mypy==v0.990 ; python_version>='3.7'",
+            "mypy==v1.4.1 ; python_version>='3.7' and python_version<'3.8'",
+            "mypy==v1.8.0 ; python_version>='3.8'",
             # Docs.
-            "Sphinx==5.3.0 ; python_version>='3.8'",
-            "sphinx-autobuild==2021.3.14 ; python_version>='3.8'",
-            "sphinx-rtd-theme==1.2.0 ; python_version>='3.8'",
+            "Sphinx==7.2.5 ; python_version>='3.9'",
+            "sphinx-autobuild==2021.3.14 ; python_version>='3.9'",
+            "sphinx-rtd-theme==2.0.0 ; python_version>='3.9'",
         ]
     },
     python_requires=">=3.5",

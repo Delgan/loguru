@@ -1,32 +1,8 @@
-import os
-import sys
-from unittest.mock import MagicMock
-
 import pytest
 
-import loguru
 from loguru import logger
 
-from .conftest import parse
-
-
-class Stream:
-    def __init__(self, tty):
-        self.out = ""
-        self.tty = tty
-        self.closed = False
-
-    def write(self, m):
-        self.out += m
-
-    def isatty(self):
-        if self.tty is None:
-            raise RuntimeError
-        else:
-            return self.tty
-
-    def flush(self):
-        pass
+from .conftest import StreamIsattyException, StreamIsattyFalse, StreamIsattyTrue, parse
 
 
 @pytest.mark.parametrize(
@@ -59,183 +35,41 @@ def test_decolorized_format(format, message, expected, writer):
     assert writer.read() == expected
 
 
-@pytest.fixture
-def patch_colorama(monkeypatch):
-    instance = MagicMock()
-    class_ = MagicMock(return_value=instance)
-    winapi_test = MagicMock(return_value=True)
-    win32 = MagicMock(winapi_test=winapi_test)
-    colorama = MagicMock(AnsiToWin32=class_, win32=win32)
-    monkeypatch.setitem(sys.modules, "colorama", colorama)
-    monkeypatch.setitem(sys.modules, "colorama.win32", win32)
-    yield colorama
-
-
-@pytest.mark.parametrize("colorize", [True, False, None])
-@pytest.mark.parametrize("tty", [True, False])
-@pytest.mark.parametrize("replace_original", [True, False])
-@pytest.mark.skipif(os.name == "nt", reason="Colorama is required on Windows")
-def test_colorize_stream_linux(patch_colorama, monkeypatch, colorize, tty, replace_original):
-    stream = Stream(tty)
-
-    monkeypatch.delenv("TERM", raising=False)
-    monkeypatch.delenv("PYCHARM_HOSTED", raising=False)
-
-    if replace_original:
-        monkeypatch.setattr(sys, "__stdout__", stream)
-
-    logger.add(stream, format="<red>{message}</red>", colorize=colorize, catch=False)
+@pytest.mark.parametrize(
+    "stream", [StreamIsattyTrue(), StreamIsattyFalse(), StreamIsattyException()]
+)
+def test_colorize_stream(stream):
+    logger.add(stream, format="<blue>{message}</blue>", colorize=True)
     logger.debug("Message")
-
-    winapi_test = patch_colorama.win32.winapi_test
-    stream_write = patch_colorama.AnsiToWin32().stream.write
-
-    assert not stream_write.called
-    assert not winapi_test.called
-
-    if colorize or (colorize is None and tty):
-        assert stream.out == parse("<red>Message</red>\n")
-    else:
-        assert stream.out == "Message\n"
+    assert stream.getvalue() == parse("<blue>Message</blue>\n")
 
 
-@pytest.mark.parametrize("colorize", [True, False, None])
-@pytest.mark.parametrize("tty", [True, False])
-@pytest.mark.parametrize("replace_original", [True, False])
-@pytest.mark.skipif(os.name != "nt", reason="Only Windows requires Colorama")
-def test_colorize_stream_windows(patch_colorama, monkeypatch, colorize, tty, replace_original):
-    stream = Stream(tty)
-
-    monkeypatch.delenv("TERM", raising=False)
-    monkeypatch.delenv("PYCHARM_HOSTED", raising=False)
-
-    if replace_original:
-        monkeypatch.setattr(sys, "__stdout__", stream)
-
-    logger.add(stream, format="<blue>{message}</blue>", colorize=colorize, catch=False)
+@pytest.mark.parametrize(
+    "stream", [StreamIsattyTrue(), StreamIsattyFalse(), StreamIsattyException()]
+)
+def test_decolorize_stream(stream):
+    stream = StreamIsattyFalse()
+    logger.add(stream, format="<blue>{message}</blue>", colorize=False)
     logger.debug("Message")
-
-    winapi_test = patch_colorama.win32.winapi_test
-    stream_write = patch_colorama.AnsiToWin32().stream.write
-
-    if replace_original and (colorize or (colorize is None and tty)):
-        assert winapi_test.called
-        assert stream_write.called
-    else:
-        assert not winapi_test.called
-        assert not stream_write.called
+    assert stream.getvalue() == "Message\n"
 
 
-@pytest.mark.parametrize("colorize", [True, False, None])
-def test_isatty_error(colorize):
-    stream = Stream(None)
-    logger.add(stream, format="<blue>{message}</blue>", colorize=colorize)
+def test_automatic_detection_when_stream_is_a_tty():
+    stream = StreamIsattyTrue()
+    logger.add(stream, format="<blue>{message}</blue>", colorize=None)
     logger.debug("Message")
-
-    if colorize is True:
-        assert stream.out == parse("<blue>Message</blue>\n")
-    else:
-        assert stream.out == "Message\n"
+    assert stream.getvalue() == parse("<blue>Message</blue>\n")
 
 
-@pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
-def test_pycharm_fixed(monkeypatch, stream):
-    monkeypatch.setitem(os.environ, "PYCHARM_HOSTED", "1")
-    monkeypatch.setattr(stream, "isatty", lambda: False)
-    assert not stream.isatty()
-    assert loguru._colorama.should_colorize(stream)
+def test_automatic_detection_when_stream_is_not_a_tty():
+    stream = StreamIsattyFalse()
+    logger.add(stream, format="<blue>{message}</blue>", colorize=None)
+    logger.debug("Message")
+    assert stream.getvalue() == "Message\n"
 
 
-@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
-def test_pycharm_ignored(monkeypatch, stream):
-    monkeypatch.setitem(os.environ, "PYCHARM_HOSTED", "1")
-    assert not loguru._colorama.should_colorize(stream)
-
-
-def test_jupyter_fixed(monkeypatch):
-    class Shell:
-        pass
-
-    class Out:
-        pass
-
-    stream = MagicMock()
-    stream.__class__ = Out
-    stream.isatty.return_value = False
-    ipython = MagicMock()
-    ipykernel = MagicMock()
-    instance = MagicMock()
-    instance.__class__ = Shell
-    ipython.get_ipython.return_value = instance
-    ipykernel.zmqshell.ZMQInteractiveShell = Shell
-    ipykernel.iostream.OutStream = Out
-
-    monkeypatch.setitem(sys.modules, "IPython", ipython)
-    monkeypatch.setitem(sys.modules, "ipykernel", ipykernel)
-    monkeypatch.setattr(sys, "stdout", stream)
-
-    assert not stream.isatty()
-    assert loguru._colorama.should_colorize(stream)
-
-
-@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
-def test_jupyter_ignored(monkeypatch, stream):
-    class Shell:
-        pass
-
-    class Out:
-        pass
-
-    ipython = MagicMock()
-    ipykernel = MagicMock()
-    instance = MagicMock()
-    instance.__class__ = Shell
-    ipython.get_ipython.return_value = instance
-    ipykernel.zmqshell.ZMQInteractiveShell = Shell
-    ipykernel.iostream.OutStream = Out
-
-    monkeypatch.setitem(sys.modules, "IPython", ipython)
-    monkeypatch.setitem(sys.modules, "ipykernel", ipykernel)
-    monkeypatch.setattr(sys, "stdout", stream)
-
-    assert not loguru._colorama.should_colorize(stream)
-
-
-@pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
-def test_github_actions_fixed(monkeypatch, stream):
-    monkeypatch.setitem(os.environ, "CI", "1")
-    monkeypatch.setitem(os.environ, "GITHUB_ACTIONS", "1")
-    monkeypatch.setattr(stream, "isatty", lambda: False)
-    assert not stream.isatty()
-    assert loguru._colorama.should_colorize(stream)
-
-
-@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
-def test_github_actions_ignored(monkeypatch, stream):
-    monkeypatch.setitem(os.environ, "CI", "1")
-    monkeypatch.setitem(os.environ, "GITHUB_ACTIONS", "1")
-    assert not loguru._colorama.should_colorize(stream)
-
-
-@pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
-@pytest.mark.skipif(os.name != "nt", reason="The fix is applied only on Windows")
-def test_mintty_fixed_windows(monkeypatch, stream):
-    monkeypatch.setitem(os.environ, "TERM", "xterm")
-    monkeypatch.setattr(stream, "isatty", lambda: False)
-    assert not stream.isatty()
-    assert loguru._colorama.should_colorize(stream)
-
-
-@pytest.mark.parametrize("stream", [sys.__stdout__, sys.__stderr__])
-@pytest.mark.skipif(os.name == "nt", reason="The fix will be applied on Windows")
-def test_mintty_not_fixed_linux(monkeypatch, stream):
-    monkeypatch.setitem(os.environ, "TERM", "xterm")
-    monkeypatch.setattr(stream, "isatty", lambda: False)
-    assert not stream.isatty()
-    assert not loguru._colorama.should_colorize(stream)
-
-
-@pytest.mark.parametrize("stream", [None, Stream(False), Stream(None)])
-def test_mintty_ignored(monkeypatch, stream):
-    monkeypatch.setitem(os.environ, "TERM", "xterm")
-    assert not loguru._colorama.should_colorize(stream)
+def test_automatic_detection_when_stream_has_no_isatty():
+    stream = StreamIsattyException()
+    logger.add(stream, format="<blue>{message}</blue>", colorize=None)
+    logger.debug("Message")
+    assert stream.getvalue() == "Message\n"

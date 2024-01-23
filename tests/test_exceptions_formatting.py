@@ -3,8 +3,12 @@ import platform
 import re
 import subprocess
 import sys
+import traceback
+from unittest.mock import MagicMock
 
 import pytest
+
+from loguru import logger
 
 
 def normalize(exception):
@@ -224,3 +228,79 @@ def test_exception_ownership(filename):
 )
 def test_exception_others(filename):
     compare_exception("others", filename)
+
+
+@pytest.mark.parametrize(
+    "filename, minimum_python_version",
+    [
+        ("type_hints", (3, 6)),
+        ("positional_only_argument", (3, 8)),
+        ("walrus_operator", (3, 8)),
+        ("match_statement", (3, 10)),
+        ("exception_group_catch", (3, 11)),
+        ("notes", (3, 11)),
+        ("grouped_simple", (3, 11)),
+        ("grouped_nested", (3, 11)),
+        ("grouped_with_cause_and_context", (3, 11)),
+        ("grouped_as_cause_and_context", (3, 11)),
+        ("grouped_max_length", (3, 11)),
+        ("grouped_max_depth", (3, 11)),
+        ("f_string", (3, 12)),  # Available since 3.6 but in 3.12 the lexer for f-string changed.
+    ],
+)
+def test_exception_modern(filename, minimum_python_version):
+    if sys.version_info < minimum_python_version:
+        pytest.skip("Feature not supported in this Python version")
+
+    compare_exception("modern", filename)
+
+
+@pytest.mark.skipif(
+    not (3, 7) <= sys.version_info < (3, 11), reason="No backport available or needed"
+)
+def test_group_exception_using_backport(writer):
+    from exceptiongroup import ExceptionGroup
+
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
+
+    try:
+        raise ExceptionGroup("Test", [ValueError(1), ValueError(2)])
+    except Exception:
+        logger.exception("")
+
+    assert writer.read().strip().startswith("+ Exception Group Traceback (most recent call last):")
+
+
+def test_invalid_format_exception_only_no_output(writer, monkeypatch):
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
+
+    with monkeypatch.context() as context:
+        context.setattr(traceback, "format_exception_only", lambda _e, _v: [])
+        error = ValueError(0)
+        logger.opt(exception=error).error("Error")
+
+        assert writer.read() == "\n"
+
+
+def test_invalid_format_exception_only_indented_error_message(writer, monkeypatch):
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
+
+    with monkeypatch.context() as context:
+        context.setattr(traceback, "format_exception_only", lambda _e, _v: ["    ValueError: 0\n"])
+        error = ValueError(0)
+        logger.opt(exception=error).error("Error")
+
+        assert writer.read() == "\n    ValueError: 0\n"
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="No builtin GroupedException")
+def test_invalid_grouped_exception_no_exceptions(writer):
+    error = MagicMock(spec=ExceptionGroup)
+    error.__cause__ = None
+    error.__context__ = None
+    error.__traceback__ = None
+
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="")
+    logger.opt(exception=error).error("Error")
+
+    assert writer.read().strip().startswith("| unittest.mock.MagicMock:")

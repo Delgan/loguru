@@ -1,5 +1,6 @@
 import functools
 import json
+import multiprocessing
 import os
 import threading
 from contextlib import contextmanager
@@ -69,6 +70,7 @@ class Handler:
         self._lock = create_handler_lock()
         self._lock_acquired = threading.local()
         self._queue = None
+        self._queue_lock = None
         self._confirmation_event = None
         self._confirmation_lock = None
         self._owner_process_pid = None
@@ -87,9 +89,15 @@ class Handler:
                 self._decolorized_format = self._formatter.strip()
 
         if self._enqueue:
-            self._queue = self._multiprocessing_context.SimpleQueue()
-            self._confirmation_event = self._multiprocessing_context.Event()
-            self._confirmation_lock = self._multiprocessing_context.Lock()
+            if self._multiprocessing_context is None:
+                self._queue = multiprocessing.SimpleQueue()
+                self._confirmation_event = multiprocessing.Event()
+                self._confirmation_lock = multiprocessing.Lock()
+            else:
+                self._queue = self._multiprocessing_context.SimpleQueue()
+                self._confirmation_event = self._multiprocessing_context.Event()
+                self._confirmation_lock = self._multiprocessing_context.Lock()
+            self._queue_lock = create_handler_lock()
             self._owner_process_pid = os.getpid()
             self._thread = Thread(
                 target=self._queued_writer, daemon=True, name="loguru-writer-%d" % self._id
@@ -223,12 +231,12 @@ class Handler:
             self._confirmation_event.wait()
             self._confirmation_event.clear()
 
-    async def complete_async(self):
+    def tasks_to_complete(self):
         if self._enqueue and self._owner_process_pid != os.getpid():
-            return
-
-        with self._protected_lock():
-            await self._sink.complete()
+            return []
+        lock = self._queue_lock if self._enqueue else self._protected_lock()
+        with lock:
+            return self._sink.tasks_to_complete()
 
     def update_format(self, level_id):
         if not self._colorize or self._is_formatter_dynamic:
@@ -285,7 +293,7 @@ class Handler:
 
         # We need to use a lock to protect sink during fork.
         # Particularly, writing to stderr may lead to deadlock in child process.
-        lock = create_handler_lock()
+        lock = self._queue_lock
 
         while True:
             try:
@@ -317,12 +325,15 @@ class Handler:
             state["_sink"] = None
             state["_thread"] = None
             state["_owner_process"] = None
+            state["_queue_lock"] = None
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
         self._lock = create_handler_lock()
         self._lock_acquired = threading.local()
+        if self._enqueue:
+            self._queue_lock = create_handler_lock()
         if self._is_formatter_dynamic:
             if self._colorize:
                 self._memoize_dynamic_format = memoize(prepare_colored_format)

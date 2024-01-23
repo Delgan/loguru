@@ -128,6 +128,9 @@ Take the tour
 .. |better_exceptions| replace:: ``better_exceptions``
 .. _better_exceptions: https://github.com/Qix-/better-exceptions
 
+.. |loguru-config| replace:: ``loguru-config``
+.. _loguru-config: https://github.com/erezinman/loguru-config
+
 .. |notifiers| replace:: ``notifiers``
 .. _notifiers: https://github.com/notifiers/notifiers
 
@@ -236,7 +239,8 @@ Logging exceptions that occur in your code is important to track bugs, but it's 
 
 The code::
 
-    logger.add("out.log", backtrace=True, diagnose=True)  # Caution, may leak sensitive data in prod
+    # Caution, "diagnose=True" is the default and may leak sensitive data in prod
+    logger.add("out.log", backtrace=True, diagnose=True)
 
     def func(a, b):
         return a / b
@@ -273,6 +277,8 @@ Would result in:
     ZeroDivisionError: division by zero
 
 Note that this feature won't work on default Python REPL due to unavailable frame data.
+
+See also: `Security considerations when using Loguru <https://loguru.readthedocs.io/en/stable/resources/recipes.html#security-considerations-when-using-loguru>`_.
 
 
 Structured logging as needed
@@ -375,12 +381,15 @@ Using the logger in your scripts is easy, and you can |configure|_ it at start. 
     }
     logger.configure(**config)
 
-    # For libraries
+    # For libraries, should be your library's `__name__`
     logger.disable("my_library")
     logger.info("No matter added sinks, this message is not displayed")
+
+    # In your application, enable the logger in the library
     logger.enable("my_library")
     logger.info("This message however is propagated to the sinks")
 
+For additional convenience, you can also use the |loguru-config|_ library to setup the ``logger`` directly from a configuration file.
 
 Entirely compatible with standard logging
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -397,7 +406,7 @@ Need to propagate `Loguru` messages to standard `logging`?
 ::
 
     class PropagateHandler(logging.Handler):
-        def emit(self, record):
+        def emit(self, record: logging.LogRecord) -> None:
             logging.getLogger(record.name).handle(record)
 
     logger.add(PropagateHandler(), format="{message}")
@@ -407,16 +416,17 @@ Want to intercept standard `logging` messages toward your `Loguru` sinks?
 ::
 
     class InterceptHandler(logging.Handler):
-        def emit(self, record):
+        def emit(self, record: logging.LogRecord) -> None:
             # Get corresponding Loguru level if it exists.
+            level: str | int
             try:
                 level = logger.level(record.levelname).name
             except ValueError:
                 level = record.levelno
 
             # Find caller from where originated the logged message.
-            frame, depth = sys._getframe(6), 6
-            while frame and frame.f_code.co_filename == logging.__file__:
+            frame, depth = inspect.currentframe(), 0
+            while frame and (depth == 0 or frame.f_code.co_filename == logging.__file__):
                 frame = frame.f_back
                 depth += 1
 

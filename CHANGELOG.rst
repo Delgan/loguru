@@ -1,7 +1,23 @@
-`Unreleased`_
-=============
+`0.7.2`_ (2023-09-11)
+=====================
+
+- Add support for formatting of ``ExceptionGroup`` errors (`#805 <https://github.com/Delgan/loguru/issues/805>`_).
+- Fix possible ``RuntimeError`` when using ``multiprocessing.set_start_method()`` after importing the ``logger`` (`#974 <https://github.com/Delgan/loguru/issues/974>`_)
+- Fix formatting of possible ``__notes__`` attached to an ``Exception`` (`#980 <https://github.com/Delgan/loguru/issues/980>`_).
+
+
+`0.7.1`_ (2023-09-04)
+=====================
 
 - Add a new ``context`` optional argument to ``logger.add()`` specifying ``multiprocessing`` context (like ``"spawn"`` or ``"fork"``) to be used internally instead of the default one (`#851 <https://github.com/Delgan/loguru/issues/851>`_).
+- Add support for true colors on Windows using ANSI/VT console when available (`#934 <https://github.com/Delgan/loguru/issues/934>`_, thanks `@tunaflsh <https://github.com/tunaflsh>`_).
+- Fix possible deadlock when calling ``logger.complete()`` with concurrent logging of an asynchronous sink (`#906 <https://github.com/Delgan/loguru/issues/906>`_).
+- Fix file possibly rotating too early or too late when re-starting an application around midnight (`#894 <https://github.com/Delgan/loguru/issues/894>`_).
+- Fix inverted ``"<hide>"`` and ``"<strike>"`` color tags (`#943 <https://github.com/Delgan/loguru/pull/943>`_, thanks `@tunaflsh <https://github.com/tunaflsh>`_).
+- Fix possible untraceable errors raised when logging non-unpicklable ``Exception`` instances while using ``enqueue=True`` (`#329 <https://github.com/Delgan/loguru/issues/329>`_).
+- Fix possible errors raised when logging non-picklable ``Exception`` instances while using ``enqueue=True`` (`#342 <https://github.com/Delgan/loguru/issues/342>`_, thanks `@ncoudene <https://github.com/ncoudene>`_).
+- Fix missing seconds and microseconds when formatting timezone offset that requires such accuracy (`#961 <https://github.com/Delgan/loguru/issues/961>`_).
+- Raise ``ValueError`` if an attempt to use nanosecond precision for time formatting is detected (`#855 <https://github.com/Delgan/loguru/issues/855>`_).
 
 
 `0.7.0`_ (2023-04-10)
@@ -205,7 +221,9 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.0...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.2...master
+.. _0.7.2: https://github.com/delgan/loguru/releases/tag/0.7.2
+.. _0.7.1: https://github.com/delgan/loguru/releases/tag/0.7.1
 .. _0.7.0: https://github.com/delgan/loguru/releases/tag/0.7.0
 .. _0.6.0: https://github.com/delgan/loguru/releases/tag/0.6.0
 .. _0.5.3: https://github.com/delgan/loguru/releases/tag/0.5.3

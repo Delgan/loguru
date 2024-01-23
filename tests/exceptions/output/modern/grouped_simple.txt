@@ -1,0 +1,100 @@
+
+  + Exception Group Traceback (most recent call last):
+  |   File "tests/exceptions/source/modern/grouped_simple.py", line 41, in <module>
+  |     main()
+  |   File "tests/exceptions/source/modern/grouped_simple.py", line 34, in main
+  |     raise ExceptionGroup("group", [error_1, error_2, error_3]) from None
+  | ExceptionGroup: group (3 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_simple.py", line 26, in main
+    |     c(b)
+    |   File "tests/exceptions/source/modern/grouped_simple.py", line 20, in c
+    |     f()
+    |   File "tests/exceptions/source/modern/grouped_simple.py", line 16, in b
+    |     a()
+    |   File "tests/exceptions/source/modern/grouped_simple.py", line 12, in a
+    |     x / y
+    | ZeroDivisionError: division by zero
+    +---------------- 2 ----------------
+    | Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_simple.py", line 29, in main
+    |     c(a)
+    |   File "tests/exceptions/source/modern/grouped_simple.py", line 20, in c
+    |     f()
+    |   File "tests/exceptions/source/modern/grouped_simple.py", line 12, in a
+    |     x / y
+    | ZeroDivisionError: division by zero
+    +---------------- 3 ----------------
+    | Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_simple.py", line 32, in main
+    |     a()
+    |   File "tests/exceptions/source/modern/grouped_simple.py", line 12, in a
+    |     x / y
+    | ZeroDivisionError: division by zero
+    +------------------------------------
+
+  + [33m[1mException Group Traceback (most recent call last):[0m
+  |
+  | > File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m41[0m, in [35m<module>[0m
+  |     [1mmain[0m[1m([0m[1m)[0m
+  |     [36m└ [0m[36m[1m<function main at 0xDEADBEEF>[0m
+  |
+  |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m34[0m, in [35mmain[0m
+  |     [35m[1mraise[0m [1mExceptionGroup[0m[1m([0m[36m"group"[0m[1m,[0m [1m[[0m[1merror_1[0m[1m,[0m [1merror_2[0m[1m,[0m [1merror_3[0m[1m][0m[1m)[0m [35m[1mfrom[0m [36m[1mNone[0m
+  |
+  | [31m[1mExceptionGroup[0m:[1m group (3 sub-exceptions)[0m
+  +-+---------------- 1 ----------------
+    | [33m[1mTraceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m26[0m, in [35mmain[0m
+    |     [1mc[0m[1m([0m[1mb[0m[1m)[0m
+    |     [36m│ └ [0m[36m[1m<function b at 0xDEADBEEF>[0m
+    |     [36m└ [0m[36m[1m<function c at 0xDEADBEEF>[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m20[0m, in [35mc[0m
+    |     [1mf[0m[1m([0m[1m)[0m
+    |     [36m└ [0m[36m[1m<function b at 0xDEADBEEF>[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m16[0m, in [35mb[0m
+    |     [1ma[0m[1m([0m[1m)[0m
+    |     [36m└ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m12[0m, in [35ma[0m
+    |     [1mx[0m [35m[1m/[0m [1my[0m
+    |     [36m│   └ [0m[36m[1m0[0m
+    |     [36m└ [0m[36m[1m1[0m
+    |
+    | [31m[1mZeroDivisionError[0m:[1m division by zero[0m
+    +---------------- 2 ----------------
+    | [33m[1mTraceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m29[0m, in [35mmain[0m
+    |     [1mc[0m[1m([0m[1ma[0m[1m)[0m
+    |     [36m│ └ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+    |     [36m└ [0m[36m[1m<function c at 0xDEADBEEF>[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m20[0m, in [35mc[0m
+    |     [1mf[0m[1m([0m[1m)[0m
+    |     [36m└ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m12[0m, in [35ma[0m
+    |     [1mx[0m [35m[1m/[0m [1my[0m
+    |     [36m│   └ [0m[36m[1m0[0m
+    |     [36m└ [0m[36m[1m1[0m
+    |
+    | [31m[1mZeroDivisionError[0m:[1m division by zero[0m
+    +---------------- 3 ----------------
+    | [33m[1mTraceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m32[0m, in [35mmain[0m
+    |     [1ma[0m[1m([0m[1m)[0m
+    |     [36m└ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_simple.py[0m", line [33m12[0m, in [35ma[0m
+    |     [1mx[0m [35m[1m/[0m [1my[0m
+    |     [36m│   └ [0m[36m[1m0[0m
+    |     [36m└ [0m[36m[1m1[0m
+    |
+    | [31m[1mZeroDivisionError[0m:[1m division by zero[0m
+    +------------------------------------

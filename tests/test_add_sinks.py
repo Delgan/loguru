@@ -55,14 +55,19 @@ def test_devnull(rep):
 
 
 @repetitions
-@pytest.mark.parametrize(
-    "sink_from_path",
-    [str, pathlib.Path, lambda path: open(path, "a"), lambda path: pathlib.Path(path).open("a")],
-)
-def test_file_sink(rep, sink_from_path, tmp_path):
+@pytest.mark.parametrize("path_type", [str, pathlib.Path])
+def test_file_path_sink(rep, path_type, tmp_path):
     file = tmp_path / "test.log"
-    sink = sink_from_path(str(file))
+    sink = path_type(str(file))
     log(sink, rep)
+    assert file.read_text() == expected * rep
+
+
+@repetitions
+def test_file_opened_sink(rep, tmp_path):
+    file = tmp_path / "test.log"
+    with open(str(file), "w") as sink:
+        log(sink, rep)
     assert file.read_text() == expected * rep
 
 

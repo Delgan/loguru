@@ -10,6 +10,24 @@ import sysconfig
 import tokenize
 import traceback
 
+if sys.version_info >= (3, 11):
+
+    def is_exception_group(exc):
+        return isinstance(exc, ExceptionGroup)
+
+else:
+    try:
+        from exceptiongroup import ExceptionGroup
+    except ImportError:
+
+        def is_exception_group(exc):
+            return False
+
+    else:
+
+        def is_exception_group(exc):
+            return isinstance(exc, ExceptionGroup)
+
 
 class SyntaxHighlighter:
     _default_style = {
@@ -27,7 +45,13 @@ class SyntaxHighlighter:
 
     _builtins = set(dir(builtins))
     _constants = {"True", "False", "None"}
-    _punctation = {"(", ")", "[", "]", "{", "}", ":", ",", ";"}
+    _punctuation = {"(", ")", "[", "]", "{", "}", ":", ",", ";"}
+    _strings = {tokenize.STRING}
+    _fstring_middle = None
+
+    if sys.version_info >= (3, 12):
+        _strings.update({tokenize.FSTRING_START, tokenize.FSTRING_MIDDLE, tokenize.FSTRING_END})
+        _fstring_middle = tokenize.FSTRING_MIDDLE
 
     def __init__(self, style=None):
         self._style = style or self._default_style
@@ -38,7 +62,12 @@ class SyntaxHighlighter:
         output = ""
 
         for token in self.tokenize(source):
-            type_, string, start, end, line = token
+            type_, string, (start_row, start_column), (_, end_column), line = token
+
+            if type_ == self._fstring_middle:
+                # When an f-string contains "{{" or "}}", they appear as "{" or "}" in the "string"
+                # attribute of the token. However, they do not count in the column position.
+                end_column += string.count("{") + string.count("}")
 
             if type_ == tokenize.NAME:
                 if string in self._constants:
@@ -50,29 +79,26 @@ class SyntaxHighlighter:
                 else:
                     color = style["identifier"]
             elif type_ == tokenize.OP:
-                if string in self._punctation:
+                if string in self._punctuation:
                     color = style["punctuation"]
                 else:
                     color = style["operator"]
             elif type_ == tokenize.NUMBER:
                 color = style["number"]
-            elif type_ == tokenize.STRING:
+            elif type_ in self._strings:
                 color = style["string"]
             elif type_ == tokenize.COMMENT:
                 color = style["comment"]
             else:
                 color = style["other"]
 
-            start_row, start_column = start
-            _, end_column = end
-
             if start_row != row:
-                source = source[:column]
+                source = source[column:]
                 row, column = start_row, 0
 
             if type_ != tokenize.ENCODING:
                 output += line[column:start_column]
-                output += color.format(string)
+                output += color.format(line[start_column:end_column])
 
             column = end_column
 
@@ -139,6 +165,15 @@ class ExceptionFormatter:
         names = ["stdlib", "platstdlib", "platlib", "purelib"]
         paths = {sysconfig.get_path(name, scheme) for scheme in schemes for name in names}
         return [os.path.abspath(path).lower() + os.sep for path in paths if path in sys.path]
+
+    @staticmethod
+    def _indent(text, count, *, prefix="| "):
+        if count == 0:
+            yield text
+            return
+        for line in text.splitlines(True):
+            indented = "  " * count + prefix + line
+            yield indented.rstrip() + "\n"
 
     def _get_char(self, char, default):
         try:
@@ -344,7 +379,9 @@ class ExceptionFormatter:
 
             yield frame
 
-    def _format_exception(self, value, tb, *, seen=None, is_first=False, from_decorator=False):
+    def _format_exception(
+        self, value, tb, *, seen=None, is_first=False, from_decorator=False, group_nesting=0
+    ):
         # Implemented from built-in traceback module:
         # https://github.com/python/cpython/blob/a5b76167/Lib/traceback.py#L468
         exc_type, exc_value, exc_traceback = type(value), value, tb
@@ -356,82 +393,138 @@ class ExceptionFormatter:
 
         if exc_value:
             if exc_value.__cause__ is not None and id(exc_value.__cause__) not in seen:
-                for text in self._format_exception(
-                    exc_value.__cause__, exc_value.__cause__.__traceback__, seen=seen
-                ):
-                    yield text
+                yield from self._format_exception(
+                    exc_value.__cause__,
+                    exc_value.__cause__.__traceback__,
+                    seen=seen,
+                    group_nesting=group_nesting,
+                )
                 cause = "The above exception was the direct cause of the following exception:"
                 if self._colorize:
                     cause = self._theme["cause"].format(cause)
                 if self._diagnose:
-                    yield "\n\n" + cause + "\n\n\n"
+                    yield from self._indent("\n\n" + cause + "\n\n\n", group_nesting)
                 else:
-                    yield "\n" + cause + "\n\n"
+                    yield from self._indent("\n" + cause + "\n\n", group_nesting)
 
             elif (
                 exc_value.__context__ is not None
                 and id(exc_value.__context__) not in seen
                 and not exc_value.__suppress_context__
             ):
-                for text in self._format_exception(
-                    exc_value.__context__, exc_value.__context__.__traceback__, seen=seen
-                ):
-                    yield text
+                yield from self._format_exception(
+                    exc_value.__context__,
+                    exc_value.__context__.__traceback__,
+                    seen=seen,
+                    group_nesting=group_nesting,
+                )
                 context = "During handling of the above exception, another exception occurred:"
                 if self._colorize:
                     context = self._theme["context"].format(context)
                 if self._diagnose:
-                    yield "\n\n" + context + "\n\n\n"
+                    yield from self._indent("\n\n" + context + "\n\n\n", group_nesting)
                 else:
-                    yield "\n" + context + "\n\n"
+                    yield from self._indent("\n" + context + "\n\n", group_nesting)
+
+        is_grouped = is_exception_group(value)
+
+        if is_grouped and group_nesting == 0:
+            yield from self._format_exception(
+                value,
+                tb,
+                seen=seen,
+                group_nesting=1,
+                is_first=is_first,
+                from_decorator=from_decorator,
+            )
+            return
 
         try:
-            tracebacklimit = sys.tracebacklimit
+            traceback_limit = sys.tracebacklimit
         except AttributeError:
-            tracebacklimit = None
+            traceback_limit = None
 
         frames, final_source = self._extract_frames(
-            exc_traceback, is_first, limit=tracebacklimit, from_decorator=from_decorator
+            exc_traceback, is_first, limit=traceback_limit, from_decorator=from_decorator
         )
         exception_only = traceback.format_exception_only(exc_type, exc_value)
 
-        error_message = exception_only[-1][:-1]  # Remove last new line temporarily
+        # Determining the correct index for the "Exception: message" part in the formatted exception
+        # is challenging. This is because it might be preceded by multiple lines specific to
+        # "SyntaxError" or followed by various notes. However, we can make an educated guess based
+        # on the indentation; the preliminary context for "SyntaxError" is always indented, while
+        # the Exception itself is not. This allows us to identify the correct index for the
+        # exception message.
+        no_indented_indexes = (i for i, p in enumerate(exception_only) if not p.startswith(" "))
+        error_message_index = next(no_indented_indexes, None)
 
-        if self._colorize:
-            if ":" in error_message:
-                exception_type, exception_value = error_message.split(":", 1)
-                exception_type = self._theme["exception_type"].format(exception_type)
-                exception_value = self._theme["exception_value"].format(exception_value)
-                error_message = exception_type + ":" + exception_value
-            else:
-                error_message = self._theme["exception_type"].format(error_message)
+        if error_message_index is not None:
+            # Remove final new line temporarily.
+            error_message = exception_only[error_message_index][:-1]
 
-        if self._diagnose and frames:
-            if issubclass(exc_type, AssertionError) and not str(exc_value) and final_source:
-                if self._colorize:
-                    final_source = self._syntax_highlighter.highlight(final_source)
-                error_message += ": " + final_source
+            if self._colorize:
+                if ":" in error_message:
+                    exception_type, exception_value = error_message.split(":", 1)
+                    exception_type = self._theme["exception_type"].format(exception_type)
+                    exception_value = self._theme["exception_value"].format(exception_value)
+                    error_message = exception_type + ":" + exception_value
+                else:
+                    error_message = self._theme["exception_type"].format(error_message)
 
-            error_message = "\n" + error_message
+            if self._diagnose and frames:
+                if issubclass(exc_type, AssertionError) and not str(exc_value) and final_source:
+                    if self._colorize:
+                        final_source = self._syntax_highlighter.highlight(final_source)
+                    error_message += ": " + final_source
 
-        exception_only[-1] = error_message + "\n"
+                error_message = "\n" + error_message
 
-        frames_lines = traceback.format_list(frames) + exception_only
-        has_introduction = bool(frames)
-
-        if self._colorize or self._backtrace or self._diagnose:
-            frames_lines = self._format_locations(frames_lines, has_introduction=has_introduction)
+            exception_only[error_message_index] = error_message + "\n"
 
         if is_first:
             yield self._prefix
 
+        has_introduction = bool(frames)
+
         if has_introduction:
-            introduction = "Traceback (most recent call last):"
+            if is_grouped:
+                introduction = "Exception Group Traceback (most recent call last):"
+            else:
+                introduction = "Traceback (most recent call last):"
             if self._colorize:
                 introduction = self._theme["introduction"].format(introduction)
-            yield introduction + "\n"
+            if group_nesting == 1:  # Implies we're processing the root ExceptionGroup.
+                yield from self._indent(introduction + "\n", group_nesting, prefix="+ ")
+            else:
+                yield from self._indent(introduction + "\n", group_nesting)
 
-        yield "".join(frames_lines)
+        frames_lines = traceback.format_list(frames) + exception_only
+        if self._colorize or self._backtrace or self._diagnose:
+            frames_lines = self._format_locations(frames_lines, has_introduction=has_introduction)
+
+        yield from self._indent("".join(frames_lines), group_nesting)
+
+        if is_grouped:
+            exc = None
+            for n, exc in enumerate(value.exceptions, start=1):
+                ruler = "+" + (" %s " % ("..." if n > 15 else n)).center(35, "-")
+                yield from self._indent(ruler, group_nesting, prefix="+-" if n == 1 else "  ")
+                if n > 15:
+                    message = "and %d more exceptions\n" % (len(value.exceptions) - 15)
+                    yield from self._indent(message, group_nesting + 1)
+                    break
+                elif group_nesting == 10 and is_exception_group(exc):
+                    message = "... (max_group_depth is 10)\n"
+                    yield from self._indent(message, group_nesting + 1)
+                else:
+                    yield from self._format_exception(
+                        exc,
+                        exc.__traceback__,
+                        seen=seen,
+                        group_nesting=group_nesting + 1,
+                    )
+            if not is_exception_group(exc) or group_nesting == 10:
+                yield from self._indent("-" * 35, group_nesting + 1, prefix="+-")
 
     def format_exception(self, type_, value, tb, *, from_decorator=False):
         yield from self._format_exception(value, tb, is_first=True, from_decorator=from_decorator)

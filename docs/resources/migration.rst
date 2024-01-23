@@ -11,10 +11,12 @@ Switching from standard ``logging`` to ``loguru``
 .. |Filter| replace:: :class:`~logging.Filter`
 .. |Formatter| replace:: :class:`~logging.Formatter`
 .. |LoggerAdapter| replace:: :class:`~logging.LoggerAdapter`
+.. |LogRecord| replace:: :class:`~logging.LogRecord`
 .. |logger.setLevel| replace:: :meth:`~logging.Logger.setLevel`
 .. |logger.addFilter| replace:: :meth:`~logging.Logger.addFilter`
 .. |makeRecord| replace:: :meth:`~logging.Logger.makeRecord`
 .. |disable| replace:: :func:`~logging.disable`
+.. |setLogRecordFactory| replace:: :func:`~logging.setLogRecordFactory`
 .. |propagate| replace:: :attr:`~logging.Logger.propagate`
 .. |addHandler| replace:: :meth:`~logging.Logger.addHandler`
 .. |removeHandler| replace:: :meth:`~logging.Logger.removeHandler`
@@ -38,6 +40,7 @@ Switching from standard ``logging`` to ``loguru``
 .. |add| replace:: :meth:`~loguru._logger.Logger.add()`
 .. |remove| replace:: :meth:`~loguru._logger.Logger.remove()`
 .. |bind| replace:: :meth:`~loguru._logger.Logger.bind`
+.. |patch| replace:: :meth:`~loguru._logger.Logger.patch`
 .. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
@@ -142,6 +145,36 @@ With::
     fmt = "{time} - {name} - {level} - {message}"
     logger.add("spam.log", level="DEBUG", format=fmt)
     logger.add(sys.stderr, level="ERROR", format=fmt)
+
+
+Replacing ``LogRecord`` objects
+-------------------------------
+
+In Loguru, the equivalence of a |LogRecord| instance is a simple ``dict`` which stores the details of a logged message. To find the correspondence with |LogRecord| attributes, please refer to :ref:`the "record dict" documentation <record>` which lists all available keys.
+
+This ``dict`` is attached to each :ref:`logged message <message>` through a special ``record`` attribute of the ``str``-like object received by sinks. For example::
+
+    def simple_sink(message):
+        # A simple sink can use "message" as a basic string and ignore the "record" attribute.
+        print(message, end="")
+
+    def advanced_sink(message):
+        # An advanced sink can use the "record" attribute to access contextual information.
+        record = message.record
+
+        if record["level"].no >= 50:
+            file_path = record["file"].path
+            print(f"Critical error in {file_path}", end="", file=sys.stderr)
+        else:
+            print(message, end="")
+
+    logger.add(simple_sink)
+    logger.add(advanced_sink)
+
+
+As explained in the previous sections, the record dict is also available during invocation of filtering and formatting functions.
+
+If you need to extend the record dict with custom information similarly to what was possible with |setLogRecordFactory|, you can simply use the |patch| method to add the desired keys to the ``record["extra"]`` dict.
 
 
 Replacing ``%`` style formatting of messages
@@ -260,7 +293,28 @@ The |assertLogs| method defined in the |unittest| from standard library is used 
         yield output
         logger.remove(handler_id)
 
-It provides the list of logged messages for each of which you can access the ``record`` attribute.
+It provides the list of :ref:`logged messages <message>` for each of which you can access :ref:`the record attribute<record>`. Here is a usage example::
+
+    def do_something(val):
+        if val < 0:
+            logger.error("Invalid value")
+            return 0
+        return val * 2
+
+
+    class TestDoSomething(unittest.TestCase):
+        def test_do_something_good(self):
+            with capture_logs() as output:
+                do_something(1)
+            self.assertEqual(output, [])
+
+        def test_do_something_bad(self):
+            with capture_logs() as output:
+                do_something(-1)
+            self.assertEqual(len(output), 1)
+            message = output[0]
+            self.assertIn("Invalid value", message)
+            self.assertEqual(message.record["level"].name, "ERROR")
 
 
 Replacing ``caplog`` fixture from ``pytest`` library

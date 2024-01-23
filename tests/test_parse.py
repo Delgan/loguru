@@ -26,7 +26,8 @@ def test_parse_file(tmp_path):
 def test_parse_fileobj(tmp_path):
     file = tmp_path / "test.log"
     file.write_text(TEXT)
-    result, *_ = list(logger.parse(open(str(file)), r"^(?P<t>\w+)"))
+    with open(str(file)) as fileobj:
+        result, *_ = list(logger.parse(fileobj, r"^(?P<t>\w+)"))
     assert result == dict(t="This")
 
 

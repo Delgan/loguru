@@ -70,16 +70,21 @@
 .. |better_exceptions| replace:: ``better_exceptions``
 .. _better_exceptions: https://github.com/Qix-/better-exceptions
 
+.. |loguru-config| replace:: ``loguru-config``
+.. _loguru-config: https://github.com/erezinman/loguru-config
+
 .. _Pendulum: https://pendulum.eustace.io/docs/#tokens
-.. _@sdispater: https://github.com/sdispater
+
 .. _@Qix-: https://github.com/Qix-
+.. _@erezinman: https://github.com/erezinman
+.. _@sdispater: https://github.com/sdispater
+
 .. _formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
 .. _reentrant: https://en.wikipedia.org/wiki/Reentrancy_(computing)
 """
 import builtins
 import contextlib
 import functools
-import itertools
 import logging
 import re
 import sys
@@ -176,7 +181,7 @@ class Core:
             name: (name, name, level.no, level.icon) for name, level in self.levels.items()
         }
 
-        self.handlers_count = itertools.count()
+        self.handlers_count = 0
         self.handlers = {}
 
         self.extra = {}
@@ -593,7 +598,8 @@ class Logger:
 
         If the sink is a |str| or a |Path|, the corresponding file will be opened for writing logs.
         The path can also contain a special ``"{time}"`` field that will be formatted with the
-        current date at file creation.
+        current date at file creation. The file is closed at sink stop, i.e. when the application
+        ends or the handler is removed.
 
         The ``rotation`` check is made before logging each message. If there is already an existing
         file with the same name that the file to be created, then the existing file is renamed by
@@ -610,11 +616,13 @@ class Logger:
           logged message and the file object, and it should return ``True`` if the rotation should
           happen now, ``False`` otherwise.
 
-        The ``retention`` occurs at rotation or at sink stop if rotation is ``None``. Files are
-        selected if they match the pattern ``"basename(.*).ext(.*)"`` (possible time fields are
-        beforehand replaced with ``.*``) based on the sink file. This parameter accepts:
+        The ``retention`` occurs at rotation or at sink stop if rotation is ``None``. Files
+        resulting from previous sessions or rotations are automatically collected from disk. A file
+        is selected if it matches the pattern ``"basename(.*).ext(.*)"`` (possible time fields are
+        beforehand replaced with ``.*``) based on the configured sink. Afterwards, the list is
+        processed to determine files to be retained. This parameter accepts:
 
-        - an |int| which indicates the number of log files to keep, while older files are removed.
+        - an |int| which indicates the number of log files to keep, while older files are deleted.
         - a |timedelta| which specifies the maximum age of files to keep.
         - a |str| for human-friendly parametrization of the maximum age of files to keep.
           Examples: ``"1 week, 3 days"``, ``"2 months"``, ...
@@ -769,7 +777,8 @@ class Logger:
         >>> logger.add(stream_object, level="INFO")
         """
         with self._core.lock:
-            handler_id = next(self._core.handlers_count)
+            handler_id = self._core.handlers_count
+            self._core.handlers_count += 1
 
         error_interceptor = ErrorInterceptor(catch, handler_id)
 
@@ -885,7 +894,7 @@ class Logger:
                         raise ValueError(
                             "The filter dict contains a module '%s' associated to a level name "
                             "which does not exist: '%s'" % (module, level_)
-                        )
+                        ) from None
                 elif isinstance(level_, int):
                     levelno_ = level_
                 else:
@@ -958,9 +967,9 @@ class Logger:
         if not isinstance(encoding, str):
             encoding = "ascii"
 
-        if context is None or isinstance(context, str):
+        if isinstance(context, str):
             context = get_context(context)
-        elif not isinstance(context, BaseContext):
+        elif context is not None and not isinstance(context, BaseContext):
             raise TypeError(
                 "Invalid context, it should be a string or a multiprocessing context, "
                 "not: '%s'" % type(context).__name__
@@ -1100,20 +1109,18 @@ class Logger:
         >>> process.join()
         Message sent from the child
         """
+        tasks = []
 
         with self._core.lock:
             handlers = self._core.handlers.copy()
             for handler in handlers.values():
                 handler.complete_queue()
-
-        logger = self
+                tasks.extend(handler.tasks_to_complete())
 
         class AwaitableCompleter:
             def __await__(self):
-                with logger._core.lock:
-                    handlers = logger._core.handlers.copy()
-                    for handler in handlers.values():
-                        yield from handler.complete_async().__await__()
+                for task in tasks:
+                    yield from task.__await__()
 
         return AwaitableCompleter()
 
@@ -1218,7 +1225,7 @@ class Logger:
 
             def __exit__(self, type_, value, traceback_):
                 if type_ is None:
-                    return
+                    return None
 
                 if not issubclass(type_, exception):
                     return False
@@ -1369,6 +1376,7 @@ class Logger:
             warnings.warn(
                 "The 'ansi' parameter is deprecated, please use 'colors' instead",
                 DeprecationWarning,
+                stacklevel=2,
             )
 
         args = self._options[-2:]
@@ -1574,8 +1582,7 @@ class Logger:
                     "Level '%s' does not exist, you have to create it by specifying a level no"
                     % name
                 )
-            else:
-                old_color, old_icon = "", " "
+            old_color, old_icon = "", " "
         elif no is not None:
             raise TypeError("Level '%s' already exists, you can't update its severity no" % name)
         else:
@@ -1660,6 +1667,9 @@ class Logger:
 
         It should be noted that ``extra`` values set using this function are available across all
         modules, so this is the best way to set overall default values.
+
+        To load the configuration directly from a file, such as JSON or YAML, it is also possible to
+        use the |loguru-config|_ library developed by `@erezinman`_.
 
         Parameters
         ----------
@@ -1831,11 +1841,18 @@ class Logger:
         ...         print(log["date"], log["something_else"])
         """
         if isinstance(file, (str, PathLike)):
-            should_close = True
-            fileobj = open(str(file))
+
+            @contextlib.contextmanager
+            def opener():
+                with open(str(file)) as fileobj:
+                    yield fileobj
+
         elif hasattr(file, "read") and callable(file.read):
-            should_close = False
-            fileobj = file
+
+            @contextlib.contextmanager
+            def opener():
+                yield file
+
         else:
             raise TypeError(
                 "Invalid file, it should be a string path or a file object, not: '%s'"
@@ -1864,21 +1881,19 @@ class Logger:
                 % type(pattern).__name__
             ) from None
 
-        matches = Logger._find_iter(fileobj, regex, chunk)
+        with opener() as fileobj:
+            matches = Logger._find_iter(fileobj, regex, chunk)
 
-        for match in matches:
-            groups = match.groupdict()
-            cast_function(groups)
-            yield groups
-
-        if should_close:
-            fileobj.close()
+            for match in matches:
+                groups = match.groupdict()
+                cast_function(groups)
+                yield groups
 
     @staticmethod
     def _find_iter(fileobj, regex, chunk):
         buffer = fileobj.read(0)
 
-        while 1:
+        while True:
             text = fileobj.read(chunk)
             buffer += text
             matches = list(regex.finditer(buffer))
@@ -2067,7 +2082,9 @@ class Logger:
           confusing name.
         """
         warnings.warn(
-            "The 'start()' method is deprecated, please use 'add()' instead", DeprecationWarning
+            "The 'start()' method is deprecated, please use 'add()' instead",
+            DeprecationWarning,
+            stacklevel=2,
         )
         return self.add(*args, **kwargs)
 
@@ -2081,6 +2098,8 @@ class Logger:
           confusing name.
         """
         warnings.warn(
-            "The 'stop()' method is deprecated, please use 'remove()' instead", DeprecationWarning
+            "The 'stop()' method is deprecated, please use 'remove()' instead",
+            DeprecationWarning,
+            stacklevel=2,
         )
         return self.remove(*args, **kwargs)

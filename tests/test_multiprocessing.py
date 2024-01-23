@@ -1,4 +1,3 @@
-import asyncio
 import copy
 import multiprocessing
 import os
@@ -10,6 +9,8 @@ import time
 import pytest
 
 from loguru import logger
+
+from .conftest import new_event_loop_context
 
 
 @pytest.fixture
@@ -56,8 +57,8 @@ def subworker_complete(logger_):
         logger_.info("Child")
         await logger_.complete()
 
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(work())
+    with new_event_loop_context() as loop:
+        loop.run_until_complete(work())
 
 
 def subworker_complete_inheritance():
@@ -65,8 +66,8 @@ def subworker_complete_inheritance():
         logger.info("Child")
         await logger.complete()
 
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(work())
+    with new_event_loop_context() as loop:
+        loop.run_until_complete(work())
 
 
 def subworker_barrier(logger_, barrier):
@@ -372,22 +373,21 @@ def test_await_complete_spawn(capsys, spawn_context):
     async def writer(msg):
         print(msg, end="")
 
-    loop = asyncio.new_event_loop()
+    with new_event_loop_context() as loop:
+        logger.add(
+            writer, context=spawn_context, format="{message}", loop=loop, enqueue=True, catch=False
+        )
 
-    logger.add(
-        writer, context=spawn_context, format="{message}", loop=loop, enqueue=True, catch=False
-    )
+        process = spawn_context.Process(target=subworker_complete, args=(logger,))
+        process.start()
+        process.join()
 
-    process = spawn_context.Process(target=subworker_complete, args=(logger,))
-    process.start()
-    process.join()
+        assert process.exitcode == 0
 
-    assert process.exitcode == 0
+        async def local():
+            await logger.complete()
 
-    async def local():
-        await logger.complete()
-
-    loop.run_until_complete(local())
+        loop.run_until_complete(local())
 
     out, err = capsys.readouterr()
     assert out == "Child\n"
@@ -399,22 +399,21 @@ def test_await_complete_fork(capsys, fork_context):
     async def writer(msg):
         print(msg, end="")
 
-    loop = asyncio.new_event_loop()
+    with new_event_loop_context() as loop:
+        logger.add(
+            writer, context=fork_context, format="{message}", loop=loop, enqueue=True, catch=False
+        )
 
-    logger.add(
-        writer, context=fork_context, format="{message}", loop=loop, enqueue=True, catch=False
-    )
+        process = fork_context.Process(target=subworker_complete, args=(logger,))
+        process.start()
+        process.join()
 
-    process = fork_context.Process(target=subworker_complete, args=(logger,))
-    process.start()
-    process.join()
+        assert process.exitcode == 0
 
-    assert process.exitcode == 0
+        async def local():
+            await logger.complete()
 
-    async def local():
-        await logger.complete()
-
-    loop.run_until_complete(local())
+        loop.run_until_complete(local())
 
     out, err = capsys.readouterr()
     assert out == "Child\n"
@@ -426,22 +425,21 @@ def test_await_complete_inheritance(capsys, fork_context):
     async def writer(msg):
         print(msg, end="")
 
-    loop = asyncio.new_event_loop()
+    with new_event_loop_context() as loop:
+        logger.add(
+            writer, context=fork_context, format="{message}", loop=loop, enqueue=True, catch=False
+        )
 
-    logger.add(
-        writer, context=fork_context, format="{message}", loop=loop, enqueue=True, catch=False
-    )
+        process = fork_context.Process(target=subworker_complete_inheritance)
+        process.start()
+        process.join()
 
-    process = fork_context.Process(target=subworker_complete_inheritance)
-    process.start()
-    process.join()
+        assert process.exitcode == 0
 
-    assert process.exitcode == 0
+        async def local():
+            await logger.complete()
 
-    async def local():
-        await logger.complete()
-
-    loop.run_until_complete(local())
+        loop.run_until_complete(local())
 
     out, err = capsys.readouterr()
     assert out == "Child\n"
@@ -551,33 +549,36 @@ def test_no_deadlock_if_internal_lock_in_use(tmp_path, enqueue, deepcopied, fork
         logger_ = logger
 
     output = tmp_path / "stdout.txt"
-    stdout = output.open("w")
 
-    def slow_sink(msg):
-        time.sleep(0.5)
-        stdout.write(msg)
-        stdout.flush()
+    with output.open("w") as stdout:
 
-    def main():
-        logger_.info("Main")
+        def slow_sink(msg):
+            time.sleep(0.5)
+            stdout.write(msg)
+            stdout.flush()
 
-    def worker():
-        logger_.info("Child")
+        def main():
+            logger_.info("Main")
 
-    logger_.add(slow_sink, context=fork_context, format="{message}", enqueue=enqueue, catch=False)
+        def worker():
+            logger_.info("Child")
 
-    thread = threading.Thread(target=main)
-    thread.start()
+        logger_.add(
+            slow_sink, context=fork_context, format="{message}", enqueue=enqueue, catch=False
+        )
 
-    process = fork_context.Process(target=worker)
-    process.start()
+        thread = threading.Thread(target=main)
+        thread.start()
 
-    thread.join()
-    process.join(2)
+        process = fork_context.Process(target=worker)
+        process.start()
 
-    assert process.exitcode == 0
+        thread.join()
+        process.join(2)
 
-    logger_.remove()
+        assert process.exitcode == 0
+
+        logger_.remove()
 
     assert output.read_text() in ("Main\nChild\n", "Child\nMain\n")
 

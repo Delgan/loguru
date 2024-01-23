@@ -10,8 +10,8 @@ class Style:
     UNDERLINE = 4
     BLINK = 5
     REVERSE = 7
-    STRIKE = 8
-    HIDE = 9
+    HIDE = 8
+    STRIKE = 9
     NORMAL = 22
 
 
@@ -238,10 +238,9 @@ class AnsiParser:
                     self._tokens.append((TokenType.CLOSING, "\033[0m"))
                     self._tokens.extend(self._color_tokens)
                     continue
-                elif tag in self._tags:
+                if tag in self._tags:
                     raise ValueError('Closing tag "%s" violates nesting rules' % markup)
-                else:
-                    raise ValueError('Closing tag "%s" has no corresponding opening tag' % markup)
+                raise ValueError('Closing tag "%s" has no corresponding opening tag' % markup)
 
             if tag in {"lvl", "level"}:
                 token = (TokenType.LEVEL, None)
@@ -280,29 +279,29 @@ class AnsiParser:
         # Substitute on a direct match.
         if tag in style:
             return style[tag]
-        elif tag in foreground:
+        if tag in foreground:
             return foreground[tag]
-        elif tag in background:
+        if tag in background:
             return background[tag]
 
         # An alternative syntax for setting the color (e.g. <fg red>, <bg red>).
-        elif tag.startswith("fg ") or tag.startswith("bg "):
+        if tag.startswith("fg ") or tag.startswith("bg "):
             st, color = tag[:2], tag[3:]
             code = "38" if st == "fg" else "48"
 
             if st == "fg" and color.lower() in foreground:
                 return foreground[color.lower()]
-            elif st == "bg" and color.upper() in background:
+            if st == "bg" and color.upper() in background:
                 return background[color.upper()]
-            elif color.isdigit() and int(color) <= 255:
+            if color.isdigit() and int(color) <= 255:
                 return "\033[%s;5;%sm" % (code, color)
-            elif re.match(r"#(?:[a-fA-F0-9]{3}){1,2}$", color):
+            if re.match(r"#(?:[a-fA-F0-9]{3}){1,2}$", color):
                 hex_color = color[1:]
                 if len(hex_color) == 3:
                     hex_color *= 2
                 rgb = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
                 return "\033[%s;2;%s;%s;%sm" % ((code,) + rgb)
-            elif color.count(",") == 2:
+            if color.count(",") == 2:
                 colors = tuple(color.split(","))
                 if all(x.isdigit() and int(x) <= 255 for x in colors):
                     return "\033[%s;2;%s;%s;%sm" % ((code,) + colors)

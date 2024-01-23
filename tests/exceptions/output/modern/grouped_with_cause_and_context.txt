@@ -1,0 +1,136 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 31, in main
+    a()
+  File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 10, in a
+    1 / 0
+ZeroDivisionError: division by zero
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 34, in main
+    raise ValueError("Error") from err
+ValueError: Error
+
+During handling of the above exception, another exception occurred:
+
+  + Exception Group Traceback (most recent call last):
+  |   File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 43, in <module>
+  |     main()
+  |   File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 36, in main
+  |     raise ExceptionGroup("from_context", [from_context, from_cause])
+  | ExceptionGroup: from_context (2 sub-exceptions)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 17, in main
+    |     a()
+    |   File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 10, in a
+    |     1 / 0
+    | ZeroDivisionError: division by zero
+    |
+    | The above exception was the direct cause of the following exception:
+    |
+    | Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 19, in main
+    |     raise ValueError("ContextError") from err
+    | ValueError: ContextError
+    +---------------- 2 ----------------
+    | Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 24, in main
+    |     a()
+    |   File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 10, in a
+    |     1 / 0
+    | ZeroDivisionError: division by zero
+    |
+    | During handling of the above exception, another exception occurred:
+    |
+    | Traceback (most recent call last):
+    |   File "tests/exceptions/source/modern/grouped_with_cause_and_context.py", line 26, in main
+    |     raise ValueError("CauseError")
+    | ValueError: CauseError
+    +------------------------------------
+
+[33m[1mTraceback (most recent call last):[0m
+
+  File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m31[0m, in [35mmain[0m
+    [1ma[0m[1m([0m[1m)[0m
+    [36m└ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+
+  File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m10[0m, in [35ma[0m
+    [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m
+
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
+
+
+[1mThe above exception was the direct cause of the following exception:[0m
+
+
+[33m[1mTraceback (most recent call last):[0m
+
+  File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m34[0m, in [35mmain[0m
+    [35m[1mraise[0m [1mValueError[0m[1m([0m[36m"Error"[0m[1m)[0m [35m[1mfrom[0m [1merr[0m
+
+[31m[1mValueError[0m:[1m Error[0m
+
+
+[1mDuring handling of the above exception, another exception occurred:[0m
+
+
+  + [33m[1mException Group Traceback (most recent call last):[0m
+  |
+  | > File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m43[0m, in [35m<module>[0m
+  |     [1mmain[0m[1m([0m[1m)[0m
+  |     [36m└ [0m[36m[1m<function main at 0xDEADBEEF>[0m
+  |
+  |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m36[0m, in [35mmain[0m
+  |     [35m[1mraise[0m [1mExceptionGroup[0m[1m([0m[36m"from_context"[0m[1m,[0m [1m[[0m[1mfrom_context[0m[1m,[0m [1mfrom_cause[0m[1m][0m[1m)[0m
+  |     [36m                                      │             └ [0m[36m[1mValueError('CauseError')[0m
+  |     [36m                                      └ [0m[36m[1mValueError('ContextError')[0m
+  |
+  | [31m[1mExceptionGroup[0m:[1m from_context (2 sub-exceptions)[0m
+  +-+---------------- 1 ----------------
+    | [33m[1mTraceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m17[0m, in [35mmain[0m
+    |     [1ma[0m[1m([0m[1m)[0m
+    |     [36m└ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m10[0m, in [35ma[0m
+    |     [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m
+    |
+    | [31m[1mZeroDivisionError[0m:[1m division by zero[0m
+    |
+    |
+    | [1mThe above exception was the direct cause of the following exception:[0m
+    |
+    |
+    | [33m[1mTraceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m19[0m, in [35mmain[0m
+    |     [35m[1mraise[0m [1mValueError[0m[1m([0m[36m"ContextError"[0m[1m)[0m [35m[1mfrom[0m [1merr[0m
+    |
+    | [31m[1mValueError[0m:[1m ContextError[0m
+    +---------------- 2 ----------------
+    | [33m[1mTraceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m24[0m, in [35mmain[0m
+    |     [1ma[0m[1m([0m[1m)[0m
+    |     [36m└ [0m[36m[1m<function a at 0xDEADBEEF>[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m10[0m, in [35ma[0m
+    |     [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m
+    |
+    | [31m[1mZeroDivisionError[0m:[1m division by zero[0m
+    |
+    |
+    | [1mDuring handling of the above exception, another exception occurred:[0m
+    |
+    |
+    | [33m[1mTraceback (most recent call last):[0m
+    |
+    |   File "[32mtests/exceptions/source/modern/[0m[32m[1mgrouped_with_cause_and_context.py[0m", line [33m26[0m, in [35mmain[0m
+    |     [35m[1mraise[0m [1mValueError[0m[1m([0m[36m"CauseError"[0m[1m)[0m
+    |
+    | [31m[1mValueError[0m:[1m CauseError[0m
+    +------------------------------------

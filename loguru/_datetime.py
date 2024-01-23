@@ -4,9 +4,9 @@ from datetime import datetime as datetime_
 from datetime import timedelta, timezone
 from time import localtime, strftime
 
-tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S{1,6}|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|X|x|E|Q|dddd|ddd|d"
+tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S+|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|X|x|E|Q|dddd|ddd|d"
 
-pattern = re.compile(r"(?:{0})|\[(?:{0}|!UTC)\]".format(tokens))
+pattern = re.compile(r"(?:{0})|\[(?:{0}|!UTC|)\]".format(tokens))
 
 
 class datetime(datetime_):  # noqa: N801
@@ -23,13 +23,20 @@ class datetime(datetime_):  # noqa: N801
         if "%" in spec:
             return datetime_.__format__(dt, spec)
 
+        if "SSSSSSS" in spec:
+            raise ValueError(
+                "Invalid time format: the provided format string contains more than six successive "
+                "'S' characters. This may be due to an attempt to use nanosecond precision, which "
+                "is not supported."
+            )
+
         year, month, day, hour, minute, second, weekday, yearday, _ = dt.timetuple()
         microsecond = dt.microsecond
         timestamp = dt.timestamp()
         tzinfo = dt.tzinfo or timezone(timedelta(seconds=0))
         offset = tzinfo.utcoffset(dt).total_seconds()
         sign = ("-", "+")[offset >= 0]
-        h, m = divmod(abs(offset // 60), 60)
+        (h, m), s = divmod(abs(offset // 60), 60), abs(offset) % 60
 
         rep = {
             "YYYY": "%04d" % year,
@@ -62,8 +69,8 @@ class datetime(datetime_):  # noqa: N801
             "SSSSS": "%05d" % (microsecond // 10),
             "SSSSSS": "%06d" % microsecond,
             "A": ("AM", "PM")[hour // 12],
-            "Z": "%s%02d:%02d" % (sign, h, m),
-            "ZZ": "%s%02d%02d" % (sign, h, m),
+            "Z": "%s%02d:%02d%s" % (sign, h, m, (":%09.06f" % s)[: 11 if s % 1 else 3] * (s > 0)),
+            "ZZ": "%s%02d%02d%s" % (sign, h, m, ("%09.06f" % s)[: 10 if s % 1 else 2] * (s > 0)),
             "zz": tzinfo.tzname(dt) or "",
             "X": "%d" % timestamp,
             "x": "%d" % (int(timestamp) * 1000000 + microsecond),
@@ -87,7 +94,9 @@ def aware_now():
         seconds = local.tm_gmtoff
         zone = local.tm_zone
     except AttributeError:
-        offset = datetime_.fromtimestamp(timestamp) - datetime_.utcfromtimestamp(timestamp)
+        # Workaround for Python 3.5.
+        utc_naive = datetime_.fromtimestamp(timestamp, tz=timezone.utc).replace(tzinfo=None)
+        offset = datetime_.fromtimestamp(timestamp) - utc_naive
         seconds = offset.total_seconds()
         zone = strftime("%Z")
 

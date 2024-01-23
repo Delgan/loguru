@@ -18,12 +18,28 @@ class NotPicklable:
         pass
 
 
+class NotPicklableTypeError:
+    def __getstate__(self):
+        raise TypeError("You shall not serialize me!")
+
+    def __setstate__(self, state):
+        pass
+
+
 class NotUnpicklable:
     def __getstate__(self):
         return "..."
 
     def __setstate__(self, state):
         raise pickle.UnpicklingError("You shall not de-serialize me!")
+
+
+class NotUnpicklableTypeError:
+    def __getstate__(self):
+        return "..."
+
+    def __setstate__(self, state):
+        raise TypeError("You shall not de-serialize me!")
 
 
 class NotWritable:
@@ -58,7 +74,7 @@ def test_enqueue_with_exception():
     logger.add(sink, format="{message}", enqueue=True)
 
     try:
-        1 / 0
+        1 / 0  # noqa: B018
     except ZeroDivisionError:
         logger.exception("Error")
 
@@ -232,7 +248,8 @@ def test_wait_for_all_messages_enqueued(capsys):
     assert err == "".join("%d\n" % i for i in range(10))
 
 
-def test_logging_not_picklable_exception():
+@pytest.mark.parametrize("exception_value", [NotPicklable(), NotPicklableTypeError()])
+def test_logging_not_picklable_exception(exception_value):
     exception = None
 
     def sink(message):
@@ -242,7 +259,7 @@ def test_logging_not_picklable_exception():
     logger.add(sink, enqueue=True, catch=False)
 
     try:
-        raise ValueError(NotPicklable())
+        raise ValueError(exception_value)
     except Exception:
         logger.exception("Oups")
 
@@ -254,8 +271,8 @@ def test_logging_not_picklable_exception():
     assert traceback_ is None
 
 
-@pytest.mark.skip(reason="No way to safely deserialize exception yet")
-def test_logging_not_unpicklable_exception():
+@pytest.mark.parametrize("exception_value", [NotUnpicklable(), NotUnpicklableTypeError()])
+def test_logging_not_unpicklable_exception(exception_value):
     exception = None
 
     def sink(message):
@@ -265,7 +282,7 @@ def test_logging_not_unpicklable_exception():
     logger.add(sink, enqueue=True, catch=False)
 
     try:
-        raise ValueError(NotUnpicklable())
+        raise ValueError(exception_value)
     except Exception:
         logger.exception("Oups")
 
