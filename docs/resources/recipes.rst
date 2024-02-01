@@ -815,7 +815,7 @@ You may also capture warnings emitted by your application by replacing |warnings
     showwarning_ = warnings.showwarning
 
     def showwarning(message, *args, **kwargs):
-        logger.warning(message)
+        logger.opt(depth=2).warning(message)
         showwarning_(message, *args, **kwargs)
 
     warnings.showwarning = showwarning
