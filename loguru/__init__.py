@@ -3,6 +3,7 @@ The Loguru library provides a pre-instanced logger to facilitate dealing with lo
 
 Just ``from loguru import logger``.
 """
+
 import atexit as _atexit
 import sys as _sys
 

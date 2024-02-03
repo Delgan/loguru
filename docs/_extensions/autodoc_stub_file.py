@@ -12,6 +12,7 @@ their usage.
 Warning: for some reason, the docs NEEDS to be re-generated for changes in the stub file to be taken
 into account: ``make clean && make html``.
 """
+
 import os
 import sys
 import types

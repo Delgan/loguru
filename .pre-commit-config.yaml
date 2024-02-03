@@ -19,7 +19,7 @@ repos:
   - id: pretty-format-toml
     args: [--autofix]
 - repo: https://github.com/ambv/black
-  rev: 23.7.0
+  rev: 24.1.1
   hooks:
   - id: black
 - repo: https://github.com/astral-sh/ruff-pre-commit
