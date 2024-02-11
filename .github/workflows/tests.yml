@@ -9,6 +9,7 @@ on:
 jobs:
   tests:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
     strategy:
       fail-fast: false
       matrix:
