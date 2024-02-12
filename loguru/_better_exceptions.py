@@ -498,7 +498,7 @@ class ExceptionFormatter:
             else:
                 yield from self._indent(introduction + "\n", group_nesting)
 
-        frames_lines = traceback.format_list(frames) + exception_only
+        frames_lines = self._format_list(frames) + exception_only
         if self._colorize or self._backtrace or self._diagnose:
             frames_lines = self._format_locations(frames_lines, has_introduction=has_introduction)
 
@@ -525,6 +525,40 @@ class ExceptionFormatter:
                     )
             if not is_exception_group(exc) or group_nesting == 10:
                 yield from self._indent("-" * 35, group_nesting + 1, prefix="+-")
+
+    def _format_list(self, frames):
+        result = []
+        last_file = None
+        last_line = None
+        last_name = None
+        count = 0
+        for filename, lineno, name, line in frames:
+            if (
+                last_file is not None
+                and last_file == filename
+                and last_line is not None
+                and last_line == lineno
+                and last_name is not None
+                and last_name == name
+            ):
+                count += 1
+            else:
+                if count > 3:
+                    result.append(f"  [Previous line repeated {count-3} more times]\n")
+                last_file = filename
+                last_line = lineno
+                last_name = name
+                count = 0
+            if count >= 3:
+                continue
+            row = []
+            row.append('  File "{}", line {}, in {}\n'.format(filename, lineno, name))
+            if line:
+                row.append("    {}\n".format(line.strip()))
+            result.append("".join(row))
+        if count > 3:
+            result.append(f"  [Previous line repeated {count-3} more times]\n")
+        return result
 
     def format_exception(self, type_, value, tb, *, from_decorator=False):
         yield from self._format_exception(value, tb, is_first=True, from_decorator=from_decorator)
