@@ -9,6 +9,7 @@ on:
 jobs:
   tests:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
     strategy:
       fail-fast: false
       matrix:
@@ -20,7 +21,8 @@ jobs:
         - '3.9'
         - '3.10'
         - '3.11'
-        - 3.12-dev
+        - '3.12'
+        - 3.13-dev
         - pypy-3.9
         include:
         - os: ubuntu-20.04
