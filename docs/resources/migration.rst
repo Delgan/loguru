@@ -278,6 +278,8 @@ The |captureWarnings| function which redirects alerts from the |warnings| module
     warnings.showwarning = showwarning
 
 
+.. _migration-assert-logs:
+
 Replacing ``assertLogs()`` method from ``unittest`` library
 -----------------------------------------------------------
 
@@ -316,6 +318,12 @@ It provides the list of :ref:`logged messages <message>` for each of which you c
             self.assertIn("Invalid value", message)
             self.assertEqual(message.record["level"].name, "ERROR")
 
+.. seealso::
+
+   See :ref:`testing logging <recipes-testing>` for more information.
+
+
+.. _migration-caplog:
 
 Replacing ``caplog`` fixture from ``pytest`` library
 ----------------------------------------------------
@@ -367,3 +375,7 @@ Note that if you want Loguru logs to be propagated to Pytest terminal reporter, 
         handler_id = logger.add(logging_plugin.report_handler, format="{message}")
         yield
         logger.remove(handler_id)
+
+.. seealso::
+
+   See :ref:`testing logging <recipes-testing>` for more information.
