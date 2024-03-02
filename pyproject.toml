@@ -12,9 +12,7 @@ filterwarnings = [
   # By default all warnings are treated as errors.
   'error',
   # Mixing threads and "fork()" is deprecated, but we need to test it anyway.
-  'ignore:.*use of fork\(\) may lead to deadlocks in the child.*:DeprecationWarning',
-  # The "dateutil" package used by "freezegun" relies on some deprecated APIs.
-  'ignore:.*datetime\.datetime\.utcfromtimestamp\(\) is deprecated.*:DeprecationWarning:dateutil.tz.tz'
+  'ignore:.*use of fork\(\) may lead to deadlocks in the child.*:DeprecationWarning'
 ]
 testpaths = ["tests"]
 
