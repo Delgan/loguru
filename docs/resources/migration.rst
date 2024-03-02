@@ -376,6 +376,20 @@ Note that if you want Loguru logs to be propagated to Pytest terminal reporter, 
         yield
         logger.remove(handler_id)
 
+Finally, when dealing with the ``--log-cli-level`` command-line flag, remember that this option controls the standard ``logging`` logs, not ``loguru`` ones. For this reason, you must first install a ``PropagateHandler`` for compatibility::
+
+    @pytest.fixture(autouse=True)
+    def propagate_logs():
+
+        class PropagateHandler(logging.Handler):
+            def emit(self, record):
+                if logging.getLogger(record.name).isEnabledFor(record.levelno):
+                    logging.getLogger(record.name).handle(record)
+
+        logger.remove()
+        logger.add(PropagateHandler(), format="{message}")
+        yield
+
 .. seealso::
 
    See :ref:`testing logging <recipes-testing>` for more information.
