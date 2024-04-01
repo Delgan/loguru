@@ -62,7 +62,7 @@ setup(
             # Setup.
             "pre-commit==3.7.0 ; python_version>='3.9'",
             "tox==3.27.1 ; python_version<'3.8'",
-            "tox==4.13.0 ; python_version>='3.8'",
+            "tox==4.14.2 ; python_version>='3.8'",
             # Testing framework.
             "pytest==6.1.2 ; python_version<'3.8'",
             "pytest==8.0.0 ; python_version>='3.8'",
