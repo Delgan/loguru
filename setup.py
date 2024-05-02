@@ -80,7 +80,7 @@ setup(
             "mypy==v0.910 ; python_version<'3.6'",
             "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",
             "mypy==v1.4.1 ; python_version>='3.7' and python_version<'3.8'",
-            "mypy==v1.9.0 ; python_version>='3.8'",
+            "mypy==v1.10.0 ; python_version>='3.8'",
             # Docs.
             "Sphinx==7.3.7 ; python_version>='3.9'",
             "sphinx-autobuild==2024.4.16 ; python_version>='3.9'",
