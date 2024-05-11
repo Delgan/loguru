@@ -1,5 +1,18 @@
-import os
-import shutil
+#!/usr/bin/env python
+"""
+Loguru hardened
+---------------
+
+Loguru hardened is a release of loguru which has small patches that
+make the default use more secure (and less developer friendly).
+
+The following changes make loguru-hardened different:
+
+- Use serialize by default to mitigate possible injection of newlines
+  when logging data injected by malicious user.
+  See https://huntr.com/bounties/73ebb08a-0415-41be-b9b0-0cea067f6771
+- Disable diagnose by default, to keep context information from leaking into the logs.
+"""
 import subprocess
 
 
@@ -16,26 +29,29 @@ def update_setup_py():
         f.write(setup_py)
 
 
-def replace_with_hardened_files():
-    """Replace the loguru files with hardened versions"""
-    # Walk hardened folder and copy files to loguru folder
-    for root, _, files in os.walk("hardened"):
-        for file in files:
-            assert os.path.isfile(os.path.join("loguru", file))
-            # Copy file to loguru folder
-            shutil.copy(os.path.join(root, file), os.path.join("loguru", file))
+def update_defaults_py():
+    """Set HARDENED_BUILD to True in _defaults.py"""
+    defaults_py_path = "loguru/_defaults.py"
+    with open(defaults_py_path, "r") as f:
+        defaults_py = f.read()
+    hardened_defaults = defaults_py.replace("HARDENED_BUILD = False", "HARDENED_BUILD = True")
+    assert hardened_defaults != defaults_py
+    with open(defaults_py_path, "w") as f:
+        f.write(hardened_defaults)
 
 
 def main():
     """Update the setup.py file for logoru-hardened
 
-    - copy hardened files in place,
+    - patch to become hardened:
+        - setup.py
+        - _defaults.py
     - test
     - build
     - git checkout changes
     """
     update_setup_py()
-    replace_with_hardened_files()
+    update_defaults_py()
     tox_test_result = subprocess.run(["tox", "-e", "tests"])
     tox_test_result.check_returncode()
     build_result = subprocess.run(["python", "-m", "build"])

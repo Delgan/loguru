@@ -27,21 +27,27 @@ def env(key, type_, default=None):
     raise ValueError("The requested type '%r' is not supported" % type_)
 
 
+HARDENED_BUILD = False
+
 LOGURU_AUTOINIT = env("LOGURU_AUTOINIT", bool, True)
 
 LOGURU_FORMAT = env(
     "LOGURU_FORMAT",
     str,
-    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
-    "<level>{level: <8}</level> | "
-    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+    (
+        "{message}"
+        if HARDENED_BUILD
+        else "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+    ),
 )
 LOGURU_FILTER = env("LOGURU_FILTER", str, None)
 LOGURU_LEVEL = env("LOGURU_LEVEL", str, "DEBUG")
 LOGURU_COLORIZE = env("LOGURU_COLORIZE", bool, None)
-LOGURU_SERIALIZE = env("LOGURU_SERIALIZE", bool, False)
+LOGURU_SERIALIZE = env("LOGURU_SERIALIZE", bool, True if HARDENED_BUILD else False)
 LOGURU_BACKTRACE = env("LOGURU_BACKTRACE", bool, True)
-LOGURU_DIAGNOSE = env("LOGURU_DIAGNOSE", bool, True)
+LOGURU_DIAGNOSE = env("LOGURU_DIAGNOSE", bool, False if HARDENED_BUILD else True)
 LOGURU_ENQUEUE = env("LOGURU_ENQUEUE", bool, False)
 LOGURU_CONTEXT = env("LOGURU_CONTEXT", str, None)
 LOGURU_CATCH = env("LOGURU_CATCH", bool, True)
