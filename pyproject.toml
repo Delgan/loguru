@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools"]
 
 [project]
 authors = [
@@ -31,14 +31,13 @@ classifiers = [
 dependencies = [
   "colorama>=0.3.4 ; sys_platform=='win32'",
   "aiocontextvars>=0.2.0 ; python_version<'3.7'",
-  "win32-setctime>=1.0.0 ; sys_platform=='win32'",
+  "win32-setctime>=1.0.0 ; sys_platform=='win32'"
 ]
 description = "Python logging made (stupidly) simple"
 dynamic = ['version']
 keywords = ["loguru", "logging", "logger", "log"]
 license = {text = "MIT"}
 name = "loguru"
-url = "https://github.com/Delgan/loguru"
 readme = 'README.rst'
 requires-python = ">=3.5,<4.0"
 
@@ -69,27 +68,18 @@ dev = [
   # Docs.
   "Sphinx==7.3.7 ; python_version>='3.9'",
   "sphinx-autobuild==2024.4.16 ; python_version>='3.9'",
-  "sphinx-rtd-theme==2.0.0 ; python_version>='3.9'",
+  "sphinx-rtd-theme==2.0.0 ; python_version>='3.9'"
 ]
 
 [project.urls]
 Changelog = "https://github.com/Delgan/loguru/blob/master/CHANGELOG.rst"
 Documentation = "https://loguru.readthedocs.io/en/stable/index.html"
+Homepage = "https://github.com/Delgan/loguru"
 
 [tool.black]
 force-exclude = "tests/exceptions/source/modern/*"
 line-length = 100
 target-version = ["py35"]
-
-[tool.hatch.build.targets.sdist]
-exclude = ["/tests"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["loguru"]
-
-[tool.hatch.version]
-path = './loguru/__init__.py'
-source = "regex"
 
 [tool.mypy]
 strict = true
@@ -112,6 +102,10 @@ select = ["F", "E", "W", "I", "B", "N", "RET"]
 
 [tool.ruff.pycodestyle]
 max-doc-length = 100
+
+[tool.setuptools.dynamic]
+# setuptools will use ast.literal_eval() to parse version from source code
+version = {attr = "loguru.__version__"}
 
 [tool.typos.default]
 extend-ignore-re = ["(?Rm)^.*# spellchecker: disable-line$"]
