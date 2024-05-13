@@ -27,6 +27,11 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
   "Programming Language :: Python :: Implementation :: CPython"
 ]
+dependencies = [
+  "colorama>=0.3.4 ; sys_platform=='win32'",
+  "aiocontextvars>=0.2.0 ; python_version<'3.7'",
+  "win32-setctime>=1.0.0 ; sys_platform=='win32'"
+]
 description = "Python logging made (stupidly) simple"
 dynamic = ['version']
 keywords = ["loguru", "logging", "logger", "log"]
@@ -61,11 +66,6 @@ dev = [
   "Sphinx==5.3.0 ; python_version>='3.8'",
   "sphinx-autobuild==2021.3.14 ; python_version>='3.8'",
   "sphinx-rtd-theme==1.2.0 ; python_version>='3.8'"
-]
-testing = [
-  "colorama>=0.3.4 ; sys_platform=='win32'",
-  "aiocontextvars>=0.2.0 ; python_version<'3.7'",
-  "win32-setctime>=1.0.0 ; sys_platform=='win32'"
 ]
 
 [project.urls]
