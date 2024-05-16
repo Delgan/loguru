@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools"]
+build-backend = "hatchling.build"
+requires = ["hatchling>=1.20.0"]
 
 [project]
 authors = [
@@ -81,6 +81,15 @@ force-exclude = "tests/exceptions/source/modern/*"
 line-length = 100
 target-version = ["py35"]
 
+[tool.hatch.build.targets.sdist]
+exclude = ['/tests']
+
+[tool.hatch.build.targets.wheel]
+packages = ["loguru"]
+
+[tool.hatch.version]
+path = "loguru/__init__.py"
+
 [tool.mypy]
 strict = true
 
@@ -102,10 +111,6 @@ select = ["F", "E", "W", "I", "B", "N", "RET"]
 
 [tool.ruff.pycodestyle]
 max-doc-length = 100
-
-[tool.setuptools.dynamic]
-# setuptools will use ast.literal_eval() to parse version from source code
-version = {attr = "loguru.__version__"}
 
 [tool.typos.default]
 extend-ignore-re = ["(?Rm)^.*# spellchecker: disable-line$"]
