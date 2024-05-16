@@ -6,6 +6,10 @@ on:
   schedule:
   - cron: 0 0 * * 0
 
+env:
+  # Temporary workaround for https://github.com/actions/setup-python/issues/866
+  PIP_TRUSTED_HOST: pypi.python.org pypi.org files.pythonhosted.org
+
 jobs:
   tests:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
@@ -22,7 +26,8 @@ jobs:
         - '3.10'
         - '3.11'
         - '3.12'
-        - 3.13-dev
+        # Temporary disabled because of https://github.com/crate-py/rpds/issues/72
+        # - 3.13-dev
         - pypy-3.9
         include:
         - os: ubuntu-20.04
