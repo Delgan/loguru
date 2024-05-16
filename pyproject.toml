@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
+build-backend = "flit_core.buildapi"
+requires = ["flit_core>=3,<4"]
 
 [project]
 authors = [
@@ -80,15 +80,6 @@ Homepage = "https://github.com/Delgan/loguru"
 force-exclude = "tests/exceptions/source/modern/*"
 line-length = 100
 target-version = ["py35"]
-
-[tool.hatch.build.targets.sdist]
-exclude = ['/tests']
-
-[tool.hatch.build.targets.wheel]
-packages = ["loguru"]
-
-[tool.hatch.version]
-path = "loguru/__init__.py"
 
 [tool.mypy]
 strict = true
