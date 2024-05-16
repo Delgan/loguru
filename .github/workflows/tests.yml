@@ -27,6 +27,8 @@ jobs:
         include:
         - os: ubuntu-20.04
           python-version: '3.5'
+          # Temporary fix for https://github.com/actions/setup-python/issues/866
+          env: PIP_TRUSTED_HOST="pypi.python.org pypi.org files.pythonhosted.org"
         - os: ubuntu-20.04
           python-version: '3.6'
         - os: windows-2022
