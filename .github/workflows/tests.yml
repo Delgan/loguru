@@ -6,6 +6,10 @@ on:
   schedule:
   - cron: 0 0 * * 0
 
+# Temporary workaround for https://github.com/actions/setup-python/issues/866
+env:
+  PIP_TRUSTED_HOST: pypi.python.org pypi.org files.pythonhosted.org
+
 jobs:
   tests:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
@@ -27,8 +31,6 @@ jobs:
         include:
         - os: ubuntu-20.04
           python-version: '3.5'
-          # Temporary fix for https://github.com/actions/setup-python/issues/866
-          env: PIP_TRUSTED_HOST="pypi.python.org pypi.org files.pythonhosted.org"
         - os: ubuntu-20.04
           python-version: '3.6'
         - os: windows-2022
