@@ -7,11 +7,6 @@ repos:
   - id: check-added-large-files
   - id: mixed-line-ending
     args: [--fix=lf]
-    exclude_types: [batch]
-  - id: mixed-line-ending
-    args: [--fix=crlf]
-    types: [batch]
-
 - repo: https://github.com/crate-ci/typos
   rev: v1.18.0
   hooks:
