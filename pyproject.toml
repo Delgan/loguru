@@ -81,6 +81,9 @@ force-exclude = "tests/exceptions/source/modern/*"
 line-length = 100
 target-version = ["py35"]
 
+[tool.flit.module]
+name = "loguru"
+
 [tool.mypy]
 strict = true
 
