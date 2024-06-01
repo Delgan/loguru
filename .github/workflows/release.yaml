@@ -18,6 +18,8 @@ jobs:
 
     - run: pipx run build
 
+    - run: twine check --strict dist/*
+
     - run: pipx run twine upload dist/* --disable-progress-bar
       env:
         TWINE_USERNAME: __token__
