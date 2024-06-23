@@ -6,10 +6,6 @@ on:
   schedule:
   - cron: 0 0 * * 0
 
-env:
-  # Temporary workaround for https://github.com/actions/setup-python/issues/866
-  PIP_TRUSTED_HOST: pypi.python.org pypi.org files.pythonhosted.org
-
 jobs:
   tests:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
@@ -46,6 +42,9 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+      env:
+        # Workaround for https://github.com/actions/setup-python/issues/866
+        PIP_TRUSTED_HOST: pypi.python.org pypi.org files.pythonhosted.org
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
