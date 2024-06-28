@@ -40,6 +40,7 @@ Installation
 
     pip install loguru
 
+Or if you need more secure defaults, install ``loguru-hardened``.
 
 Features
 --------
