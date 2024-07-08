@@ -31,9 +31,9 @@ jobs:
         - os: ubuntu-20.04
           python-version: '3.6'
         - os: windows-2022
-          python-version: '3.11'
-        - os: macos-11
-          python-version: '3.11'
+          python-version: '3.12'
+        - os: macos-13
+          python-version: '3.12'
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout repository
