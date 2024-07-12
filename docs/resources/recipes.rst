@@ -43,6 +43,12 @@ Code snippets and recipes for ``loguru``
 .. |if-name-equals-main| replace:: ``if __name__ == "__main__":``
 .. _if-name-equals-main: https://docs.python.org/3/library/__main__.html#idiomatic-usage
 
+.. |logot| replace:: ``logot``
+.. _logot: https://logot.readthedocs.io/
+
+.. |pytest| replace:: ``pytest``
+.. _pytest: https://docs.pytest.org/en/latest/
+
 .. |stackprinter| replace:: ``stackprinter``
 .. _stackprinter: https://github.com/cknd/stackprinter
 
@@ -815,7 +821,7 @@ You may also capture warnings emitted by your application by replacing |warnings
     showwarning_ = warnings.showwarning
 
     def showwarning(message, *args, **kwargs):
-        logger.warning(message)
+        logger.opt(depth=2).warning(message)
         showwarning_(message, *args, **kwargs)
 
     warnings.showwarning = showwarning
@@ -1043,3 +1049,36 @@ Another thing to keep in mind when dealing with multiprocessing is the fact that
         worker = workers_a.Worker()
         with context.Pool(4, initializer=worker.set_logger, initargs=(logger, )) as pool:
             results = pool.map(worker.work, [1, 10, 100])
+
+
+.. _recipes-testing:
+
+Testing logging
+---------------
+
+Logging calls can be tested using |logot|_, a high-level log testing library with built-in support for Loguru::
+
+    from logot import Logot, logged
+
+    def test_something(logot: Logot) -> None:
+        do_something()
+        logot.assert_logged(logged.info("Something was done"))
+
+Enable Loguru log capture in your |pytest|_ configuration:
+
+.. code:: toml
+
+   [tool.pytest.ini_options]
+   logot_capturer = "logot.loguru.LoguruCapturer"
+
+.. seealso::
+
+    See `using logot with Loguru <https://logot.readthedocs.io/latest/integrations/loguru.html>`_ for more information
+    about `configuring pytest <https://logot.readthedocs.io/latest/integrations/loguru.html#enabling-for-pytest>`_
+    and `configuring unittest <https://logot.readthedocs.io/latest/integrations/loguru.html#enabling-for-unittest>`_.
+
+.. note::
+
+    When migrating an existing project from standard :mod:`logging`, it can be useful to migrate your existing test
+    cases too. See :ref:`migrating assertLogs() <migration-assert-logs>` and :ref:`migrating caplog <migration-caplog>`
+    for more information.

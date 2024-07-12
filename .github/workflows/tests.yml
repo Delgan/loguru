@@ -9,6 +9,7 @@ on:
 jobs:
   tests:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
     strategy:
       fail-fast: false
       matrix:
@@ -20,7 +21,9 @@ jobs:
         - '3.9'
         - '3.10'
         - '3.11'
-        - 3.12-dev
+        - '3.12'
+        # Temporary disabled because of https://github.com/crate-py/rpds/issues/72
+        # - 3.13-dev
         - pypy-3.9
         include:
         - os: ubuntu-20.04
@@ -28,9 +31,9 @@ jobs:
         - os: ubuntu-20.04
           python-version: '3.6'
         - os: windows-2022
-          python-version: '3.11'
-        - os: macos-11
-          python-version: '3.11'
+          python-version: '3.12'
+        - os: macos-13
+          python-version: '3.12'
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout repository
@@ -39,6 +42,9 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+      env:
+        # Workaround for https://github.com/actions/setup-python/issues/866
+        PIP_TRUSTED_HOST: pypi.python.org pypi.org files.pythonhosted.org
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -47,7 +53,7 @@ jobs:
       run: |
         tox -e tests
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: ${{ matrix.os }}_${{ matrix.python-version }}

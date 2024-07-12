@@ -1,16 +1,18 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v4.5.0
   hooks:
   - id: end-of-file-fixer
   - id: trailing-whitespace
   - id: check-added-large-files
+  - id: mixed-line-ending
+    args: [--fix=lf]
 - repo: https://github.com/crate-ci/typos
-  rev: v1.16.19
+  rev: v1.18.0
   hooks:
   - id: typos
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.10.0
+  rev: v2.12.0
   hooks:
   - id: pretty-format-ini
     args: [--autofix]
@@ -19,11 +21,11 @@ repos:
   - id: pretty-format-toml
     args: [--autofix]
 - repo: https://github.com/ambv/black
-  rev: 23.7.0
+  rev: 24.1.1
   hooks:
   - id: black
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.0.286
+  rev: v0.2.0
   hooks:
   - id: ruff
     args: [--fix, --exit-non-zero-on-fix]

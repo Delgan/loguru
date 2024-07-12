@@ -50,11 +50,18 @@ class StreamHandler:
         self.stopped = True
 
 
+class MockLock:
+    def __enter__(self):
+        pass
+
+    def __exit__(self, *excinfo):
+        pass
+
+
 class StandardHandler(logging.Handler):
     def __init__(self, level):
         super().__init__(level)
         self.written = ""
-        self.lock = None
 
     def emit(self, record):
         self.written += record.getMessage()
@@ -62,8 +69,11 @@ class StandardHandler(logging.Handler):
     def acquire(self):
         pass
 
+    def release(self):
+        pass
+
     def createLock(self):  # noqa: N802
-        return None
+        self.lock = MockLock()
 
 
 def format_function(record):
