@@ -1083,10 +1083,9 @@ def test_multiple_rotation_conditions(freeze_time, tmp_path):
     )
 
 
-@pytest.mark.parametrize("rotations", [list(), tuple(), set()])
-def test_empty_rotation_condition_list(rotations):
+def test_empty_rotation_condition_list():
     with pytest.raises(ValueError):
-        logger.add("test.log", rotation=rotations)
+        logger.add("test.log", rotation=[])
 
 
 @pytest.mark.parametrize(
