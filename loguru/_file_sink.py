@@ -153,6 +153,13 @@ class Rotation:
                 return True
             return False
 
+    class RotationGroup:
+        def __init__(self, rotations) -> None:
+            self._rotations = rotations
+
+        def __call__(self, message, file) -> bool:
+            return any(rotation(message, file) for rotation in self._rotations)
+
 
 class FileSink:
     def __init__(
@@ -310,6 +317,12 @@ class FileSink:
     def _make_rotation_function(rotation):
         if rotation is None:
             return None
+        if isinstance(rotation, (list, tuple, set)):
+            if len(rotation) == 0:
+                raise ValueError("Must provide at least one rotation condition")
+            return Rotation.RotationGroup(
+                [FileSink._make_rotation_function(rot) for rot in rotation]
+            )
         if isinstance(rotation, str):
             size = string_parsers.parse_size(rotation)
             if size is not None:

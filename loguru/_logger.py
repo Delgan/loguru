@@ -309,9 +309,11 @@ class Logger:
 
         Parameters
         ----------
-        rotation : |str|, |int|, |time|, |timedelta| or |callable|_, optional
-            A condition indicating whenever the current logged file should be closed and a new one
-            started.
+        rotation : |str|, |int|, |time|, |timedelta|, |callable|_, or |list| of any of those
+            types, optional
+            Condition(s) indicating whenever the current logged file should be closed and a
+            new one started. If a list of conditions are provided, the current file is rotated
+            if any condition is true.
         retention : |str|, |int|, |timedelta| or |callable|_, optional
             A directive filtering old files that should be removed during rotation or end of
             program.

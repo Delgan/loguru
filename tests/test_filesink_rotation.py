@@ -1058,6 +1058,37 @@ def test_recipe_rotation_both_size_and_time(freeze_time, tmp_path):
     )
 
 
+def test_multiple_rotation_conditions(freeze_time, tmp_path):
+    with freeze_time("2020-01-01 20:00:00") as frozen:
+        logger.add(tmp_path / "file.log", rotation=["8 B", "1 min"], format="{message}")
+        logger.info("abcde")
+        frozen.tick()
+
+        logger.info("fghij")
+        frozen.tick()
+
+        logger.info("klm")
+        frozen.move_to("2020-01-01 20:01:01")
+
+        logger.info("no")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("file.2020-01-01_20-00-00_000000.log", "abcde\n"),
+            ("file.2020-01-01_20-00-01_000000.log", "fghij\n"),
+            ("file.2020-01-01_20-00-02_000000.log", "klm\n"),
+            ("file.log", "no\n"),
+        ],
+    )
+
+
+@pytest.mark.parametrize("rotations", [list(), tuple(), set()])
+def test_empty_rotation_condition_list(rotations):
+    with pytest.raises(ValueError):
+        logger.add("test.log", rotation=rotations)
+
+
 @pytest.mark.parametrize(
     "rotation", [object(), os, datetime.date(2017, 11, 11), datetime.datetime.now(), 1j]
 )
