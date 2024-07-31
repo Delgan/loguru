@@ -2033,7 +2033,8 @@ class Logger:
         for patcher in patchers:
             patcher(log_record)
 
-        for handler in core.handlers.values():
+        # Create a copy to ensure safety when interating over handlers
+        for handler in list(core.handlers.values()):
             handler.emit(log_record, level_id, from_decorator, raw, colored_message)
 
     def trace(__self, __message, *args, **kwargs):  # noqa: N805
