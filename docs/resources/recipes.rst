@@ -323,11 +323,13 @@ Another possibility is to use a third party library like |zmq|_ for example.
     # client.py
     import zmq
     from zmq.log.handlers import PUBHandler
+    from logging import Formatter
     from loguru import logger
 
     socket = zmq.Context().socket(zmq.PUB)
     socket.connect("tcp://127.0.0.1:12345")
     handler = PUBHandler(socket)
+    handler.setFormatter(Formatter("%(message)s"))
     logger.add(handler)
 
     logger.info("Logging from client")
