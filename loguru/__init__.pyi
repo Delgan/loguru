@@ -87,16 +87,18 @@ It helps to catch several possible runtime errors by performing additional check
 For more details, go to official |documentation of loguru-mypy|_.
 """
 
-import sys
 from asyncio import AbstractEventLoop
 from datetime import datetime, time, timedelta
 from logging import Handler
 from multiprocessing.context import BaseContext
+from os import PathLike
 from types import TracebackType
 from typing import (
     Any,
+    Awaitable,
     BinaryIO,
     Callable,
+    ContextManager,
     Dict,
     Generator,
     Generic,
@@ -105,34 +107,18 @@ from typing import (
     NewType,
     Optional,
     Pattern,
+    Protocol,
     Sequence,
     TextIO,
     Tuple,
     Type,
+    TypedDict,
     TypeVar,
     Union,
     overload,
 )
 
-if sys.version_info >= (3, 5, 3):
-    from typing import Awaitable
-else:
-    from typing_extensions import Awaitable
-
-if sys.version_info >= (3, 6):
-    from os import PathLike
-    from typing import ContextManager
-
-    PathLikeStr = PathLike[str]
-else:
-    from pathlib import PurePath as PathLikeStr
-
-    from typing_extensions import ContextManager
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol, TypedDict
-else:
-    from typing_extensions import Protocol, TypedDict
+PathLikeStr = PathLike[str]
 
 _T = TypeVar("_T")
 _F = TypeVar("_F", bound=Callable[..., Any])
@@ -320,8 +306,8 @@ class Logger:
         depth: int = ...,
         ansi: bool = ...,
     ) -> Logger: ...
-    def bind(__self, **kwargs: Any) -> Logger: ...  # noqa: N805
-    def contextualize(__self, **kwargs: Any) -> Contextualizer: ...  # noqa: N805
+    def bind(self, **kwargs: Any) -> Logger: ...  # noqa: N805
+    def contextualize(self, **kwargs: Any) -> Contextualizer: ...  # noqa: N805
     def patch(self, patcher: PatcherFunction) -> Logger: ...
     @overload
     def level(self, name: str) -> Level: ...
@@ -371,43 +357,43 @@ class Logger:
         chunk: int = ...,
     ) -> Generator[Dict[str, Any], None, None]: ...
     @overload
-    def trace(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def trace(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def trace(__self, __message: Any) -> None: ...  # noqa: N805
+    def trace(self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def debug(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def debug(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def debug(__self, __message: Any) -> None: ...  # noqa: N805
+    def debug(self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def info(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def info(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def info(__self, __message: Any) -> None: ...  # noqa: N805
+    def info(self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def success(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def success(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def success(__self, __message: Any) -> None: ...  # noqa: N805
+    def success(self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def warning(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def warning(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def warning(__self, __message: Any) -> None: ...  # noqa: N805
+    def warning(self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def error(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def error(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def error(__self, __message: Any) -> None: ...  # noqa: N805
+    def error(self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def critical(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def critical(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def critical(__self, __message: Any) -> None: ...  # noqa: N805
+    def critical(self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def exception(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def exception(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def exception(__self, __message: Any) -> None: ...  # noqa: N805
+    def exception(self, __message: Any) -> None: ...  # noqa: N805
     @overload
     def log(
-        __self, __level: Union[int, str], __message: str, *args: Any, **kwargs: Any  # noqa: N805
+        self, __level: Union[int, str], __message: str, *args: Any, **kwargs: Any  # noqa: N805
     ) -> None: ...
     @overload
-    def log(__self, __level: Union[int, str], __message: Any) -> None: ...  # noqa: N805
+    def log(self, __level: Union[int, str], __message: Any) -> None: ...  # noqa: N805
     def start(self, *args: Any, **kwargs: Any) -> int: ...
     def stop(self, *args: Any, **kwargs: Any) -> None: ...
 
