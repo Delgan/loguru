@@ -26,10 +26,6 @@ jobs:
         # - 3.13-dev
         - pypy-3.9
         include:
-        - os: ubuntu-20.04
-          python-version: '3.5'
-        - os: ubuntu-20.04
-          python-version: '3.6'
         - os: windows-2022
           python-version: '3.12'
         - os: macos-13
