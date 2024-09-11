@@ -11,7 +11,7 @@ tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S+|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|X|x|
 pattern = re.compile(r"(?:{0})|\[(?:{0}|!UTC|)\]".format(tokens))
 
 
-@functools.cache
+@functools.lru_cache(maxsize=None)
 def _compile_format(spec: str) -> Callable[[datetime_], str]:
     if spec.endswith("!UTC"):
         use_utc: bool = True
