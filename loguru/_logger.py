@@ -90,17 +90,19 @@ import logging
 import re
 import sys
 import warnings
-from collections import namedtuple
+from asyncio import get_running_loop
+from contextvars import ContextVar
 from inspect import isclass, iscoroutinefunction, isgeneratorfunction
 from multiprocessing import current_process, get_context
 from multiprocessing.context import BaseContext
+from os import PathLike
 from os.path import basename, splitext
 from threading import current_thread
+from typing import NamedTuple
 
-from . import _asyncio_loop, _colorama, _defaults, _filters
+from . import _colorama, _defaults, _filters
 from ._better_exceptions import ExceptionFormatter
 from ._colorizer import Colorizer
-from ._contextvars import ContextVar
 from ._datetime import aware_now
 from ._error_interceptor import ErrorInterceptor
 from ._file_sink import FileSink
@@ -110,13 +112,13 @@ from ._locks_machinery import create_logger_lock
 from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
 from ._simple_sinks import AsyncSink, CallableSink, StandardSink, StreamSink
 
-if sys.version_info >= (3, 6):
-    from os import PathLike
-else:
-    from pathlib import PurePath as PathLike
 
+class Level(NamedTuple):
+    name: str
+    no: int
+    color: str
+    icon: str
 
-Level = namedtuple("Level", ["name", "no", "color", "icon"])
 
 start_time = aware_now()
 
@@ -840,7 +842,7 @@ class Logger:
             # running loop in Python 3.5.2 and earlier versions, see python/asyncio#452.
             if enqueue and loop is None:
                 try:
-                    loop = _asyncio_loop.get_running_loop()
+                    loop = get_running_loop()
                 except RuntimeError as e:
                     raise ValueError(
                         "An event loop is required to add a coroutine sink with `enqueue=True`, "

@@ -1,8 +1,7 @@
 import asyncio
 import logging
 import weakref
-
-from ._asyncio_loop import get_running_loop, get_task_loop
+from asyncio import get_running_loop
 
 
 class StreamSink:
@@ -97,7 +96,7 @@ class AsyncSink:
 
     async def _complete_task(self, task):
         loop = get_running_loop()
-        if get_task_loop(task) is not loop:
+        if task.get_loop() is not loop:
             return
         try:
             await task
