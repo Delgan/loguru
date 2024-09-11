@@ -87,6 +87,7 @@ It helps to catch several possible runtime errors by performing additional check
 For more details, go to official |documentation of loguru-mypy|_.
 """
 
+import sys
 from asyncio import AbstractEventLoop
 from datetime import datetime, time, timedelta
 from logging import Handler
@@ -107,16 +108,19 @@ from typing import (
     NewType,
     Optional,
     Pattern,
-    Protocol,
     Sequence,
     TextIO,
     Tuple,
     Type,
-    TypedDict,
     TypeVar,
     Union,
     overload,
 )
+
+if sys.version_info >= (3, 8):
+    from typing import Protocol, TypedDict
+else:
+    from typing_extensions import Protocol, TypedDict
 
 PathLikeStr = PathLike[str]
 
