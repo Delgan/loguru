@@ -361,37 +361,37 @@ class Logger:
         chunk: int = ...,
     ) -> Generator[Dict[str, Any], None, None]: ...
     @overload
-    def trace(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def trace(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def trace(self, __message: Any) -> None: ...  # noqa: N805
+    def trace(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def debug(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def debug(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def debug(self, __message: Any) -> None: ...  # noqa: N805
+    def debug(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def info(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def info(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def info(self, __message: Any) -> None: ...  # noqa: N805
+    def info(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def success(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def success(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def success(self, __message: Any) -> None: ...  # noqa: N805
+    def success(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def warning(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def warning(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def warning(self, __message: Any) -> None: ...  # noqa: N805
+    def warning(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def error(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def error(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def error(self, __message: Any) -> None: ...  # noqa: N805
+    def error(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def critical(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def critical(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def critical(self, __message: Any) -> None: ...  # noqa: N805
+    def critical(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def exception(self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def exception(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
-    def exception(self, __message: Any) -> None: ...  # noqa: N805
+    def exception(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
     def log(
         self, __level: Union[int, str], __message: str, *args: Any, **kwargs: Any  # noqa: N805
