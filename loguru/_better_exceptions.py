@@ -10,7 +10,8 @@ import sysconfig
 import tokenize
 import traceback
 
-from exceptiongroup import ExceptionGroup
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
 
 def is_exception_group(exc):
