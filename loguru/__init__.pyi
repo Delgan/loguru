@@ -248,7 +248,7 @@ class Logger:
         diagnose: bool = ...,
         enqueue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
-        catch: bool = ...
+        catch: bool = ...,
     ) -> int: ...
     @overload
     def add(
@@ -265,7 +265,7 @@ class Logger:
         enqueue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...,
-        loop: Optional[AbstractEventLoop] = ...
+        loop: Optional[AbstractEventLoop] = ...,
     ) -> int: ...
     @overload
     def add(
@@ -290,7 +290,7 @@ class Logger:
         mode: str = ...,
         buffering: int = ...,
         encoding: str = ...,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> int: ...
     def remove(self, handler_id: Optional[int] = ...) -> None: ...
     def complete(self) -> AwaitableCompleter: ...
@@ -304,7 +304,7 @@ class Logger:
         onerror: Optional[Callable[[BaseException], None]] = ...,
         exclude: Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]] = ...,
         default: Any = ...,
-        message: str = ...
+        message: str = ...,
     ) -> Catcher: ...
     @overload
     def catch(self, function: _F) -> _F: ...
@@ -318,7 +318,7 @@ class Logger:
         raw: bool = ...,
         capture: bool = ...,
         depth: int = ...,
-        ansi: bool = ...
+        ansi: bool = ...,
     ) -> Logger: ...
     def bind(__self, **kwargs: Any) -> Logger: ...  # noqa: N805
     def contextualize(__self, **kwargs: Any) -> Contextualizer: ...  # noqa: N805
@@ -346,7 +346,7 @@ class Logger:
         levels: Optional[Sequence[LevelConfig]] = ...,
         extra: Optional[Dict[Any, Any]] = ...,
         patcher: Optional[PatcherFunction] = ...,
-        activation: Optional[Sequence[ActivationConfig]] = ...
+        activation: Optional[Sequence[ActivationConfig]] = ...,
     ) -> List[int]: ...
     # @staticmethod cannot be used with @overload in mypy (python/mypy#7781).
     # However Logger is not exposed and logger is an instance of Logger
@@ -359,7 +359,7 @@ class Logger:
         pattern: Union[str, Pattern[str]],
         *,
         cast: Union[Dict[str, Callable[[str], Any]], Callable[[Dict[str, str]], None]] = ...,
-        chunk: int = ...
+        chunk: int = ...,
     ) -> Generator[Dict[str, Any], None, None]: ...
     @overload
     def parse(
@@ -368,7 +368,7 @@ class Logger:
         pattern: Union[bytes, Pattern[bytes]],
         *,
         cast: Union[Dict[str, Callable[[bytes], Any]], Callable[[Dict[str, bytes]], None]] = ...,
-        chunk: int = ...
+        chunk: int = ...,
     ) -> Generator[Dict[str, Any], None, None]: ...
     @overload
     def trace(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805

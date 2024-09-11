@@ -249,7 +249,7 @@ class Logger:
         enqueue=_defaults.LOGURU_ENQUEUE,
         context=_defaults.LOGURU_CONTEXT,
         catch=_defaults.LOGURU_CATCH,
-        **kwargs
+        **kwargs,
     ):
         r"""Add a handler sending log messages to a sink adequately configured.
 
@@ -1136,7 +1136,7 @@ class Logger:
         default=None,
         message="An error has been caught in function '{record[function]}', "
         "process '{record[process].name}' ({record[process].id}), "
-        "thread '{record[thread].name}' ({record[thread].id}):"
+        "thread '{record[thread].name}' ({record[thread].id}):",
     ):
         """Return a decorator to automatically log possibly caught error in wrapped function.
 
@@ -1293,7 +1293,7 @@ class Logger:
         raw=False,
         capture=True,
         depth=0,
-        ansi=False
+        ansi=False,
     ):
         r"""Parametrize a logging call to slightly change generated log message.
 
