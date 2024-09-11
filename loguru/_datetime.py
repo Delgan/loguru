@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import functools
 import re
 from calendar import day_abbr, day_name, month_abbr, month_name
