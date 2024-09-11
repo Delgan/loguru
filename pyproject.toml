@@ -36,7 +36,7 @@ keywords = ["loguru", "logging", "logger", "log"]
 license = {text = "MIT"}
 name = "loguru"
 readme = 'README.rst'
-requires-python = ">=3.5,<4.0"
+requires-python = ">=3.7,<4.0"
 
 [project.optional-dependencies]
 dev = [
@@ -75,7 +75,7 @@ Homepage = "https://github.com/Delgan/loguru"
 [tool.black]
 force-exclude = "tests/exceptions/source/modern/*"
 line-length = 100
-target-version = ["py35"]
+target-version = ["py37"]
 
 [tool.flit.module]
 name = "loguru"
