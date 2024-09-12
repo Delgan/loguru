@@ -11,8 +11,19 @@ tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S+|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|X|x|
 pattern = re.compile(r"(?:{0})|\[(?:{0}|!UTC|)\]".format(tokens))
 
 
+def __default_fmt_fast_path(dt: datetime_) -> str:
+    return (
+        f"{dt.year:04d}-{dt.month:02d}-{dt.day:02d}"
+        f" {dt.hour:02d}:{dt.month:02d}:{dt.day:02d}.{dt.microsecond // 1000:03d}"
+    )
+
+
 @functools.lru_cache(maxsize=None)
 def _compile_format(spec: str) -> Callable[[datetime_], str]:
+    # default format for text output
+    if spec == "YYYY-MM-DD HH:mm:ss.SSS":
+        return __default_fmt_fast_path
+
     if spec.endswith("!UTC"):
         use_utc: bool = True
         spec = spec[:-4]
@@ -152,7 +163,8 @@ def _compile_format(spec: str) -> Callable[[datetime_], str]:
 
 class datetime(datetime_):  # noqa: N801
     def __format__(self, spec):
-        return _compile_format(spec)(self)
+        fmt = _compile_format(spec)
+        return fmt(self)
 
 
 def aware_now():
