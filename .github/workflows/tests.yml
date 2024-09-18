@@ -22,8 +22,7 @@ jobs:
         - '3.10'
         - '3.11'
         - '3.12'
-        # Temporary disabled because of https://github.com/crate-py/rpds/issues/72
-        # - 3.13-dev
+        - 3.13-dev
         - pypy-3.9
         include:
         - os: windows-2022
