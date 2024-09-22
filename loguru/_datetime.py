@@ -2,6 +2,7 @@ import re
 from calendar import day_abbr, day_name, month_abbr, month_name
 from datetime import datetime as datetime_
 from datetime import timedelta, timezone
+from functools import lru_cache, partial
 from time import localtime, strftime
 
 tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S+|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|X|x|E|Q|dddd|ddd|d"
@@ -9,80 +10,134 @@ tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S+|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|X|x|
 pattern = re.compile(r"(?:{0})|\[(?:{0}|!UTC|)\]".format(tokens))
 
 
-class datetime(datetime_):  # noqa: N801
-    def __format__(self, spec):
-        if spec.endswith("!UTC"):
-            dt = self.astimezone(timezone.utc)
-            spec = spec[:-4]
+def _builtin_datetime_formatter(is_utc, format_string, dt):
+    if is_utc:
+        dt = dt.astimezone(timezone.utc)
+    return dt.strftime(format_string)
+
+
+def _loguru_datetime_formatter(is_utc, format_string, formatters, dt):
+    if is_utc:
+        dt = dt.astimezone(timezone.utc)
+    t = dt.timetuple()
+    args = tuple(f(t, dt) for f in formatters)
+    return format_string % args
+
+
+def _default_datetime_formatter(dt):
+    return "%04d-%02d-%02d %02d:%02d:%02d.%03d" % (
+        dt.year,
+        dt.month,
+        dt.day,
+        dt.hour,
+        dt.minute,
+        dt.second,
+        dt.microsecond // 1000,
+    )
+
+
+def _format_timezone(tzinfo, *, sep):
+    offset = tzinfo.utcoffset(None).total_seconds()
+    sign = "+" if offset >= 0 else "-"
+    (h, m), s = divmod(abs(offset // 60), 60), abs(offset) % 60
+    z = "%s%02d%s%02d" % (sign, h, sep, m)
+    if s > 0:
+        if s.is_integer():
+            z += "%s%02d" % (sep, s)
         else:
-            dt = self
+            z += "%s%09.06f" % (sep, s)
+    return z
 
-        if not spec:
-            spec = "%Y-%m-%dT%H:%M:%S.%f%z"
 
-        if "%" in spec:
-            return datetime_.__format__(dt, spec)
+@lru_cache(maxsize=32)
+def _compile_format(spec):
+    if spec == "YYYY-MM-DD HH:mm:ss.SSS":
+        return _default_datetime_formatter
 
-        if "SSSSSSS" in spec:
-            raise ValueError(
-                "Invalid time format: the provided format string contains more than six successive "
-                "'S' characters. This may be due to an attempt to use nanosecond precision, which "
-                "is not supported."
-            )
+    is_utc = spec.endswith("!UTC")
 
-        year, month, day, hour, minute, second, weekday, yearday, _ = dt.timetuple()
-        microsecond = dt.microsecond
-        timestamp = dt.timestamp()
-        tzinfo = dt.tzinfo or timezone(timedelta(seconds=0))
-        offset = tzinfo.utcoffset(dt).total_seconds()
-        sign = ("-", "+")[offset >= 0]
-        (h, m), s = divmod(abs(offset // 60), 60), abs(offset) % 60
+    if is_utc:
+        spec = spec[:-4]
 
-        rep = {
-            "YYYY": "%04d" % year,
-            "YY": "%02d" % (year % 100),
-            "Q": "%d" % ((month - 1) // 3 + 1),
-            "MMMM": month_name[month],
-            "MMM": month_abbr[month],
-            "MM": "%02d" % month,
-            "M": "%d" % month,
-            "DDDD": "%03d" % yearday,
-            "DDD": "%d" % yearday,
-            "DD": "%02d" % day,
-            "D": "%d" % day,
-            "dddd": day_name[weekday],
-            "ddd": day_abbr[weekday],
-            "d": "%d" % weekday,
-            "E": "%d" % (weekday + 1),
-            "HH": "%02d" % hour,
-            "H": "%d" % hour,
-            "hh": "%02d" % ((hour - 1) % 12 + 1),
-            "h": "%d" % ((hour - 1) % 12 + 1),
-            "mm": "%02d" % minute,
-            "m": "%d" % minute,
-            "ss": "%02d" % second,
-            "s": "%d" % second,
-            "S": "%d" % (microsecond // 100000),
-            "SS": "%02d" % (microsecond // 10000),
-            "SSS": "%03d" % (microsecond // 1000),
-            "SSSS": "%04d" % (microsecond // 100),
-            "SSSSS": "%05d" % (microsecond // 10),
-            "SSSSSS": "%06d" % microsecond,
-            "A": ("AM", "PM")[hour // 12],
-            "Z": "%s%02d:%02d%s" % (sign, h, m, (":%09.06f" % s)[: 11 if s % 1 else 3] * (s > 0)),
-            "ZZ": "%s%02d%02d%s" % (sign, h, m, ("%09.06f" % s)[: 10 if s % 1 else 2] * (s > 0)),
-            "zz": tzinfo.tzname(dt) or "",
-            "X": "%d" % timestamp,
-            "x": "%d" % (int(timestamp) * 1000000 + microsecond),
-        }
+    if not spec:
+        spec = "%Y-%m-%dT%H:%M:%S.%f%z"
 
-        def get(m):
-            try:
-                return rep[m.group(0)]
-            except KeyError:
-                return m.group(0)[1:-1]
+    if "%" in spec:
+        return partial(_builtin_datetime_formatter, is_utc, spec)
 
-        return pattern.sub(get, spec)
+    if "SSSSSSS" in spec:
+        raise ValueError(
+            "Invalid time format: the provided format string contains more than six successive "
+            "'S' characters. This may be due to an attempt to use nanosecond precision, which "
+            "is not supported."
+        )
+
+    rep = {
+        "YYYY": ("%04d", lambda t, dt: t.tm_year),
+        "YY": ("%02d", lambda t, dt: t.tm_year % 100),
+        "Q": ("%d", lambda t, dt: (t.tm_mon - 1) // 3 + 1),
+        "MMMM": ("%s", lambda t, dt: month_name[t.tm_mon]),
+        "MMM": ("%s", lambda t, dt: month_abbr[t.tm_mon]),
+        "MM": ("%02d", lambda t, dt: t.tm_mon),
+        "M": ("%d", lambda t, dt: t.tm_mon),
+        "DDDD": ("%03d", lambda t, dt: t.tm_yday),
+        "DDD": ("%d", lambda t, dt: t.tm_yday),
+        "DD": ("%02d", lambda t, dt: t.tm_mday),
+        "D": ("%d", lambda t, dt: t.tm_mday),
+        "dddd": ("%s", lambda t, dt: day_name[t.tm_wday]),
+        "ddd": ("%s", lambda t, dt: day_abbr[t.tm_wday]),
+        "d": ("%d", lambda t, dt: t.tm_wday),
+        "E": ("%d", lambda t, dt: t.tm_wday + 1),
+        "HH": ("%02d", lambda t, dt: t.tm_hour),
+        "H": ("%d", lambda t, dt: t.tm_hour),
+        "hh": ("%02d", lambda t, dt: (t.tm_hour - 1) % 12 + 1),
+        "h": ("%d", lambda t, dt: (t.tm_hour - 1) % 12 + 1),
+        "mm": ("%02d", lambda t, dt: t.tm_min),
+        "m": ("%d", lambda t, dt: t.tm_min),
+        "ss": ("%02d", lambda t, dt: t.tm_sec),
+        "s": ("%d", lambda t, dt: t.tm_sec),
+        "S": ("%d", lambda t, dt: dt.microsecond // 100000),
+        "SS": ("%02d", lambda t, dt: dt.microsecond // 10000),
+        "SSS": ("%03d", lambda t, dt: dt.microsecond // 1000),
+        "SSSS": ("%04d", lambda t, dt: dt.microsecond // 100),
+        "SSSSS": ("%05d", lambda t, dt: dt.microsecond // 10),
+        "SSSSSS": ("%06d", lambda t, dt: dt.microsecond),
+        "A": ("%s", lambda t, dt: "AM" if t.tm_hour < 12 else "PM"),
+        "Z": ("%s", lambda t, dt: _format_timezone(dt.tzinfo or timezone.utc, sep=":")),
+        "ZZ": ("%s", lambda t, dt: _format_timezone(dt.tzinfo or timezone.utc, sep="")),
+        "zz": ("%s", lambda t, dt: (dt.tzinfo or timezone.utc).tzname(dt) or ""),
+        "X": ("%d", lambda t, dt: dt.timestamp()),
+        "x": ("%d", lambda t, dt: int(dt.timestamp() * 1000000 + dt.microsecond)),
+    }
+
+    format_string = ""
+    formatters = []
+    pos = 0
+
+    for match in pattern.finditer(spec):
+        start, end = match.span()
+        format_string += spec[pos:start]
+        pos = end
+
+        token = match.group(0)
+
+        try:
+            specifier, formatter = rep[token]
+        except KeyError:
+            format_string += token[1:-1]
+        else:
+            format_string += specifier
+            formatters.append(formatter)
+
+    format_string += spec[pos:]
+
+    return partial(_loguru_datetime_formatter, is_utc, format_string, formatters)
+
+
+class datetime(datetime_):  # noqa: N801
+
+    def __format__(self, fmt):
+        return _compile_format(fmt)(self)
 
 
 def aware_now():
