@@ -531,6 +531,43 @@ def divide(a, b):
 
 divide(5, 0)
 
+Asynchronous Logging
+Use Loguru in asynchronous applications:
+
+
+::
+import asyncio
+
+@logger.catch
+async def main():
+    logger.info("Async logging is supported!")
+    await asyncio.sleep(1)
+
+asyncio.run(main())
+
+Contextual Logging
+Add contextual information to your logs:
+
+::
+with logger.contextualize(user_id=42):
+    logger.info("User logged in")
+
+
+Migrating from Standard Logging
+Switching from Python's standard logging module is straightforward:
+
+::
+import logging
+
+# Replace standard logging setup
+logging.basicConfig(level=logging.INFO)
+
+# With Loguru
+from loguru import logger
+logger.add(sys.stderr, level="INFO")
+
+
+# Output includes 'user_id' in the log message
 
 |strike|
 
