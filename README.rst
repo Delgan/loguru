@@ -487,6 +487,50 @@ Exhaustive notifier
     handler = NotificationHandler("gmail", defaults=params)
     logger.add(handler, level="ERROR")
 
+Advanced Configuration
+^^^^^^^^^^^^^^^^^^^^^^
+
+Logging to Multiple Destinations (Sinks)
+You can add multiple sinks to the logger to direct logs to different destinations:
+
+::  
+    logger.add("file.log", rotation="500 MB")  # Log to a file, rotating every 500 MB
+    logger.add(sys.stderr, format="{time} - {level} - {message}")  # Log to stderr with custom format
+
+
+Custom Log Formats
+Customize the log message format to include the information you need:
+
+::
+
+logger.add(
+    "debug.log",
+    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {module}:{function}:{line} - {message}",
+    level="DEBUG",
+)
+
+Log Rotation and Retention
+Automatically rotate logs and manage retention:
+
+::
+    logger.add(
+    "app.log",
+    rotation="00:00",  # Rotate at midnight
+    retention="7 days",  # Keep logs for 7 days
+    compression="zip",  # Compress log files
+)
+
+Exception Handling
+Loguru can catch exceptions and log them automatically:
+
+::
+
+@logger.catch
+def divide(a, b):
+    return a / b
+
+divide(5, 0)
+
 
 |strike|
 
@@ -508,6 +552,27 @@ Although logging impact on performances is in most cases negligible, a zero-cost
 
 .. end-of-readme-usage
 
+Best Practices
+^^^^^^^^^^^^^^
+
+Initialize Early: Configure your logger at the entry point of your application.
+Use Context Managers: Employ logger.contextualize() to add dynamic context.
+Avoid Global Imports: Import the logger within modules to prevent configuration issues
+
+Troubleshooting
+^^^^^^^^^^^^^^^
+Logs Not Appearing:
+
+Ensure that you've added at least one sink using logger.add().
+Check the logging level; messages below the set level won't appear.
+Duplicate Logs:
+
+Multiple imports of logger in different modules can cause duplication.
+Configure the logger in a single module and import it elsewhere.
+Performance Issues:
+
+Extensive logging can slow down your application.
+Use appropriate logging levels in production (WARNING or higher).
 
 Documentation
 -------------
