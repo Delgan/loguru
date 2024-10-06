@@ -1040,17 +1040,16 @@ class Logger:
             )
 
         with self._core.lock:
-            handlers = self._core.handlers.copy()
-
-            if handler_id is not None and handler_id not in handlers:
+            if handler_id is not None and handler_id not in self._core.handlers:
                 raise ValueError("There is no existing handler with id %d" % handler_id) from None
 
             if handler_id is None:
-                handler_ids = list(handlers.keys())
+                handler_ids = list(self._core.handlers)
             else:
                 handler_ids = [handler_id]
 
             for handler_id in handler_ids:
+                handlers = self._core.handlers.copy()
                 handler = handlers.pop(handler_id)
 
                 # This needs to be done first in case "stop()" raises an exception
