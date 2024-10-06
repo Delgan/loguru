@@ -23,7 +23,7 @@ jobs:
         - '3.11'
         - '3.12'
         - 3.13-dev
-        - pypy-3.9
+        - pypy-3.10
         include:
         - os: ubuntu-20.04
           python-version: '3.5'
