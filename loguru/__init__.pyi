@@ -282,7 +282,16 @@ class Logger:
         enqueue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...,
-        rotation: Optional[Union[str, int, time, timedelta, RotationFunction]] = ...,
+        rotation: Optional[
+            Union[
+                str,
+                int,
+                time,
+                timedelta,
+                RotationFunction,
+                list[Union[str, int, time, timedelta, RotationFunction]],
+            ]
+        ] = ...,
         retention: Optional[Union[str, int, timedelta, RetentionFunction]] = ...,
         compression: Optional[Union[str, CompressionFunction]] = ...,
         delay: bool = ...,
