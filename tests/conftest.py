@@ -5,7 +5,6 @@ import datetime
 import io
 import logging
 import os
-import pathlib
 import sys
 import threading
 import time
@@ -17,34 +16,6 @@ import freezegun
 import pytest
 
 import loguru
-
-if sys.version_info < (3, 5, 3):
-
-    def run(coro):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        res = loop.run_until_complete(coro)
-        loop.close()
-        asyncio.set_event_loop(None)
-        return res
-
-    asyncio.run = run
-elif sys.version_info < (3, 7):
-
-    def run(coro):
-        loop = asyncio.new_event_loop()
-        res = loop.run_until_complete(coro)
-        loop.close()
-        asyncio.set_event_loop(None)
-        return res
-
-    asyncio.run = run
-
-if sys.version_info < (3, 6):
-
-    @pytest.fixture
-    def tmp_path(tmp_path):
-        yield pathlib.Path(str(tmp_path))
 
 
 @contextlib.contextmanager

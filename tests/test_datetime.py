@@ -7,10 +7,7 @@ import pytest
 
 from loguru import logger
 
-if sys.version_info < (3, 6):
-    UTC_NAME = "UTC+00:00"
-else:
-    UTC_NAME = "UTC"
+UTC_NAME = "UTC"
 
 
 @pytest.mark.parametrize(

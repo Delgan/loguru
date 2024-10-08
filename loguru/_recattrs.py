@@ -11,7 +11,7 @@ class RecordLevel:
         self.icon = icon
 
     def __repr__(self):
-        return "(name=%r, no=%r, icon=%r)" % (self.name, self.no, self.icon)
+        return f"(name={self.name!r}, no={self.no!r}, icon={self.icon!r})"
 
     def __format__(self, spec):
         return self.name.__format__(spec)
@@ -25,7 +25,7 @@ class RecordFile:
         self.path = path
 
     def __repr__(self):
-        return "(name=%r, path=%r)" % (self.name, self.path)
+        return f"(name={self.name!r}, path={self.path!r})"
 
     def __format__(self, spec):
         return self.name.__format__(spec)
@@ -39,7 +39,7 @@ class RecordThread:
         self.name = name
 
     def __repr__(self):
-        return "(id=%r, name=%r)" % (self.id, self.name)
+        return f"(id={self.id!r}, name={self.name!r})"
 
     def __format__(self, spec):
         return self.id.__format__(spec)
@@ -53,7 +53,7 @@ class RecordProcess:
         self.name = name
 
     def __repr__(self):
-        return "(id=%r, name=%r)" % (self.id, self.name)
+        return f"(id={self.id!r}, name={self.name!r})"
 
     def __format__(self, spec):
         return self.id.__format__(spec)
@@ -61,7 +61,9 @@ class RecordProcess:
 
 class RecordException(namedtuple("RecordException", ("type", "value", "traceback"))):
     def __repr__(self):
-        return "(type=%r, value=%r, traceback=%r)" % (self.type, self.value, self.traceback)
+        return "(type={!r}, value={!r}, traceback={!r})".format(
+            self.type, self.value, self.traceback
+        )
 
     def __reduce__(self):
         # The traceback is not picklable, therefore it needs to be removed. Additionally, there's a

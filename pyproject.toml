@@ -15,8 +15,6 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.5",
-  "Programming Language :: Python :: 3.6",
   "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
@@ -30,8 +28,8 @@ classifiers = [
 ]
 dependencies = [
   "colorama>=0.3.4 ; sys_platform=='win32'",
-  "aiocontextvars>=0.2.0 ; python_version<'3.7'",
-  "win32-setctime>=1.0.0 ; sys_platform=='win32'"
+  "win32-setctime>=1.0.0 ; sys_platform=='win32'",
+  "exceptiongroup>=1.1.3,<2 ; python_version<'3.11'"
 ]
 description = "Python logging made (stupidly) simple"
 dynamic = ['version']
@@ -39,7 +37,7 @@ keywords = ["loguru", "logging", "logger", "log"]
 license = {text = "MIT"}
 name = "loguru"
 readme = 'README.rst'
-requires-python = ">=3.5,<4.0"
+requires-python = ">=3.7,<4.0"
 
 [project.optional-dependencies]
 dev = [
@@ -52,17 +50,16 @@ dev = [
   "pytest==8.3.2 ; python_version>='3.8'",
   "pytest-cov==2.12.1 ; python_version<'3.8'",
   "pytest-cov==5.0.0 ; python_version>='3.8'",
-  "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.8'",
+  "pytest-mypy-plugins==1.9.3 ; python_version<'3.8'",
   "pytest-mypy-plugins==3.1.0 ; python_version>='3.8'",
   # Testing utils.
   "colorama==0.4.5 ; python_version<'3.8'",
   "colorama==0.4.6 ; python_version>='3.8'",
   "freezegun==1.1.0 ; python_version<'3.8'",
   "freezegun==1.5.0 ; python_version>='3.8'",
-  "exceptiongroup==1.1.3 ; python_version>='3.7' and python_version<'3.11'",
+  "exceptiongroup==1.1.3 ; python_version<'3.11'",
   # Type checking.
-  "mypy==v0.910 ; python_version<'3.6'",
-  "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",
+  "mypy==v0.971 ; python_version<'3.7'",
   "mypy==v1.4.1 ; python_version>='3.7' and python_version<'3.8'",
   "mypy==v1.11.2 ; python_version>='3.8'",
   # Docs.
@@ -79,7 +76,7 @@ Homepage = "https://github.com/Delgan/loguru"
 [tool.black]
 force-exclude = "tests/exceptions/source/modern/*"
 line-length = 100
-target-version = ["py35"]
+target-version = ["py37"]
 
 [tool.flit.module]
 name = "loguru"

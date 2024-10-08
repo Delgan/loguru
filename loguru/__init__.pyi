@@ -92,11 +92,14 @@ from asyncio import AbstractEventLoop
 from datetime import datetime, time, timedelta
 from logging import Handler
 from multiprocessing.context import BaseContext
+from os import PathLike
 from types import TracebackType
 from typing import (
     Any,
+    Awaitable,
     BinaryIO,
     Callable,
+    ContextManager,
     Dict,
     Generator,
     Generic,
@@ -114,25 +117,12 @@ from typing import (
     overload,
 )
 
-if sys.version_info >= (3, 5, 3):
-    from typing import Awaitable
-else:
-    from typing_extensions import Awaitable
-
-if sys.version_info >= (3, 6):
-    from os import PathLike
-    from typing import ContextManager
-
-    PathLikeStr = PathLike[str]
-else:
-    from pathlib import PurePath as PathLikeStr
-
-    from typing_extensions import ContextManager
-
 if sys.version_info >= (3, 8):
     from typing import Protocol, TypedDict
 else:
     from typing_extensions import Protocol, TypedDict
+
+PathLikeStr = PathLike[str]
 
 _T = TypeVar("_T")
 _F = TypeVar("_F", bound=Callable[..., Any])
@@ -248,7 +238,7 @@ class Logger:
         diagnose: bool = ...,
         enqueue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
-        catch: bool = ...
+        catch: bool = ...,
     ) -> int: ...
     @overload
     def add(
@@ -265,7 +255,7 @@ class Logger:
         enqueue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...,
-        loop: Optional[AbstractEventLoop] = ...
+        loop: Optional[AbstractEventLoop] = ...,
     ) -> int: ...
     @overload
     def add(
@@ -290,7 +280,7 @@ class Logger:
         mode: str = ...,
         buffering: int = ...,
         encoding: str = ...,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> int: ...
     def remove(self, handler_id: Optional[int] = ...) -> None: ...
     def complete(self) -> AwaitableCompleter: ...
@@ -304,7 +294,7 @@ class Logger:
         onerror: Optional[Callable[[BaseException], None]] = ...,
         exclude: Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]] = ...,
         default: Any = ...,
-        message: str = ...
+        message: str = ...,
     ) -> Catcher: ...
     @overload
     def catch(self, function: _F) -> _F: ...
@@ -318,10 +308,10 @@ class Logger:
         raw: bool = ...,
         capture: bool = ...,
         depth: int = ...,
-        ansi: bool = ...
+        ansi: bool = ...,
     ) -> Logger: ...
-    def bind(__self, **kwargs: Any) -> Logger: ...  # noqa: N805
-    def contextualize(__self, **kwargs: Any) -> Contextualizer: ...  # noqa: N805
+    def bind(self, **kwargs: Any) -> Logger: ...  # noqa: N805
+    def contextualize(self, **kwargs: Any) -> Contextualizer: ...  # noqa: N805
     def patch(self, patcher: PatcherFunction) -> Logger: ...
     @overload
     def level(self, name: str) -> Level: ...
@@ -346,7 +336,7 @@ class Logger:
         levels: Optional[Sequence[LevelConfig]] = ...,
         extra: Optional[Dict[Any, Any]] = ...,
         patcher: Optional[PatcherFunction] = ...,
-        activation: Optional[Sequence[ActivationConfig]] = ...
+        activation: Optional[Sequence[ActivationConfig]] = ...,
     ) -> List[int]: ...
     # @staticmethod cannot be used with @overload in mypy (python/mypy#7781).
     # However Logger is not exposed and logger is an instance of Logger
@@ -359,7 +349,7 @@ class Logger:
         pattern: Union[str, Pattern[str]],
         *,
         cast: Union[Dict[str, Callable[[str], Any]], Callable[[Dict[str, str]], None]] = ...,
-        chunk: int = ...
+        chunk: int = ...,
     ) -> Generator[Dict[str, Any], None, None]: ...
     @overload
     def parse(
@@ -368,7 +358,7 @@ class Logger:
         pattern: Union[bytes, Pattern[bytes]],
         *,
         cast: Union[Dict[str, Callable[[bytes], Any]], Callable[[Dict[str, bytes]], None]] = ...,
-        chunk: int = ...
+        chunk: int = ...,
     ) -> Generator[Dict[str, Any], None, None]: ...
     @overload
     def trace(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
@@ -404,10 +394,10 @@ class Logger:
     def exception(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
     def log(
-        __self, __level: Union[int, str], __message: str, *args: Any, **kwargs: Any  # noqa: N805
+        self, __level: Union[int, str], __message: str, *args: Any, **kwargs: Any  # noqa: N805
     ) -> None: ...
     @overload
-    def log(__self, __level: Union[int, str], __message: Any) -> None: ...  # noqa: N805
+    def log(self, __level: Union[int, str], __message: Any) -> None: ...  # noqa: N805
     def start(self, *args: Any, **kwargs: Any) -> int: ...
     def stop(self, *args: Any, **kwargs: Any) -> None: ...
 
