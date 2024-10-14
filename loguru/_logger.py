@@ -1938,10 +1938,7 @@ class Logger:
 
         frame = get_frame(depth + 2)
 
-        try:
-            name = frame.f_globals["__name__"]
-        except KeyError:
-            name = None
+        name = frame.f_globals.get("__name__", None)
 
         try:
             if not core.enabled[name]:
