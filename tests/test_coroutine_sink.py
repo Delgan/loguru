@@ -361,7 +361,7 @@ def test_exception_in_coroutine_not_caught(capsys, caplog):
     assert "was never retrieved" not in message
 
     exc_type, exc_value, _ = record.exc_info
-    assert exc_type == ValueError
+    assert exc_type is ValueError
     assert str(exc_value) == "Oh no"
 
 
@@ -411,7 +411,7 @@ def test_exception_in_coroutine_during_complete_not_caught(capsys, caplog):
     assert "was never retrieved" not in message
 
     exc_type, exc_value, _ = record.exc_info
-    assert exc_type == ValueError
+    assert exc_type is ValueError
     assert str(exc_value) == "Oh no"
 
 

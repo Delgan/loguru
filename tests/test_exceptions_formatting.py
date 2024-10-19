@@ -295,7 +295,7 @@ def test_invalid_format_exception_only_indented_error_message(writer, monkeypatc
 
 @pytest.mark.skipif(sys.version_info < (3, 11), reason="No builtin GroupedException")
 def test_invalid_grouped_exception_no_exceptions(writer):
-    error = MagicMock(spec=ExceptionGroup)
+    error = MagicMock(spec=ExceptionGroup)  # noqa: F821
     error.__cause__ = None
     error.__context__ = None
     error.__traceback__ = None
