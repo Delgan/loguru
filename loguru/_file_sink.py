@@ -17,12 +17,12 @@ def generate_rename_path(root, ext, creation_time):
     creation_datetime = datetime.datetime.fromtimestamp(creation_time)
     date = FileDateFormatter(creation_datetime)
 
-    renamed_path = "{}.{}{}".format(root, date, ext)
+    renamed_path = f"{root}.{date}{ext}"
     counter = 1
 
     while os.path.exists(renamed_path):
         counter += 1
-        renamed_path = "{}.{}.{}{}".format(root, date, counter, ext)
+        renamed_path = f"{root}.{date}.{counter}{ext}"
 
     return renamed_path
 
@@ -56,7 +56,7 @@ class Compression:
 
     @staticmethod
     def compression(path_in, ext, compress_function):
-        path_out = "{}{}".format(path_in, ext)
+        path_out = f"{path_in}{ext}"
 
         if os.path.exists(path_out):
             creation_time = get_ctime(path_out)
@@ -167,7 +167,7 @@ class FileSink:
         mode="a",
         buffering=1,
         encoding="utf8",
-        **kwargs
+        **kwargs,
     ):
         self.encoding = encoding
 

@@ -1,12 +1,10 @@
 import asyncio
 import sys
 import threading
-from unittest.mock import MagicMock
 
 import pytest
 
 from loguru import logger
-from loguru._contextvars import load_contextvar_class
 
 
 def test_contextualize(writer):
@@ -209,13 +207,3 @@ def test_context_reset_despite_error(writer):
         logger.info("Error")
 
     assert writer.read() == "Division {'foobar': 456}\nError {}\n"
-
-
-# There is not CI runner available for Python 3.5.2. Consequently, we are just
-# verifying third-library is properly imported to reach 100% coverage.
-def test_contextvars_fallback_352(monkeypatch):
-    mock_module = MagicMock()
-    with monkeypatch.context() as context:
-        context.setattr(sys, "version_info", (3, 5, 2))
-        context.setitem(sys.modules, "contextvars", mock_module)
-        assert load_contextvar_class() == mock_module.ContextVar
