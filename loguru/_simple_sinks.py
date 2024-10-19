@@ -1,4 +1,4 @@
-import asyncio
+import inspect
 import logging
 import weakref
 
@@ -10,7 +10,7 @@ class StreamSink:
         self._stream = stream
         self._flushable = callable(getattr(stream, "flush", None))
         self._stoppable = callable(getattr(stream, "stop", None))
-        self._completable = asyncio.iscoroutinefunction(getattr(stream, "complete", None))
+        self._completable = inspect.iscoroutinefunction(getattr(stream, "complete", None))
 
     def write(self, message):
         self._stream.write(message)
