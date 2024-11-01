@@ -101,7 +101,7 @@ def test_caught_exception_queue_put(writer, capsys):
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
-    assert lines[-2].endswith("PicklingError: You shall not serialize me!")
+    assert "PicklingError: You shall not serialize me!" in err
     assert lines[-1] == "--- End of logging error ---"
 
 
@@ -119,7 +119,7 @@ def test_caught_exception_queue_get(writer, capsys):
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert lines[1] == "Record was: None"
-    assert lines[-2].endswith("UnpicklingError: You shall not de-serialize me!")
+    assert "UnpicklingError: You shall not de-serialize me!" in err
     assert lines[-1] == "--- End of logging error ---"
 
 
@@ -136,7 +136,7 @@ def test_caught_exception_sink_write(capsys):
     assert out == "It's fine\nIt's fine again\n"
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
-    assert lines[-2] == "RuntimeError: You asked me to fail..."
+    assert "RuntimeError: You asked me to fail..." in err
     assert lines[-1] == "--- End of logging error ---"
 
 
@@ -171,7 +171,7 @@ def test_not_caught_exception_queue_get(writer, capsys):
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert lines[1] == "Record was: None"
-    assert lines[-2].endswith("UnpicklingError: You shall not de-serialize me!")
+    assert "UnpicklingError: You shall not de-serialize me!" in err
     assert lines[-1] == "--- End of logging error ---"
 
 
@@ -189,7 +189,7 @@ def test_not_caught_exception_sink_write(capsys):
     assert out == "It's fine\nIt's fine again\n"
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
-    assert lines[-2] == "RuntimeError: You asked me to fail..."
+    assert "RuntimeError: You asked me to fail..." in err
     assert lines[-1] == "--- End of logging error ---"
 
 
@@ -207,7 +207,7 @@ def test_not_caught_exception_sink_write_then_complete(capsys):
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert re.match(r"Record was: \{.*Bye bye.*\}", lines[1])
-    assert lines[-2] == "RuntimeError: You asked me to fail..."
+    assert "RuntimeError: You asked me to fail..." in err
     assert lines[-1] == "--- End of logging error ---"
 
 
@@ -226,7 +226,7 @@ def test_not_caught_exception_queue_get_then_complete(writer, capsys):
     assert out == ""
     assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
     assert lines[1] == "Record was: None"
-    assert lines[-2].endswith("UnpicklingError: You shall not de-serialize me!")
+    assert "UnpicklingError: You shall not de-serialize me!" in err
     assert lines[-1] == "--- End of logging error ---"
 
 

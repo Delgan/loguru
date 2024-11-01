@@ -9,7 +9,6 @@ on:
 jobs:
   tests:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
-    continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
     strategy:
       fail-fast: false
       matrix:
@@ -22,13 +21,16 @@ jobs:
         - '3.10'
         - '3.11'
         - '3.12'
-        - 3.13-dev
-        - pypy-3.9
+        - '3.13'
+        - pypy-3.10
         include:
         - os: windows-2022
           python-version: '3.12'
         - os: macos-13
           python-version: '3.12'
+        - os: ubuntu-22.04
+          python-version: 3.14-dev
+          allow-failure: true
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout repository
@@ -47,6 +49,7 @@ jobs:
     - name: Run tests
       run: |
         tox -e tests
+      continue-on-error: ${{ matrix.allow-failure }}
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
@@ -54,3 +57,4 @@ jobs:
         flags: ${{ matrix.os }}_${{ matrix.python-version }}
         verbose: true
         fail_ci_if_error: true
+      continue-on-error: ${{ matrix.allow-failure }}

@@ -44,7 +44,7 @@ dev = [
   # Setup.
   "pre-commit==3.8.0 ; python_version>='3.9'",
   "tox==3.27.1 ; python_version<'3.8'",
-  "tox==4.18.0 ; python_version>='3.8'",
+  "tox==4.21.0 ; python_version>='3.8'",
   # Testing framework.
   "pytest==6.1.2 ; python_version<'3.8'",
   "pytest==8.3.2 ; python_version>='3.8'",
@@ -64,7 +64,7 @@ dev = [
   "mypy==v1.11.2 ; python_version>='3.8'",
   # Docs.
   "Sphinx==7.3.7 ; python_version>='3.9'",
-  "sphinx-autobuild==2024.4.16 ; python_version>='3.9'",
+  "sphinx-autobuild==2024.9.19 ; python_version>='3.9'",
   "sphinx-rtd-theme==2.0.0 ; python_version>='3.9'"
 ]
 
@@ -97,10 +97,12 @@ testpaths = ["tests"]
 [tool.ruff]
 exclude = ["tests/exceptions/source/*"]
 line-length = 100
+
+[tool.ruff.lint]
 # Enforce pyflakes(F), pycodestyle(E, W), isort (I), bugbears (B), and pep8-naming (N) rules.
 select = ["F", "E", "W", "I", "B", "N", "RET"]
 
-[tool.ruff.pycodestyle]
+[tool.ruff.lint.pycodestyle]
 max-doc-length = 100
 
 [tool.typos.default]

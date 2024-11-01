@@ -251,7 +251,7 @@ def test_exception_is_tuple():
     assert reference == exception
     assert not (exception != reference)
     assert not (reference != exception)
-    assert all(t == ZeroDivisionError for t in (t_1, t_2, t_3, t_4))
+    assert all(t is ZeroDivisionError for t in (t_1, t_2, t_3, t_4))
     assert all(isinstance(v, ZeroDivisionError) for v in (v_1, v_2, v_3, v_4))
     assert all(isinstance(tb, types.TracebackType) for tb in (tb_1, tb_2, tb_3, tb_4))
 

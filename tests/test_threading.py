@@ -6,8 +6,9 @@ from loguru import logger
 
 
 class NonSafeSink:
-    def __init__(self, sleep_time):
+    def __init__(self, sleep_time, stop_time=0):
         self.sleep_time = sleep_time
+        self.stop_time = stop_time
         self.written = ""
         self.stopped = False
 
@@ -21,6 +22,7 @@ class NonSafeSink:
         self.written += message[length:]
 
     def stop(self):
+        time.sleep(self.stop_time)
         self.stopped = True
 
 
@@ -109,6 +111,63 @@ def test_safe_removing_while_logging(capsys):
     assert out == ""
     assert err == ""
     assert sink.written == "aaa0bbb\n"
+
+
+def test_safe_removing_all_while_logging(capsys):
+    barrier = Barrier(2)
+
+    for _ in range(1000):
+        logger.add(lambda _: None, format="{message}", catch=False)
+
+    def thread_1():
+        barrier.wait()
+        logger.remove()
+
+    def thread_2():
+        barrier.wait()
+        for _ in range(100):
+            logger.info("Some message")
+
+    threads = [Thread(target=thread_1), Thread(target=thread_2)]
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == ""
+
+
+def test_safe_slow_removing_all_while_logging(capsys):
+    barrier = Barrier(2)
+
+    for _ in range(10):
+        sink = NonSafeSink(0.1, 0.1)
+        logger.add(sink, format="{message}", catch=False)
+
+    def thread_1():
+        barrier.wait()
+        logger.remove()
+
+    def thread_2():
+        barrier.wait()
+        time.sleep(0.5)
+        logger.info("Some message")
+
+    threads = [Thread(target=thread_1), Thread(target=thread_2)]
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == ""
 
 
 def test_safe_writing_after_removing(capsys):
