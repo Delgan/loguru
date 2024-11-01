@@ -115,7 +115,7 @@ def test_not_managed_files(tmp_path):
     i = logger.add(tmp_path / "test.log", retention=0, catch=False)
     logger.remove(i)
 
-    assert set(f.name for f in tmp_path.iterdir()) == others
+    assert {f.name for f in tmp_path.iterdir()} == others
 
 
 @pytest.mark.parametrize("filename", ["test", "test.log"])

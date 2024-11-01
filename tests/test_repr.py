@@ -1,6 +1,5 @@
 import logging
 import pathlib
-import re
 import sys
 
 from loguru import logger
@@ -154,12 +153,8 @@ def test_coroutine_function_with_empty_name():
 def test_standard_handler():
     handler = logging.StreamHandler(sys.__stderr__)
     logger.add(handler)
-    if sys.version_info >= (3, 6):
-        r = "<loguru.logger handlers=[(id=0, level=10, sink=<StreamHandler <stderr> (NOTSET)>)]>"
-        assert repr(logger) == r
-    else:
-        r = r"<loguru\.logger handlers=\[\(id=0, level=10, sink=<logging\.StreamHandler .*>\)\]>"
-        assert re.match(r, repr(logger))
+    r = "<loguru.logger handlers=[(id=0, level=10, sink=<StreamHandler <stderr> (NOTSET)>)]>"
+    assert repr(logger) == r
 
 
 def test_multiple_handlers():

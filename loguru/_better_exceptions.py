@@ -10,23 +10,12 @@ import sysconfig
 import tokenize
 import traceback
 
-if sys.version_info >= (3, 11):
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
-    def is_exception_group(exc):
-        return isinstance(exc, ExceptionGroup)
 
-else:
-    try:
-        from exceptiongroup import ExceptionGroup
-    except ImportError:
-
-        def is_exception_group(exc):
-            return False
-
-    else:
-
-        def is_exception_group(exc):
-            return isinstance(exc, ExceptionGroup)
+def is_exception_group(exc):
+    return isinstance(exc, ExceptionGroup)
 
 
 class SyntaxHighlighter:

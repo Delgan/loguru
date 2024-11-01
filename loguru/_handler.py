@@ -45,7 +45,7 @@ class Handler:
         error_interceptor,
         exception_formatter,
         id_,
-        levels_ansi_codes
+        levels_ansi_codes,
     ):
         self._name = name
         self._sink = sink
