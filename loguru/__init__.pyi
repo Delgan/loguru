@@ -104,7 +104,6 @@ from typing import (
     NamedTuple,
     NewType,
     Optional,
-    ParamSpec,
     Pattern,
     Sequence,
     TextIO,
@@ -114,6 +113,8 @@ from typing import (
     Union,
     overload,
 )
+
+import typing_extensions
 
 if sys.version_info >= (3, 5, 3):
     from typing import Awaitable
@@ -414,7 +415,7 @@ class Logger:
 
 logger: Logger
 
-__P = ParamSpec("__P")
+__P = typing_extensions.ParamSpec("__P")
 
 class LazyValue:
     def __init__(self, fn: Callable[__P, Any], *args: __P.args, **kwargs: __P.kwargs): ...
