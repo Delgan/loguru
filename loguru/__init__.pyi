@@ -104,6 +104,7 @@ from typing import (
     NamedTuple,
     NewType,
     Optional,
+    ParamSpec,
     Pattern,
     Sequence,
     TextIO,
@@ -412,3 +413,8 @@ class Logger:
     def stop(self, *args: Any, **kwargs: Any) -> None: ...
 
 logger: Logger
+
+__P = ParamSpec("__P")
+
+class LazyValue:
+    def __init__(self, fn: Callable[__P, Any], *args: __P.args, **kwargs: __P.kwargs): ...
