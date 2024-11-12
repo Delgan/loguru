@@ -231,7 +231,7 @@ class Logger:
     def __init__(self, core, exception, depth, record, lazy, colors, raw, capture, patchers, extra):
         if lazy:
             warnings.warn(
-                "'lazy' mode is deprecated, use `LazyValue` for deferred value",
+                "lazy mode is deprecated, use `LazyValue` for deferred value",
                 stacklevel=2,
                 category=DeprecationWarning,
             )

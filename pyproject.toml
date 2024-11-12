@@ -94,7 +94,9 @@ filterwarnings = [
   # By default all warnings are treated as errors.
   'error',
   # Mixing threads and "fork()" is deprecated, but we need to test it anyway.
-  'ignore:.*use of fork\(\) may lead to deadlocks in the child.*:DeprecationWarning'
+  'ignore:.*use of fork\(\) may lead to deadlocks in the child.*:DeprecationWarning',
+  # deprecated message for users
+  'ignore:lazy mode is deprecated.*'
 ]
 testpaths = ["tests"]
 
