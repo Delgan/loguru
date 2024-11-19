@@ -1604,7 +1604,6 @@ class Logger:
 
         ansi = Colorizer.ansify(color)
         level = Level(name, no, color, icon)
-        logging.addLevelName(no, name)
 
         with self._core.lock:
             self._core.levels[name] = level
