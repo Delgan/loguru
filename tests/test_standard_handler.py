@@ -182,3 +182,37 @@ def test_raw_standard_formatter_with_new_line(capsys, dynamic_format):
     out, err = capsys.readouterr()
     assert out == "Test INFO\n"
     assert err == ""
+
+
+def test_standard_formatter_with_non_standard_level_name(capsys):
+    handler = StreamHandler(sys.stdout)
+    formatter = Formatter("%(levelno)s | %(levelname)s | %(message)s")
+    handler.setFormatter(formatter)
+    logger.add(handler, format="{message}")
+    logger.success("Test")
+    out, err = capsys.readouterr()
+    assert out == "25 | SUCCESS | Test\n"
+    assert err == ""
+
+
+def test_standard_formatter_with_custom_level_name(capsys):
+    handler = StreamHandler(sys.stdout)
+    formatter = Formatter("%(levelno)s | %(levelname)s | %(message)s")
+    handler.setFormatter(formatter)
+    logger.add(handler, format="{message}")
+    logger.level("CUSTOM", no=35)
+    logger.log("CUSTOM", "Test")
+    out, err = capsys.readouterr()
+    assert out == "35 | CUSTOM | Test\n"
+    assert err == ""
+
+
+def test_standard_formatter_with_unregistered_level(capsys):
+    handler = StreamHandler(sys.stdout)
+    formatter = Formatter("%(levelno)s | %(levelname)s | %(message)s")
+    handler.setFormatter(formatter)
+    logger.add(handler, format="{message}")
+    logger.log(45, "Test")
+    out, err = capsys.readouterr()
+    assert out == "45 | Level 45 | Test\n"
+    assert err == ""
