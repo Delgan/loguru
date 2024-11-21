@@ -4,6 +4,7 @@
 - Fix possible ``RuntimeError`` when removing all handlers with ``logger.remove()`` due to thread-safety issue (`#1183 <https://github.com/Delgan/loguru/issues/1183>`_, thanks `@jeremyk <https://github.com/jeremyk>`_).
 - Fix ``diagnose=True`` option of exception formatting not working as expected with Python 3.13 (`#1235 <https://github.com/Delgan/loguru/issues/1235>`_, thanks `@etianen <https://github.com/etianen>`_).
 - Fix non-standard level names not fully compatible with ``logging.Formatter()`` (`#1231 <https://github.com/Delgan/loguru/issues/1231>`_, thanks `@yechielb2000 <https://github.com/yechielb2000>`_).
+- Fix inability to display a literal ``"\"`` immediately before color markups (`#988 <https://github.com/Delgan/loguru/issues/988>`_).
 - Improve performance of ``datetime`` formatting while logging messages (`#1201 <https://github.com/Delgan/loguru/issues/1201>`_, thanks `@trim21 <https://github.com/trim21>`_).
 - Reduce startup time in the presence of installed but unused ``IPython`` third-party library (`#1001 <https://github.com/Delgan/loguru/issues/1001>`_, thanks `@zakstucke <https://github.com/zakstucke>`_).
 

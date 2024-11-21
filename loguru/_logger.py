@@ -659,9 +659,10 @@ class Logger:
 
         Tags which are not recognized will raise an exception during parsing, to inform you about
         possible misuse. If you wish to display a markup tag literally, you can escape it by
-        prepending a ``\`` like for example ``\<blue>``. If, for some reason, you need to escape a
-        string programmatically, note that the regex used internally to parse markup tags is
-        ``r"\\?</?((?:[fb]g\s)?[^<>\s]*)>"``.
+        prepending a ``\`` like for example ``\<blue>``. To prevent the escaping to occur, you can
+        simply double the ``\`` (e.g. ``\\<blue>`` will print a literal ``\`` before colored text).
+        If, for some reason, you need to escape a string programmatically, note that the regex used
+        internally to parse markup tags is ``r"(\\*)(</?(?:[fb]g\s)?[^<>\s]*>)"``.
 
         Note that when logging a message with ``opt(colors=True)``, color tags present in the
         formatting arguments (``args`` and ``kwargs``) are completely ignored. This is important if

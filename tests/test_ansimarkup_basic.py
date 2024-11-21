@@ -140,10 +140,15 @@ def test_autoclose(text, expected):
 @pytest.mark.parametrize(
     "text, expected",
     [
+        (r"\<red>foobar\</red>", "<red>foobar</red>"),
+        (r"\\<red>foobar\\</red>", "\\" + Fore.RED + "foobar\\" + Style.RESET_ALL),
+        (r"\\\<red>foobar\\\</red>", "\\<red>foobar\\</red>"),
+        (r"\\\\<red>foobar\\\\</red>", "\\\\" + Fore.RED + "foobar\\\\" + Style.RESET_ALL),
         (r"<red>foo\</red>bar</red>", Fore.RED + "foo</red>bar" + Style.RESET_ALL),
         (r"<red>foo\<red>bar</red>", Fore.RED + "foo<red>bar" + Style.RESET_ALL),
         (r"\<red>\</red>", "<red></red>"),
         (r"foo\</>bar\</>baz", "foo</>bar</>baz"),
+        (r"\a \\b \\\c \\\\d", "\\a \\\\b \\\\\\c \\\\\\\\d"),
     ],
 )
 def test_escaping(text, expected):
