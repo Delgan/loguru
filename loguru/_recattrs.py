@@ -3,7 +3,7 @@ from collections import namedtuple
 
 
 class RecordLevel:
-    __slots__ = ("name", "no", "icon")
+    __slots__ = ("icon", "name", "no")
 
     def __init__(self, name, no, icon):
         self.name = name
