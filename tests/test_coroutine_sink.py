@@ -666,5 +666,11 @@ def test_complete_with_sub_processes(capsys):
 
 @pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
 def test_invalid_coroutine_sink_if_no_loop_with_enqueue():
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=(
+            "^An event loop is required to add a coroutine sink with `enqueue=True`, "
+            "but none has been passed as argument and none is currently running.$"
+        ),
+    ):
         logger.add(async_writer, enqueue=True, loop=None)

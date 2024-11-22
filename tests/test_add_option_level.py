@@ -18,12 +18,18 @@ def test_level_too_high(writer, level):
 
 
 @pytest.mark.parametrize("level", [3.4, object()])
-def test_invalid_level(writer, level):
+def test_invalid_level_type(writer, level):
     with pytest.raises(TypeError):
         logger.add(writer, level=level)
 
 
-@pytest.mark.parametrize("level", ["foo", -1])
-def test_unknown_level(writer, level):
-    with pytest.raises(ValueError):
-        logger.add(writer, level=level)
+def test_invalid_level_value(writer):
+    with pytest.raises(
+        ValueError, match="^Invalid level value, it should be a positive integer, not: -1$"
+    ):
+        logger.add(writer, level=-1)
+
+
+def test_unknown_level(writer):
+    with pytest.raises(ValueError, match="^Level 'foo' does not exist$"):
+        logger.add(writer, level="foo")

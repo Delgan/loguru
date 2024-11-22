@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from loguru import logger
@@ -95,21 +97,39 @@ def test_invalid_filter(writer, filter):
         logger.add(writer, filter=filter)
 
 
-@pytest.mark.parametrize(
-    "filter",
-    [{1: "DEBUG"}, {object(): 10}, {"foo": None}, {"foo": 2.5}, {"a": "DEBUG", "b": object()}],
-)
-def test_invalid_filter_dict_types(writer, filter):
+@pytest.mark.parametrize("filter", [{"foo": None}, {"foo": 2.5}, {"a": "DEBUG", "b": object()}])
+def test_invalid_filter_dict_level_types(writer, filter):
     with pytest.raises(TypeError):
         logger.add(writer, filter=filter)
 
 
-@pytest.mark.parametrize(
-    "filter", [{"foo": "UNKNOWN_LEVEL"}, {"tests": -1}, {"tests.test_add_option_filter": ""}]
-)
-def test_invalid_filter_dict_values(writer, filter):
-    with pytest.raises(ValueError):
+@pytest.mark.parametrize("filter", [{1: "DEBUG"}, {object(): 10}])
+def test_invalid_filter_dict_module_types(writer, filter):
+    with pytest.raises(TypeError):
         logger.add(writer, filter=filter)
+
+
+@pytest.mark.parametrize("filter", [{"foo": "UNKNOWN_LEVEL"}, {"tests.test_add_option_filter": ""}])
+def test_invalid_filter_dict_values_unknown_level(writer, filter):
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The filter dict contains a module '[^']*' associated to "
+            "a level name which does not exist: '[^']*'"
+        ),
+    ):
+        logger.add(writer, filter=filter)
+
+
+def test_invalid_filter_dict_values_wrong_integer_value(writer):
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The filter dict contains a module '[^']*' associated to an invalid level, "
+            "it should be a positive integer, not: '[^']*'"
+        ),
+    ):
+        logger.add(writer, filter={"tests": -1})
 
 
 def test_filter_dict_with_custom_level(writer):
@@ -121,5 +141,11 @@ def test_filter_dict_with_custom_level(writer):
 
 
 def test_invalid_filter_builtin(writer):
-    with pytest.raises(ValueError, match=r".* most likely a mistake"):
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "The built-in 'filter()' function cannot be used as a 'filter' parameter, this is "
+            "most likely a mistake (please double-check the arguments passed to 'logger.add()'"
+        ),
+    ):
         logger.add(writer, filter=filter)

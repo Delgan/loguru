@@ -21,7 +21,13 @@ def test_record(writer):
 def test_record_in_kwargs_too(writer):
     logger.add(writer, catch=False)
 
-    with pytest.raises(TypeError, match=r"The message can't be formatted"):
+    with pytest.raises(
+        TypeError,
+        match=(
+            "^The message can't be formatted: 'record' shall not be used as a keyword argument "
+            r"while logger has been configured with '\.opt\(record=True\)'$"
+        ),
+    ):
         logger.opt(record=True).info("Foo {record}", record=123)
 
 
@@ -272,7 +278,10 @@ def test_colors_stripped_in_message_record(colorize):
 @pytest.mark.parametrize("colorize", [True, False])
 def test_invalid_markup_in_message(writer, message, colorize):
     logger.add(writer, format="<red>{message}</red>", colorize=colorize, catch=False)
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match='(Closing|Opening) tag "[^"]*" has no corresponding (opening|closing) tag',
+    ):
         logger.opt(colors=True).debug(message)
 
 
@@ -371,7 +380,9 @@ def test_colors_without_formatting_args(writer, colorize):
 
 @pytest.mark.parametrize("colorize", [True, False])
 def test_colors_with_recursion_depth_exceeded_in_format(writer, colorize):
-    with pytest.raises(ValueError, match=r"Invalid format"):
+    with pytest.raises(
+        ValueError, match="^Invalid format, color markups could not be parsed correctly$"
+    ):
         logger.add(writer, format="{message:{message:{message:}}}", colorize=colorize)
 
 
@@ -379,7 +390,7 @@ def test_colors_with_recursion_depth_exceeded_in_format(writer, colorize):
 def test_colors_with_recursion_depth_exceeded_in_message(writer, colorize):
     logger.add(writer, format="{message}", colorize=colorize)
 
-    with pytest.raises(ValueError, match=r"Max string recursion exceeded"):
+    with pytest.raises(ValueError, match="Max string recursion exceeded"):
         logger.opt(colors=True).info("{foo:{foo:{foo:}}}", foo=123)
 
 
@@ -402,7 +413,10 @@ def test_colors_with_manual_indexing(writer, colorize):
 def test_colors_with_invalid_indexing(writer, colorize, message):
     logger.add(writer, format="{message}", colorize=colorize)
 
-    with pytest.raises(ValueError, match=r"cannot switch"):
+    with pytest.raises(
+        ValueError,
+        match="cannot switch from manual field specification to automatic field numbering",
+    ):
         logger.opt(colors=True).debug(message, 1, 2, 3)
 
 

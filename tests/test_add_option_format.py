@@ -4,7 +4,7 @@ from loguru import logger
 
 
 @pytest.mark.parametrize(
-    "message, format, expected",
+    ("message", "format", "expected"),
     [
         ("a", "Message: {message}", "Message: a\n"),
         ("b", "Nope", "Nope\n"),
@@ -64,7 +64,9 @@ def test_invalid_format(writer, format):
 
 @pytest.mark.parametrize("format", ["<red>", "</red>", "</level><level>", "</>", "<foobar>"])
 def test_invalid_markups(writer, format):
-    with pytest.raises(ValueError, match=r"Invalid format"):
+    with pytest.raises(
+        ValueError, match="^Invalid format, color markups could not be parsed correctly$"
+    ):
         logger.add(writer, format=format)
 
 

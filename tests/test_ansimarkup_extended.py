@@ -5,7 +5,7 @@ from .conftest import parse
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<bg red>1</bg red>", Back.RED + "1" + Style.RESET_ALL),
         ("<bg BLACK>1</bg BLACK>", Back.BLACK + "1" + Style.RESET_ALL),
@@ -18,7 +18,7 @@ def test_background_colors(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<fg yellow>1</fg yellow>", Fore.YELLOW + "1" + Style.RESET_ALL),
         ("<fg BLUE>1</fg BLUE>", Fore.BLUE + "1" + Style.RESET_ALL),
@@ -31,7 +31,7 @@ def test_foreground_colors(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<fg #ff0000>1</fg #ff0000>", "\x1b[38;2;255;0;0m" "1" + Style.RESET_ALL),
         ("<bg #00A000>1</bg #00A000>", "\x1b[48;2;0;160;0m" "1" + Style.RESET_ALL),
@@ -43,7 +43,7 @@ def test_8bit_colors(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<fg #ff0000>1</fg #ff0000>", "\x1b[38;2;255;0;0m" "1" + Style.RESET_ALL),
         ("<bg #00A000>1</bg #00A000>", "\x1b[48;2;0;160;0m" "1" + Style.RESET_ALL),
@@ -56,7 +56,7 @@ def test_hex_colors(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<fg 200>1</fg 200>", "\x1b[38;5;200m" "1" + Style.RESET_ALL),
         ("<bg 49>1</bg 49>", "\x1b[48;5;49m" "1" + Style.RESET_ALL),
@@ -67,7 +67,7 @@ def test_rgb_colors(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         (
             "<red><b><bg #00A000>1</bg #00A000></b></red>",
@@ -99,7 +99,7 @@ def test_nested(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<r>2 > 1</r>", Fore.RED + "2 > 1" + Style.RESET_ALL),
         ("<r>1 < 2</r>", Fore.RED + "1 < 2" + Style.RESET_ALL),
@@ -135,7 +135,13 @@ def test_tricky_parse(text, expected):
 )
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_color(text, strip):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=(
+            '^Tag "<[^>]*>" does not correspond to any known color directive, '
+            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)$"
+        ),
+    ):
         parse(text, strip=strip)
 
 
@@ -146,19 +152,31 @@ def test_invalid_color(text, strip):
         "<bg #12>1</bg #12>",
         "<fg #1234567>1</fg #1234567>",
         "<bg #E7G>1</bg #E7G>",
-        "fg #F2D1GZ>1</fg #F2D1GZ>",
+        "<fg #F2D1GZ>1</fg #F2D1GZ>",
     ],
 )
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_hex(text, strip):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=(
+            '^Tag "<[^>]*>" does not correspond to any known color directive, '
+            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)$"
+        ),
+    ):
         parse(text, strip=strip)
 
 
 @pytest.mark.parametrize("text", ["<fg 256>1</fg 256>", "<bg 2222>1</bg 2222>", "<bg -1>1</bg -1>"])
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_8bit(text, strip):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=(
+            '^Tag "<[^>]*>" does not correspond to any known color directive, '
+            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)$"
+        ),
+    ):
         parse(text, strip=strip)
 
 
@@ -174,12 +192,18 @@ def test_invalid_8bit(text, strip):
 )
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_rgb(text, strip):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=(
+            '^Tag "<[^>]*>" does not correspond to any known color directive, '
+            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)$"
+        ),
+    ):
         parse(text, strip=strip)
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<fg #ff0000>foobar</fg #ff0000>", "foobar"),
         ("<fg 55>baz</fg 55>", "baz"),
@@ -191,7 +215,7 @@ def test_strip(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<r>2 > 1</r>", "2 > 1"),
         ("<r>1 < 2</r>", "1 < 2"),

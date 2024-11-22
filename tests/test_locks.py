@@ -28,7 +28,7 @@ class CyclicReference:
         logger.info("tearing down")
 
 
-@pytest.fixture()
+@pytest.fixture
 def _remove_cyclic_references():
     """Prevent cyclic isolate finalizers bleeding into other tests."""
     try:
@@ -37,7 +37,8 @@ def _remove_cyclic_references():
         gc.collect()
 
 
-def test_no_deadlock_on_generational_garbage_collection(_remove_cyclic_references):
+@pytest.mark.usefixtures("_remove_cyclic_references")
+def test_no_deadlock_on_generational_garbage_collection():
     """Regression test for https://github.com/Delgan/loguru/issues/712
 
     Assert that deadlocks do not occur when a cyclic isolate containing log output in

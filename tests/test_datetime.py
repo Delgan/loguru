@@ -14,7 +14,7 @@ else:
 
 
 @pytest.mark.parametrize(
-    "time_format, date, timezone, expected",
+    ("time_format", "date", "timezone", "expected"),
     [
         (
             "%Y-%m-%d %H-%M-%S %f %Z %z",
@@ -116,7 +116,7 @@ def test_formatting(writer, freeze_time, time_format, date, timezone, expected):
 
 
 @pytest.mark.parametrize(
-    "time_format, offset, expected",
+    ("time_format", "offset", "expected"),
     [
         ("%Y-%m-%d %H-%M-%S %f %Z %z", 7230.099, "2018-06-09 01-02-03 000000 ABC +020030.099000"),
         ("YYYY-MM-DD HH-mm-ss zz Z ZZ", 6543, "2018-06-09 01-02-03 ABC +01:49:03 +014903"),

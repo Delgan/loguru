@@ -44,7 +44,7 @@ if sys.version_info < (3, 6):
 
     @pytest.fixture
     def tmp_path(tmp_path):
-        yield pathlib.Path(str(tmp_path))
+        return pathlib.Path(str(tmp_path))
 
 
 @contextlib.contextmanager

@@ -231,7 +231,7 @@ def test_exception_others(filename):
 
 
 @pytest.mark.parametrize(
-    "filename, minimum_python_version",
+    ("filename", "minimum_python_version"),
     [
         ("type_hints", (3, 6)),
         ("positional_only_argument", (3, 8)),

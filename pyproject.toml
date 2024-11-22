@@ -103,8 +103,9 @@ exclude = ["tests/exceptions/source/*"]
 line-length = 100
 
 [tool.ruff.lint]
+ignore = ["PT004", "PT005"]  # Deprecated rules.
 # See list of rules at: https://docs.astral.sh/ruff/rules/
-select = ["F", "E", "W", "I", "B", "N", "RET", "RUF"]
+select = ["F", "E", "W", "I", "B", "N", "PT", "RET", "RUF"]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 100
