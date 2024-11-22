@@ -3,9 +3,7 @@ build-backend = "flit_core.buildapi"
 requires = ["flit_core>=3,<4"]
 
 [project]
-authors = [
-  {name = "Delgan", email = "delgan.py@gmail.com"}
-]
+authors = [{ name = "Delgan", email = "delgan.py@gmail.com" }]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Topic :: System :: Logging",
@@ -26,17 +24,17 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: Implementation :: PyPy",
-  "Programming Language :: Python :: Implementation :: CPython"
+  "Programming Language :: Python :: Implementation :: CPython",
 ]
 dependencies = [
   "colorama>=0.3.4 ; sys_platform=='win32'",
   "aiocontextvars>=0.2.0 ; python_version<'3.7'",
-  "win32-setctime>=1.0.0 ; sys_platform=='win32'"
+  "win32-setctime>=1.0.0 ; sys_platform=='win32'",
 ]
 description = "Python logging made (stupidly) simple"
 dynamic = ['version']
 keywords = ["loguru", "logging", "logger", "log"]
-license = {text = "MIT"}
+license = { text = "MIT" }
 name = "loguru"
 readme = 'README.rst'
 requires-python = ">=3.5,<4.0"
@@ -68,7 +66,7 @@ dev = [
   "mypy==v1.13.0 ; python_version>='3.8'",
   # Docs.
   "Sphinx==7.3.7 ; python_version>='3.9'",
-  "sphinx-rtd-theme==2.0.0 ; python_version>='3.9'"
+  "sphinx-rtd-theme==2.0.0 ; python_version>='3.9'",
 ]
 
 [project.urls]
@@ -93,7 +91,7 @@ filterwarnings = [
   # By default all warnings are treated as errors.
   'error',
   # Mixing threads and "fork()" is deprecated, but we need to test it anyway.
-  'ignore:.*use of fork\(\) may lead to deadlocks in the child.*:DeprecationWarning'
+  'ignore:.*use of fork\(\) may lead to deadlocks in the child.*:DeprecationWarning',
 ]
 testpaths = ["tests"]
 
@@ -106,7 +104,7 @@ line-length = 100
 select = ["F", "E", "W", "I", "B", "N", "D", "PT", "RET", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D1"]  # Do not require documentation for tests.
+"tests/**" = ["D1"] # Do not require documentation for tests.
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 100
@@ -118,4 +116,6 @@ convention = "numpy"
 extend-ignore-re = ["(?Rm)^.*# spellchecker: disable-line$"]
 
 [tool.typos.files]
-extend-exclude = ["tests/exceptions/output/**"]  # False positive due to ansi sequences.
+extend-exclude = [
+  "tests/exceptions/output/**", # False positive due to ansi sequences.
+]
