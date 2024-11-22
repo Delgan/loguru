@@ -1,28 +1,4 @@
-"""
-.. |str| replace:: :class:`str`
-.. |namedtuple| replace:: :func:`namedtuple<collections.namedtuple>`
-.. |dict| replace:: :class:`dict`
-
-.. |Logger| replace:: :class:`~loguru._logger.Logger`
-.. |catch| replace:: :meth:`~loguru._logger.Logger.catch()`
-.. |contextualize| replace:: :meth:`~loguru._logger.Logger.contextualize()`
-.. |complete| replace:: :meth:`~loguru._logger.Logger.complete()`
-.. |bind| replace:: :meth:`~loguru._logger.Logger.bind()`
-.. |patch| replace:: :meth:`~loguru._logger.Logger.patch()`
-.. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
-.. |level| replace:: :meth:`~loguru._logger.Logger.level()`
-
-.. _stub file: https://www.python.org/dev/peps/pep-0484/#stub-files
-.. _string literals: https://www.python.org/dev/peps/pep-0484/#forward-references
-.. _postponed evaluation of annotations: https://www.python.org/dev/peps/pep-0563/
-.. |future| replace:: ``__future__``
-.. _future: https://www.python.org/dev/peps/pep-0563/#enabling-the-future-behavior-in-python-3-7
-.. |loguru-mypy| replace:: ``loguru-mypy``
-.. _loguru-mypy: https://github.com/kornicameister/loguru-mypy
-.. |documentation of loguru-mypy| replace:: documentation of ``loguru-mypy``
-.. _documentation of loguru-mypy:
-    https://github.com/kornicameister/loguru-mypy/blob/master/README.md
-.. _@kornicameister: https://github.com/kornicameister
+"""Type hints details of the `Loguru` library.
 
 Loguru relies on a `stub file`_ to document its types. This implies that these types are not
 accessible during execution of your program, however they can be used by type checkers and IDE.
@@ -85,6 +61,31 @@ It helps to catch several possible runtime errors by performing additional check
 - and even more...
 
 For more details, go to official |documentation of loguru-mypy|_.
+
+.. |str| replace:: :class:`str`
+.. |namedtuple| replace:: :func:`namedtuple<collections.namedtuple>`
+.. |dict| replace:: :class:`dict`
+
+.. |Logger| replace:: :class:`~loguru._logger.Logger`
+.. |catch| replace:: :meth:`~loguru._logger.Logger.catch()`
+.. |contextualize| replace:: :meth:`~loguru._logger.Logger.contextualize()`
+.. |complete| replace:: :meth:`~loguru._logger.Logger.complete()`
+.. |bind| replace:: :meth:`~loguru._logger.Logger.bind()`
+.. |patch| replace:: :meth:`~loguru._logger.Logger.patch()`
+.. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
+.. |level| replace:: :meth:`~loguru._logger.Logger.level()`
+
+.. _stub file: https://www.python.org/dev/peps/pep-0484/#stub-files
+.. _string literals: https://www.python.org/dev/peps/pep-0484/#forward-references
+.. _postponed evaluation of annotations: https://www.python.org/dev/peps/pep-0563/
+.. |future| replace:: ``__future__``
+.. _future: https://www.python.org/dev/peps/pep-0563/#enabling-the-future-behavior-in-python-3-7
+.. |loguru-mypy| replace:: ``loguru-mypy``
+.. _loguru-mypy: https://github.com/kornicameister/loguru-mypy
+.. |documentation of loguru-mypy| replace:: documentation of ``loguru-mypy``
+.. _documentation of loguru-mypy:
+    https://github.com/kornicameister/loguru-mypy/blob/master/README.md
+.. _@kornicameister: https://github.com/kornicameister
 """
 
 import sys

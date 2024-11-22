@@ -12,7 +12,7 @@ from loguru import logger
 
 
 def normalize(exception):
-    """Normalize exception output for reproducible test cases"""
+    """Normalize exception output for reproducible test cases."""
     if os.name == "nt":
         exception = re.sub(
             r'File[^"]+"[^"]+\.py[^"]*"', lambda m: m.group().replace("\\", "/"), exception
@@ -82,7 +82,7 @@ def normalize(exception):
 
 
 def generate(output, outpath):
-    """Generate new output file if exception formatting is updated"""
+    """Generate new output file if exception formatting is updated."""
     os.makedirs(os.path.dirname(outpath), exist_ok=True)
     with open(outpath, "w") as file:
         file.write(output)

@@ -39,12 +39,11 @@ def _remove_cyclic_references():
 
 @pytest.mark.usefixtures("_remove_cyclic_references")
 def test_no_deadlock_on_generational_garbage_collection():
-    """Regression test for https://github.com/Delgan/loguru/issues/712
+    """Regression test for https://github.com/Delgan/loguru/issues/712.
 
     Assert that deadlocks do not occur when a cyclic isolate containing log output in
     finalizers is collected by generational GC, during the output of another log message.
     """
-
     # GIVEN a sink which assigns some memory
     output = []
 

@@ -1,5 +1,4 @@
-"""
-Small Sphinx extension intended to generate documentation for stub files.
+"""Small Sphinx extension intended to generate documentation for stub files.
 
 It retrieves only the docstrings of "loguru/__init__.pyi", hence avoiding possible errors (caused by
 missing imports or forward references). The stub file is loaded as a dummy module which contains
@@ -18,7 +17,7 @@ import sys
 import types
 
 
-def get_module_docstring(filepath):
+def _get_module_docstring(filepath):
     with open(filepath) as file:
         source = file.read()
 
@@ -33,9 +32,10 @@ def get_module_docstring(filepath):
 
 
 def setup(app):
+    """Configure the Sphinx plugin."""
     module_name = "autodoc_stub_file.loguru"
     dirname = os.path.dirname(os.path.abspath(__file__))
     stub_path = os.path.join(dirname, "..", "..", "loguru", "__init__.pyi")
-    docstring = get_module_docstring(stub_path)
+    docstring = _get_module_docstring(stub_path)
     module = types.ModuleType(module_name, docstring)
     sys.modules[module_name] = module

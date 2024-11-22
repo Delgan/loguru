@@ -1,4 +1,5 @@
-"""
+"""Core logging functionalities of the `Loguru` library.
+
 .. References and links rendered by Sphinx are kept here as "module documentation" so that they can
    be used in the ``Logger`` docstrings but do not pollute ``help(logger)`` output.
 
@@ -1514,7 +1515,7 @@ class Logger:
         return Logger(self._core, *options, [*patchers, patcher], extra)
 
     def level(self, name, no=None, color=None, icon=None):
-        """Add, update or retrieve a logging level.
+        r"""Add, update or retrieve a logging level.
 
         Logging levels are defined by their ``name`` to which a severity ``no``, an ansi ``color``
         tag and an ``icon`` are associated and possibly modified at run-time. To |log| to a custom
@@ -2065,7 +2066,7 @@ class Logger:
         __self._log("CRITICAL", False, __self._options, __message, args, kwargs)
 
     def exception(__self, __message, *args, **kwargs):  # noqa: N805
-        r"""Convenience method for logging an ``'ERROR'`` with exception information."""
+        r"""Log an ``'ERROR'```` message while also capturing the currently handled exception."""
         options = (True,) + __self._options[1:]
         __self._log("ERROR", False, options, __message, args, kwargs)
 
@@ -2074,7 +2075,9 @@ class Logger:
         __self._log(__level, False, __self._options, __message, args, kwargs)
 
     def start(self, *args, **kwargs):
-        """Deprecated function to |add| a new handler.
+        """Add a handler sending log messages to a sink adequately configured.
+
+        Deprecated function, use |add| instead.
 
         Warnings
         --------
@@ -2090,7 +2093,9 @@ class Logger:
         return self.add(*args, **kwargs)
 
     def stop(self, *args, **kwargs):
-        """Deprecated function to |remove| an existing handler.
+        """Remove a previously added handler and stop sending logs to its sink.
+
+        Deprecated function, use |remove| instead.
 
         Warnings
         --------

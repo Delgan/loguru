@@ -105,10 +105,16 @@ line-length = 100
 [tool.ruff.lint]
 ignore = ["PT004", "PT005"]  # Deprecated rules.
 # See list of rules at: https://docs.astral.sh/ruff/rules/
-select = ["F", "E", "W", "I", "B", "N", "PT", "RET", "RUF"]
+select = ["F", "E", "W", "I", "B", "N", "D", "PT", "RET", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D1"]  # Do not require documentation for tests.
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 100
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
 
 [tool.typos.default]
 extend-ignore-re = ["(?Rm)^.*# spellchecker: disable-line$"]
