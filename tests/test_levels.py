@@ -181,13 +181,13 @@ def test_assign_custom_level_method(writer):
 
 
 def test_updating_level_no_not_allowed_default():
-    with pytest.raises(TypeError, match="can't update its severity"):
+    with pytest.raises(ValueError, match="can't update its severity"):
         logger.level("DEBUG", 100)
 
 
 def test_updating_level_no_not_allowed_custom():
     logger.level("foobar", no=33)
-    with pytest.raises(TypeError, match="can't update its severity"):
+    with pytest.raises(ValueError, match="can't update its severity"):
         logger.level("foobar", 100)
 
 

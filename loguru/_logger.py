@@ -1585,7 +1585,7 @@ class Logger:
                 )
             old_color, old_icon = "", " "
         elif no is not None:
-            raise TypeError("Level '%s' already exists, you can't update its severity no" % name)
+            raise ValueError("Level '%s' already exists, you can't update its severity no" % name)
         else:
             _, no, old_color, old_icon = self.level(name)
 
