@@ -1240,7 +1240,7 @@ class Logger:
                 if from_decorator:
                     depth += 1
 
-                catch_options = [(type_, value, traceback_), depth, True] + options
+                catch_options = [(type_, value, traceback_), depth, True, *options]
                 logger._log(level, from_decorator, catch_options, message, (), {})
 
                 if onerror is not None:
@@ -1511,7 +1511,7 @@ class Logger:
         ...     logger.patch(lambda r: r.update(record)).log(level, message)
         """
         *options, patchers, extra = self._options
-        return Logger(self._core, *options, patchers + [patcher], extra)
+        return Logger(self._core, *options, [*patchers, patcher], extra)
 
     def level(self, name, no=None, color=None, icon=None):
         """Add, update or retrieve a logging level.

@@ -309,11 +309,11 @@ class AnsiParser:
                 if len(hex_color) == 3:
                     hex_color *= 2
                 rgb = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
-                return "\033[%s;2;%s;%s;%sm" % ((code,) + rgb)
+                return "\033[%s;2;%s;%s;%sm" % ((code, *rgb))
             if color.count(",") == 2:
                 colors = tuple(color.split(","))
                 if all(x.isdigit() and int(x) <= 255 for x in colors):
-                    return "\033[%s;2;%s;%s;%sm" % ((code,) + colors)
+                    return "\033[%s;2;%s;%s;%sm" % ((code, *colors))
 
         return None
 

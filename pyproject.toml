@@ -103,8 +103,8 @@ exclude = ["tests/exceptions/source/*"]
 line-length = 100
 
 [tool.ruff.lint]
-# Enforce pyflakes(F), pycodestyle(E, W), isort (I), bugbears (B), and pep8-naming (N) rules.
-select = ["F", "E", "W", "I", "B", "N", "RET"]
+# See list of rules at: https://docs.astral.sh/ruff/rules/
+select = ["F", "E", "W", "I", "B", "N", "RET", "RUF"]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 100
