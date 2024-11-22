@@ -68,7 +68,6 @@ dev = [
   "mypy==v1.13.0 ; python_version>='3.8'",
   # Docs.
   "Sphinx==7.3.7 ; python_version>='3.9'",
-  "sphinx-autobuild==2024.9.19 ; python_version>='3.9'",
   "sphinx-rtd-theme==2.0.0 ; python_version>='3.9'"
 ]
 
