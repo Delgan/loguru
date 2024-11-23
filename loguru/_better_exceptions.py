@@ -534,13 +534,39 @@ class ExceptionFormatter:
                 yield from self._indent("-" * 35, group_nesting + 1, prefix="+-")
 
     def _format_list(self, frames):
-        result = []
-        for filename, lineno, name, line in frames:
-            row = []
-            row.append('  File "{}", line {}, in {}\n'.format(filename, lineno, name))
+
+        def source_message(filename, lineno, name, line):
+            message = '  File "%s", line %d, in %s\n' % (filename, lineno, name)
             if line:
-                row.append("    {}\n".format(line.strip()))
-            result.append("".join(row))
+                message += "    %s\n" % line.strip()
+            return message
+
+        def skip_message(count):
+            plural = "s" if count > 1 else ""
+            return "  [Previous line repeated %d more time%s]\n" % (count, plural)
+
+        result = []
+        count = 0
+        last_source = None
+
+        for *source, line in frames:
+            if source != last_source and count > 3:
+                result.append(skip_message(count - 3))
+
+            if source == last_source:
+                count += 1
+                if count > 3:
+                    continue
+            else:
+                count = 1
+
+            result.append(source_message(*source, line))
+            last_source = source
+
+        # Add a final skip message if the iteration of frames ended mid-repetition.
+        if count > 3:
+            result.append(skip_message(count - 3))
+
         return result
 
     def format_exception(self, type_, value, tb, *, from_decorator=False):

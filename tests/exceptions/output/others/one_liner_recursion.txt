@@ -1,0 +1,79 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <module>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <lambda>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <lambda>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <lambda>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+  [Previous line repeated 8 more times]
+ZeroDivisionError: division by zero
+
+Traceback (most recent call last):
+> File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <module>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <lambda>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <lambda>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <lambda>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+  [Previous line repeated 8 more times]
+ZeroDivisionError: division by zero
+
+[33m[1mTraceback (most recent call last):[0m
+  File "[32mtests/exceptions/source/others/[0m[32m[1mone_liner_recursion.py[0m", line [33m14[0m, in [35m<module>[0m
+    [1mrec[0m [35m[1m=[0m [35m[1mlambda[0m [1mr[0m[1m,[0m [1mi[0m[1m:[0m [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m [35m[1mif[0m [1mi[0m [35m[1m==[0m [34m[1m0[0m [35m[1melse[0m [1mr[0m[1m([0m[1mr[0m[1m,[0m [1mi[0m [35m[1m-[0m [34m[1m1[0m[1m)[0m[1m;[0m [1mrec[0m[1m([0m[1mrec[0m[1m,[0m [34m[1m10[0m[1m)[0m
+  File "[32mtests/exceptions/source/others/[0m[32m[1mone_liner_recursion.py[0m", line [33m14[0m, in [35m<lambda>[0m
+    [1mrec[0m [35m[1m=[0m [35m[1mlambda[0m [1mr[0m[1m,[0m [1mi[0m[1m:[0m [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m [35m[1mif[0m [1mi[0m [35m[1m==[0m [34m[1m0[0m [35m[1melse[0m [1mr[0m[1m([0m[1mr[0m[1m,[0m [1mi[0m [35m[1m-[0m [34m[1m1[0m[1m)[0m[1m;[0m [1mrec[0m[1m([0m[1mrec[0m[1m,[0m [34m[1m10[0m[1m)[0m
+  File "[32mtests/exceptions/source/others/[0m[32m[1mone_liner_recursion.py[0m", line [33m14[0m, in [35m<lambda>[0m
+    [1mrec[0m [35m[1m=[0m [35m[1mlambda[0m [1mr[0m[1m,[0m [1mi[0m[1m:[0m [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m [35m[1mif[0m [1mi[0m [35m[1m==[0m [34m[1m0[0m [35m[1melse[0m [1mr[0m[1m([0m[1mr[0m[1m,[0m [1mi[0m [35m[1m-[0m [34m[1m1[0m[1m)[0m[1m;[0m [1mrec[0m[1m([0m[1mrec[0m[1m,[0m [34m[1m10[0m[1m)[0m
+  File "[32mtests/exceptions/source/others/[0m[32m[1mone_liner_recursion.py[0m", line [33m14[0m, in [35m<lambda>[0m
+    [1mrec[0m [35m[1m=[0m [35m[1mlambda[0m [1mr[0m[1m,[0m [1mi[0m[1m:[0m [34m[1m1[0m [35m[1m/[0m [34m[1m0[0m [35m[1mif[0m [1mi[0m [35m[1m==[0m [34m[1m0[0m [35m[1melse[0m [1mr[0m[1m([0m[1mr[0m[1m,[0m [1mi[0m [35m[1m-[0m [34m[1m1[0m[1m)[0m[1m;[0m [1mrec[0m[1m([0m[1mrec[0m[1m,[0m [34m[1m10[0m[1m)[0m
+  [Previous line repeated 8 more times]
+[31m[1mZeroDivisionError[0m:[1m division by zero[0m
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <module>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+                                                         │   └ <function <lambda> at 0xDEADBEEF>
+                                                         └ <function <lambda> at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <lambda>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+                 │  │           │           │ │  │       │   └ <function <lambda> at 0xDEADBEEF>
+                 │  │           │           │ │  │       └ <function <lambda> at 0xDEADBEEF>
+                 │  │           │           │ │  └ 10
+                 │  │           │           │ └ <function <lambda> at 0xDEADBEEF>
+                 │  │           │           └ <function <lambda> at 0xDEADBEEF>
+                 │  │           └ 10
+                 │  └ 10
+                 └ <function <lambda> at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <lambda>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+                 │  │           │           │ │  │       │   └ <function <lambda> at 0xDEADBEEF>
+                 │  │           │           │ │  │       └ <function <lambda> at 0xDEADBEEF>
+                 │  │           │           │ │  └ 9
+                 │  │           │           │ └ <function <lambda> at 0xDEADBEEF>
+                 │  │           │           └ <function <lambda> at 0xDEADBEEF>
+                 │  │           └ 9
+                 │  └ 9
+                 └ <function <lambda> at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/one_liner_recursion.py", line 14, in <lambda>
+    rec = lambda r, i: 1 / 0 if i == 0 else r(r, i - 1); rec(rec, 10)
+                 │  │           │           │ │  │       │   └ <function <lambda> at 0xDEADBEEF>
+                 │  │           │           │ │  │       └ <function <lambda> at 0xDEADBEEF>
+                 │  │           │           │ │  └ 8
+                 │  │           │           │ └ <function <lambda> at 0xDEADBEEF>
+                 │  │           │           └ <function <lambda> at 0xDEADBEEF>
+                 │  │           └ 8
+                 │  └ 8
+                 └ <function <lambda> at 0xDEADBEEF>
+  [Previous line repeated 8 more times]
+
+ZeroDivisionError: division by zero

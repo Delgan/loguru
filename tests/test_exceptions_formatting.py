@@ -219,6 +219,9 @@ def test_exception_ownership(filename):
         "message_formatting_with_context_manager",
         "message_formatting_with_decorator",
         "nested_with_reraise",
+        "one_liner_recursion",
+        "recursion_error",
+        "repeated_lines",
         "syntaxerror_without_traceback",
         "sys_tracebacklimit",
         "sys_tracebacklimit_negative",
@@ -228,6 +231,9 @@ def test_exception_ownership(filename):
     ],
 )
 def test_exception_others(filename):
+    if filename == "recursion_error" and platform.python_implementation() == "PyPy":
+        pytest.skip("RecursionError is not reliable on PyPy")
+
     compare_exception("others", filename)
 
 
