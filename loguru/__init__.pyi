@@ -194,7 +194,7 @@ class Record(TypedDict):
     line: int
     message: str
     module: str
-    name: Union[str, None]
+    name: Optional[str]
     process: RecordProcess
     thread: RecordThread
     time: datetime
@@ -205,7 +205,7 @@ class Message(str):
 class Writable(Protocol):
     def write(self, message: Message) -> None: ...
 
-FilterDict = Dict[Union[str, None], Union[str, int, bool]]
+FilterDict = Dict[Optional[str], Union[str, int, bool]]
 FilterFunction = Callable[[Record], bool]
 FormatFunction = Callable[[Record], str]
 PatcherFunction = Callable[[Record], None]
@@ -213,9 +213,10 @@ RotationFunction = Callable[[Message, TextIO], bool]
 RetentionFunction = Callable[[List[str]], None]
 CompressionFunction = Callable[[str], None]
 
-# Actually unusable because TypedDict can't allow extra keys: python/mypy#4617
-class _HandlerConfig(TypedDict, total=False):
-    sink: Union[str, PathLikeStr, TextIO, Writable, Callable[[Message], None], Handler]
+StandardOpener = Callable[[str, int], int]
+
+class BasicHandlerConfig(TypedDict, total=False):
+    sink: Union[TextIO, Writable, Callable[[Message], None], Handler]
     level: Union[str, int]
     format: Union[str, FormatFunction]
     filter: Optional[Union[str, FilterFunction, FilterDict]]
@@ -226,13 +227,53 @@ class _HandlerConfig(TypedDict, total=False):
     enqueue: bool
     catch: bool
 
+class FileHandlerConfig(TypedDict, total=False):
+    sink: Union[str, PathLikeStr]
+    level: Union[str, int]
+    format: Union[str, FormatFunction]
+    filter: Optional[Union[str, FilterFunction, FilterDict]]
+    colorize: Optional[bool]
+    serialize: bool
+    backtrace: bool
+    diagnose: bool
+    enqueue: bool
+    catch: bool
+    rotation: Optional[Union[str, int, time, timedelta, RotationFunction]]
+    retention: Optional[Union[str, int, timedelta, RetentionFunction]]
+    compression: Optional[Union[str, CompressionFunction]]
+    delay: bool
+    watch: bool
+    mode: str
+    buffering: int
+    encoding: str
+    errors: Optional[str]
+    newline: Optional[str]
+    closefd: bool
+    opener: Optional[StandardOpener]
+
+class AsyncHandlerConfig(TypedDict, total=False):
+    sink: Callable[[Message], Awaitable[None]]
+    level: Union[str, int]
+    format: Union[str, FormatFunction]
+    filter: Optional[Union[str, FilterFunction, FilterDict]]
+    colorize: Optional[bool]
+    serialize: bool
+    backtrace: bool
+    diagnose: bool
+    enqueue: bool
+    catch: bool
+    context: Optional[Union[str, BaseContext]]
+    loop: Optional[AbstractEventLoop]
+
+HandlerConfig = Union[BasicHandlerConfig, FileHandlerConfig, AsyncHandlerConfig]
+
 class LevelConfig(TypedDict, total=False):
     name: str
     no: int
     color: str
     icon: str
 
-ActivationConfig = Tuple[Union[str, None], bool]
+ActivationConfig = Tuple[Optional[str], bool]
 
 class Logger:
     @overload
@@ -264,8 +305,8 @@ class Logger:
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
-        context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...,
+        context: Optional[Union[str, BaseContext]] = ...,
         loop: Optional[AbstractEventLoop] = ...
     ) -> int: ...
     @overload
@@ -291,7 +332,10 @@ class Logger:
         mode: str = ...,
         buffering: int = ...,
         encoding: str = ...,
-        **kwargs: Any
+        errors: Optional[str] = ...,
+        newline: Optional[str] = ...,
+        closefd: bool = ...,
+        opener: Optional[StandardOpener] = ...,
     ) -> int: ...
     def remove(self, handler_id: Optional[int] = ...) -> None: ...
     def complete(self) -> AwaitableCompleter: ...
@@ -338,12 +382,12 @@ class Logger:
         color: Optional[str] = ...,
         icon: Optional[str] = ...,
     ) -> Level: ...
-    def disable(self, name: Union[str, None]) -> None: ...
-    def enable(self, name: Union[str, None]) -> None: ...
+    def disable(self, name: Optional[str]) -> None: ...
+    def enable(self, name: Optional[str]) -> None: ...
     def configure(
         self,
         *,
-        handlers: Sequence[Dict[str, Any]] = ...,
+        handlers: Optional[Sequence[HandlerConfig]] = ...,
         levels: Optional[Sequence[LevelConfig]] = ...,
         extra: Optional[Dict[Any, Any]] = ...,
         patcher: Optional[PatcherFunction] = ...,
