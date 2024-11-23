@@ -90,6 +90,7 @@ import functools
 import logging
 import re
 import sys
+import threading
 import warnings
 from collections import namedtuple
 from inspect import isclass, iscoroutinefunction, isgeneratorfunction
@@ -194,15 +195,18 @@ class Core:
         self.activation_list = []
         self.activation_none = True
 
+        self.thread_locals = threading.local()
         self.lock = create_logger_lock()
 
     def __getstate__(self):
         state = self.__dict__.copy()
+        state["thread_locals"] = None
         state["lock"] = None
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
+        self.thread_locals = threading.local()
         self.lock = create_logger_lock()
 
 
@@ -1229,6 +1233,15 @@ class Logger:
                 if type_ is None:
                     return None
 
+                # We must prevent infinite recursion in case "logger.catch()" handles an exception
+                # that occurs while logging another exception. This can happen for example when
+                # the exception formatter calls "repr(obj)" while the "__repr__" method is broken
+                # but decorated with "logger.catch()". In such a case, we ignore the catching
+                # mechanism and just let the exception be thrown (that way, the formatter will
+                # rightly assume the object is unprintable).
+                if getattr(logger._core.thread_locals, "already_logging_exception", False):
+                    return False
+
                 if not issubclass(type_, exception):
                     return False
 
@@ -1242,7 +1255,12 @@ class Logger:
                     depth += 1
 
                 catch_options = [(type_, value, traceback_), depth, True, *options]
-                logger._log(level, from_decorator, catch_options, message, (), {})
+
+                logger._core.thread_locals.already_logging_exception = True
+                try:
+                    logger._log(level, from_decorator, catch_options, message, (), {})
+                finally:
+                    logger._core.thread_locals.already_logging_exception = False
 
                 if onerror is not None:
                     onerror(value)

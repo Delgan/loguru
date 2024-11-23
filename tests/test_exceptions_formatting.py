@@ -202,6 +202,7 @@ def test_exception_ownership(filename):
     "filename",
     [
         "assertionerror_without_traceback",
+        "broken_but_decorated_repr",
         "catch_as_context_manager",
         "catch_as_decorator_with_parentheses",
         "catch_as_decorator_without_parentheses",
