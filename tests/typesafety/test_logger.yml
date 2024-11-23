@@ -106,6 +106,7 @@
       pass
     logger.add(
       sink,
+      context="fork",
       loop=asyncio.get_event_loop(),
     )
 
@@ -266,6 +267,7 @@
     logger.disable("foo")
 
 - case: configure
+  skip: sys.version_info < (3, 7)  # Old Mypy bug: Union of TypedDict not fully supported.
   main: |
     from loguru import logger
     import sys
@@ -278,6 +280,28 @@
     reveal_type(ids)
   out: |
     main:9: note: Revealed type is "builtins.list[builtins.int]"
+
+- case: configure_stream_handler
+  skip: sys.version_info < (3, 7)  # Old Mypy bug: Union of TypedDict not fully supported.
+  main: |
+    from loguru import logger
+    import sys
+    logger.configure(handlers=[{"sink": sys.stderr, "colorize": False}])
+
+
+- case: configure_file_handler
+  main: |
+    from loguru import logger
+    logger.configure(handlers=[{"sink": "file.log", "mode": "w", "closefd": False}])
+
+
+- case: configure_coroutine_handler
+  main: |
+    import loguru
+    from loguru import logger
+    async def sink(m: loguru.Message) -> None:
+      pass
+    logger.configure(handlers=[{"sink": sink, "context": "spawn", "loop": None}])
 
 - case: parse
   main: |
@@ -300,8 +324,8 @@
     main:2: error: No overload variant of "add" of "Logger" matches argument types "Callable[[Any], None]", "int"
     main:2: note: Possible overload variants:
     main:2: note:     def add(self, sink: Union[TextIO, Writable, Callable[[Message], None], Handler], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ...) -> int
-    main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ..., loop: Optional[AbstractEventLoop] = ...) -> int
-    main:2: note:     def add(self, sink: Union[str, PathLike[str]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ..., rotation: Union[str, int, time, timedelta, Callable[[Message, TextIO], bool], None] = ..., retention: Union[str, int, timedelta, Callable[[List[str]], None], None] = ..., compression: Union[str, Callable[[str], None], None] = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., **kwargs: Any) -> int
+    main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., context: Union[str, BaseContext, None] = ..., loop: Optional[AbstractEventLoop] = ...) -> int
+    main:2: note:     def add(self, sink: Union[str, PathLike[str]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ..., rotation: Union[str, int, time, timedelta, Callable[[Message, TextIO], bool], None] = ..., retention: Union[str, int, timedelta, Callable[[List[str]], None], None] = ..., compression: Union[str, Callable[[str], None], None] = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., errors: Optional[str] = ..., newline: Optional[str] = ..., closefd: bool = ..., opener: Optional[Callable[[str, int], int]] = ...) -> int
   mypy_config: |
     show_error_codes = false
     force_uppercase_builtins = true
@@ -316,8 +340,8 @@
     main:2: error: No overload variant of "add" of "Logger" matches argument types "Callable[[Any], None]", "int"
     main:2: note: Possible overload variants:
     main:2: note:     def add(self, sink: Union[TextIO, Writable, Callable[[Message], None], Handler], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ...) -> int
-    main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ..., loop: Optional[AbstractEventLoop] = ...) -> int
-    main:2: note:     def add(self, sink: Union[str, PathLike[str]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ..., rotation: Union[str, int, time, timedelta, Callable[[Message, TextIO], bool], None] = ..., retention: Union[str, int, timedelta, Callable[[List[str]], None], None] = ..., compression: Union[str, Callable[[str], None], None] = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., **kwargs: Any) -> int
+    main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., context: Union[str, BaseContext, None] = ..., loop: Optional[AbstractEventLoop] = ...) -> int
+    main:2: note:     def add(self, sink: Union[str, PathLike[str]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ..., rotation: Union[str, int, time, timedelta, Callable[[Message, TextIO], bool], None] = ..., retention: Union[str, int, timedelta, Callable[[List[str]], None], None] = ..., compression: Union[str, Callable[[str], None], None] = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., errors: Optional[str] = ..., newline: Optional[str] = ..., closefd: bool = ..., opener: Optional[Callable[[str, int], int]] = ...) -> int
   mypy_config: |
     show_error_codes = false
 
@@ -359,6 +383,7 @@
       extra=[1],
     )
   out: |
+    main:3: error: List item 0 has incompatible type "Dict[str, str]"; expected "Union[BasicHandlerConfig, FileHandlerConfig, AsyncHandlerConfig]"
     main:4: error: Extra key "baz" for TypedDict "LevelConfig"
     main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Optional[Callable[[Record], None]]"
     main:6: error: List item 0 has incompatible type "Dict[str, str]"; expected "Tuple[Optional[str], bool]"
@@ -380,6 +405,7 @@
       extra=[1],
     )
   out: |
+    main:3: error: List item 0 has incompatible type "Dict[str, str]"; expected "Union[BasicHandlerConfig, FileHandlerConfig, AsyncHandlerConfig]"
     main:4: error: Extra key "baz" for TypedDict "LevelConfig"
     main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Optional[Callable[[Record], None]]"
     main:6: error: List item 0 has incompatible type "Dict[str, str]"; expected "Tuple[Optional[str], bool]"
