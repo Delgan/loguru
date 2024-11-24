@@ -14,7 +14,6 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
-sys.path.insert(0, os.path.abspath("_extensions"))
 
 
 # -- Project information -----------------------------------------------------
@@ -43,7 +42,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
-    "autodoc_stub_file",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
