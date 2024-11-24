@@ -247,9 +247,9 @@ def freeze_time(monkeypatch):
         ]
 
         if not fakes["include_tm_zone"]:
+            struct_time_attributes = struct_time_attributes[:-2]
             struct_time = NamedTuple("struct_time", struct_time_attributes)._make
         elif fix_struct:
-            struct_time_attributes = struct_time_attributes[:-2]
             struct_time = NamedTuple("struct_time", struct_time_attributes)._make
         else:
             struct_time = time.struct_time
