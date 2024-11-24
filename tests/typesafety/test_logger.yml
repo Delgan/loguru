@@ -1,3 +1,7 @@
+# Note that tests defined in this file are slightly modified by "conftest.py". In particular, a
+# specific Mypy configuration is applied to each test case to ensure that the output is consistent
+# regardless of the Python version.
+
 - case: basic_logger_usage
   parametrized:
   - method: trace
@@ -195,19 +199,6 @@
     main:5: note: Revealed type is "loguru.Contextualizer"
 
 - case: level_get
-  skip: sys.version_info < (3, 7)
-  main: |
-    from loguru import logger
-    import loguru
-    level = logger.level("INFO")
-    reveal_type(level)
-  out: |
-    main:4: note: Revealed type is "Tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
-  mypy_config: |
-    force_uppercase_builtins = true
-
-- case: level_get_pre37
-  skip: not sys.version_info < (3, 7)
   main: |
     from loguru import logger
     import loguru
@@ -217,19 +208,6 @@
     main:4: note: Revealed type is "Tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
 
 - case: level_set
-  skip: sys.version_info < (3, 7)
-  main: |
-    from loguru import logger
-    import loguru
-    level = logger.level("FOO", no=11, icon="!", color="<blue>")
-    reveal_type(level)
-  out: |
-    main:4: note: Revealed type is "Tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
-  mypy_config: |
-    force_uppercase_builtins = true
-
-- case: level_set_pre37
-  skip: not sys.version_info < (3, 7)
   main: |
     from loguru import logger
     import loguru
@@ -239,19 +217,6 @@
     main:4: note: Revealed type is "Tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
 
 - case: level_update
-  skip: sys.version_info < (3, 7)
-  main: |
-    from loguru import logger
-    import loguru
-    level = logger.level("INFO", color="<blue>")
-    reveal_type(level)
-  out: |
-    main:4: note: Revealed type is "Tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
-  mypy_config: |
-    force_uppercase_builtins = true
-
-- case: level_update_pre37
-  skip: not sys.version_info < (3, 7)
   main: |
     from loguru import logger
     import loguru
@@ -288,12 +253,10 @@
     import sys
     logger.configure(handlers=[{"sink": sys.stderr, "colorize": False}])
 
-
 - case: configure_file_handler
   main: |
     from loguru import logger
     logger.configure(handlers=[{"sink": "file.log", "mode": "w", "closefd": False}])
-
 
 - case: configure_coroutine_handler
   main: |
@@ -316,7 +279,6 @@
     main:6: note: Revealed type is "builtins.dict[builtins.str, Any]"
 
 - case: invalid_add_argument
-  skip: sys.version_info < (3, 7)
   main: |
     from loguru import logger
     logger.add(lambda m: None, foobar=123)
@@ -326,27 +288,8 @@
     main:2: note:     def add(self, sink: Union[TextIO, Writable, Callable[[Message], None], Handler], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ...) -> int
     main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., context: Union[str, BaseContext, None] = ..., loop: Optional[AbstractEventLoop] = ...) -> int
     main:2: note:     def add(self, sink: Union[str, PathLike[str]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ..., rotation: Union[str, int, time, timedelta, Callable[[Message, TextIO], bool], None] = ..., retention: Union[str, int, timedelta, Callable[[List[str]], None], None] = ..., compression: Union[str, Callable[[str], None], None] = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., errors: Optional[str] = ..., newline: Optional[str] = ..., closefd: bool = ..., opener: Optional[Callable[[str, int], int]] = ...) -> int
-  mypy_config: |
-    show_error_codes = false
-    force_uppercase_builtins = true
-    force_union_syntax = true
-
-- case: invalid_add_argument_pre37
-  skip: not sys.version_info < (3, 7)
-  main: |
-    from loguru import logger
-    logger.add(lambda m: None, foobar=123)
-  out: |
-    main:2: error: No overload variant of "add" of "Logger" matches argument types "Callable[[Any], None]", "int"
-    main:2: note: Possible overload variants:
-    main:2: note:     def add(self, sink: Union[TextIO, Writable, Callable[[Message], None], Handler], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ...) -> int
-    main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., context: Union[str, BaseContext, None] = ..., loop: Optional[AbstractEventLoop] = ...) -> int
-    main:2: note:     def add(self, sink: Union[str, PathLike[str]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], Dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ..., rotation: Union[str, int, time, timedelta, Callable[[Message, TextIO], bool], None] = ..., retention: Union[str, int, timedelta, Callable[[List[str]], None], None] = ..., compression: Union[str, Callable[[str], None], None] = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., errors: Optional[str] = ..., newline: Optional[str] = ..., closefd: bool = ..., opener: Optional[Callable[[str, int], int]] = ...) -> int
-  mypy_config: |
-    show_error_codes = false
 
 - case: invalid_logged_object_formatting
-  skip: sys.version_info < (3, 7)
   main: |
     from loguru import logger
     logger.info(123, foo=123)
@@ -355,24 +298,8 @@
     main:2: note: Possible overload variants:
     main:2: note:     def info(__self, str, /, *args: Any, **kwargs: Any) -> None
     main:2: note:     def info(__self, Any, /) -> None
-  mypy_config: |
-    show_error_codes = false
-
-- case: invalid_logged_object_formatting_pre37
-  skip: not sys.version_info < (3, 7)
-  main: |
-    from loguru import logger
-    logger.info(123, foo=123)
-  out: |
-    main:2: error: No overload variant of "info" of "Logger" matches argument types "int", "int"
-    main:2: note: Possible overload variants:
-    main:2: note:     def info(__self, str, *args: Any, **kwargs: Any) -> None
-    main:2: note:     def info(__self, Any) -> None
-  mypy_config: |
-    show_error_codes = false
 
 - case: invalid_configuration
-  skip: sys.version_info < (3, 7)
   main: |
     from loguru import logger
     logger.configure(
@@ -388,27 +315,3 @@
     main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Optional[Callable[[Record], None]]"
     main:6: error: List item 0 has incompatible type "Dict[str, str]"; expected "Tuple[Optional[str], bool]"
     main:7: error: Argument "extra" to "configure" of "Logger" has incompatible type "List[int]"; expected "Optional[Dict[Any, Any]]"
-  mypy_config: |
-    show_error_codes = false
-    force_uppercase_builtins = true
-    force_union_syntax = true
-
-- case: invalid_configuration_pre37
-  skip: not sys.version_info < (3, 7)
-  main: |
-    from loguru import logger
-    logger.configure(
-      handlers=[{"x": "y"}],
-      levels=[{"baz": 1}],
-      patcher=123,
-      activation=[{"foo": "bar"}],
-      extra=[1],
-    )
-  out: |
-    main:3: error: List item 0 has incompatible type "Dict[str, str]"; expected "Union[BasicHandlerConfig, FileHandlerConfig, AsyncHandlerConfig]"
-    main:4: error: Extra key "baz" for TypedDict "LevelConfig"
-    main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Optional[Callable[[Record], None]]"
-    main:6: error: List item 0 has incompatible type "Dict[str, str]"; expected "Tuple[Optional[str], bool]"
-    main:7: error: Argument "extra" to "configure" of "Logger" has incompatible type "List[int]"; expected "Optional[Dict[Any, Any]]"
-  mypy_config: |
-    show_error_codes = false

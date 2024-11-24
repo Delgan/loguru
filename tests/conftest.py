@@ -47,6 +47,38 @@ if sys.version_info < (3, 6):
         return pathlib.Path(str(tmp_path))
 
 
+if sys.version_info >= (3, 6):
+    from pytest_mypy_plugins.item import YamlTestItem
+
+    def _fix_positional_only_args(item: YamlTestItem):
+        """Remove forward-slash marker from the expected output for Python 3.6."""
+        for output in item.expected_output:
+            output.message = output.message.replace(", /", "")
+            # Also patch the "severity" attribute because there is a parsing bug in the plugin.
+            output.severity = output.severity.replace(", /", "")
+
+    def _add_mypy_config(item: YamlTestItem):
+        """Add some extra options to the mypy configuration for Python 3.7+."""
+        item.additional_mypy_config += "\n".join(
+            [
+                "show_error_codes = false",
+                "force_uppercase_builtins = true",
+                "force_union_syntax = true",
+            ]
+        )
+
+    def pytest_collection_modifyitems(config, items):
+        """Modify the tests to ensure they produce the same output regardless of Python version."""
+        for item in items:
+            if not isinstance(item, YamlTestItem):
+                continue
+
+            if sys.version_info >= (3, 7):
+                _add_mypy_config(item)
+            else:
+                _fix_positional_only_args(item)
+
+
 @contextlib.contextmanager
 def new_event_loop_context():
     loop = asyncio.new_event_loop()
