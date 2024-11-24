@@ -118,7 +118,7 @@ else:
     from pathlib import PurePath as PathLike
 
 
-Level = namedtuple("Level", ["name", "no", "color", "icon"])
+Level = namedtuple("Level", ["name", "no", "color", "icon"])  # noqa: PYI024
 
 start_time = aware_now()
 

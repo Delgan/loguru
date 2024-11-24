@@ -99,12 +99,20 @@ testpaths = ["tests"]
 exclude = ["tests/exceptions/source/*"]
 line-length = 100
 
+# Actually, we should target Python 3.5, but Ruff does not support it.
+target-version = "py37"
+
 [tool.ruff.lint]
 # See list of rules at: https://docs.astral.sh/ruff/rules/
-select = ["F", "E", "W", "I", "B", "N", "D", "PT", "RET", "RUF"]
+select = ["F", "E", "W", "I", "B", "N", "D", "PT", "PYI", "RET", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D1"] # Do not require documentation for tests.
+"tests/**" = [
+  "D1", # Do not require documentation for tests.
+]
+"loguru/__init__.pyi" = [
+  "PYI026", # TypeAlias is not supported by Mypy 0.910 (Python 3.5).
+]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 100

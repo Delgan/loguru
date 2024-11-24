@@ -25,7 +25,7 @@ from typing import (
     overload,
 )
 
-if sys.version_info >= (3, 5, 3):
+if sys.version_info >= (3, 6):
     from typing import Awaitable
 else:
     from typing_extensions import Awaitable
@@ -69,7 +69,6 @@ class Level(NamedTuple):
     icon: str
 
 class _RecordAttribute:
-    def __repr__(self) -> str: ...
     def __format__(self, spec: str) -> str: ...
 
 class RecordFile(_RecordAttribute):

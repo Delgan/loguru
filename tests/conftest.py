@@ -11,7 +11,7 @@ import threading
 import time
 import traceback
 import warnings
-from collections import namedtuple
+from typing import NamedTuple
 
 import freezegun
 import pytest
@@ -201,25 +201,24 @@ def freeze_time(monkeypatch):
         fix_struct = os.name == "nt" and sys.version_info < (3, 6)
 
         struct_time_attributes = [
-            "tm_year",
-            "tm_mon",
-            "tm_mday",
-            "tm_hour",
-            "tm_min",
-            "tm_sec",
-            "tm_wday",
-            "tm_yday",
-            "tm_isdst",
-            "tm_zone",
-            "tm_gmtoff",
+            ("tm_year", int),
+            ("tm_mon", int),
+            ("tm_mday", int),
+            ("tm_hour", int),
+            ("tm_min", int),
+            ("tm_sec", int),
+            ("tm_wday", int),
+            ("tm_yday", int),
+            ("tm_isdst", int),
+            ("tm_zone", str),
+            ("tm_gmtoff", int),
         ]
 
         if not fakes["include_tm_zone"]:
-            struct_time_attributes.remove("tm_zone")
-            struct_time_attributes.remove("tm_gmtoff")
-            struct_time = namedtuple("struct_time", struct_time_attributes)._make
+            struct_time = NamedTuple("struct_time", struct_time_attributes)._make
         elif fix_struct:
-            struct_time = namedtuple("struct_time", struct_time_attributes)._make
+            struct_time_attributes = struct_time_attributes[:-2]
+            struct_time = NamedTuple("struct_time", struct_time_attributes)._make
         else:
             struct_time = time.struct_time
 
@@ -227,7 +226,7 @@ def freeze_time(monkeypatch):
         override = {"tm_zone": fakes["zone"], "tm_gmtoff": fakes["offset"]}
         attributes = []
 
-        for attribute in struct_time_attributes:
+        for attribute, _ in struct_time_attributes:
             if attribute in override:
                 value = override[attribute]
             else:
