@@ -2110,3 +2110,19 @@ class Logger:
             stacklevel=2,
         )
         return self.remove(*args, **kwargs)
+
+    @staticmethod
+    def lazy(fn, *args, **kwargs):
+        return LazyValue(fn, *args, **kwargs)
+
+
+class LazyValue:
+    __slots__ = ("fn", "args", "kwargs")
+
+    def __init__(self, fn, *args, **kwargs):
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+    def __format__(self, format_spec: str):
+        return format(self.fn(*self.args, **self.kwargs), format_spec)

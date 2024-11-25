@@ -13,7 +13,7 @@ from ._logger import Logger as _Logger
 
 __version__ = "0.7.2"
 
-__all__ = ["logger", "LazyValue"]
+__all__ = ["logger"]
 
 logger = _Logger(
     core=_Core(),
@@ -32,15 +32,3 @@ if _defaults.LOGURU_AUTOINIT and _sys.stderr:
     logger.add(_sys.stderr)
 
 _atexit.register(logger.remove)
-
-
-class LazyValue:
-    __slots__ = ("fn", "args", "kwargs")
-
-    def __init__(self, fn, *args, **kwargs):
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-
-    def __format__(self, format_spec: str):
-        return format(self.fn(*self.args, **self.kwargs), format_spec)

@@ -138,6 +138,7 @@ else:
 
 _T = TypeVar("_T")
 _F = TypeVar("_F", bound=Callable[..., Any])
+_P = typing_extensions.ParamSpec("_P")
 ExcInfo = Tuple[Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]]
 
 class _GeneratorContextManager(ContextManager[_T], Generic[_T]):
@@ -412,10 +413,15 @@ class Logger:
     def log(__self, __level: Union[int, str], __message: Any) -> None: ...  # noqa: N805
     def start(self, *args: Any, **kwargs: Any) -> int: ...
     def stop(self, *args: Any, **kwargs: Any) -> None: ...
+    @staticmethod
+    def lazy(fn: Callable[_P, Any], *args: _P.args, **kwargs: _P.kwargs) -> Any:
+        """
+        a utils to make fn Lazy evaluated, only if certain log level is enabled.
+
+        for example, fn will only be called if debug level is enabled.
+        ```python
+        logger.debug("hello {}", logger.lazy(fn, *...))
+        ```
+        """
 
 logger: Logger
-
-__P = typing_extensions.ParamSpec("__P")
-
-class LazyValue:
-    def __init__(self, fn: Callable[__P, Any], *args: __P.args, **kwargs: __P.kwargs): ...
