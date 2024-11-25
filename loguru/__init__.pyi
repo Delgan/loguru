@@ -415,10 +415,9 @@ class Logger:
     def stop(self, *args: Any, **kwargs: Any) -> None: ...
     @staticmethod
     def lazy(fn: Callable[_P, Any], *args: _P.args, **kwargs: _P.kwargs) -> Any:
-        """
-        a utils to make fn Lazy evaluated, only if certain log level is enabled.
+        """A utils to make fn lazy evaluated.
 
-        for example, fn will only be called if debug level is enabled.
+        For example, fn will only be called if debug level is enabled.
         ```python
         logger.debug("hello {}", logger.lazy(fn, *...))
         ```
