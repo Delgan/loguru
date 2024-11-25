@@ -23,15 +23,21 @@ jobs:
         - '3.12'
         - '3.13'
         - pypy-3.10
+        allow-failure:
+        - false
         include:
         - os: ubuntu-20.04
           python-version: '3.5'
+          allow-failure: false
         - os: ubuntu-20.04
           python-version: '3.6'
+          allow-failure: false
         - os: windows-2022
           python-version: '3.12'
+          allow-failure: false
         - os: macos-13
           python-version: '3.12'
+          allow-failure: false
         - os: ubuntu-22.04
           python-version: 3.14-dev
           allow-failure: true

@@ -166,20 +166,20 @@ def parse_daytime(daytime):
         day = time = daytime
 
     try:
-        day = parse_day(day)
-        if match and day is None:
-            raise ValueError
+        parsed_day = parse_day(day)
+        if match and parsed_day is None:
+            raise ValueError("Unparsable day")
     except ValueError as e:
         raise ValueError("Invalid day while parsing daytime: '%s'" % day) from e
 
     try:
-        time = parse_time(time)
-        if match and time is None:
-            raise ValueError
+        parsed_time = parse_time(time)
+        if match and parsed_time is None:
+            raise ValueError("Unparsable time")
     except ValueError as e:
         raise ValueError("Invalid time while parsing daytime: '%s'" % time) from e
 
-    if day is None and time is None:
+    if parsed_day is None and parsed_time is None:
         return None
 
-    return day, time
+    return parsed_day, parsed_time

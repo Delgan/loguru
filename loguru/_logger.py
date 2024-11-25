@@ -1,4 +1,5 @@
-"""
+"""Core logging functionalities of the `Loguru` library.
+
 .. References and links rendered by Sphinx are kept here as "module documentation" so that they can
    be used in the ``Logger`` docstrings but do not pollute ``help(logger)`` output.
 
@@ -89,6 +90,7 @@ import functools
 import logging
 import re
 import sys
+import threading
 import warnings
 from collections import namedtuple
 from inspect import isclass, iscoroutinefunction, isgeneratorfunction
@@ -115,8 +117,7 @@ if sys.version_info >= (3, 6):
 else:
     from pathlib import PurePath as PathLike
 
-
-Level = namedtuple("Level", ["name", "no", "color", "icon"])
+Level = namedtuple("Level", ["name", "no", "color", "icon"])  # noqa: PYI024
 
 start_time = aware_now()
 
@@ -193,15 +194,18 @@ class Core:
         self.activation_list = []
         self.activation_none = True
 
+        self.thread_locals = threading.local()
         self.lock = create_logger_lock()
 
     def __getstate__(self):
         state = self.__dict__.copy()
+        state["thread_locals"] = None
         state["lock"] = None
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
+        self.thread_locals = threading.local()
         self.lock = create_logger_lock()
 
 
@@ -666,9 +670,10 @@ class Logger:
 
         Tags which are not recognized will raise an exception during parsing, to inform you about
         possible misuse. If you wish to display a markup tag literally, you can escape it by
-        prepending a ``\`` like for example ``\<blue>``. If, for some reason, you need to escape a
-        string programmatically, note that the regex used internally to parse markup tags is
-        ``r"\\?</?((?:[fb]g\s)?[^<>\s]*)>"``.
+        prepending a ``\`` like for example ``\<blue>``. To prevent the escaping to occur, you can
+        simply double the ``\`` (e.g. ``\\<blue>`` will print a literal ``\`` before colored text).
+        If, for some reason, you need to escape a string programmatically, note that the regex used
+        internally to parse markup tags is ``r"(\\*)(</?(?:[fb]g\s)?[^<>\s]*>)"``.
 
         Note that when logging a message with ``opt(colors=True)``, color tags present in the
         formatting arguments (``args`` and ``kwargs``) are completely ignored. This is important if
@@ -1234,6 +1239,15 @@ class Logger:
                 if type_ is None:
                     return None
 
+                # We must prevent infinite recursion in case "logger.catch()" handles an exception
+                # that occurs while logging another exception. This can happen for example when
+                # the exception formatter calls "repr(obj)" while the "__repr__" method is broken
+                # but decorated with "logger.catch()". In such a case, we ignore the catching
+                # mechanism and just let the exception be thrown (that way, the formatter will
+                # rightly assume the object is unprintable).
+                if getattr(logger._core.thread_locals, "already_logging_exception", False):
+                    return False
+
                 if not issubclass(type_, exception):
                     return False
 
@@ -1246,8 +1260,13 @@ class Logger:
                 if from_decorator:
                     depth += 1
 
-                catch_options = [(type_, value, traceback_), depth, True] + options
-                logger._log(level, from_decorator, catch_options, message, (), {})
+                catch_options = [(type_, value, traceback_), depth, True, *options]
+
+                logger._core.thread_locals.already_logging_exception = True
+                try:
+                    logger._log(level, from_decorator, catch_options, message, (), {})
+                finally:
+                    logger._core.thread_locals.already_logging_exception = False
 
                 if onerror is not None:
                     onerror(value)
@@ -1517,10 +1536,10 @@ class Logger:
         ...     logger.patch(lambda r: r.update(record)).log(level, message)
         """
         *options, patchers, extra = self._options
-        return Logger(self._core, *options, patchers + [patcher], extra)
+        return Logger(self._core, *options, [*patchers, patcher], extra)
 
     def level(self, name, no=None, color=None, icon=None):
-        """Add, update or retrieve a logging level.
+        r"""Add, update or retrieve a logging level.
 
         Logging levels are defined by their ``name`` to which a severity ``no``, an ansi ``color``
         tag and an ``icon`` are associated and possibly modified at run-time. To |log| to a custom
@@ -1591,7 +1610,7 @@ class Logger:
                 )
             old_color, old_icon = "", " "
         elif no is not None:
-            raise TypeError("Level '%s' already exists, you can't update its severity no" % name)
+            raise ValueError("Level '%s' already exists, you can't update its severity no" % name)
         else:
             _, no, old_color, old_icon = self.level(name)
 
@@ -2071,7 +2090,7 @@ class Logger:
         __self._log("CRITICAL", False, __self._options, __message, args, kwargs)
 
     def exception(__self, __message, *args, **kwargs):  # noqa: N805
-        r"""Convenience method for logging an ``'ERROR'`` with exception information."""
+        r"""Log an ``'ERROR'```` message while also capturing the currently handled exception."""
         options = (True,) + __self._options[1:]
         __self._log("ERROR", False, options, __message, args, kwargs)
 
@@ -2080,7 +2099,9 @@ class Logger:
         __self._log(__level, False, __self._options, __message, args, kwargs)
 
     def start(self, *args, **kwargs):
-        """Deprecated function to |add| a new handler.
+        """Add a handler sending log messages to a sink adequately configured.
+
+        Deprecated function, use |add| instead.
 
         Warnings
         --------
@@ -2096,7 +2117,9 @@ class Logger:
         return self.add(*args, **kwargs)
 
     def stop(self, *args, **kwargs):
-        """Deprecated function to |remove| an existing handler.
+        """Remove a previously added handler and stop sending logs to its sink.
+
+        Deprecated function, use |remove| instead.
 
         Warnings
         --------
@@ -2113,11 +2136,19 @@ class Logger:
 
     @staticmethod
     def lazy(fn, *args, **kwargs):
+        """Make fn lazy evaluated.
+
+        For example, fn will only be called if debug level is enabled.
+
+        ```python
+        logger.debug("hello {}", logger.lazy(fn, *...))
+        ```
+        """
         return LazyValue(fn, *args, **kwargs)
 
 
 class LazyValue:
-    __slots__ = ("fn", "args", "kwargs")
+    __slots__ = ("args", "fn", "kwargs")
 
     def __init__(self, fn, *args, **kwargs):
         self.fn = fn

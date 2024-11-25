@@ -1,0 +1,22 @@
+
+Traceback (most recent call last):
+
+> File "tests/exceptions/source/others/broken_but_decorated_repr.py", line 25, in <module>
+    repr(foo)
+         └ <unprintable Foo object>
+
+  File "tests/exceptions/source/others/broken_but_decorated_repr.py", line 12, in __repr__
+    raise ValueError("Something went wrong (Foo)")
+
+ValueError: Something went wrong (Foo)
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/broken_but_decorated_repr.py", line 31, in <module>
+    repr(bar)
+         └ <unprintable Bar object>
+
+> File "tests/exceptions/source/others/broken_but_decorated_repr.py", line 18, in __repr__
+    raise ValueError("Something went wrong (Bar)")
+
+ValueError: Something went wrong (Bar)

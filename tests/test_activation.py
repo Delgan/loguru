@@ -4,7 +4,7 @@ from loguru import logger
 
 
 @pytest.mark.parametrize(
-    "name, should_log",
+    ("name", "should_log"),
     [
         ("", False),
         ("tests", False),
@@ -30,7 +30,7 @@ def test_disable(writer, name, should_log):
 
 
 @pytest.mark.parametrize(
-    "name, should_log",
+    ("name", "should_log"),
     [
         ("", True),
         ("tests", True),

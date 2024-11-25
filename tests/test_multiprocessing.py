@@ -15,12 +15,12 @@ from .conftest import new_event_loop_context
 
 @pytest.fixture
 def fork_context():
-    yield multiprocessing.get_context("fork")
+    return multiprocessing.get_context("fork")
 
 
 @pytest.fixture
 def spawn_context():
-    yield multiprocessing.get_context("spawn")
+    return multiprocessing.get_context("spawn")
 
 
 def do_something(i):

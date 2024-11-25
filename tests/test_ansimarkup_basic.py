@@ -5,7 +5,7 @@ from .conftest import parse
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<bold>1</bold>", Style.BRIGHT + "1" + Style.RESET_ALL),
         ("<dim>1</dim>", Style.DIM + "1" + Style.RESET_ALL),
@@ -20,7 +20,7 @@ def test_styles(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<RED>1</RED>", Back.RED + "1" + Style.RESET_ALL),
         ("<R>1</R>", Back.RED + "1" + Style.RESET_ALL),
@@ -33,7 +33,7 @@ def test_background_colors(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<yellow>1</yellow>", Fore.YELLOW + "1" + Style.RESET_ALL),
         ("<y>1</y>", Fore.YELLOW + "1" + Style.RESET_ALL),
@@ -46,7 +46,7 @@ def test_foreground_colors(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         (
             "<b>1</b><d>2</d>",
@@ -94,12 +94,14 @@ def test_nested(text, expected):
 
 @pytest.mark.parametrize("text", ["<b>", "<Y><b></b>", "<b><b></b>"])
 def test_strict_parsing(text):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match='^Opening tag "<[^>]*>" has no corresponding closing tag$'
+    ):
         parse(text, strip=False)
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<b>", Style.BRIGHT),
         ("<Y><b></b>", Back.YELLOW + Style.BRIGHT + Style.RESET_ALL + Back.YELLOW),
@@ -111,7 +113,7 @@ def test_permissive_parsing(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<red>foo</>", Fore.RED + "foo" + Style.RESET_ALL),
         (
@@ -138,12 +140,17 @@ def test_autoclose(text, expected):
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
+        (r"\<red>foobar\</red>", "<red>foobar</red>"),
+        (r"\\<red>foobar\\</red>", "\\" + Fore.RED + "foobar\\" + Style.RESET_ALL),
+        (r"\\\<red>foobar\\\</red>", "\\<red>foobar\\</red>"),
+        (r"\\\\<red>foobar\\\\</red>", "\\\\" + Fore.RED + "foobar\\\\" + Style.RESET_ALL),
         (r"<red>foo\</red>bar</red>", Fore.RED + "foo</red>bar" + Style.RESET_ALL),
         (r"<red>foo\<red>bar</red>", Fore.RED + "foo<red>bar" + Style.RESET_ALL),
         (r"\<red>\</red>", "<red></red>"),
         (r"foo\</>bar\</>baz", "foo</>bar</>baz"),
+        (r"\a \\b \\\c \\\\d", "\\a \\\\b \\\\\\c \\\\\\\\d"),
     ],
 )
 def test_escaping(text, expected):
@@ -157,14 +164,17 @@ def test_escaping(text, expected):
         "</b>",
         "<b>1</b></b>",
         "<red><b>1</b></b></red>",
-        "<tag>1</b>",
+        "<green>1</b>",
+        "<green>foo</bar>",
         "</>",
         "<red><green>X</></green>",
     ],
 )
 @pytest.mark.parametrize("strip", [True, False])
 def test_mismatched_error(text, strip):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match='^Closing tag "<[^>]*>" has no corresponding opening tag$'
+    ):
         parse(text, strip=strip)
 
 
@@ -173,14 +183,16 @@ def test_mismatched_error(text, strip):
 )
 @pytest.mark.parametrize("strip", [True, False])
 def test_unbalanced_error(text, strip):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='^Closing tag "<[^>]*>" violates nesting rules$'):
         parse(text, strip=strip)
 
 
 @pytest.mark.parametrize("text", ["<b>", "<Y><b></b>", "<b><b></b>", "<fg red>1<fg red>"])
 @pytest.mark.parametrize("strip", [True, False])
 def test_unclosed_error(text, strip):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match='^Opening tag "<[^>]*>" has no corresponding closing tag$'
+    ):
         parse(text, strip=strip)
 
 
@@ -189,7 +201,6 @@ def test_unclosed_error(text, strip):
     [
         "<foo>bar</foo>",
         "<Green>foobar</Green>",
-        "<green>foo</bar>",
         "<bar>foo</green>",
         "<b>1</b><tag>2</tag>",
         "<tag>1</tag><b>2</b>",
@@ -197,18 +208,25 @@ def test_unclosed_error(text, strip):
         "<tag>1</tag><b>2</b><tag>3</tag>",
         "<b><tag>1</tag></b>",
         "<tag><b>1</b></tag>",
+        "<tag>1</b>",
         "<b></b><tag>1</tag>",
         "<tag>1</tag><b></b>",
     ],
 )
 @pytest.mark.parametrize("strip", [True, False])
 def test_invalid_color(text, strip):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=(
+            '^Tag "<[^>]*>" does not correspond to any known color directive, '
+            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)$"
+        ),
+    ):
         parse(text, strip=strip)
 
 
 @pytest.mark.parametrize(
-    "text, expected",
+    ("text", "expected"),
     [
         ("<red>foo</red>", "foo"),
         ("<BLACK>bar</BLACK>", "bar"),

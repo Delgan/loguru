@@ -6,7 +6,7 @@ from .conftest import StreamIsattyException, StreamIsattyFalse, StreamIsattyTrue
 
 
 @pytest.mark.parametrize(
-    "format, message, expected",
+    ("format", "message", "expected"),
     [
         ("<red>{message}</red>", "Foo", parse("<red>Foo</red>\n")),
         (lambda _: "<red>{message}</red>", "Bar", parse("<red>Bar</red>")),
@@ -21,7 +21,7 @@ def test_colorized_format(format, message, expected, writer):
 
 
 @pytest.mark.parametrize(
-    "format, message, expected",
+    ("format", "message", "expected"),
     [
         ("<red>{message}</red>", "Foo", "Foo\n"),
         (lambda _: "<red>{message}</red>", "Bar", "Bar"),
