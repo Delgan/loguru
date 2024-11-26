@@ -153,6 +153,22 @@ def test_lazy(writer):
     assert writer.read() == "10 => 1: 1\n17 => 4: 1\n20 => 7: 2\n"
 
 
+def test_lazy_function_executed_only_once(writer):
+    counter = 0
+
+    def laziness():
+        nonlocal counter
+        counter += 1
+        return counter
+
+    logger.add(writer, level=10, format="{level.name} => {message}")
+
+    logger.opt(lazy=True).info("1: {lazy} {lazy}", lazy=laziness)
+    logger.opt(lazy=True).info("2: {0} {0}", laziness)
+
+    assert writer.read() == "INFO => 1: 1 1\nINFO => 2: 2 2\n"
+
+
 def test_logging_within_lazy_function(writer):
     logger.add(writer, level=20, format="{message}")
 
