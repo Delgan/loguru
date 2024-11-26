@@ -200,6 +200,13 @@ def test_depth(writer):
     assert writer.read() == "test_depth : Test 1\na : Test 2\ntest_depth : Test 3\n"
 
 
+def test_depth_with_unreachable_frame(writer):
+    logger.add(writer, format="{name} : {function} : {file} : {line} : {message}")
+    logger.opt(depth=1000).debug("Test")
+    logger.remove()
+    assert writer.read() == "None : <unknown> : <unknown> : 0 : Test\n"
+
+
 def test_capture(writer):
     logger.add(writer, format="{message} {extra}")
     logger.opt(capture=False).info("No {}", 123, no=False)

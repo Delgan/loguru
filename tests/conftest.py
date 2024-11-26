@@ -329,8 +329,8 @@ def make_logging_logger(name, handler, fmt="%(message)s", level="DEBUG"):
         logging_logger.removeHandler(handler)
 
 
-@pytest.fixture
-def f_globals_name_absent(monkeypatch):
+def _simulate_f_globals_name_absent(monkeypatch):
+    """Simulate execution in Dask environment, where "__name__" is not available in globals."""
     getframe_ = loguru._get_frame.load_get_frame_function()
 
     def patched_getframe(*args, **kwargs):
@@ -341,3 +341,20 @@ def f_globals_name_absent(monkeypatch):
     with monkeypatch.context() as context:
         context.setattr(loguru._logger, "get_frame", patched_getframe)
         yield
+
+
+def _simulate_no_frame_available(monkeypatch):
+    """Simulate execution in Cython, where there is no stack frame to retrieve."""
+
+    def patched_getframe(*args, **kwargs):
+        raise ValueError("Call stack is not deep enough (dummy)")
+
+    with monkeypatch.context() as context:
+        context.setattr(loguru._logger, "get_frame", patched_getframe)
+        yield
+
+
+@pytest.fixture(params=[_simulate_f_globals_name_absent, _simulate_no_frame_available])
+def incomplete_frame_context(request, monkeypatch):
+    """Simulate different scenarios where the stack frame is incomplete or entirely absent."""
+    yield from request.param(monkeypatch)
