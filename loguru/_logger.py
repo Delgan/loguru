@@ -1567,7 +1567,8 @@ class Logger:
         Raises
         ------
         ValueError
-            If there is no level registered with such ``name``.
+            If attempting to access a level with a ``name`` that is not registered, or if trying to
+            change the severity ``no`` of an existing level.
 
         Examples
         --------
