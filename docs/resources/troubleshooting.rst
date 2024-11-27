@@ -1,5 +1,5 @@
-Common questions and troubleshooting tips for ``loguru``
-========================================================
+Frequently Asked Questions and Troubleshooting Tips for Loguru
+==============================================================
 
 .. highlight:: python3
 

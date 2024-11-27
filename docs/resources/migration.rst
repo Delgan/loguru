@@ -1,5 +1,5 @@
-Switching from standard ``logging`` to ``loguru``
-=================================================
+Switching from Standard Logging to Loguru
+=========================================
 
 .. highlight:: python3
 

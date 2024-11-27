@@ -1,6 +1,6 @@
 .. _type-hints:
 
-Type hints
+Type Hints
 ==========
 
 .. |str| replace:: :class:`str`

@@ -1,5 +1,5 @@
-Code snippets and recipes for ``loguru``
-========================================
+Code Snippets and Recipes for Loguru
+====================================
 
 .. highlight:: python3
 
