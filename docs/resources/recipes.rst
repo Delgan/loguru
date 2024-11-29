@@ -138,6 +138,8 @@ The logger is pre-configured for convenience with a default handler which writes
     logger.add(sys.stderr, level="WARNING")
 
 
+.. _changing-level-of-existing-handler:
+
 Changing the level of an existing handler
 -----------------------------------------
 
@@ -193,6 +195,8 @@ Finally, more advanced control over handler's level can be achieved by using a c
 
     logger.debug("Not logged")
 
+
+.. _configuring-loguru-as-lib-or-app:
 
 Configuring Loguru to be used by a library or an application
 ------------------------------------------------------------
@@ -889,6 +893,8 @@ You can update the default ``format`` of your handlers and omit the uninterestin
 Note that the ``"name"`` attribute of the log record is set to ``None`` when the frame is unavailable.
 
 
+.. _creating-independent-loggers:
+
 Creating independent loggers with separate set of handlers
 ----------------------------------------------------------
 
@@ -937,6 +943,8 @@ Now, supposing that you have a lot of these tasks. It may be a bit cumbersome to
 
 Note that you may encounter errors if you try to copy a ``logger`` to which non-picklable handlers have been added. For this reason, it is generally advised to remove all handlers before calling ``copy.deepcopy(logger)``.
 
+
+.. _multiprocessing-compatibility:
 
 Compatibility with ``multiprocessing`` using ``enqueue`` argument
 -----------------------------------------------------------------

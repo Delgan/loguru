@@ -52,7 +52,7 @@ A basic usage example could look like this:
     logger.add(good_sink, filter=bad_filter)
 
 
-.. code-block:: bash
+.. code-block::
 
     $ mypy test.py
     test.py:8: error: TypedDict "Record" has no key 'invalid'
