@@ -58,6 +58,15 @@ Switching from Standard Logging to Loguru
 .. _`GH#474`: https://github.com/Delgan/loguru/issues/474
 
 
+Introduction to logging in Python
+---------------------------------
+
+First and foremost, it is important to understand some basic concepts about logging in Python.
+
+Logging is an essential part of any application, as it allows you to track the behavior of your code and diagnose issues. It associates messages with severity levels which are collected and dispatched to readable outputs called handlers.
+
+For newcomers, take a look at the tutorial in the Python documentation: `Logging HOWTO <https://docs.python.org/3/howto/logging.html>`_.
+
 
 Fundamental differences between ``logging`` and ``loguru``
 ----------------------------------------------------------
