@@ -178,23 +178,20 @@ Alternatively, you can combine the |bind| method with the ``filter`` argument to
 
 Finally, more advanced control over handler's level can be achieved by using a callable object as the ``filter``::
 
-    class MyFilter:
+    min_level = logger.level("DEBUG").no
 
-        def __init__(self, level):
-            self.level = level
+    def filter_by_level(record):
+        return record["level"].no >= min_level
 
-        def __call__(self, record):
-            levelno = logger.level(self.level).no
-            return record["level"].no >= levelno
 
-    my_filter = MyFilter("WARNING")
-    logger.add(sys.stderr, filter=my_filter, level=0)
+    logger.remove()
+    logger.add(sys.stderr, filter=filter_by_level, level=0)
 
-    logger.warning("OK")
-    logger.debug("NOK")
+    logger.debug("Logged")
 
-    my_filter.level = "DEBUG"
-    logger.debug("OK")
+    min_level = logger.level("WARNING").no
+
+    logger.debug("Not logged")
 
 
 Configuring Loguru to be used by a library or an application
