@@ -61,7 +61,7 @@ jobs:
         tox -e tests
       continue-on-error: ${{ matrix.allow-failure }}
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: ${{ matrix.os }}_${{ matrix.python-version }}
