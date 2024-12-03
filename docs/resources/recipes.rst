@@ -1,5 +1,5 @@
-Code snippets and recipes for ``loguru``
-========================================
+Code Snippets and Recipes for Loguru
+====================================
 
 .. highlight:: python3
 
@@ -55,7 +55,6 @@ Code snippets and recipes for ``loguru``
 .. |zmq| replace:: ``zmq``
 .. _zmq: https://github.com/zeromq/pyzmq
 
-.. _`GH#88`: https://github.com/Delgan/loguru/issues/88
 .. _`GH#132`: https://github.com/Delgan/loguru/issues/132
 
 
@@ -139,6 +138,8 @@ The logger is pre-configured for convenience with a default handler which writes
     logger.add(sys.stderr, level="WARNING")
 
 
+.. _changing-level-of-existing-handler:
+
 Changing the level of an existing handler
 -----------------------------------------
 
@@ -179,24 +180,23 @@ Alternatively, you can combine the |bind| method with the ``filter`` argument to
 
 Finally, more advanced control over handler's level can be achieved by using a callable object as the ``filter``::
 
-    class MyFilter:
+    min_level = logger.level("DEBUG").no
 
-        def __init__(self, level):
-            self.level = level
+    def filter_by_level(record):
+        return record["level"].no >= min_level
 
-        def __call__(self, record):
-            levelno = logger.level(self.level).no
-            return record["level"].no >= levelno
 
-    my_filter = MyFilter("WARNING")
-    logger.add(sys.stderr, filter=my_filter, level=0)
+    logger.remove()
+    logger.add(sys.stderr, filter=filter_by_level, level=0)
 
-    logger.warning("OK")
-    logger.debug("NOK")
+    logger.debug("Logged")
 
-    my_filter.level = "DEBUG"
-    logger.debug("OK")
+    min_level = logger.level("WARNING").no
 
+    logger.debug("Not logged")
+
+
+.. _configuring-loguru-as-lib-or-app:
 
 Configuring Loguru to be used by a library or an application
 ------------------------------------------------------------
@@ -418,7 +418,9 @@ You could then use it like this::
     bar()
 
 
-Which would result in::
+Which would result in:
+
+.. code-block:: none
 
     2019-04-07 11:08:44.198 | DEBUG    | __main__:bar:30 - Entering 'foo' (args=(2, 4), kwargs={'c': 8})
     2019-04-07 11:08:44.198 | INFO     | __main__:foo:26 - Inside the function
@@ -876,17 +878,22 @@ Using Loguru's ``logger`` within a Cython module
 
 Loguru and Cython do not interoperate very well. This is because Loguru (and logging generally) heavily relies on Python stack frames while Cython, being an alternative Python implementation, try to get rid of these frames for optimization reasons.
 
-Calling the ``logger`` from code compiled with Cython may raise this kind of exception::
+Calling the ``logger`` from code compiled with Cython may result in "incomplete" logs (missing call context):
 
-    ValueError: call stack is not deep enough
+.. code-block:: none
 
-This error happens when Loguru tries to access a stack frame which has been suppressed by Cython. There is no way for Loguru to retrieve contextual information of the logged message, but there exists a workaround that will at least prevent your application to crash::
+    2024-11-26 15:58:48.985 | INFO     | None:<unknown>:0 - Message from Cython!
 
-    # Add this at the start of your file
-    logger = logger.opt(depth=-1)
+This happens when Loguru tries to access a stack frame which has been suppressed by Cython. In such a case, there is no way for Loguru to retrieve contextual information of the logged message.
 
-Note that logged messages should be displayed correctly, but function name and other information will be incorrect. This issue is discussed in `GH#88`_.
+You can update the default ``format`` of your handlers and omit the uninteresting fields. You can also tries to |patch| the ``logger`` to manually add information you may know about the caller, for example::
 
+    logger = logger.patch(lambda record: record.update(name="my_cython_module"))
+
+Note that the ``"name"`` attribute of the log record is set to ``None`` when the frame is unavailable.
+
+
+.. _creating-independent-loggers:
 
 Creating independent loggers with separate set of handlers
 ----------------------------------------------------------
@@ -936,6 +943,8 @@ Now, supposing that you have a lot of these tasks. It may be a bit cumbersome to
 
 Note that you may encounter errors if you try to copy a ``logger`` to which non-picklable handlers have been added. For this reason, it is generally advised to remove all handlers before calling ``copy.deepcopy(logger)``.
 
+
+.. _multiprocessing-compatibility:
 
 Compatibility with ``multiprocessing`` using ``enqueue`` argument
 -----------------------------------------------------------------

@@ -38,6 +38,7 @@ release = ""
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
@@ -51,7 +52,7 @@ templates_path = ["_templates"]
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
+source_suffix = [".rst", ".md"]
 
 # The master toctree document.
 master_doc = "index"
@@ -169,6 +170,11 @@ html_show_sourcelink = False
 html_show_copyright = False
 napoleon_use_rtype = False
 napoleon_use_ivar = True
+myst_heading_anchors = 3
+
+# MyST parser complains that headers where the README start at H2 and not H1.
+# We may be able to get rid of this warning if we convert the reST files to MyST.
+suppress_warnings = ["myst.header"]
 
 
 def setup(app):

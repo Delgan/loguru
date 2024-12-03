@@ -68,7 +68,7 @@ def test_filtered_out(filter, writer):
         {None: "INFO", "": "WARNING"},
     ],
 )
-def test_filtered_in_f_globals_name_absent(writer, filter, f_globals_name_absent):
+def test_filtered_in_incomplete_frame_context(writer, filter, incomplete_frame_context):
     logger.add(writer, filter=filter, format="{message}", catch=False)
     logger.info("It's ok")
     assert writer.read() == "It's ok\n"
@@ -85,7 +85,7 @@ def test_filtered_in_f_globals_name_absent(writer, filter, f_globals_name_absent
         {None: 100, "tests": True},
     ],
 )
-def test_filtered_out_f_globals_name_absent(writer, filter, f_globals_name_absent):
+def test_filtered_out_incomplete_frame_context(writer, filter, incomplete_frame_context):
     logger.add(writer, filter=filter, format="{message}", catch=False)
     logger.info("It's not ok")
     assert writer.read() == ""

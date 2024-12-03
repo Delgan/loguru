@@ -1573,7 +1573,8 @@ class Logger:
         Raises
         ------
         ValueError
-            If there is no level registered with such ``name``.
+            If attempting to access a level with a ``name`` that is not registered, or if trying to
+            change the severity ``no`` of an existing level.
 
         Examples
         --------
@@ -1962,10 +1963,21 @@ class Logger:
 
         (exception, depth, record, lazy, colors, raw, capture, patchers, extra) = options
 
-        frame = get_frame(depth + 2)
+        try:
+            frame = get_frame(depth + 2)
+        except ValueError:
+            f_globals = {}
+            f_lineno = 0
+            co_name = "<unknown>"
+            co_filename = "<unknown>"
+        else:
+            f_globals = frame.f_globals
+            f_lineno = frame.f_lineno
+            co_name = frame.f_code.co_name
+            co_filename = frame.f_code.co_filename
 
         try:
-            name = frame.f_globals["__name__"]
+            name = f_globals["__name__"]
         except KeyError:
             name = None
 
@@ -1991,9 +2003,7 @@ class Logger:
 
         current_datetime = aware_now()
 
-        code = frame.f_code
-        file_path = code.co_filename
-        file_name = basename(file_path)
+        file_name = basename(co_filename)
         thread = current_thread()
         process = current_process()
         elapsed = current_datetime - start_time
@@ -2013,10 +2023,10 @@ class Logger:
             "elapsed": elapsed,
             "exception": exception,
             "extra": {**core.extra, **context.get(), **extra},
-            "file": RecordFile(file_name, file_path),
-            "function": code.co_name,
+            "file": RecordFile(file_name, co_filename),
+            "function": co_name,
             "level": RecordLevel(level_name, level_no, level_icon),
-            "line": frame.f_lineno,
+            "line": f_lineno,
             "message": str(message),
             "module": splitext(file_name)[0],
             "name": name,
