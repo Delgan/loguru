@@ -363,26 +363,22 @@ for groups in logger.parse("file.log", pattern, cast=caster_dict):
 
 ### Exhaustive notifier
 
-Loguru can easily be combined with the great [`notifiers`](https://github.com/notifiers/notifiers) library (must be installed separately) to receive an e-mail when your program fail unexpectedly or to send many other kind of notifications.
+Loguru can easily be combined with the great [`apprise`](https://github.com/caronc/apprise) library (must be installed separately) to receive an e-mail when your program fail unexpectedly or to send many other kind of notifications.
 
 ```python
-import notifiers
+import apprise
 
-params = {
-    "username": "you@gmail.com",
-    "password": "abc123",
-    "to": "dest@gmail.com"
-}
+# Define the configuration constants.
+WEBHOOK_ID = "123456790"
+WEBHOOK_TOKEN = "abc123def456"
 
-# Send a single notification
-notifier = notifiers.get_notifier("gmail")
-notifier.notify(message="The application is running!", **params)
+# Prepare the object to send Discord notifications.
+notifier = apprise.Apprise()
+notifier.add(f"discord://{WEBHOOK_ID}/{WEBHOOK_TOKEN}")
 
-# Be alerted on each error message
-from notifiers.logging import NotificationHandler
-
-handler = NotificationHandler("gmail", defaults=params)
-logger.add(handler, level="ERROR")
+# Install a handler to be alerted on each error.
+# You can filter out logs from "apprise" itself to avoid recursive calls.
+logger.add(notifier.notify, level="ERROR", filter={"apprise": False})
 ```
 
 <s>
