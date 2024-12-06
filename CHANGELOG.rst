@@ -1,7 +1,7 @@
-`Unreleased`_
-=============
+`0.7.3`_ (2024-12-06)
+=====================
 
-- Fix Cython incompatibility caused by the absence of underlying stack frames, which resulted in a ValueError during logging (`#88 <https://github.com/Delgan/loguru/issues/88>`_).
+- Fix Cython incompatibility caused by the absence of underlying stack frames, which resulted in a ``ValueError`` during logging (`#88 <https://github.com/Delgan/loguru/issues/88>`_).
 - Fix possible ``RuntimeError`` when removing all handlers with ``logger.remove()`` due to thread-safety issue (`#1183 <https://github.com/Delgan/loguru/issues/1183>`_, thanks `@jeremyk <https://github.com/jeremyk>`_).
 - Fix ``diagnose=True`` option of exception formatting not working as expected with Python 3.13 (`#1235 <https://github.com/Delgan/loguru/issues/1235>`_, thanks `@etianen <https://github.com/etianen>`_).
 - Fix non-standard level names not fully compatible with ``logging.Formatter()`` (`#1231 <https://github.com/Delgan/loguru/issues/1231>`_, thanks `@yechielb2000 <https://github.com/yechielb2000>`_).
@@ -234,7 +234,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.2...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.3...master
+.. _0.7.3: https://github.com/delgan/loguru/releases/tag/0.7.3
 .. _0.7.2: https://github.com/delgan/loguru/releases/tag/0.7.2
 .. _0.7.1: https://github.com/delgan/loguru/releases/tag/0.7.1
 .. _0.7.0: https://github.com/delgan/loguru/releases/tag/0.7.0
