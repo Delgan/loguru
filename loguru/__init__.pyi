@@ -25,6 +25,8 @@ from typing import (
     overload,
 )
 
+import typing_extensions
+
 if sys.version_info >= (3, 6):
     from typing import Awaitable
 else:
@@ -47,6 +49,7 @@ else:
 
 _T = TypeVar("_T")
 _F = TypeVar("_F", bound=Callable[..., Any])
+_P = typing_extensions.ParamSpec("_P")
 ExcInfo = Tuple[Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]]
 
 class _GeneratorContextManager(ContextManager[_T], Generic[_T]):
@@ -364,5 +367,7 @@ class Logger:
     def log(__self, __level: Union[int, str], __message: Any) -> None: ...  # noqa: N805
     def start(self, *args: Any, **kwargs: Any) -> int: ...
     def stop(self, *args: Any, **kwargs: Any) -> None: ...
+    @staticmethod
+    def lazy(fn: Callable[_P, Any], *args: _P.args, **kwargs: _P.kwargs) -> Any: ...
 
 logger: Logger
