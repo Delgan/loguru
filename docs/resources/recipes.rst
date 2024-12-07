@@ -143,7 +143,7 @@ The logger is pre-configured for convenience with a default handler which writes
 Changing the level of an existing handler
 -----------------------------------------
 
-Once a handler has been added, it is actually not possible to update it. This is a deliberate choice in order to keep the Loguru's API minimal. Several solutions are possible, tough, if you need to change the configured ``level`` of a handler. Chose the one that best fits your use case.
+Once a handler has been added, it is actually not possible to update it. This is a deliberate choice in order to keep the Loguru's API minimal. Several solutions are possible, though, if you need to change the configured ``level`` of a handler. Chose the one that best fits your use case.
 
 The most straightforward workaround is to |remove| your handler and then re-|add| it with the updated ``level`` parameter. To do so, you have to keep a reference to the identifier number returned while adding a handler::
 
