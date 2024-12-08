@@ -85,7 +85,7 @@ logger.add(sys.stderr, format="{time} {level} {message}", filter="my_module", le
 
 This function should be used to register [sinks](https://loguru.readthedocs.io/en/stable/api/logger.html#sink) which are responsible for managing [log messages](https://loguru.readthedocs.io/en/stable/api/logger.html#message) contextualized with a [record dict](https://loguru.readthedocs.io/en/stable/api/logger.html#record). A sink can take many forms: a simple function, a string path, a file-like object, a coroutine function or a built-in Handler.
 
-Note that you may also  a previously added handler by using the identifier returned while adding it. This is particularly useful if you want to supersede the default `stderr` handler: just call [`logger.remove()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.remove) to make a fresh start.
+Note that you may also [`remove()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.remove) a previously added handler by using the identifier returned while adding it. This is particularly useful if you want to supersede the default `stderr` handler: just call `logger.remove()` to make a fresh start.
 
 ### Easier file logging with rotation / retention / compression
 
