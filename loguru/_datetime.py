@@ -36,8 +36,9 @@ def _default_datetime_formatter(dt):
     )
 
 
-def _format_timezone(tzinfo, *, sep):
-    offset = tzinfo.utcoffset(None).total_seconds()
+def _format_timezone(dt, *, sep):
+    tzinfo = dt.tzinfo or timezone.utc
+    offset = tzinfo.utcoffset(dt).total_seconds()
     sign = "+" if offset >= 0 else "-"
     (h, m), s = divmod(abs(offset // 60), 60), abs(offset) % 60
     z = "%s%02d%s%02d" % (sign, h, sep, m)
@@ -103,8 +104,8 @@ def _compile_format(spec):
         "SSSSS": ("%05d", lambda t, dt: dt.microsecond // 10),
         "SSSSSS": ("%06d", lambda t, dt: dt.microsecond),
         "A": ("%s", lambda t, dt: "AM" if t.tm_hour < 12 else "PM"),
-        "Z": ("%s", lambda t, dt: _format_timezone(dt.tzinfo or timezone.utc, sep=":")),
-        "ZZ": ("%s", lambda t, dt: _format_timezone(dt.tzinfo or timezone.utc, sep="")),
+        "Z": ("%s", lambda t, dt: _format_timezone(dt, sep=":")),
+        "ZZ": ("%s", lambda t, dt: _format_timezone(dt, sep="")),
         "zz": ("%s", lambda t, dt: (dt.tzinfo or timezone.utc).tzname(dt) or ""),
         "X": ("%d", lambda t, dt: dt.timestamp()),
         "x": ("%d", lambda t, dt: int(dt.timestamp() * 1000000 + dt.microsecond)),
@@ -135,7 +136,6 @@ def _compile_format(spec):
 
 
 class datetime(datetime_):  # noqa: N801
-
     def __format__(self, fmt):
         return _compile_format(fmt)(self)
 
