@@ -34,7 +34,7 @@ dependencies = [
 description = "Python logging made (stupidly) simple"
 dynamic = ['version']
 keywords = ["loguru", "logging", "logger", "log"]
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 name = "loguru"
 readme = 'README.md'
 requires-python = ">=3.5,<4.0"
