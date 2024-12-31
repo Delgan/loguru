@@ -168,6 +168,29 @@ def test_missing_struct_time_fields(writer, freeze_time):
         assert re.fullmatch(r"2011 01 02 03 04 05 600000 [+-]\d{4} .*\n", result)
 
 
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="No zoneinfo module available")
+@pytest.mark.parametrize(
+    ("date", "expected_result"),
+    [
+        ("2023-07-01 12:00:00", "2023 07 01 14 00 00 000000 +0200 CEST +02:00"),  # DST.
+        ("2023-01-01 12:00:00", "2023 01 01 13 00 00 000000 +0100 CET +01:00"),  # Non-DST.
+    ],
+)
+def test_update_with_zone_info(writer, freeze_time, date, expected_result):
+    from zoneinfo import ZoneInfo
+
+    def tz_converter(record):
+        record["time"] = record["time"].astimezone(tz=ZoneInfo("Europe/Paris"))
+
+    with freeze_time(date):
+        logger.add(writer, format="{time:YYYY MM DD HH mm ss SSSSSS ZZ zz Z}")
+
+        logger.patch(tz_converter).debug("Message")
+
+        result = writer.read()
+        assert result == expected_result + "\n"
+
+
 def test_freezegun_mocking(writer):
     logger.add(writer, format="[{time:YYYY MM DD HH:mm:ss}] {message}")
 
