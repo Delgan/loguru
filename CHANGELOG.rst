@@ -1,3 +1,9 @@
+`Unreleased`_
+=============
+
+- Fix a regression preventing formatting of ``record["time"]`` when using ``zoneinfo.ZoneInfo`` timezones (`#1260 <https://github.com/Delgan/loguru/pull/1260>`_, thanks `@bijlpieter <https://github.com/bijlpieter>`_).
+
+
 `0.7.3`_ (2024-12-06)
 =====================
 
