@@ -1,4 +1,5 @@
 import datetime
+import os
 import re
 import sys
 
@@ -169,6 +170,7 @@ def test_missing_struct_time_fields(writer, freeze_time):
 
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="No zoneinfo module available")
+@pytest.mark.skipif(os.name == "nt", reason="No IANA database available")
 @pytest.mark.parametrize(
     ("date", "expected_result"),
     [
