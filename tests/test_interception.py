@@ -16,7 +16,12 @@ class InterceptHandler(logging.Handler):
 
         # Find caller from where originated the logged message.
         frame, depth = inspect.currentframe(), 0
-        while frame and (depth == 0 or frame.f_code.co_filename == logging.__file__):
+        while frame:
+            filename = frame.f_code.co_filename
+            is_logging = filename == logging.__file__
+            is_frozen = "importlib" in filename and "_bootstrap" in filename
+            if depth > 0 and not (is_logging or is_frozen):
+                break
             frame = frame.f_back
             depth += 1
 
@@ -31,7 +36,7 @@ def test_formatting(writer):
 
     expected = (
         "tests.test_interception - test_interception.py - test_formatting - DEBUG - "
-        "10 - 39 - test_interception - This is the message\n"
+        "10 - 44 - test_interception - This is the message\n"
     )
 
     with make_logging_logger("tests", InterceptHandler()) as logging_logger:
@@ -158,4 +163,4 @@ def test_using_logging_function(writer):
         logging.warning("ABC")
 
     result = writer.read()
-    assert result == "test_using_logging_function 158 test_interception test_interception.py ABC\n"
+    assert result == "test_using_logging_function 163 test_interception test_interception.py ABC\n"
