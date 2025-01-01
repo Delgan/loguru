@@ -117,7 +117,6 @@ if sys.version_info >= (3, 6):
 else:
     from pathlib import PurePath as PathLike
 
-
 Level = namedtuple("Level", ["name", "no", "color", "icon"])  # noqa: PYI024
 
 start_time = aware_now()
@@ -234,6 +233,13 @@ class Logger:
     """
 
     def __init__(self, core, exception, depth, record, lazy, colors, raw, capture, patchers, extra):
+        if lazy:
+            warnings.warn(
+                "lazy mode is deprecated, use `LazyValue` for deferred value",
+                stacklevel=2,
+                category=DeprecationWarning,
+            )
+
         self._core = core
         self._options = (exception, depth, record, lazy, colors, raw, capture, patchers, extra)
 
@@ -2137,3 +2143,27 @@ class Logger:
             stacklevel=2,
         )
         return self.remove(*args, **kwargs)
+
+    @staticmethod
+    def lazy(fn, *args, **kwargs):
+        """Make fn lazy evaluated.
+
+        For example, fn will only be called if debug level is enabled.
+
+        ```python
+        logger.debug("hello {}", logger.lazy(fn, *...))
+        ```
+        """
+        return LazyValue(fn, *args, **kwargs)
+
+
+class LazyValue:
+    __slots__ = ("args", "fn", "kwargs")
+
+    def __init__(self, fn, *args, **kwargs):
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+    def __format__(self, format_spec: str):
+        return format(self.fn(*self.args, **self.kwargs), format_spec)
