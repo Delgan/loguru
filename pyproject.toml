@@ -52,7 +52,8 @@ dev = [
   "pytest-cov==5.0.0 ; python_version>='3.8' and python_version<'3.9'",
   "pytest-cov==6.0.0 ; python_version>='3.9'",
   "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.8'",
-  "pytest-mypy-plugins==3.1.0 ; python_version>='3.8'",
+  "pytest-mypy-plugins==3.1.0 ; python_version>='3.8' and python_version<'3.9'",
+  "pytest-mypy-plugins==3.2.0 ; python_version>='3.9'",
   # Testing utils.
   "colorama==0.4.5 ; python_version<'3.8'",
   "colorama==0.4.6 ; python_version>='3.8'",
