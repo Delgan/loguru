@@ -196,14 +196,14 @@ class ExceptionFormatter:
             return False
         return not any(filepath.startswith(d) for d in self._lib_dirs)
 
+    def _should_include_frame(self, frame):
+        return frame.f_code.co_filename != self._hidden_frames_filename
+
     def _extract_frames(self, tb, is_first, *, limit=None, from_decorator=False):
         frames, final_source = [], None
 
         if tb is None or (limit is not None and limit <= 0):
             return frames, final_source
-
-        def is_valid(frame):
-            return frame.f_code.co_filename != self._hidden_frames_filename
 
         def get_info(frame, lineno):
             filename = frame.f_code.co_filename
@@ -213,7 +213,7 @@ class ExceptionFormatter:
 
         infos = []
 
-        if is_valid(tb.tb_frame):
+        if self._should_include_frame(tb.tb_frame):
             infos.append((get_info(tb.tb_frame, tb.tb_lineno), tb.tb_frame))
 
         get_parent_only = from_decorator and not self._backtrace
@@ -221,7 +221,7 @@ class ExceptionFormatter:
         if (self._backtrace and is_first) or get_parent_only:
             frame = tb.tb_frame.f_back
             while frame:
-                if is_valid(frame):
+                if self._should_include_frame(frame):
                     infos.insert(0, (get_info(frame, frame.f_lineno), frame))
                     if get_parent_only:
                         break
@@ -235,7 +235,7 @@ class ExceptionFormatter:
         tb = tb.tb_next
 
         while tb:
-            if is_valid(tb.tb_frame):
+            if self._should_include_frame(tb.tb_frame):
                 infos.append((get_info(tb.tb_frame, tb.tb_lineno), tb.tb_frame))
             tb = tb.tb_next
 
