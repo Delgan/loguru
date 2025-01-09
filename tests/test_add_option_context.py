@@ -15,7 +15,6 @@ def reset_start_method():
 
 
 @pytest.mark.usefixtures("reset_start_method")
-@pytest.mark.usefixtures("reset_start_method")
 def test_using_multiprocessing_directly_if_context_is_none():
     logger.add(lambda _: None, enqueue=True, context=None)
     assert multiprocessing.get_start_method(allow_none=True) is not None
