@@ -7,20 +7,18 @@ import pytest
 from loguru import logger
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def reset_start_method():
     multiprocessing.set_start_method(None, force=True)
     yield
     multiprocessing.set_start_method(None, force=True)
 
 
-@pytest.mark.usefixtures("reset_start_method")
 def test_using_multiprocessing_directly_if_context_is_none():
     logger.add(lambda _: None, enqueue=True, context=None)
     assert multiprocessing.get_start_method(allow_none=True) is not None
 
 
-@pytest.mark.usefixtures("reset_start_method")
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
 @pytest.mark.parametrize("context_name", ["fork", "forkserver"])
 def test_fork_context_as_string(context_name):
@@ -31,7 +29,6 @@ def test_fork_context_as_string(context_name):
     assert multiprocessing.get_start_method(allow_none=True) is None
 
 
-@pytest.mark.usefixtures("reset_start_method")
 def test_spawn_context_as_string():
     context = multiprocessing.get_context("spawn")
     with patch.object(type(context), "Lock", wraps=context.Lock) as mock:
@@ -40,7 +37,6 @@ def test_spawn_context_as_string():
     assert multiprocessing.get_start_method(allow_none=True) is None
 
 
-@pytest.mark.usefixtures("reset_start_method")
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
 @pytest.mark.parametrize("context_name", ["fork", "forkserver"])
 def test_fork_context_as_object(context_name):
@@ -51,7 +47,6 @@ def test_fork_context_as_object(context_name):
     assert multiprocessing.get_start_method(allow_none=True) is None
 
 
-@pytest.mark.usefixtures("reset_start_method")
 def test_spawn_context_as_object():
     context = multiprocessing.get_context("spawn")
     with patch.object(type(context), "Lock", wraps=context.Lock) as mock:
@@ -60,7 +55,6 @@ def test_spawn_context_as_object():
     assert multiprocessing.get_start_method(allow_none=True) is None
 
 
-@pytest.mark.usefixtures("reset_start_method")
 def test_global_start_method_is_none_if_enqueue_is_false():
     logger.add(lambda _: None, enqueue=False, context=None)
     assert multiprocessing.get_start_method(allow_none=True) is None
