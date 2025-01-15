@@ -315,7 +315,7 @@ def freeze_time(monkeypatch):
 
 @contextlib.contextmanager
 def make_logging_logger(name, handler, fmt="%(message)s", level="DEBUG"):
-    original_logging_level: int = logging.getLogger().getEffectiveLevel()
+    original_logging_level = logging.getLogger().getEffectiveLevel()
     logging_logger = logging.getLogger(name)
     logging_logger.setLevel(level)
     formatter = logging.Formatter(fmt)
