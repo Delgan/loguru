@@ -12,14 +12,6 @@ from loguru import logger
 from .conftest import new_event_loop_context, set_event_loop_context
 
 
-# Tests that invoke logger.add with enqueue=True set the multiprocessing start method
-# This ficture resets it to prevent flaky behaviour in other classes
-@pytest.fixture
-def reset_multiprocessing_start_method():
-    yield
-    multiprocessing.set_start_method(None, force=True)
-
-
 async def async_writer(msg):
     await asyncio.sleep(0.01)
     print(msg, end="")
@@ -424,7 +416,6 @@ def test_exception_in_coroutine_during_complete_not_caught(capsys, caplog):
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
-@pytest.mark.usefixtures("reset_multiprocessing_start_method")
 def test_enqueue_coroutine_loop(capsys):
     with new_event_loop_context() as loop:
         logger.add(async_writer, enqueue=True, loop=loop, format="{message}", catch=False)
@@ -440,7 +431,6 @@ def test_enqueue_coroutine_loop(capsys):
     assert err == ""
 
 
-@pytest.mark.usefixtures("reset_multiprocessing_start_method")
 def test_enqueue_coroutine_from_inside_coroutine_without_loop(capsys):
     with new_event_loop_context() as loop:
 
@@ -653,7 +643,6 @@ class Writer:
         self.output += message
 
 
-@pytest.mark.usefixtures("reset_multiprocessing_start_method")
 def test_complete_with_sub_processes(capsys):
     spawn_context = multiprocessing.get_context("spawn")
 
@@ -676,7 +665,6 @@ def test_complete_with_sub_processes(capsys):
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5, 3), reason="Coroutine can't access running loop")
-@pytest.mark.usefixtures("reset_multiprocessing_start_method")
 def test_invalid_coroutine_sink_if_no_loop_with_enqueue():
     with pytest.raises(
         ValueError,

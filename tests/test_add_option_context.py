@@ -7,13 +7,6 @@ import pytest
 from loguru import logger
 
 
-@pytest.fixture(autouse=True)
-def reset_start_method():
-    multiprocessing.set_start_method(None, force=True)
-    yield
-    multiprocessing.set_start_method(None, force=True)
-
-
 def test_using_multiprocessing_directly_if_context_is_none():
     logger.add(lambda _: None, enqueue=True, context=None)
     assert multiprocessing.get_start_method(allow_none=True) is not None

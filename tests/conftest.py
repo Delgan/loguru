@@ -4,6 +4,7 @@ import contextlib
 import datetime
 import io
 import logging
+import multiprocessing
 import os
 import pathlib
 import sys
@@ -358,3 +359,10 @@ def _simulate_no_frame_available(monkeypatch):
 def incomplete_frame_context(request, monkeypatch):
     """Simulate different scenarios where the stack frame is incomplete or entirely absent."""
     yield from request.param(monkeypatch)
+
+
+@pytest.fixture(autouse=True)
+def reset_multiprocessing_start_method():
+    multiprocessing.set_start_method(None, force=True)
+    yield
+    multiprocessing.set_start_method(None, force=True)
