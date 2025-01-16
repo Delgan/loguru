@@ -246,77 +246,105 @@ Files relate to Loguru as follows:
     * It does not need to configure anything.
 
 
+.. _inter-process-communication:
 
-Sending and receiving log messages across network or processes
---------------------------------------------------------------
+Transmitting log messages across network, processes or Gunicorn workers
+-----------------------------------------------------------------------
 
-It is possible to transmit logs between different processes and even between different computer if needed. Once the connection is established between the two Python programs, this requires serializing the logging record in one side while re-constructing the message on the other hand.
+It is possible to send and receive logs between different processes and even between different computers if needed. Once the connection is established between the two Python programs, this requires serializing the logging record in one side while re-constructing the message on the other hand. Keep in mind though that `pickling is unsafe <https://intoli.com/blog/dangerous-pickles/>`_, you should use this with care.
 
-This can be achieved using a custom sink for the client and |patch| for the server.
-
-.. code::
-
-    # client.py
-    import sys
-    import socket
-    import struct
-    import time
-    import pickle
-
-    from loguru import logger
-
-
-    class SocketHandler:
-
-        def __init__(self, host, port):
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect((host, port))
-
-        def write(self, message):
-            record = message.record
-            data = pickle.dumps(record)
-            slen = struct.pack(">L", len(data))
-            self.sock.send(slen + data)
-
-    logger.configure(handlers=[{"sink": SocketHandler('localhost', 9999)}])
-
-    while 1:
-        time.sleep(1)
-        logger.info("Sending message from the client")
-
-
-.. code::
+The first thing you will need is to run a server responsible for receiving log messages emitted by other processes::
 
     # server.py
     import socketserver
     import pickle
     import struct
-
+    import sys
     from loguru import logger
 
 
-    class LoggingStreamHandler(socketserver.StreamRequestHandler):
+    class LoggingRequestHandler(socketserver.StreamRequestHandler):
 
         def handle(self):
             while True:
                 chunk = self.connection.recv(4)
                 if len(chunk) < 4:
                     break
-                slen = struct.unpack('>L', chunk)[0]
+                slen = struct.unpack(">L", chunk)[0]
                 chunk = self.connection.recv(slen)
                 while len(chunk) < slen:
                     chunk = chunk + self.connection.recv(slen - len(chunk))
                 record = pickle.loads(chunk)
-                level, message = record["level"].no, record["message"]
-                logger.patch(lambda record: record.update(record)).log(level, message)
-
-    server = socketserver.TCPServer(('localhost', 9999), LoggingStreamHandler)
-    server.serve_forever()
+                level, message = record["level"].name, record["message"]
+                logger.patch(lambda r, record=record: r.update(record)).log(level, message)
 
 
-Keep in mind though that `pickling is unsafe <https://intoli.com/blog/dangerous-pickles/>`_, use this with care.
+    if __name__ == "__main__":
+        # Configure the logger with desired handlers.
+        logger.configure(handlers=[{"sink": "server.log"}, {"sink": sys.stderr}])
 
-Another possibility is to use a third party library like |zmq|_ for example.
+        # Setup the server to receive log messages from other processes.
+        with socketserver.TCPServer(("localhost", 9999), LoggingRequestHandler) as server:
+            server.serve_forever()
+
+
+Then, you need your clients to send messages using a specific handler::
+
+    # client.py
+    import socket
+    import struct
+    import time
+    import pickle
+    from loguru import logger
+
+
+    class SocketHandler:
+
+        def __init__(self, host, port):
+            self._host = host
+            self._port = port
+
+        def write(self, message):
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((self._host, self._port))
+            record = message.record
+            data = pickle.dumps(record)
+            slen = struct.pack(">L", len(data))
+            sock.send(slen + data)
+
+
+    if __name__ == "__main__":
+        # Setup the handler sending log messages to the server.
+        logger.configure(handlers=[{"sink": SocketHandler('localhost', 9999)}])
+
+        # Proceed with standard logger usage.
+        logger.info("Sending message from the client")
+
+
+Make sure that the server is running while the clients are logging messages, and note that they must communicate on the same port.
+
+Another example, when using Gunicorn and FastAPI you should add the previously defined ``SocketHandler`` to each of the running workers, possibly like so::
+
+    from contextlib import asynccontextmanager
+    from fastapi import FastAPI
+    from loguru import logger
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        """Setup the server instance (executed once for each worker)."""
+        logger.configure(handlers=[{"sink": SocketHandler("localhost", 9999)}])
+        logger.debug("Worker is initializing")
+        yield
+
+    app = FastAPI(lifespan=lifespan)
+
+When sharing the logger between processes is not technically possible, using a server handling TCP requests is the most reliable way of guaranteeing the integrity of logged messages.
+
+
+Using ZMQ to send and receive log messages
+------------------------------------------
+
+Third-party libraries like |zmq|_ can be leveraged to exchange messages between multiple processes. Here is an example of a basic server and client:
 
 .. code::
 
