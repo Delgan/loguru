@@ -202,28 +202,7 @@ When this happens, the file is opened again by the newly created handler. Conseq
 
 If you observe such weird behavior, you should review your code carefully to ensure that the same file sink is not being added multiple times. This can occur if ``multiprocessing`` is used incorrectly (see :ref:`this section of the documentation <multiprocessing-compatibility>` for more details). You have to make sure that the logger is not configured repeatedly by different processes, and you should use a |if-name-equals-main|_ guard.
 
-It is also a common issue with web frameworks like Gunicorn and Uvicorn, as they start multiple workers in parallel. With such a setup, it is generally recommended to configure a separate logging file per worker. Here is an example using FastAPI and the command ``uvicorn app:app --workers 4``::
-
-    import os
-    from contextlib import asynccontextmanager
-    from fastapi import FastAPI
-    from loguru import logger
-
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        """Setup executed once for each worker."""
-        process_id = os.getpid()
-        logger.remove()
-        logger.add(f"logfile_{process_id}.log")
-        logger.info("Worker started: {}", process_id)
-        yield
-
-    app = FastAPI(lifespan=lifespan)
-
-    @app.get("/hello")
-    def hello():
-        logger.info("Handling 'hello' request")
-        return {"hello": "world"}
+It is also a common issue with web frameworks like Gunicorn and Uvicorn, as they start multiple workers in parallel. In such cases, you need to set up a log server, and configure workers to send messages to it using a socket. Refer to :ref:`Transmitting log messages across network, processes or Gunicorn workers <inter-process-communication>` for details.
 
 
 Why logging a message with f-string sometimes raises an exception?
