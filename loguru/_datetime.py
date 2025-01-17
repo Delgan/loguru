@@ -25,7 +25,7 @@ def _loguru_datetime_formatter(is_utc, format_string, formatters, dt):
 
 
 def _default_datetime_formatter(dt):
-    return "%04d-%02d-%02d %02d:%02d:%02d.%03d" % (
+    return "%04d-%02d-%02d %02d:%02d:%02d.%03d %s" % (
         dt.year,
         dt.month,
         dt.day,
@@ -33,6 +33,7 @@ def _default_datetime_formatter(dt):
         dt.minute,
         dt.second,
         dt.microsecond // 1000,
+        _format_timezone(dt, sep=":"),
     )
 
 
@@ -52,7 +53,7 @@ def _format_timezone(dt, *, sep):
 
 @lru_cache(maxsize=32)
 def _compile_format(spec):
-    if spec == "YYYY-MM-DD HH:mm:ss.SSS":
+    if spec == "YYYY-MM-DD HH:mm:ss.SSS Z":
         return _default_datetime_formatter
 
     is_utc = spec.endswith("!UTC")
