@@ -1,8 +1,27 @@
+`Unreleased`_
+=============
+
+- Fix a regression preventing formatting of ``record["time"]`` when using ``zoneinfo.ZoneInfo`` timezones (`#1260 <https://github.com/Delgan/loguru/pull/1260>`_, thanks `@bijlpieter <https://github.com/bijlpieter>`_).
+
+
+`0.7.3`_ (2024-12-06)
+=====================
+
+- Fix Cython incompatibility caused by the absence of underlying stack frames, which resulted in a ``ValueError`` during logging (`#88 <https://github.com/Delgan/loguru/issues/88>`_).
+- Fix possible ``RuntimeError`` when removing all handlers with ``logger.remove()`` due to thread-safety issue (`#1183 <https://github.com/Delgan/loguru/issues/1183>`_, thanks `@jeremyk <https://github.com/jeremyk>`_).
+- Fix ``diagnose=True`` option of exception formatting not working as expected with Python 3.13 (`#1235 <https://github.com/Delgan/loguru/issues/1235>`_, thanks `@etianen <https://github.com/etianen>`_).
+- Fix non-standard level names not fully compatible with ``logging.Formatter()`` (`#1231 <https://github.com/Delgan/loguru/issues/1231>`_, thanks `@yechielb2000 <https://github.com/yechielb2000>`_).
+- Fix inability to display a literal ``"\"`` immediately before color markups (`#988 <https://github.com/Delgan/loguru/issues/988>`_).
+- Fix possible infinite recursion when an exception is raised from a ``__repr__``  method decorated with ``logger.catch()`` (`#1044 <https://github.com/Delgan/loguru/issues/1044>`_).
+- Improve performance of ``datetime`` formatting while logging messages (`#1201 <https://github.com/Delgan/loguru/issues/1201>`_, thanks `@trim21 <https://github.com/trim21>`_).
+- Reduce startup time in the presence of installed but unused ``IPython`` third-party library (`#1001 <https://github.com/Delgan/loguru/issues/1001>`_, thanks `@zakstucke <https://github.com/zakstucke>`_).
+
+
 `0.7.2`_ (2023-09-11)
 =====================
 
 - Add support for formatting of ``ExceptionGroup`` errors (`#805 <https://github.com/Delgan/loguru/issues/805>`_).
-- Fix possible ``RuntimeError`` when using ``multiprocessing.set_start_method()`` after importing the ``logger`` (`#974 <https://github.com/Delgan/loguru/issues/974>`_)
+- Fix possible ``RuntimeError`` when using ``multiprocessing.set_start_method()`` after importing the ``logger`` (`#974 <https://github.com/Delgan/loguru/issues/974>`_).
 - Fix formatting of possible ``__notes__`` attached to an ``Exception`` (`#980 <https://github.com/Delgan/loguru/issues/980>`_).
 
 
@@ -221,7 +240,8 @@
 Initial release.
 
 
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.2...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.3...master
+.. _0.7.3: https://github.com/delgan/loguru/releases/tag/0.7.3
 .. _0.7.2: https://github.com/delgan/loguru/releases/tag/0.7.2
 .. _0.7.1: https://github.com/delgan/loguru/releases/tag/0.7.1
 .. _0.7.0: https://github.com/delgan/loguru/releases/tag/0.7.0

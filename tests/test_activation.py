@@ -4,7 +4,7 @@ from loguru import logger
 
 
 @pytest.mark.parametrize(
-    "name, should_log",
+    ("name", "should_log"),
     [
         ("", False),
         ("tests", False),
@@ -30,7 +30,7 @@ def test_disable(writer, name, should_log):
 
 
 @pytest.mark.parametrize(
-    "name, should_log",
+    ("name", "should_log"),
     [
         ("", True),
         ("tests", True),
@@ -107,7 +107,7 @@ def test_multiple_activations():
     assert n() == 0
 
 
-def test_log_before_enable_f_globals_name_absent(writer, f_globals_name_absent):
+def test_log_before_enable_incomplete_frame_context(writer, incomplete_frame_context):
     logger.add(writer, format="{message}")
     logger.disable(None)
     logger.debug("nope")
@@ -117,7 +117,7 @@ def test_log_before_enable_f_globals_name_absent(writer, f_globals_name_absent):
     assert result == "yes\n"
 
 
-def test_log_before_disable_f_globals_name_absent(writer, f_globals_name_absent):
+def test_log_before_disable_incomplete_frame_context(writer, incomplete_frame_context):
     logger.add(writer, format="{message}")
     logger.enable(None)
     logger.debug("yes")
@@ -127,7 +127,7 @@ def test_log_before_disable_f_globals_name_absent(writer, f_globals_name_absent)
     assert result == "yes\n"
 
 
-def test_f_globals_name_absent_with_others(writer, f_globals_name_absent):
+def test_incomplete_frame_context_with_others(writer, incomplete_frame_context):
     logger.add(writer, format="{message}")
     logger.info("1")
     logger.enable(None)

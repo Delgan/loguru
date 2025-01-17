@@ -7,7 +7,7 @@ from loguru import logger
 
 
 @pytest.mark.parametrize(
-    "format, validator",
+    ("format", "validator"),
     [
         ("{name}", lambda r: r == "tests.test_formatting"),
         ("{time}", lambda r: re.fullmatch(r"\d+-\d+-\d+T\d+:\d+:\d+[.,]\d+[+-]\d{4}", r)),
@@ -49,7 +49,7 @@ def test_log_formatters(format, validator, writer, use_log_function):
 
 
 @pytest.mark.parametrize(
-    "format, validator",
+    ("format", "validator"),
     [
         ("{time}.log", lambda r: re.fullmatch(r"\d+-\d+-\d+_\d+-\d+-\d+\_\d+.log", r)),
         ("%s_{{a}}_天_{{1}}_%d", lambda r: r == "%s_{a}_天_{1}_%d"),
@@ -84,7 +84,7 @@ def test_file_formatters(tmp_path, format, validator, part):
 
 
 @pytest.mark.parametrize(
-    "message, args, kwargs, expected",
+    ("message", "args", "kwargs", "expected"),
     [
         ("{1, 2, 3} - {0} - {", [], {}, "{1, 2, 3} - {0} - {"),
         ("{} + {} = {}", [1, 2, 3], {}, "1 + 2 = 3"),
@@ -113,7 +113,7 @@ def test_log_formatting(writer, message, args, kwargs, expected, use_log_functio
     assert writer.read() == expected + "\n"
 
 
-def test_f_globals_name_absent(writer, f_globals_name_absent):
+def test_formatting_incomplete_frame_context(writer, incomplete_frame_context):
     logger.add(writer, format="{name} {message}", colorize=False)
     logger.info("Foobar")
     assert writer.read() == "None Foobar\n"
@@ -226,5 +226,7 @@ def test_not_formattable_message_with_colors(writer):
 
 
 def test_invalid_color_markup(writer):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="^Invalid format, color markups could not be parsed correctly$"
+    ):
         logger.add(writer, format="<red>Not closed tag", colorize=True)

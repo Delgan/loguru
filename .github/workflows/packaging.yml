@@ -1,0 +1,44 @@
+name: Packaging
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install tox
+    - name: Build package
+      run: |
+        tox -e build
+    - name: Upload package
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-22.04
+    needs: build
+    environment:
+      name: pypi
+      url: https://pypi.org/project/loguru/
+    permissions:
+      id-token: write
+    steps:
+    - name: Download package
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@release/v1

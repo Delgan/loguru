@@ -39,7 +39,10 @@ def test_invalid_int(value, monkeypatch):
     with monkeypatch.context() as context:
         key = "INVALID_INT"
         context.setenv(key, value)
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match=r"^Invalid environment variable 'INVALID_INT' \(expected an integer\): '[^']*'$",
+        ):
             env(key, int)
 
 
@@ -48,7 +51,10 @@ def test_invalid_bool(value, monkeypatch):
     with monkeypatch.context() as context:
         key = "INVALID_BOOL"
         context.setenv(key, value)
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match=r"^Invalid environment variable 'INVALID_BOOL' \(expected a boolean\): '[^']*'$",
+        ):
             env(key, bool)
 
 
@@ -56,5 +62,5 @@ def test_invalid_type(monkeypatch):
     with monkeypatch.context() as context:
         key = "INVALID_TYPE"
         context.setenv(key, "42.0")
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^The requested type '[^']+' is not supported"):
             env(key, float)

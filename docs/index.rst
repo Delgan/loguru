@@ -1,7 +1,8 @@
-.. include:: ../README.rst
-   :end-before: end-of-readme-intro
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
+   :end-before: <!-- end-of-readme-intro -->
 
-Table of contents
+Table of Contents
 =================
 
 .. toctree::

@@ -1,0 +1,57 @@
+
+Traceback (most recent call last):
+  File "tests/exceptions/source/others/recursion_error.py", line 19, in <module>
+    recursive()
+  File "tests/exceptions/source/others/recursion_error.py", line 15, in recursive
+    recursive()
+  File "tests/exceptions/source/others/recursion_error.py", line 15, in recursive
+    recursive()
+  File "tests/exceptions/source/others/recursion_error.py", line 15, in recursive
+    recursive()
+  [Previous line repeated 996 more times]
+RecursionError: maximum recursion depth exceeded
+
+Traceback (most recent call last):
+> File "tests/exceptions/source/others/recursion_error.py", line 19, in <module>
+    recursive()
+  File "tests/exceptions/source/others/recursion_error.py", line 15, in recursive
+    recursive()
+  File "tests/exceptions/source/others/recursion_error.py", line 15, in recursive
+    recursive()
+  File "tests/exceptions/source/others/recursion_error.py", line 15, in recursive
+    recursive()
+  [Previous line repeated 996 more times]
+RecursionError: maximum recursion depth exceeded
+
+[33m[1mTraceback (most recent call last):[0m
+  File "[32mtests/exceptions/source/others/[0m[32m[1mrecursion_error.py[0m", line [33m19[0m, in [35m<module>[0m
+    [1mrecursive[0m[1m([0m[1m)[0m
+  File "[32mtests/exceptions/source/others/[0m[32m[1mrecursion_error.py[0m", line [33m15[0m, in [35mrecursive[0m
+    [1mrecursive[0m[1m([0m[1m)[0m
+  File "[32mtests/exceptions/source/others/[0m[32m[1mrecursion_error.py[0m", line [33m15[0m, in [35mrecursive[0m
+    [1mrecursive[0m[1m([0m[1m)[0m
+  File "[32mtests/exceptions/source/others/[0m[32m[1mrecursion_error.py[0m", line [33m15[0m, in [35mrecursive[0m
+    [1mrecursive[0m[1m([0m[1m)[0m
+  [Previous line repeated 996 more times]
+[31m[1mRecursionError[0m:[1m maximum recursion depth exceeded[0m
+
+Traceback (most recent call last):
+
+  File "tests/exceptions/source/others/recursion_error.py", line 19, in <module>
+    recursive()
+    └ <function recursive at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/recursion_error.py", line 15, in recursive
+    recursive()
+    └ <function recursive at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/recursion_error.py", line 15, in recursive
+    recursive()
+    └ <function recursive at 0xDEADBEEF>
+
+  File "tests/exceptions/source/others/recursion_error.py", line 15, in recursive
+    recursive()
+    └ <function recursive at 0xDEADBEEF>
+  [Previous line repeated 996 more times]
+
+RecursionError: maximum recursion depth exceeded

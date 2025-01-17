@@ -2,6 +2,7 @@ import asyncio
 import site
 import sys
 import sysconfig
+import threading
 import types
 
 import pytest
@@ -251,7 +252,7 @@ def test_exception_is_tuple():
     assert reference == exception
     assert not (exception != reference)
     assert not (reference != exception)
-    assert all(t == ZeroDivisionError for t in (t_1, t_2, t_3, t_4))
+    assert all(t is ZeroDivisionError for t in (t_1, t_2, t_3, t_4))
     assert all(isinstance(v, ZeroDivisionError) for v in (v_1, v_2, v_3, v_4))
     assert all(isinstance(tb, types.TracebackType) for tb in (tb_1, tb_2, tb_3, tb_4))
 
@@ -452,3 +453,174 @@ def test_error_when_decorating_class_with_parentheses():
         @logger.catch()
         class Foo:
             pass
+
+
+def test_unprintable_but_decorated_repr(writer):
+
+    class Foo:
+        @logger.catch(reraise=True)
+        def __repr__(self):
+            raise ValueError("Something went wrong")
+
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="", catch=False)
+
+    foo = Foo()
+
+    with pytest.raises(ValueError, match="^Something went wrong$"):
+        repr(foo)
+
+    assert writer.read().endswith("ValueError: Something went wrong\n")
+
+
+def test_unprintable_but_decorated_repr_without_reraise(writer):
+    class Foo:
+        @logger.catch(reraise=False, default="?")
+        def __repr__(self):
+            raise ValueError("Something went wrong")
+
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="", catch=False)
+
+    foo = Foo()
+
+    repr(foo)
+
+    assert writer.read().endswith("ValueError: Something went wrong\n")
+
+
+def test_unprintable_but_decorated_multiple_sinks(capsys):
+    class Foo:
+        @logger.catch(reraise=True)
+        def __repr__(self):
+            raise ValueError("Something went wrong")
+
+    logger.add(sys.stderr, backtrace=True, diagnose=True, colorize=False, format="", catch=False)
+    logger.add(sys.stdout, backtrace=True, diagnose=True, colorize=False, format="", catch=False)
+
+    foo = Foo()
+
+    with pytest.raises(ValueError, match="^Something went wrong$"):
+        repr(foo)
+
+    out, err = capsys.readouterr()
+    assert out.endswith("ValueError: Something went wrong\n")
+    assert err.endswith("ValueError: Something went wrong\n")
+
+
+def test_unprintable_but_decorated_repr_with_enqueue(writer):
+    class Foo:
+        @logger.catch(reraise=True)
+        def __repr__(self):
+            raise ValueError("Something went wrong")
+
+    logger.add(
+        writer, backtrace=True, diagnose=True, colorize=False, format="", catch=False, enqueue=True
+    )
+
+    foo = Foo()
+
+    with pytest.raises(ValueError, match="^Something went wrong$"):
+        repr(foo)
+
+    logger.complete()
+
+    assert writer.read().endswith("ValueError: Something went wrong\n")
+
+
+def test_unprintable_but_decorated_repr_twice(writer):
+    class Foo:
+        @logger.catch(reraise=True)
+        @logger.catch(reraise=True)
+        def __repr__(self):
+            raise ValueError("Something went wrong")
+
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="", catch=False)
+
+    foo = Foo()
+
+    with pytest.raises(ValueError, match="^Something went wrong$"):
+        repr(foo)
+
+    assert writer.read().endswith("ValueError: Something went wrong\n")
+
+
+def test_unprintable_with_catch_context_manager(writer):
+    class Foo:
+        def __repr__(self):
+            with logger.catch(reraise=True):
+                raise ValueError("Something went wrong")
+
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="", catch=False)
+
+    foo = Foo()
+
+    with pytest.raises(ValueError, match="^Something went wrong$"):
+        repr(foo)
+
+    assert writer.read().endswith("ValueError: Something went wrong\n")
+
+
+def test_unprintable_with_catch_context_manager_reused(writer):
+    def sink(_):
+        raise ValueError("Sink error")
+
+    logger.remove()
+    logger.add(sink, catch=False)
+
+    catcher = logger.catch(reraise=False)
+
+    class Foo:
+        def __repr__(self):
+            with catcher:
+                raise ValueError("Something went wrong")
+
+    foo = Foo()
+
+    with pytest.raises(ValueError, match="^Sink error$"):
+        repr(foo)
+
+    logger.remove()
+    logger.add(writer)
+
+    with catcher:
+        raise ValueError("Error")
+
+    assert writer.read().endswith("ValueError: Error\n")
+
+
+def test_unprintable_but_decorated_repr_multiple_threads(writer):
+    wait_for_repr_block = threading.Event()
+    wait_for_worker_finish = threading.Event()
+
+    recursive = False
+
+    class Foo:
+        @logger.catch(reraise=True)
+        def __repr__(self):
+            nonlocal recursive
+            if not recursive:
+                recursive = True
+            else:
+                wait_for_repr_block.set()
+                wait_for_worker_finish.wait()
+            raise ValueError("Something went wrong")
+
+    def worker():
+        wait_for_repr_block.wait()
+        with logger.catch(reraise=False):
+            raise ValueError("Worker error")
+        wait_for_worker_finish.set()
+
+    logger.add(writer, backtrace=True, diagnose=True, colorize=False, format="", catch=False)
+
+    thread = threading.Thread(target=worker)
+    thread.start()
+
+    foo = Foo()
+
+    with pytest.raises(ValueError, match="^Something went wrong$"):
+        repr(foo)
+
+    thread.join()
+
+    assert "ValueError: Worker error\n" in writer.read()
+    assert writer.read().endswith("ValueError: Something went wrong\n")

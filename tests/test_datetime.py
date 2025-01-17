@@ -1,4 +1,5 @@
 import datetime
+import os
 import re
 import sys
 
@@ -14,7 +15,7 @@ else:
 
 
 @pytest.mark.parametrize(
-    "time_format, date, timezone, expected",
+    ("time_format", "date", "timezone", "expected"),
     [
         (
             "%Y-%m-%d %H-%M-%S %f %Z %z",
@@ -116,7 +117,7 @@ def test_formatting(writer, freeze_time, time_format, date, timezone, expected):
 
 
 @pytest.mark.parametrize(
-    "time_format, offset, expected",
+    ("time_format", "offset", "expected"),
     [
         ("%Y-%m-%d %H-%M-%S %f %Z %z", 7230.099, "2018-06-09 01-02-03 000000 ABC +020030.099000"),
         ("YYYY-MM-DD HH-mm-ss zz Z ZZ", 6543, "2018-06-09 01-02-03 ABC +01:49:03 +014903"),
@@ -166,6 +167,30 @@ def test_missing_struct_time_fields(writer, freeze_time):
 
         result = writer.read()
         assert re.fullmatch(r"2011 01 02 03 04 05 600000 [+-]\d{4} .*\n", result)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="No zoneinfo module available")
+@pytest.mark.skipif(os.name == "nt", reason="No IANA database available")
+@pytest.mark.parametrize(
+    ("date", "expected_result"),
+    [
+        ("2023-07-01 12:00:00", "2023 07 01 14 00 00 000000 +0200 CEST +02:00"),  # DST.
+        ("2023-01-01 12:00:00", "2023 01 01 13 00 00 000000 +0100 CET +01:00"),  # Non-DST.
+    ],
+)
+def test_update_with_zone_info(writer, freeze_time, date, expected_result):
+    from zoneinfo import ZoneInfo
+
+    def tz_converter(record):
+        record["time"] = record["time"].astimezone(tz=ZoneInfo("Europe/Paris"))
+
+    with freeze_time(date):
+        logger.add(writer, format="{time:YYYY MM DD HH mm ss SSSSSS ZZ zz Z}")
+
+        logger.patch(tz_converter).debug("Message")
+
+        result = writer.read()
+        assert result == expected_result + "\n"
 
 
 def test_freezegun_mocking(writer):

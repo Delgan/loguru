@@ -1,22 +1,19 @@
-# -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+"""Configuration file for the Sphinx documentation builder.
 
-# -- Path setup --------------------------------------------------------------
+This file does only contain a selection of the most common options. For a
+full list see the documentation: http://www.sphinx-doc.org/en/master/config
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
+-- Path setup --------------------------------------------------------------
+
+If extensions (or modules to document with autodoc) are in another directory,
+add these directories to sys.path here. If the directory is relative to the
+documentation root, use os.path.abspath to make it absolute, like shown here.
+"""
 
 import os
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
-sys.path.insert(0, os.path.abspath("_extensions"))
 
 
 # -- Project information -----------------------------------------------------
@@ -41,11 +38,11 @@ release = ""
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
-    "autodoc_stub_file",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -55,7 +52,7 @@ templates_path = ["_templates"]
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
+source_suffix = [".rst", ".md"]
 
 # The master toctree document.
 master_doc = "index"
@@ -173,8 +170,14 @@ html_show_sourcelink = False
 html_show_copyright = False
 napoleon_use_rtype = False
 napoleon_use_ivar = True
+myst_heading_anchors = 3
+
+# MyST parser complains that headers where the README start at H2 and not H1.
+# We may be able to get rid of this warning if we convert the reST files to MyST.
+suppress_warnings = ["myst.header"]
 
 
 def setup(app):
+    """Configure the generation of docs."""
     app.add_css_file("css/loguru.css")
     app.add_js_file("js/copybutton.js")

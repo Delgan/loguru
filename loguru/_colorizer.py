@@ -166,7 +166,7 @@ class AnsiParser:
         }
     )
 
-    _regex_tag = re.compile(r"\\?</?((?:[fb]g\s)?[^<>\s]*)>")
+    _regex_tag = re.compile(r"(\\*)(</?(?:[fb]g\s)?[^<>\s]*>)")
 
     def __init__(self):
         self._tokens = []
@@ -221,17 +221,26 @@ class AnsiParser:
         position = 0
 
         for match in self._regex_tag.finditer(text):
-            markup, tag = match.group(0), match.group(1)
+            escaping, markup = match.group(1), match.group(2)
 
             self._tokens.append((TokenType.TEXT, text[position : match.start()]))
 
             position = match.end()
 
-            if markup[0] == "\\":
-                self._tokens.append((TokenType.TEXT, markup[1:]))
+            escaping_count = len(escaping)
+            backslashes = "\\" * (escaping_count // 2)
+
+            if escaping_count % 2 == 1:
+                self._tokens.append((TokenType.TEXT, backslashes + markup))
                 continue
 
-            if markup[1] == "/":
+            if escaping_count > 0:
+                self._tokens.append((TokenType.TEXT, backslashes))
+
+            is_closing = markup[1] == "/"
+            tag = markup[2:-1] if is_closing else markup[1:-1]
+
+            if is_closing:
                 if self._tags and (tag == "" or tag == self._tags[-1]):
                     self._tags.pop()
                     self._color_tokens.pop()
@@ -300,11 +309,11 @@ class AnsiParser:
                 if len(hex_color) == 3:
                     hex_color *= 2
                 rgb = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
-                return "\033[%s;2;%s;%s;%sm" % ((code,) + rgb)
+                return "\033[%s;2;%s;%s;%sm" % ((code, *rgb))
             if color.count(",") == 2:
                 colors = tuple(color.split(","))
                 if all(x.isdigit() and int(x) <= 255 for x in colors):
-                    return "\033[%s;2;%s;%s;%sm" % ((code,) + colors)
+                    return "\033[%s;2;%s;%s;%sm" % ((code, *colors))
 
         return None
 

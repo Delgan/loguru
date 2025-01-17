@@ -1,5 +1,5 @@
-Code snippets and recipes for ``loguru``
-========================================
+Code Snippets and Recipes for Loguru
+====================================
 
 .. highlight:: python3
 
@@ -55,7 +55,6 @@ Code snippets and recipes for ``loguru``
 .. |zmq| replace:: ``zmq``
 .. _zmq: https://github.com/zeromq/pyzmq
 
-.. _`GH#88`: https://github.com/Delgan/loguru/issues/88
 .. _`GH#132`: https://github.com/Delgan/loguru/issues/132
 
 
@@ -139,10 +138,12 @@ The logger is pre-configured for convenience with a default handler which writes
     logger.add(sys.stderr, level="WARNING")
 
 
+.. _changing-level-of-existing-handler:
+
 Changing the level of an existing handler
 -----------------------------------------
 
-Once a handler has been added, it is actually not possible to update it. This is a deliberate choice in order to keep the Loguru's API minimal. Several solutions are possible, tough, if you need to change the configured ``level`` of a handler. Chose the one that best fits your use case.
+Once a handler has been added, it is actually not possible to update it. This is a deliberate choice in order to keep the Loguru's API minimal. Several solutions are possible, though, if you need to change the configured ``level`` of a handler. Chose the one that best fits your use case.
 
 The most straightforward workaround is to |remove| your handler and then re-|add| it with the updated ``level`` parameter. To do so, you have to keep a reference to the identifier number returned while adding a handler::
 
@@ -179,24 +180,23 @@ Alternatively, you can combine the |bind| method with the ``filter`` argument to
 
 Finally, more advanced control over handler's level can be achieved by using a callable object as the ``filter``::
 
-    class MyFilter:
+    min_level = logger.level("DEBUG").no
 
-        def __init__(self, level):
-            self.level = level
+    def filter_by_level(record):
+        return record["level"].no >= min_level
 
-        def __call__(self, record):
-            levelno = logger.level(self.level).no
-            return record["level"].no >= levelno
 
-    my_filter = MyFilter("WARNING")
-    logger.add(sys.stderr, filter=my_filter, level=0)
+    logger.remove()
+    logger.add(sys.stderr, filter=filter_by_level, level=0)
 
-    logger.warning("OK")
-    logger.debug("NOK")
+    logger.debug("Logged")
 
-    my_filter.level = "DEBUG"
-    logger.debug("OK")
+    min_level = logger.level("WARNING").no
 
+    logger.debug("Not logged")
+
+
+.. _configuring-loguru-as-lib-or-app:
 
 Configuring Loguru to be used by a library or an application
 ------------------------------------------------------------
@@ -246,88 +246,118 @@ Files relate to Loguru as follows:
     * It does not need to configure anything.
 
 
+.. _inter-process-communication:
 
-Sending and receiving log messages across network or processes
---------------------------------------------------------------
+Transmitting log messages across network, processes or Gunicorn workers
+-----------------------------------------------------------------------
 
-It is possible to transmit logs between different processes and even between different computer if needed. Once the connection is established between the two Python programs, this requires serializing the logging record in one side while re-constructing the message on the other hand.
+It is possible to send and receive logs between different processes and even between different computers if needed. Once the connection is established between the two Python programs, this requires serializing the logging record in one side while re-constructing the message on the other hand. Keep in mind though that `pickling is unsafe <https://intoli.com/blog/dangerous-pickles/>`_, you should use this with care.
 
-This can be achieved using a custom sink for the client and |patch| for the server.
-
-.. code::
-
-    # client.py
-    import sys
-    import socket
-    import struct
-    import time
-    import pickle
-
-    from loguru import logger
-
-
-    class SocketHandler:
-
-        def __init__(self, host, port):
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect((host, port))
-
-        def write(self, message):
-            record = message.record
-            data = pickle.dumps(record)
-            slen = struct.pack(">L", len(data))
-            self.sock.send(slen + data)
-
-    logger.configure(handlers=[{"sink": SocketHandler('localhost', 9999)}])
-
-    while 1:
-        time.sleep(1)
-        logger.info("Sending message from the client")
-
-
-.. code::
+The first thing you will need is to run a server responsible for receiving log messages emitted by other processes::
 
     # server.py
     import socketserver
     import pickle
     import struct
-
+    import sys
     from loguru import logger
 
 
-    class LoggingStreamHandler(socketserver.StreamRequestHandler):
+    class LoggingRequestHandler(socketserver.StreamRequestHandler):
 
         def handle(self):
             while True:
                 chunk = self.connection.recv(4)
                 if len(chunk) < 4:
                     break
-                slen = struct.unpack('>L', chunk)[0]
+                slen = struct.unpack(">L", chunk)[0]
                 chunk = self.connection.recv(slen)
                 while len(chunk) < slen:
                     chunk = chunk + self.connection.recv(slen - len(chunk))
                 record = pickle.loads(chunk)
-                level, message = record["level"].no, record["message"]
-                logger.patch(lambda record: record.update(record)).log(level, message)
-
-    server = socketserver.TCPServer(('localhost', 9999), LoggingStreamHandler)
-    server.serve_forever()
+                level, message = record["level"].name, record["message"]
+                logger.patch(lambda r, record=record: r.update(record)).log(level, message)
 
 
-Keep in mind though that `pickling is unsafe <https://intoli.com/blog/dangerous-pickles/>`_, use this with care.
+    if __name__ == "__main__":
+        # Configure the logger with desired handlers.
+        logger.configure(handlers=[{"sink": "server.log"}, {"sink": sys.stderr}])
 
-Another possibility is to use a third party library like |zmq|_ for example.
+        # Setup the server to receive log messages from other processes.
+        with socketserver.TCPServer(("localhost", 9999), LoggingRequestHandler) as server:
+            server.serve_forever()
+
+
+Then, you need your clients to send messages using a specific handler::
+
+    # client.py
+    import socket
+    import struct
+    import time
+    import pickle
+    from loguru import logger
+
+
+    class SocketHandler:
+
+        def __init__(self, host, port):
+            self._host = host
+            self._port = port
+
+        def write(self, message):
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((self._host, self._port))
+            record = message.record
+            data = pickle.dumps(record)
+            slen = struct.pack(">L", len(data))
+            sock.send(slen + data)
+
+
+    if __name__ == "__main__":
+        # Setup the handler sending log messages to the server.
+        logger.configure(handlers=[{"sink": SocketHandler('localhost', 9999)}])
+
+        # Proceed with standard logger usage.
+        logger.info("Sending message from the client")
+
+
+Make sure that the server is running while the clients are logging messages, and note that they must communicate on the same port.
+
+Another example, when using Gunicorn and FastAPI you should add the previously defined ``SocketHandler`` to each of the running workers, possibly like so::
+
+    from contextlib import asynccontextmanager
+    from fastapi import FastAPI
+    from loguru import logger
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        """Setup the server instance (executed once for each worker)."""
+        logger.configure(handlers=[{"sink": SocketHandler("localhost", 9999)}])
+        logger.debug("Worker is initializing")
+        yield
+
+    app = FastAPI(lifespan=lifespan)
+
+When sharing the logger between processes is not technically possible, using a server handling TCP requests is the most reliable way of guaranteeing the integrity of logged messages.
+
+
+Using ZMQ to send and receive log messages
+------------------------------------------
+
+Third-party libraries like |zmq|_ can be leveraged to exchange messages between multiple processes. Here is an example of a basic server and client:
 
 .. code::
 
     # client.py
     import zmq
     from zmq.log.handlers import PUBHandler
+    from logging import Formatter
     from loguru import logger
 
     socket = zmq.Context().socket(zmq.PUB)
     socket.connect("tcp://127.0.0.1:12345")
     handler = PUBHandler(socket)
+    handler.setFormatter(Formatter("%(message)s"))
     logger.add(handler)
 
     logger.info("Logging from client")
@@ -416,7 +446,9 @@ You could then use it like this::
     bar()
 
 
-Which would result in::
+Which would result in:
+
+.. code-block:: none
 
     2019-04-07 11:08:44.198 | DEBUG    | __main__:bar:30 - Entering 'foo' (args=(2, 4), kwargs={'c': 8})
     2019-04-07 11:08:44.198 | INFO     | __main__:foo:26 - Inside the function
@@ -874,17 +906,22 @@ Using Loguru's ``logger`` within a Cython module
 
 Loguru and Cython do not interoperate very well. This is because Loguru (and logging generally) heavily relies on Python stack frames while Cython, being an alternative Python implementation, try to get rid of these frames for optimization reasons.
 
-Calling the ``logger`` from code compiled with Cython may raise this kind of exception::
+Calling the ``logger`` from code compiled with Cython may result in "incomplete" logs (missing call context):
 
-    ValueError: call stack is not deep enough
+.. code-block:: none
 
-This error happens when Loguru tries to access a stack frame which has been suppressed by Cython. There is no way for Loguru to retrieve contextual information of the logged message, but there exists a workaround that will at least prevent your application to crash::
+    2024-11-26 15:58:48.985 | INFO     | None:<unknown>:0 - Message from Cython!
 
-    # Add this at the start of your file
-    logger = logger.opt(depth=-1)
+This happens when Loguru tries to access a stack frame which has been suppressed by Cython. In such a case, there is no way for Loguru to retrieve contextual information of the logged message.
 
-Note that logged messages should be displayed correctly, but function name and other information will be incorrect. This issue is discussed in `GH#88`_.
+You can update the default ``format`` of your handlers and omit the uninteresting fields. You can also tries to |patch| the ``logger`` to manually add information you may know about the caller, for example::
 
+    logger = logger.patch(lambda record: record.update(name="my_cython_module"))
+
+Note that the ``"name"`` attribute of the log record is set to ``None`` when the frame is unavailable.
+
+
+.. _creating-independent-loggers:
 
 Creating independent loggers with separate set of handlers
 ----------------------------------------------------------
@@ -934,6 +971,8 @@ Now, supposing that you have a lot of these tasks. It may be a bit cumbersome to
 
 Note that you may encounter errors if you try to copy a ``logger`` to which non-picklable handlers have been added. For this reason, it is generally advised to remove all handlers before calling ``copy.deepcopy(logger)``.
 
+
+.. _multiprocessing-compatibility:
 
 Compatibility with ``multiprocessing`` using ``enqueue`` argument
 -----------------------------------------------------------------

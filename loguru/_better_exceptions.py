@@ -30,31 +30,36 @@ else:
 
 
 class SyntaxHighlighter:
-    _default_style = {
-        "comment": "\x1b[30m\x1b[1m{}\x1b[0m",
-        "keyword": "\x1b[35m\x1b[1m{}\x1b[0m",
-        "builtin": "\x1b[1m{}\x1b[0m",
-        "string": "\x1b[36m{}\x1b[0m",
-        "number": "\x1b[34m\x1b[1m{}\x1b[0m",
-        "operator": "\x1b[35m\x1b[1m{}\x1b[0m",
-        "punctuation": "\x1b[1m{}\x1b[0m",
-        "constant": "\x1b[36m\x1b[1m{}\x1b[0m",
-        "identifier": "\x1b[1m{}\x1b[0m",
-        "other": "{}",
-    }
+    _default_style = frozenset(
+        {
+            "comment": "\x1b[30m\x1b[1m{}\x1b[0m",
+            "keyword": "\x1b[35m\x1b[1m{}\x1b[0m",
+            "builtin": "\x1b[1m{}\x1b[0m",
+            "string": "\x1b[36m{}\x1b[0m",
+            "number": "\x1b[34m\x1b[1m{}\x1b[0m",
+            "operator": "\x1b[35m\x1b[1m{}\x1b[0m",
+            "punctuation": "\x1b[1m{}\x1b[0m",
+            "constant": "\x1b[36m\x1b[1m{}\x1b[0m",
+            "identifier": "\x1b[1m{}\x1b[0m",
+            "other": "{}",
+        }.items()
+    )
 
-    _builtins = set(dir(builtins))
-    _constants = {"True", "False", "None"}
-    _punctuation = {"(", ")", "[", "]", "{", "}", ":", ",", ";"}
-    _strings = {tokenize.STRING}
-    _fstring_middle = None
+    _builtins = frozenset(dir(builtins))
+    _constants = frozenset({"True", "False", "None"})
+    _punctuation = frozenset({"(", ")", "[", "]", "{", "}", ":", ",", ";"})
 
     if sys.version_info >= (3, 12):
-        _strings.update({tokenize.FSTRING_START, tokenize.FSTRING_MIDDLE, tokenize.FSTRING_END})
+        _strings = frozenset(
+            {tokenize.STRING, tokenize.FSTRING_START, tokenize.FSTRING_MIDDLE, tokenize.FSTRING_END}
+        )
         _fstring_middle = tokenize.FSTRING_MIDDLE
+    else:
+        _strings = frozenset({tokenize.STRING})
+        _fstring_middle = None
 
     def __init__(self, style=None):
-        self._style = style or self._default_style
+        self._style = style or dict(self._default_style)
 
     def highlight(self, source):
         style = self._style
@@ -119,19 +124,21 @@ class SyntaxHighlighter:
 
 
 class ExceptionFormatter:
-    _default_theme = {
-        "introduction": "\x1b[33m\x1b[1m{}\x1b[0m",
-        "cause": "\x1b[1m{}\x1b[0m",
-        "context": "\x1b[1m{}\x1b[0m",
-        "dirname": "\x1b[32m{}\x1b[0m",
-        "basename": "\x1b[32m\x1b[1m{}\x1b[0m",
-        "line": "\x1b[33m{}\x1b[0m",
-        "function": "\x1b[35m{}\x1b[0m",
-        "exception_type": "\x1b[31m\x1b[1m{}\x1b[0m",
-        "exception_value": "\x1b[1m{}\x1b[0m",
-        "arrows": "\x1b[36m{}\x1b[0m",
-        "value": "\x1b[36m\x1b[1m{}\x1b[0m",
-    }
+    _default_theme = frozenset(
+        {
+            "introduction": "\x1b[33m\x1b[1m{}\x1b[0m",
+            "cause": "\x1b[1m{}\x1b[0m",
+            "context": "\x1b[1m{}\x1b[0m",
+            "dirname": "\x1b[32m{}\x1b[0m",
+            "basename": "\x1b[32m\x1b[1m{}\x1b[0m",
+            "line": "\x1b[33m{}\x1b[0m",
+            "function": "\x1b[35m{}\x1b[0m",
+            "exception_type": "\x1b[31m\x1b[1m{}\x1b[0m",
+            "exception_value": "\x1b[1m{}\x1b[0m",
+            "arrows": "\x1b[36m{}\x1b[0m",
+            "value": "\x1b[36m\x1b[1m{}\x1b[0m",
+        }.items()
+    )
 
     def __init__(
         self,
@@ -147,7 +154,7 @@ class ExceptionFormatter:
     ):
         self._colorize = colorize
         self._diagnose = diagnose
-        self._theme = theme or self._default_theme
+        self._theme = theme or dict(self._default_theme)
         self._backtrace = backtrace
         self._syntax_highlighter = SyntaxHighlighter(style)
         self._max_length = max_length
@@ -189,14 +196,14 @@ class ExceptionFormatter:
             return False
         return not any(filepath.startswith(d) for d in self._lib_dirs)
 
+    def _should_include_frame(self, frame):
+        return frame.f_code.co_filename != self._hidden_frames_filename
+
     def _extract_frames(self, tb, is_first, *, limit=None, from_decorator=False):
         frames, final_source = [], None
 
         if tb is None or (limit is not None and limit <= 0):
             return frames, final_source
-
-        def is_valid(frame):
-            return frame.f_code.co_filename != self._hidden_frames_filename
 
         def get_info(frame, lineno):
             filename = frame.f_code.co_filename
@@ -206,7 +213,7 @@ class ExceptionFormatter:
 
         infos = []
 
-        if is_valid(tb.tb_frame):
+        if self._should_include_frame(tb.tb_frame):
             infos.append((get_info(tb.tb_frame, tb.tb_lineno), tb.tb_frame))
 
         get_parent_only = from_decorator and not self._backtrace
@@ -214,7 +221,7 @@ class ExceptionFormatter:
         if (self._backtrace and is_first) or get_parent_only:
             frame = tb.tb_frame.f_back
             while frame:
-                if is_valid(frame):
+                if self._should_include_frame(frame):
                     infos.insert(0, (get_info(frame, frame.f_lineno), frame))
                     if get_parent_only:
                         break
@@ -228,7 +235,7 @@ class ExceptionFormatter:
         tb = tb.tb_next
 
         while tb:
-            if is_valid(tb.tb_frame):
+            if self._should_include_frame(tb.tb_frame):
                 infos.append((get_info(tb.tb_frame, tb.tb_lineno), tb.tb_frame))
             tb = tb.tb_next
 
@@ -527,13 +534,39 @@ class ExceptionFormatter:
                 yield from self._indent("-" * 35, group_nesting + 1, prefix="+-")
 
     def _format_list(self, frames):
-        result = []
-        for filename, lineno, name, line in frames:
-            row = []
-            row.append('  File "{}", line {}, in {}\n'.format(filename, lineno, name))
+
+        def source_message(filename, lineno, name, line):
+            message = '  File "%s", line %d, in %s\n' % (filename, lineno, name)
             if line:
-                row.append("    {}\n".format(line.strip()))
-            result.append("".join(row))
+                message += "    %s\n" % line.strip()
+            return message
+
+        def skip_message(count):
+            plural = "s" if count > 1 else ""
+            return "  [Previous line repeated %d more time%s]\n" % (count, plural)
+
+        result = []
+        count = 0
+        last_source = None
+
+        for *source, line in frames:
+            if source != last_source and count > 3:
+                result.append(skip_message(count - 3))
+
+            if source == last_source:
+                count += 1
+                if count > 3:
+                    continue
+            else:
+                count = 1
+
+            result.append(source_message(*source, line))
+            last_source = source
+
+        # Add a final skip message if the iteration of frames ended mid-repetition.
+        if count > 3:
+            result.append(skip_message(count - 3))
+
         return result
 
     def format_exception(self, type_, value, tb, *, from_decorator=False):

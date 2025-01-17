@@ -80,7 +80,7 @@ def test_is_a_tty_exception():
 
 
 @pytest.mark.parametrize(
-    "patched, expected",
+    ("patched", "expected"),
     [
         ("__stdout__", True),
         ("__stderr__", True),
@@ -98,7 +98,7 @@ def test_pycharm_fixed(monkeypatch, patched, expected):
 
 
 @pytest.mark.parametrize(
-    "patched, expected",
+    ("patched", "expected"),
     [
         ("__stdout__", True),
         ("__stderr__", True),
@@ -117,7 +117,7 @@ def test_github_actions_fixed(monkeypatch, patched, expected):
 
 
 @pytest.mark.parametrize(
-    "patched, expected",
+    ("patched", "expected"),
     [
         ("__stdout__", True),
         ("__stderr__", True),
@@ -136,7 +136,7 @@ def test_mintty_fixed_windows(monkeypatch, patched, expected):
 
 
 @pytest.mark.parametrize(
-    "patched, expected",
+    ("patched", "expected"),
     [
         ("__stdout__", False),
         ("__stderr__", False),
@@ -155,7 +155,7 @@ def test_mintty_not_fixed_linux(monkeypatch, patched, expected):
 
 
 @pytest.mark.parametrize(
-    "patched, out_class, expected",
+    ("patched", "out_class", "expected"),
     [
         ("stdout", StreamIsattyFalse, True),
         ("stderr", StreamIsattyFalse, True),

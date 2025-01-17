@@ -1,4 +1,4 @@
-import asyncio
+import inspect
 import logging
 import weakref
 
@@ -10,7 +10,7 @@ class StreamSink:
         self._stream = stream
         self._flushable = callable(getattr(stream, "flush", None))
         self._stoppable = callable(getattr(stream, "stop", None))
-        self._completable = asyncio.iscoroutinefunction(getattr(stream, "complete", None))
+        self._completable = inspect.iscoroutinefunction(getattr(stream, "complete", None))
 
     def write(self, message):
         self._stream.write(message)
@@ -32,22 +32,23 @@ class StandardSink:
         self._handler = handler
 
     def write(self, message):
-        record = message.record
+        raw_record = message.record
         message = str(message)
-        exc = record["exception"]
+        exc = raw_record["exception"]
         record = logging.getLogger().makeRecord(
-            record["name"],
-            record["level"].no,
-            record["file"].path,
-            record["line"],
+            raw_record["name"],
+            raw_record["level"].no,
+            raw_record["file"].path,
+            raw_record["line"],
             message,
             (),
             (exc.type, exc.value, exc.traceback) if exc else None,
-            record["function"],
-            {"extra": record["extra"]},
+            raw_record["function"],
+            {"extra": raw_record["extra"]},
         )
         if exc:
             record.exc_text = "\n"
+        record.levelname = raw_record["level"].name
         self._handler.handle(record)
 
     def stop(self):

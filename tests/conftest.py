@@ -4,6 +4,7 @@ import contextlib
 import datetime
 import io
 import logging
+import multiprocessing
 import os
 import pathlib
 import sys
@@ -11,7 +12,7 @@ import threading
 import time
 import traceback
 import warnings
-from collections import namedtuple
+from typing import NamedTuple
 
 import freezegun
 import pytest
@@ -44,7 +45,39 @@ if sys.version_info < (3, 6):
 
     @pytest.fixture
     def tmp_path(tmp_path):
-        yield pathlib.Path(str(tmp_path))
+        return pathlib.Path(str(tmp_path))
+
+
+if sys.version_info >= (3, 6):
+    from pytest_mypy_plugins.item import YamlTestItem
+
+    def _fix_positional_only_args(item: YamlTestItem):
+        """Remove forward-slash marker from the expected output for Python 3.6."""
+        for output in item.expected_output:
+            output.message = output.message.replace(", /", "")
+            # Also patch the "severity" attribute because there is a parsing bug in the plugin.
+            output.severity = output.severity.replace(", /", "")
+
+    def _add_mypy_config(item: YamlTestItem):
+        """Add some extra options to the mypy configuration for Python 3.7+."""
+        item.additional_mypy_config += "\n".join(
+            [
+                "show_error_codes = false",
+                "force_uppercase_builtins = true",
+                "force_union_syntax = true",
+            ]
+        )
+
+    def pytest_collection_modifyitems(config, items):
+        """Modify the tests to ensure they produce the same output regardless of Python version."""
+        for item in items:
+            if not isinstance(item, YamlTestItem):
+                continue
+
+            if sys.version_info >= (3, 7):
+                _add_mypy_config(item)
+            else:
+                _fix_positional_only_args(item)
 
 
 @contextlib.contextmanager
@@ -201,25 +234,24 @@ def freeze_time(monkeypatch):
         fix_struct = os.name == "nt" and sys.version_info < (3, 6)
 
         struct_time_attributes = [
-            "tm_year",
-            "tm_mon",
-            "tm_mday",
-            "tm_hour",
-            "tm_min",
-            "tm_sec",
-            "tm_wday",
-            "tm_yday",
-            "tm_isdst",
-            "tm_zone",
-            "tm_gmtoff",
+            ("tm_year", int),
+            ("tm_mon", int),
+            ("tm_mday", int),
+            ("tm_hour", int),
+            ("tm_min", int),
+            ("tm_sec", int),
+            ("tm_wday", int),
+            ("tm_yday", int),
+            ("tm_isdst", int),
+            ("tm_zone", str),
+            ("tm_gmtoff", int),
         ]
 
         if not fakes["include_tm_zone"]:
-            struct_time_attributes.remove("tm_zone")
-            struct_time_attributes.remove("tm_gmtoff")
-            struct_time = namedtuple("struct_time", struct_time_attributes)._make
+            struct_time_attributes = struct_time_attributes[:-2]
+            struct_time = NamedTuple("struct_time", struct_time_attributes)._make
         elif fix_struct:
-            struct_time = namedtuple("struct_time", struct_time_attributes)._make
+            struct_time = NamedTuple("struct_time", struct_time_attributes)._make
         else:
             struct_time = time.struct_time
 
@@ -227,7 +259,7 @@ def freeze_time(monkeypatch):
         override = {"tm_zone": fakes["zone"], "tm_gmtoff": fakes["offset"]}
         attributes = []
 
-        for attribute in struct_time_attributes:
+        for attribute, _ in struct_time_attributes:
             if attribute in override:
                 value = override[attribute]
             else:
@@ -284,6 +316,7 @@ def freeze_time(monkeypatch):
 
 @contextlib.contextmanager
 def make_logging_logger(name, handler, fmt="%(message)s", level="DEBUG"):
+    original_logging_level = logging.getLogger().getEffectiveLevel()
     logging_logger = logging.getLogger(name)
     logging_logger.setLevel(level)
     formatter = logging.Formatter(fmt)
@@ -295,11 +328,12 @@ def make_logging_logger(name, handler, fmt="%(message)s", level="DEBUG"):
     try:
         yield logging_logger
     finally:
+        logging_logger.setLevel(original_logging_level)
         logging_logger.removeHandler(handler)
 
 
-@pytest.fixture
-def f_globals_name_absent(monkeypatch):
+def _simulate_f_globals_name_absent(monkeypatch):
+    """Simulate execution in Dask environment, where "__name__" is not available in globals."""
     getframe_ = loguru._get_frame.load_get_frame_function()
 
     def patched_getframe(*args, **kwargs):
@@ -310,3 +344,27 @@ def f_globals_name_absent(monkeypatch):
     with monkeypatch.context() as context:
         context.setattr(loguru._logger, "get_frame", patched_getframe)
         yield
+
+
+def _simulate_no_frame_available(monkeypatch):
+    """Simulate execution in Cython, where there is no stack frame to retrieve."""
+
+    def patched_getframe(*args, **kwargs):
+        raise ValueError("Call stack is not deep enough (dummy)")
+
+    with monkeypatch.context() as context:
+        context.setattr(loguru._logger, "get_frame", patched_getframe)
+        yield
+
+
+@pytest.fixture(params=[_simulate_f_globals_name_absent, _simulate_no_frame_available])
+def incomplete_frame_context(request, monkeypatch):
+    """Simulate different scenarios where the stack frame is incomplete or entirely absent."""
+    yield from request.param(monkeypatch)
+
+
+@pytest.fixture(autouse=True)
+def reset_multiprocessing_start_method():
+    multiprocessing.set_start_method(None, force=True)
+    yield
+    multiprocessing.set_start_method(None, force=True)
