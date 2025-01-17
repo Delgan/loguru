@@ -1084,7 +1084,7 @@ def test_multiple_rotation_conditions(freeze_time, tmp_path):
 
 
 def test_empty_rotation_condition_list():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="^Must provide at least one rotation condition$"):
         logger.add("test.log", rotation=[])
 
 
