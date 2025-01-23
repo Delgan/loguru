@@ -46,8 +46,15 @@ class StandardSink:
             raw_record["function"],
             {"extra": raw_record["extra"]},
         )
+
+        # By default, the standard logging module will format the exception and assign it to the
+        # "exc_text" attribute. Then, the formatted exception will be automatically appended to the
+        # message when the record is formatted. This is a problem, because that would cause the
+        # exception to be duplicated in the log message, since it's also formatted by Loguru. To
+        # avoid this, we set "exc_text" to a simple newline character, which will end the message.
         if exc:
             record.exc_text = "\n"
+
         record.levelname = raw_record["level"].name
         self._handler.handle(record)
 
