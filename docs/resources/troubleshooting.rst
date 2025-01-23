@@ -149,8 +149,8 @@ Conversely, if raw ANSI sequences such as ``\x1b[31m`` or ``\x1b[0m`` appear in 
 Note that on Windows, log coloring is handled using the |colorama|_ library.
 
 
-Why are my logs not appearing in the output?
---------------------------------------------
+Why are my logs not showing up?
+-------------------------------
 
 Ensure that you've added at least one sink using |add|. You can get an overview of the configured handlers by simply printing the logger object::
 
@@ -162,6 +162,28 @@ Check also the logging level: messages below the set level won't appear::
 
     logger.add(sys.stderr, level="INFO")
     logger.debug("Some debug message")  # Won't be displayed since "DEBUG" is below "INFO".
+
+
+Why is the captured exception missing from the formatted message?
+-----------------------------------------------------------------
+
+When ``logger.exception()`` or ``logger.opt(exception=True)`` is used within an ``except`` clause, Loguru automatically captures the exception information and includes it in :ref:`the logged message <message>`.
+
+The position of the exception in the message is controlled by the ``"{exception}"`` field of the configured log format. By default, when the ``format`` argument of |add| is a string, the ``"{exception}"`` field is automatically appended to the format::
+
+    # The "{exception}" placeholder is implicit here (at the end of the format).
+    log_format = "{time} - {level} - {message}"
+    logger.add(sys.stderr, format=log_format)
+
+
+However, when using a custom function to define the format of logs, the user gets complete control over the desired format. This means the ``"{exception}"`` field must be explicitly included::
+
+    def custom_formatter(record):
+        return "{time} - {level} - {message}\n{exception}"
+
+    logger.add(sys.stderr, format=custom_formatter)
+
+If the field is missing, the formatted error will not appear in the log message. Always ensure the ``"{exception}"`` placeholder is present in your log format if you want exception details to appear in your logs.
 
 
 How can I use different loggers in different modules of my application?
