@@ -33,7 +33,7 @@ def should_colorize(stream):
             return True
 
     try:
-        return stream.isatty()
+        return stream.isatty() and os.environ.get('TERM', '') not in ('dumb', )
     except Exception:
         return False
 
