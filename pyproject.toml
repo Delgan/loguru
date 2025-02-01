@@ -71,7 +71,7 @@ dev = [
   "myst-parser==4.0.0 ; python_version>='3.11'",
   # Packaging.
   "build==1.2.2 ; python_version>='3.11'",
-  "twine==6.0.1 ; python_version>='3.11'",
+  "twine==6.1.0 ; python_version>='3.11'",
 ]
 
 [project.urls]
