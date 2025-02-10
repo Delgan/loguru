@@ -153,7 +153,6 @@ def test_dumb_term_not_colored(monkeypatch, patched, expected):
         assert should_colorize(stream) is expected
 
 
-
 @pytest.mark.parametrize(
     ("patched", "expected"),
     [
