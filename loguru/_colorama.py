@@ -29,11 +29,13 @@ def should_colorize(stream):
             return True
         if "PYCHARM_HOSTED" in os.environ:
             return True
+        if os.environ.get("TERM", "") in ("dumb",):
+            return False
         if os.name == "nt" and "TERM" in os.environ:
             return True
 
     try:
-        return stream.isatty() and os.environ.get("TERM", "") not in ("dumb",)
+        return stream.isatty()
     except Exception:
         return False
 

@@ -140,6 +140,25 @@ def test_mintty_fixed_windows(monkeypatch, patched, expected):
     [
         ("__stdout__", False),
         ("__stderr__", False),
+        ("stdout", True),
+        ("stderr", True),
+        ("", True),
+    ],
+)
+def test_dumb_term_not_colored(monkeypatch, patched, expected):
+    stream = StreamIsattyTrue()
+    with monkeypatch.context() as context:
+        context.setitem(os.environ, "TERM", "dumb")
+        context.setattr(sys, patched, stream, raising=False)
+        assert should_colorize(stream) is expected
+
+
+
+@pytest.mark.parametrize(
+    ("patched", "expected"),
+    [
+        ("__stdout__", False),
+        ("__stderr__", False),
         ("stdout", False),
         ("stderr", False),
         ("", False),
