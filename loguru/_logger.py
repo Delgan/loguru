@@ -13,6 +13,7 @@
 .. |patch| replace:: :meth:`~Logger.patch()`
 .. |opt| replace:: :meth:`~Logger.opt()`
 .. |log| replace:: :meth:`~Logger.log()`
+.. |error| replace:: :meth:`~Logger.error()`
 .. |level| replace:: :meth:`~Logger.level()`
 .. |enable| replace:: :meth:`~Logger.enable()`
 .. |disable| replace:: :meth:`~Logger.disable()`
@@ -2096,7 +2097,12 @@ class Logger:
         __self._log("CRITICAL", False, __self._options, __message, args, kwargs)
 
     def exception(__self, __message, *args, **kwargs):  # noqa: N805
-        r"""Log an ``'ERROR'```` message while also capturing the currently handled exception."""
+        r"""Log an ``'ERROR'`` message while also capturing the currently handled exception.
+
+        This method internally uses |sys.exc_info|, therefore it should only be called within
+        an ``except`` block. To log an exception that has already been caught, use the ``exception``
+        argument of |opt| along with a call to the |error| method (for example).
+        """
         options = (True,) + __self._options[1:]
         __self._log("ERROR", False, options, __message, args, kwargs)
 
