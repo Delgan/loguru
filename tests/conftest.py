@@ -228,7 +228,12 @@ def freeze_time(monkeypatch):
     freezegun_localtime = freezegun.api.fake_localtime
     builtins_open = builtins.open
 
-    fakes = {"zone": "UTC", "offset": 0, "include_tm_zone": True}
+    fakes = {
+        "zone": "UTC",
+        "offset": 0,
+        "include_tm_zone": True,
+        "tm_gmtoff_override": None,
+    }
 
     def fake_localtime(t=None):
         fix_struct = os.name == "nt" and sys.version_info < (3, 6)
@@ -259,6 +264,9 @@ def freeze_time(monkeypatch):
         override = {"tm_zone": fakes["zone"], "tm_gmtoff": fakes["offset"]}
         attributes = []
 
+        if fakes["tm_gmtoff_override"] is not None:
+            override["tm_gmtoff"] = fakes["tm_gmtoff_override"]
+
         for attribute, _ in struct_time_attributes:
             if attribute in override:
                 value = override[attribute]
@@ -275,7 +283,7 @@ def freeze_time(monkeypatch):
         return builtins_open(filepath, *args, **kwargs)
 
     @contextlib.contextmanager
-    def freeze_time(date, timezone=("UTC", 0), *, include_tm_zone=True):
+    def freeze_time(date, timezone=("UTC", 0), *, include_tm_zone=True, tm_gmtoff_override=None):
         # Freezegun does not behave very well with UTC and timezones, see spulec/freezegun#348.
         # In particular, "now(tz=utc)" does not return the converted datetime.
         # For this reason, we re-implement date parsing here to properly handle aware date using
@@ -300,6 +308,7 @@ def freeze_time(monkeypatch):
             context.setitem(fakes, "zone", zone)
             context.setitem(fakes, "offset", offset)
             context.setitem(fakes, "include_tm_zone", include_tm_zone)
+            context.setitem(fakes, "tm_gmtoff_override", tm_gmtoff_override)
 
             context.setattr(loguru._file_sink, "get_ctime", ctimes.__getitem__)
             context.setattr(loguru._file_sink, "set_ctime", ctimes.__setitem__)
