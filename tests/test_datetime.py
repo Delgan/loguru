@@ -1,17 +1,24 @@
 import datetime
 import os
-import re
 import sys
+from time import strftime
+from unittest.mock import Mock
 
 import freezegun
 import pytest
 
+import loguru
 from loguru import logger
 
 if sys.version_info < (3, 6):
     UTC_NAME = "UTC+00:00"
 else:
     UTC_NAME = "UTC"
+
+
+def _expected_fallback_time_zone():
+    # For some reason, Python versions and interepreters return different time zones here.
+    return strftime("%Z")
 
 
 @pytest.mark.parametrize(
@@ -161,12 +168,44 @@ def test_file_formatting(freeze_time, tmp_path):
 
 
 def test_missing_struct_time_fields(writer, freeze_time):
-    with freeze_time("2011-01-02 03:04:05.6", include_tm_zone=False):
+    with freeze_time("2011-01-02 03:04:05.6", ("A", 7200), include_tm_zone=False):
         logger.add(writer, format="{time:YYYY MM DD HH mm ss SSSSSS ZZ zz}")
         logger.debug("X")
 
         result = writer.read()
-        assert re.fullmatch(r"2011 01 02 03 04 05 600000 [+-]\d{4} .*\n", result)
+        zone = _expected_fallback_time_zone()
+
+        assert result == "2011 01 02 03 04 05 600000 +0200 %s\n" % zone
+
+
+@pytest.mark.parametrize("tm_gmtoff", [-4294963696, 4294963696])
+def test_value_of_gmtoff_is_invalid(writer, freeze_time, tm_gmtoff):
+    with freeze_time("2011-01-02 03:04:05.6", ("ABC", -3600), tm_gmtoff_override=tm_gmtoff):
+        logger.add(writer, format="{time:YYYY MM DD HH mm ss SSSSSS ZZ zz}")
+        logger.debug("X")
+
+        result = writer.read()
+        zone = _expected_fallback_time_zone()
+
+        assert result == "2011 01 02 03 04 05 600000 -0100 %s\n" % zone
+
+
+@pytest.mark.parametrize("exception", [OSError, OverflowError])
+def test_localtime_raising_exception(writer, freeze_time, monkeypatch, exception):
+    with freeze_time("2011-01-02 03:04:05.6", ("A", 7200), include_tm_zone=True):
+        with monkeypatch.context() as context:
+            mock = Mock(side_effect=exception)
+            context.setattr(loguru._datetime, "localtime", mock, raising=True)
+
+            logger.add(writer, format="{time:YYYY MM DD HH mm ss SSSSSS ZZ zz}")
+            logger.debug("X")
+
+            assert mock.called
+
+            result = writer.read()
+            zone = _expected_fallback_time_zone()
+
+            assert result == "2011 01 02 03 04 05 600000 +0200 %s\n" % zone
 
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="No zoneinfo module available")
