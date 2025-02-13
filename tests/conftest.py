@@ -48,8 +48,14 @@ if sys.version_info < (3, 6):
         return pathlib.Path(str(tmp_path))
 
 
-if sys.version_info >= (3, 6):
+try:
     from pytest_mypy_plugins.item import YamlTestItem
+except ImportError:
+    # The plugin is only available starting with Python 3.6.
+    # Additionally, it has dependencies that are not compatible with Python versions in development.
+    # In both cases, the Mypy tests will be skipped.
+    pass
+else:
 
     def _fix_positional_only_args(item: YamlTestItem):
         """Remove forward-slash marker from the expected output for Python 3.6."""
