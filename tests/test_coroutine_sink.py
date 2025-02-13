@@ -162,6 +162,7 @@ def test_using_sink_without_running_loop_none(capsys):
     assert out == ""
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 16), reason="The 'set_event_loop' function is removed")
 def test_global_loop_not_used(capsys):
     with new_event_loop_context() as loop:
         with set_event_loop_context(loop):

@@ -53,7 +53,7 @@ dev = [
   "pytest-cov==6.0.0 ; python_version>='3.9'",
   "pytest-mypy-plugins==1.9.3 ; python_version>='3.6' and python_version<'3.8'",
   "pytest-mypy-plugins==3.1.0 ; python_version>='3.8' and python_version<'3.9'",
-  "pytest-mypy-plugins==3.2.0 ; python_version>='3.9'",
+  "pytest-mypy-plugins==3.2.0 ; python_version>='3.9' and python_version<'3.14'",
   # Testing utils.
   "colorama==0.4.5 ; python_version<'3.8'",
   "colorama==0.4.6 ; python_version>='3.8'",
@@ -100,6 +100,8 @@ filterwarnings = [
   'error',
   # Mixing threads and "fork()" is deprecated, but we need to test it anyway.
   'ignore:.*use of fork\(\) may lead to deadlocks in the child.*:DeprecationWarning',
+  # Using "set_event_loop()" is deprecated, but no alternative is provided.
+  "ignore:.*'asyncio.set_event_loop' is deprecated.*:DeprecationWarning",
 ]
 testpaths = ["tests"]
 
