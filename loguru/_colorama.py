@@ -7,6 +7,9 @@ def should_colorize(stream):
     if stream is None:
         return False
 
+    if "NO_COLOR" in os.environ:
+        return False
+
     if getattr(builtins, "__IPYTHON__", False) and (stream is sys.stdout or stream is sys.stderr):
         try:
             import ipykernel

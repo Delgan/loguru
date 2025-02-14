@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from loguru import logger
@@ -73,3 +75,12 @@ def test_automatic_detection_when_stream_has_no_isatty():
     logger.add(stream, format="<blue>{message}</blue>", colorize=None)
     logger.debug("Message")
     assert stream.getvalue() == "Message\n"
+
+
+def test_override_no_color(monkeypatch):
+    stream = StreamIsattyTrue()
+    with monkeypatch.context() as context:
+        context.setitem(os.environ, "NO_COLOR", "1")
+        logger.add(stream, format="<blue>{message}</blue>", colorize=True)
+        logger.debug("Message", colorize=False)
+        assert stream.getvalue() == parse("<blue>Message</blue>\n")

@@ -163,6 +163,24 @@ def test_dumb_term_not_colored(monkeypatch, patched, expected):
         ("", False),
     ],
 )
+def test_honor_no_color_standard(monkeypatch, patched, expected):
+    stream = StreamIsattyTrue()
+    with monkeypatch.context() as context:
+        context.setitem(os.environ, "NO_COLOR", "1")
+        context.setattr(sys, patched, stream, raising=False)
+        assert should_colorize(stream) is expected
+
+
+@pytest.mark.parametrize(
+    ("patched", "expected"),
+    [
+        ("__stdout__", False),
+        ("__stderr__", False),
+        ("stdout", False),
+        ("stderr", False),
+        ("", False),
+    ],
+)
 @pytest.mark.skipif(os.name == "nt", reason="The fix will be applied on Windows")
 def test_mintty_not_fixed_linux(monkeypatch, patched, expected):
     stream = StreamIsattyFalse()
