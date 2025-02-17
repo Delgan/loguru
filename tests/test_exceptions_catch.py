@@ -407,9 +407,9 @@ def test_decorate_generator(writer):
 def test_decorate_generator_with_error():
     @logger.catch
     def foo():
-        for i in range(3):
-            1 / (2 - i)
-            yield i
+        yield 0
+        yield 1
+        raise ValueError
 
     assert list(foo()) == [0, 1]
 

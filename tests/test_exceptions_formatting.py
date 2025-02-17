@@ -23,16 +23,21 @@ def normalize(exception):
 
         def fix_filepath(match):
             filepath = match.group(1)
+
+            # Pattern to check if the filepath contains ANSI escape codes.
             pattern = (
                 r'((?:\x1b\[[0-9]*m)+)([^"]+?)((?:\x1b\[[0-9]*m)+)([^"]+?)((?:\x1b\[[0-9]*m)+)'
             )
+
             match = re.match(pattern, filepath)
             start_directory = os.path.dirname(os.path.dirname(__file__))
             if match:
+                # Simplify the path while preserving the color highlighting of the file basename.
                 groups = list(match.groups())
                 groups[1] = os.path.relpath(os.path.abspath(groups[1]), start_directory) + "/"
                 relpath = "".join(groups)
             else:
+                # We can straightforwardly convert from absolute to relative path.
                 relpath = os.path.relpath(os.path.abspath(filepath), start_directory)
             return 'File "%s"' % relpath.replace("\\", "/")
 
@@ -241,6 +246,8 @@ def test_exception_others(filename):
     ("filename", "minimum_python_version"),
     [
         ("type_hints", (3, 6)),
+        ("exception_formatting_async_generator", (3, 6)),
+        ("decorate_async_generator", (3, 7)),
         ("positional_only_argument", (3, 8)),
         ("walrus_operator", (3, 8)),
         ("match_statement", (3, 10)),
