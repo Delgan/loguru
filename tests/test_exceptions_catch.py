@@ -439,6 +439,15 @@ def test_default_with_coroutine():
     assert asyncio.run(foo()) == 42
 
 
+def test_async_context_manager():
+    async def coro():
+        async with logger.catch():
+            return 1 / 0
+        return 1
+
+    assert asyncio.run(coro()) == 1
+
+
 def test_error_when_decorating_class_without_parentheses():
     with pytest.raises(TypeError):
 

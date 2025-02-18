@@ -1333,6 +1333,12 @@ class Logger:
                 functools.update_wrapper(catch_wrapper, function)
                 return catch_wrapper
 
+            async def __aenter__(self):
+                return self.__enter__()
+
+            async def __aexit__(self, type_, value, traceback_):
+                return self.__exit__(type_, value, traceback_)
+
         return Catcher(False)
 
     def opt(
