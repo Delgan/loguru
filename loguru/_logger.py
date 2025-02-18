@@ -114,9 +114,15 @@ from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, 
 from ._simple_sinks import AsyncSink, CallableSink, StandardSink, StreamSink
 
 if sys.version_info >= (3, 6):
+    from collections.abc import AsyncGenerator
+    from inspect import isasyncgenfunction
     from os import PathLike
+
 else:
     from pathlib import PurePath as PathLike
+
+    def isasyncgenfunction(func):
+        return False
 
 
 Level = namedtuple("Level", ["name", "no", "color", "icon"])  # noqa: PYI024
@@ -1292,6 +1298,30 @@ class Logger:
                         with catcher:
                             return (yield from function(*args, **kwargs))
                         return default
+
+                elif isasyncgenfunction(function):
+
+                    class AsyncGenCatchWrapper(AsyncGenerator):
+
+                        def __init__(self, gen):
+                            self._gen = gen
+
+                        async def asend(self, value):
+                            with catcher:
+                                try:
+                                    return await self._gen.asend(value)
+                                except StopAsyncIteration:
+                                    pass
+                                except:
+                                    raise
+                            raise StopAsyncIteration
+
+                        async def athrow(self, *args, **kwargs):
+                            return await self._gen.athrow(*args, **kwargs)
+
+                    def catch_wrapper(*args, **kwargs):
+                        gen = function(*args, **kwargs)
+                        return AsyncGenCatchWrapper(gen)
 
                 else:
 

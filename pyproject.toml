@@ -133,6 +133,9 @@ convention = "numpy"
 [tool.typos.default]
 extend-ignore-re = ["(?Rm)^.*# spellchecker: disable-line$"]
 
+[tool.typos.default.extend-identifiers]
+asend = "asend"
+
 [tool.typos.files]
 extend-exclude = [
   "tests/exceptions/output/**", # False positive due to ansi sequences.
