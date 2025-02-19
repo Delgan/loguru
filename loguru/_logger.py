@@ -1812,6 +1812,40 @@ class Logger:
 
         return [self.add(**params) for params in handlers]
 
+    def reinstall(self):
+        """Reinstall the core of logger.
+
+        When using multiprocessing, you can pass logger as a parameter to the target of
+        ``multiprocessing.Process``, and run this method once, thus you don't need to pass
+        logger to every function you called in the same process with spawn multiprocessing.
+
+        Examples
+        --------
+        >>> def subworker(logger):
+        ...     logger.reinstall()
+        ...     logger.info("Child")
+        ...     deeper_subworker()
+
+        >>> def deeper_subworker():
+        ...     logger.info("Grandchild")
+
+        >>> def test_process_spawn():
+        ...     spawn_context = multiprocessing.get_context("spawn")
+        ...     logger.add("file.log", context=spawn_context, enqueue=True, catch=False)
+        ...
+        ...     process = spawn_context.Process(target=subworker, args=(logger,))
+        ...     process.start()
+        ...     process.join()
+
+        ...     assert process.exitcode == 0
+
+        ...     logger.info("Main")
+        ...     logger.remove()
+        """
+        from loguru import logger
+
+        logger._core = self._core
+
     def _change_activation(self, name, status):
         if not (name is None or isinstance(name, str)):
             raise TypeError(
