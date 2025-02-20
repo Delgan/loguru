@@ -7,8 +7,15 @@ def should_colorize(stream):
     if stream is None:
         return False
 
-    if "NO_COLOR" in os.environ:
+    # Per the spec (https://no-color.org/), this needs to check for a
+    # non-empty string, not just presence of the variable:
+    if os.getenv("NO_COLOR"):
         return False
+
+    # Per the spec (https://force-color.org/), this needs to check for a
+    # non-empty string, not just presence of the variable:
+    if os.getenv("FORCE_COLOR"):
+        return True
 
     if getattr(builtins, "__IPYTHON__", False) and (stream is sys.stdout or stream is sys.stderr):
         try:
