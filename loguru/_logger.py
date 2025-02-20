@@ -83,6 +83,15 @@
 
 .. _formatting directives: https://docs.python.org/3/library/string.html#format-string-syntax
 .. _reentrant: https://en.wikipedia.org/wiki/Reentrancy_(computing)
+
+.. _ANSI codes: https://en.wikipedia.org/wiki/ANSI_escape_code
+
+.. |NO_COLOR| replace:: ``NO_COLOR``
+.. _NO_COLOR: https://no-color.org/
+
+.. |FORCE_COLOR| replace:: ``FORCE_COLOR``
+.. _FORCE_COLOR: https://force-color.org/
+
 """
 
 import builtins
@@ -663,13 +672,17 @@ class Logger:
 
         .. rubric:: The color markups
 
-        To add colors to your logs, you just have to enclose your format string with the appropriate
-        tags (e.g. ``<red>some message</red>``). These tags are automatically removed if the sink
-        doesn't support ansi codes. For convenience, you can use ``</>`` to close the last opening
-        tag without repeating its name (e.g. ``<red>another message</>``).
+        When the sink supports it, the logs can be colored by using markups in the format string.
+        By default (when ``colorize`` is not specified), these are automatically converted or
+        removed depending on the sink's support for `ANSI codes`_. Loguru also honors the
+        |NO_COLOR|_ and |FORCE_COLOR|_ environment variables (the former taking precedence over the
+        latter).
 
-        The special tag ``<level>`` (abbreviated with ``<lvl>``) is transformed according to
-        the configured color of the logged message level.
+        To add colors, you just have to enclose your format string with the appropriate tags
+        (e.g. ``<red>some message</red>``). For convenience, you can use ``</>`` to close the last
+        opening tag without repeating its name (e.g. ``<red>another message</>``). The special tag
+        ``<level>`` (abbreviated with ``<lvl>``) is transformed according to the configured color
+        of the logged message level.
 
         Tags which are not recognized will raise an exception during parsing, to inform you about
         possible misuse. If you wish to display a markup tag literally, you can escape it by
