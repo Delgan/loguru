@@ -84,3 +84,12 @@ def test_override_no_color(monkeypatch):
         logger.add(stream, format="<blue>{message}</blue>", colorize=True)
         logger.debug("Message", colorize=False)
         assert stream.getvalue() == parse("<blue>Message</blue>\n")
+
+
+def test_override_force_color(monkeypatch):
+    stream = StreamIsattyFalse()
+    with monkeypatch.context() as context:
+        context.setitem(os.environ, "FORCE_COLOR", "1")
+        logger.add(stream, format="<blue>{message}</blue>", colorize=False)
+        logger.debug("Message", colorize=False)
+        assert stream.getvalue() == "Message\n"

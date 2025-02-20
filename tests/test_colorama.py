@@ -201,6 +201,21 @@ def test_honor_force_color_standard(monkeypatch, patched, force_color, expected)
         assert should_colorize(stream) is expected
 
 
+def test_no_color_takes_precedence_over_force_color(monkeypatch):
+    stream_tty = StreamIsattyTrue()
+    stream_not_tty = StreamIsattyFalse()
+
+    with monkeypatch.context() as context:
+        context.setitem(os.environ, "NO_COLOR", "1")
+        context.setitem(os.environ, "FORCE_COLOR", "1")
+
+        context.setattr(sys, "__stderr__", stream_tty, raising=False)
+        assert not should_colorize(stream_tty)
+
+        context.setattr(sys, "__stderr__", stream_not_tty, raising=False)
+        assert not should_colorize(stream_not_tty)
+
+
 @pytest.mark.parametrize(
     ("patched", "expected"),
     [
