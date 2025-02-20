@@ -6,7 +6,8 @@
 - Fix possible ``ValueError`` raised on Windows when system clock was set far ahead in the future (`#1291 <https://github.com/Delgan/loguru/issues/1291>`_).
 - Allow the ``rotation`` argument of file sinks to accept a list of rotation conditions, any of which can trigger the rotation (`#1174 <https://github.com/Delgan/loguru/issues/1174>`_, thanks `@CollinHeist <https://github.com/CollinHeist>`_).
 - Update the default log format to include the timezone offset since it produces less ambiguous logs (`#856 <https://github.com/Delgan/loguru/pull/856>`_, thanks `@tim-x-y-z <https://github.com/tim-x-y-z>`_).
-- Honor the ``NO_COLOR`` environment variable to disable color output by default if ``colorize`` is not provided (`#1178 <https://github.com/Delgan/loguru/issues/1178>`_).
+- Honor the ``NO_COLOR`` environment variable which disables color output by default if ``colorize`` is not provided (`#1178 <https://github.com/Delgan/loguru/issues/1178>`_).
+- Honor the ``FORCE_COLOR`` environment variable which enables color output by default if ``colorize`` is not provided (`#1305 <https://github.com/Delgan/loguru/issues/1305>`_, thanks `@nhurden <https://github.com/nhurden>`_).
 - Add requirement for ``TERM`` environment variable not to be ``"dumb"`` to enable colorization (`#1287 <https://github.com/Delgan/loguru/pull/1287>`_, thanks `@snosov1 <https://github.com/snosov1>`_).
 - Make ``logger.catch()`` usable as an asynchronous context manager (`#1084 <https://github.com/Delgan/loguru/issues/1084>`_).
 - Make ``logger.catch()`` compatible with asynchronous generators (`#1302 <https://github.com/Delgan/loguru/issues/1302>`_).
