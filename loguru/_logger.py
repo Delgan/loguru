@@ -1855,7 +1855,7 @@ class Logger:
         ...     logger.info("Main")
         ...     logger.remove()
         """
-        from loguru import logger
+        from . import logger
 
         logger._core = self._core
 
