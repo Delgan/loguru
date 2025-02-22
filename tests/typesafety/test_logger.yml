@@ -315,3 +315,8 @@
     main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Optional[Callable[[Record], None]]"
     main:6: error: List item 0 has incompatible type "Dict[str, str]"; expected "Tuple[Optional[str], bool]"
     main:7: error: Argument "extra" to "configure" of "Logger" has incompatible type "List[int]"; expected "Optional[Dict[Any, Any]]"
+
+- case: reinstall
+  main: |
+    from loguru import logger
+    logger.reinstall()
