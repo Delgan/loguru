@@ -147,7 +147,16 @@ class FileHandlerConfig(TypedDict, total=False):
     diagnose: bool
     enqueue: bool
     catch: bool
-    rotation: Optional[Union[str, int, time, timedelta, RotationFunction]]
+    rotation: Optional[
+        Union[
+            str,
+            int,
+            time,
+            timedelta,
+            RotationFunction,
+            list[Union[str, int, time, timedelta, RotationFunction]],
+        ]
+    ]
     retention: Optional[Union[str, int, timedelta, RetentionFunction]]
     compression: Optional[Union[str, CompressionFunction]]
     delay: bool
