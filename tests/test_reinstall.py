@@ -33,6 +33,11 @@ def subworker(logger):
     deeper_subworker()
 
 
+def poolworker(_):
+    logger.info("Child")
+    deeper_subworker()
+
+
 def deeper_subworker():
     logger.info("Grandchild")
 
@@ -65,6 +70,35 @@ def test_process_spawn(spawn_context):
     process.join()
 
     assert process.exitcode == 0
+
+    logger.info("Main")
+    logger.remove()
+
+    assert writer.read() == "Child\nGrandchild\nMain\n"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
+def test_pool_fork(fork_context):
+    writer = Writer()
+
+    logger.add(writer, context=fork_context, format="{message}", enqueue=True, catch=False)
+
+    with fork_context.Pool(1, initializer=logger.reinstall) as pool:
+        pool.map(poolworker, [None])
+
+    logger.info("Main")
+    logger.remove()
+
+    assert writer.read() == "Child\nGrandchild\nMain\n"
+
+
+def test_pool_spawn(spawn_context):
+    writer = Writer()
+
+    logger.add(writer, context=spawn_context, format="{message}", enqueue=True, catch=False)
+
+    with spawn_context.Pool(1, initializer=logger.reinstall) as pool:
+        pool.map(poolworker, [None])
 
     logger.info("Main")
     logger.remove()
