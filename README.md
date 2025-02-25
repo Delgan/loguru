@@ -385,6 +385,8 @@ notifier.add(f"discord://{WEBHOOK_ID}/{WEBHOOK_TOKEN}")
 logger.add(notifier.notify, level="ERROR", filter={"apprise": False})
 ```
 
+This can be seamlessly integrated using the [`logprise`](https://github.com/svaningelgem/logprise) library.
+
 <s>
 
 ### 10x faster than built-in logging
