@@ -390,7 +390,7 @@ This can be seamlessly integrated using the [`logprise`](https://github.com/svan
 # Import the integrated logger
 from logprise import appriser, logger
 
-# Just use logurus logger as usual, but: 
+# Just use logurus logger as usual, but:
 #   logs of ERROR level or higher are automatically sent as notifications at the end of
 #   your script (or periodically for longer-running ones)
 logger.info("Regular log message")  # This will be shown as-is
