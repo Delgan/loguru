@@ -85,12 +85,6 @@ force-exclude = "tests/exceptions/source/modern/*"
 line-length = 100
 target-version = ["py35"]
 
-[tool.pyright]
-# Types are defined in a stub file. Unfortunately, type checkers such as Pyright and Mypy are
-# unable to "merge" them with the file containing the actual Python implementation. This causes
-# many false positives, therefore type checking is disabled to avoid noisy errors in the editor.
-typeCheckingMode = "off"
-
 [tool.flit.module]
 name = "loguru"
 
