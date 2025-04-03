@@ -101,6 +101,7 @@ import logging
 import re
 import sys
 import threading
+import typing as t
 import warnings
 from collections import namedtuple
 from inspect import isclass, iscoroutinefunction, isgeneratorfunction
@@ -249,9 +250,20 @@ class Logger:
     You should not instantiate a |Logger| by yourself, use ``from loguru import logger`` instead.
     """
 
-    def __init__(self, core, exception, depth, record, lazy, colors, raw, capture, patchers, extra):
+    class Options(t.NamedTuple):
+        exception: t.Any = None
+        depth: t.Any = 0
+        record: t.Any = False
+        lazy: t.Any = False
+        colors: t.Any = False
+        raw: t.Any = False
+        capture: t.Any = True
+        patchers: t.Any = []
+        extra: t.Any = {}
+
+    def __init__(self, core: Core, options: Options):
         self._core = core
-        self._options = (exception, depth, record, lazy, colors, raw, capture, patchers, extra)
+        self._options = options
 
     def __repr__(self):
         return "<loguru.logger handlers=%r>" % list(self._core.handlers.values())
@@ -1451,10 +1463,18 @@ class Logger:
                 stacklevel=2,
             )
 
-        args = self._options[-2:]
-        return Logger(self._core, exception, depth, record, lazy, colors, raw, capture, *args)
+        options = self._options._replace(
+            exception=exception,
+            depth=depth,
+            record=record,
+            lazy=lazy,
+            colors=colors,
+            raw=raw,
+            capture=capture,
+        )
+        return Logger(self._core, options)
 
-    def bind(__self, **kwargs):  # noqa: N805
+    def bind(self, **kwargs):
         """Bind attributes to the ``extra`` dict of each logged message record.
 
         This is used to add custom context to each logging call.
@@ -1487,8 +1507,8 @@ class Logger:
         >>> instance_2.call("Second instance")
         127.0.0.1 - Second instance
         """
-        *options, extra = __self._options
-        return Logger(__self._core, *options, {**extra, **kwargs})
+        options = self._options._replace(extra=self._options.extra | kwargs)
+        return Logger(self._core, options)
 
     @contextlib.contextmanager
     def contextualize(__self, **kwargs):  # noqa: N805
@@ -1581,8 +1601,8 @@ class Logger:
         ...     level, message = record["level"], record["message"]
         ...     logger.patch(lambda r: r.update(record)).log(level, message)
         """
-        *options, patchers, extra = self._options
-        return Logger(self._core, *options, [*patchers, patcher], extra)
+        options = self._options._replace(patchers=[*self._options.patchers, patcher])
+        return Logger(self._core, options)
 
     def level(self, name, no=None, color=None, icon=None):
         r"""Add, update or retrieve a logging level.

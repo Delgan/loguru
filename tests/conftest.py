@@ -193,7 +193,8 @@ def reset_logger():
     def reset():
         loguru.logger.remove()
         loguru.logger.__init__(
-            loguru._logger.Core(), None, 0, False, False, False, False, True, [], {}
+            loguru._logger.Core(),
+            loguru.logger.Options(None, 0, False, False, False, False, True, [], {}),
         )
         loguru._logger.context.set({})
 

@@ -3,5 +3,11 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "editor.rulers": [
+        {
+            "column": 100,
+            "color": "#ff00ff"
+        },
+    ],
 }

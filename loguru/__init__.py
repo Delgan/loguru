@@ -17,15 +17,17 @@ __all__ = ["logger"]
 
 logger = _Logger(
     core=_Core(),
-    exception=None,
-    depth=0,
-    record=False,
-    lazy=False,
-    colors=False,
-    raw=False,
-    capture=True,
-    patchers=[],
-    extra={},
+    options=_Logger.Options(
+        exception=None,
+        depth=0,
+        record=False,
+        lazy=False,
+        colors=False,
+        raw=False,
+        capture=True,
+        patchers=[],
+        extra={},
+    ),
 )
 
 if _defaults.LOGURU_AUTOINIT and _sys.stderr:
