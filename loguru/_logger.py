@@ -101,12 +101,14 @@ import logging
 import re
 import sys
 import threading
+import types
 import typing as t
 import warnings
-from collections import namedtuple
-from inspect import isclass, iscoroutinefunction, isgeneratorfunction
+from collections.abc import AsyncGenerator
+from inspect import isasyncgenfunction, isclass, iscoroutinefunction, isgeneratorfunction
 from multiprocessing import current_process, get_context
 from multiprocessing.context import BaseContext
+from os import PathLike
 from os.path import basename, splitext
 from threading import current_thread
 
@@ -123,19 +125,29 @@ from ._locks_machinery import create_logger_lock
 from ._recattrs import RecordException, RecordFile, RecordLevel, RecordProcess, RecordThread
 from ._simple_sinks import AsyncSink, CallableSink, StandardSink, StreamSink
 
-if sys.version_info >= (3, 6):
-    from collections.abc import AsyncGenerator
-    from inspect import isasyncgenfunction
-    from os import PathLike
+if t.TYPE_CHECKING:
+    from . import (
+        ActivationConfig,
+        ExcInfo,
+        FilterDict,
+        FilterFunction,
+        FormatFunction,
+        HandlerConfig,
+        LevelConfig,
+        Message,
+        PatcherFunction,
+        PathLikeStr,
+        Record,
+        Writable,
+    )
 
-else:
-    from pathlib import PurePath as PathLike
 
-    def isasyncgenfunction(func):
-        return False
+class Level(t.NamedTuple):
+    name: str | None
+    no: int
+    color: str
+    icon: str
 
-
-Level = namedtuple("Level", ["name", "no", "color", "icon"])  # noqa: PYI024
 
 start_time = aware_now()
 
@@ -197,7 +209,7 @@ class Core:
         # Cache used internally to quickly access level attributes based on their name or severity.
         # It can also contain integers as keys, it serves to avoid calling "isinstance()" repeatedly
         # when "logger.log()" is used.
-        self.levels_lookup = {
+        self.levels_lookup: dict[str | int | None, tuple[str | None, str | None, int, str]] = {
             name: (name, name, level.no, level.icon) for name, level in self.levels.items()
         }
 
@@ -208,7 +220,7 @@ class Core:
         self.patcher = None
 
         self.min_level = float("inf")
-        self.enabled = {}
+        self.enabled: dict[str, bool] = {}
         self.activation_list = []
         self.activation_none = True
 
@@ -251,15 +263,15 @@ class Logger:
     """
 
     class Options(t.NamedTuple):
-        exception: t.Any = None
-        depth: t.Any = 0
-        record: t.Any = False
-        lazy: t.Any = False
-        colors: t.Any = False
-        raw: t.Any = False
-        capture: t.Any = True
-        patchers: t.Any = []
-        extra: t.Any = {}
+        exception: bool | ExcInfo | BaseException | None = None
+        record: bool = False
+        lazy: bool = False
+        colors: bool = False
+        raw: bool = False
+        capture: bool = True
+        depth: int = 0
+        patchers: t.Sequence[PatcherFunction] = ()
+        extra: t.Mapping = types.MappingProxyType({})
 
     def __init__(self, core: Core, options: Options):
         self._core = core
@@ -270,20 +282,20 @@ class Logger:
 
     def add(
         self,
-        sink,
+        sink: str | PathLikeStr | t.TextIO | Writable| t.Callable[[Message], None] | logging.Handler,
         *,
-        level=_defaults.LOGURU_LEVEL,
-        format=_defaults.LOGURU_FORMAT,
-        filter=_defaults.LOGURU_FILTER,
-        colorize=_defaults.LOGURU_COLORIZE,
-        serialize=_defaults.LOGURU_SERIALIZE,
-        backtrace=_defaults.LOGURU_BACKTRACE,
-        diagnose=_defaults.LOGURU_DIAGNOSE,
-        enqueue=_defaults.LOGURU_ENQUEUE,
-        context=_defaults.LOGURU_CONTEXT,
-        catch=_defaults.LOGURU_CATCH,
+        level: str | int =_defaults.LOGURU_LEVEL,
+        format: str | FormatFunction=_defaults.LOGURU_FORMAT,
+        filter: str | FilterFunction | FilterDict | None = _defaults.LOGURU_FILTER,
+        colorize: bool | None = _defaults.LOGURU_COLORIZE,
+        serialize: bool = _defaults.LOGURU_SERIALIZE,
+        backtrace: bool = _defaults.LOGURU_BACKTRACE,
+        diagnose: bool = _defaults.LOGURU_DIAGNOSE,
+        enqueue: bool = _defaults.LOGURU_ENQUEUE,
+        context: str | BaseContext | None = _defaults.LOGURU_CONTEXT,
+        catch: bool = _defaults.LOGURU_CATCH,
         **kwargs
-    ):
+    ) -> int:
         r"""Add a handler sending log messages to a sink adequately configured.
 
         Parameters
@@ -1051,7 +1063,7 @@ class Logger:
 
         return handler_id
 
-    def remove(self, handler_id=None):
+    def remove(self, handler_id: int | None = None):
         """Remove a previously added handler and stop sending logs to its sink.
 
         Parameters
@@ -1166,14 +1178,14 @@ class Logger:
 
     def catch(
         self,
-        exception=Exception,
+        exception: type[BaseException] | tuple[type[BaseException], ...] = Exception,
         *,
-        level="ERROR",
-        reraise=False,
-        onerror=None,
-        exclude=None,
-        default=None,
-        message="An error has been caught in function '{record[function]}', "
+        level: str | int = "ERROR",
+        reraise: bool = False,
+        onerror: t.Callable[[BaseException], None] | None = None,
+        exclude: type[BaseException] | tuple[type[BaseException], ...] | None = None,
+        default: t.Any = None,
+        message: str = "An error has been caught in function '{record[function]}', "
         "process '{record[process].name}' ({record[process].id}), "
         "thread '{record[thread].name}' ({record[thread].id}):"
     ):
@@ -1369,14 +1381,14 @@ class Logger:
     def opt(
         self,
         *,
-        exception=None,
-        record=False,
-        lazy=False,
-        colors=False,
-        raw=False,
-        capture=True,
-        depth=0,
-        ansi=False
+        exception: bool | ExcInfo | BaseException | None = None,
+        record: bool = False,
+        lazy: bool = False,
+        colors: bool = False,
+        raw: bool = False,
+        capture: bool = True,
+        depth: int = 0,
+        ansi: bool = False,
     ):
         r"""Parametrize a logging call to slightly change generated log message.
 
@@ -1474,7 +1486,7 @@ class Logger:
         )
         return Logger(self._core, options)
 
-    def bind(self, **kwargs):
+    def bind(self, **kwargs: t.Any):
         """Bind attributes to the ``extra`` dict of each logged message record.
 
         This is used to add custom context to each logging call.
@@ -1511,7 +1523,7 @@ class Logger:
         return Logger(self._core, options)
 
     @contextlib.contextmanager
-    def contextualize(__self, **kwargs):  # noqa: N805
+    def contextualize(__self, **kwargs: t.Any):  # noqa: N805
         """Bind attributes to the context-local ``extra`` dict while inside the ``with`` block.
 
         Contrary to |bind| there is no ``logger`` returned, the ``extra`` dict is modified in-place
@@ -1555,7 +1567,7 @@ class Logger:
             with __self._core.lock:
                 context.reset(token)
 
-    def patch(self, patcher):
+    def patch(self, patcher: PatcherFunction):
         """Attach a function to modify the record dict created by each logging call.
 
         The ``patcher`` may be used to update the record on-the-fly before it's propagated to the
@@ -1604,7 +1616,9 @@ class Logger:
         options = self._options._replace(patchers=[*self._options.patchers, patcher])
         return Logger(self._core, options)
 
-    def level(self, name, no=None, color=None, icon=None):
+    def level(
+        self, name: str, no: int | None = None, color: str | None = None, icon: str | None = None,
+    ):
         r"""Add, update or retrieve a logging level.
 
         Logging levels are defined by their ``name`` to which a severity ``no``, an ansi ``color``
@@ -1707,7 +1721,7 @@ class Logger:
 
         return level
 
-    def disable(self, name):
+    def disable(self, name: str | None):
         """Disable logging of messages coming from ``name`` module and its children.
 
         Developers of library using `Loguru` should absolutely disable it to avoid disrupting
@@ -1731,7 +1745,7 @@ class Logger:
         """
         self._change_activation(name, False)
 
-    def enable(self, name):
+    def enable(self, name: str | None):
         """Enable logging of messages coming from ``name`` module and its children.
 
         Logging is generally disabled by imported library using `Loguru`, hence this function
@@ -1755,7 +1769,15 @@ class Logger:
         """
         self._change_activation(name, True)
 
-    def configure(self, *, handlers=None, levels=None, extra=None, patcher=None, activation=None):
+    def configure(
+        self,
+        *,
+        handlers: t.Sequence[HandlerConfig] | None = None,
+        levels: t.Sequence[LevelConfig] | None = None,
+        extra: dict[t.Any, t.Any] | None = None,
+        patcher: PatcherFunction | None = None,
+        activation: t.Sequence[ActivationConfig] | None = None,
+    ):
         """Configure the core logger.
 
         It should be noted that ``extra`` values set using this function are available across all
@@ -1879,7 +1901,7 @@ class Logger:
 
         logger._core = self._core
 
-    def _change_activation(self, name, status):
+    def _change_activation(self, name: str | None, status: bool):
         if not (name is None or isinstance(name, str)):
             raise TypeError(
                 "Invalid name, it should be a string (or None), not: '%s'" % type(name).__name__
@@ -2034,7 +2056,7 @@ class Logger:
                 buffer = buffer[end:]
                 yield from matches[:-1]
 
-    def _log(self, level, from_decorator, options, message, args, kwargs):
+    def _log(self, level: str | int, from_decorator: bool, options: Options, message, args, kwargs):
         core = self._core
 
         if not core.handlers:
@@ -2119,7 +2141,7 @@ class Logger:
         else:
             exception = None
 
-        log_record = {
+        log_record: Record = {
             "elapsed": elapsed,
             "exception": exception,
             "extra": {**core.extra, **context.get(), **extra},
@@ -2171,47 +2193,47 @@ class Logger:
         for handler in core.handlers.values():
             handler.emit(log_record, level_id, from_decorator, raw, colored_message)
 
-    def trace(__self, __message, *args, **kwargs):  # noqa: N805
+    def trace(self, __message, *args, **kwargs):
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
-        __self._log("TRACE", False, __self._options, __message, args, kwargs)
+        self._log("TRACE", False, self._options, __message, args, kwargs)
 
-    def debug(__self, __message, *args, **kwargs):  # noqa: N805
+    def debug(self, __message, *args, **kwargs):
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'DEBUG'``."""
-        __self._log("DEBUG", False, __self._options, __message, args, kwargs)
+        self._log("DEBUG", False, self._options, __message, args, kwargs)
 
-    def info(__self, __message, *args, **kwargs):  # noqa: N805
+    def info(self, __message, *args, **kwargs):
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'INFO'``."""
-        __self._log("INFO", False, __self._options, __message, args, kwargs)
+        self._log("INFO", False, self._options, __message, args, kwargs)
 
-    def success(__self, __message, *args, **kwargs):  # noqa: N805
+    def success(self, __message, *args, **kwargs):
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'SUCCESS'``."""
-        __self._log("SUCCESS", False, __self._options, __message, args, kwargs)
+        self._log("SUCCESS", False, self._options, __message, args, kwargs)
 
-    def warning(__self, __message, *args, **kwargs):  # noqa: N805
+    def warning(self, __message, *args, **kwargs):
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'WARNING'``."""
-        __self._log("WARNING", False, __self._options, __message, args, kwargs)
+        self._log("WARNING", False, self._options, __message, args, kwargs)
 
-    def error(__self, __message, *args, **kwargs):  # noqa: N805
+    def error(self, __message, *args, **kwargs):
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'ERROR'``."""
-        __self._log("ERROR", False, __self._options, __message, args, kwargs)
+        self._log("ERROR", False, self._options, __message, args, kwargs)
 
-    def critical(__self, __message, *args, **kwargs):  # noqa: N805
+    def critical(self, __message, *args, **kwargs):
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'CRITICAL'``."""
-        __self._log("CRITICAL", False, __self._options, __message, args, kwargs)
+        self._log("CRITICAL", False, self._options, __message, args, kwargs)
 
-    def exception(__self, __message, *args, **kwargs):  # noqa: N805
+    def exception(self, __message, *args, **kwargs):
         r"""Log an ``'ERROR'`` message while also capturing the currently handled exception.
 
         This method internally uses |sys.exc_info|, therefore it should only be called within
         an ``except`` block. To log an exception that has already been caught, use the ``exception``
         argument of |opt| along with a call to the |error| method (for example).
         """
-        options = (True,) + __self._options[1:]
-        __self._log("ERROR", False, options, __message, args, kwargs)
+        options = self._options._replace(exception=True)
+        self._log("ERROR", False, options, __message, args, kwargs)
 
-    def log(__self, __level, __message, *args, **kwargs):  # noqa: N805
+    def log(self, __level: int | str, __message, *args, **kwargs):
         r"""Log ``message.format(*args, **kwargs)`` with severity ``level``."""
-        __self._log(__level, False, __self._options, __message, args, kwargs)
+        self._log(__level, False, self._options, __message, args, kwargs)
 
     def start(self, *args, **kwargs):
         """Add a handler sending log messages to a sink adequately configured.
