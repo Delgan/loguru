@@ -1,11 +1,24 @@
-from os import environ
+import os
+import typing as t
+
+_T = t.TypeVar('_T', str, bool, int)
 
 
-def env(key, type_, default=None):
-    if key not in environ:
+@t.overload
+def env(key: str, type_: type[_T], default: _T) -> _T:
+    ...
+
+
+@t.overload
+def env(key: str, type_: type[_T], default: None = None) -> _T | None:
+    ...
+
+
+def env(key: str, type_: type[_T], default=None) -> _T:
+    if key not in os.environ:
         return default
 
-    val = environ[key]
+    val = os.environ[key]
 
     if type_ is str:
         return val
