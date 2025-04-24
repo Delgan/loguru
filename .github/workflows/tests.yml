@@ -60,6 +60,11 @@ jobs:
       run: |
         tox -e tests
       continue-on-error: ${{ matrix.allow-failure }}
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }} # Run even if tests fail
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:
