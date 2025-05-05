@@ -174,7 +174,7 @@ class FileSink:
         mode="a",
         buffering=1,
         encoding="utf8",
-        **kwargs
+        **kwargs,
     ):
         self.encoding = encoding
 
