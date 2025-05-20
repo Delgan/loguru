@@ -2107,7 +2107,7 @@ class Logger:
             "function": co_name,
             "level": RecordLevel(level_name, level_no, level_icon),
             "line": f_lineno,
-            "message": str(message),
+            "message": message,
             "module": splitext(file_name)[0],
             "name": name,
             "process": RecordProcess(process.ident, process.name),
@@ -2130,23 +2130,25 @@ class Logger:
                 )
             kwargs.update(record=log_record)
 
-        if colors:
-            if args or kwargs:
-                colored_message = Colorizer.prepare_message(message, args, kwargs)
-            else:
-                colored_message = Colorizer.prepare_simple_message(str(message))
-            log_record["message"] = colored_message.stripped
-        elif args or kwargs:
-            colored_message = None
-            log_record["message"] = message.format(*args, **kwargs)
-        else:
-            colored_message = None
-
         if core.patcher:
             core.patcher(log_record)
 
         for patcher in patchers:
             patcher(log_record)
+
+        if colors:
+            if args or kwargs:
+                colored_message = Colorizer.prepare_message(log_record["message"], args, kwargs)
+            else:
+                colored_message = Colorizer.prepare_simple_message(str(log_record["message"]))
+            log_record["message"] = colored_message.stripped
+        elif args or kwargs:
+            colored_message = None
+            log_record["message"] = log_record["message"].format(*args, **kwargs)
+        else:
+            colored_message = None
+
+        log_record["message"] = str(log_record["message"])
 
         for handler in core.handlers.values():
             handler.emit(log_record, level_id, from_decorator, raw, colored_message)
