@@ -1,3 +1,7 @@
+import re
+
+import pytest
+
 from loguru import logger
 
 
@@ -83,3 +87,46 @@ def test_multiple_patches(writer):
     logger.patch(patch_1).patch(patch_2).patch(patch_3).info("Test")
 
     assert writer.read() == "12 Test\n"
+
+
+@pytest.mark.parametrize(
+    ("colorize", "colors", "expected"),
+    [
+        (False, False, "<red>A</red>\n"),
+        (False, True, "A\n"),
+        (True, False, "<red>A</red>\n"),
+        (True, True, "\x1b[31mA\x1b[0m\n"),
+    ],
+)
+def test_colorful_patch(colorize, colors, expected, writer):
+    logger.add(writer, format="{message}", colorize=colorize)
+
+    logger_patched = logger.patch(lambda r: r.update(message=f"<red>{r['message']}</red>"))
+    logger_patched.opt(colors=colors).debug("A")
+
+    assert writer.read() == expected
+
+
+@pytest.mark.parametrize(
+    ("colorize", "colors", "expected"),
+    [
+        (False, False, "A <red>W</red>, <red>M</red>\n"),
+        (False, True, "A W, M\n"),
+        (True, False, "A <red>W</red>, <red>M</red>\n"),
+        (True, True, "A \x1b[31mW\x1b[0m, \x1b[31mM\x1b[0m\n"),
+    ],
+)
+def test_automatic_colorful_patch(colorize, colors, expected, writer):
+    # regex matches on single curly braces and substitutes
+    # a color tag in-place
+    _regex_pattern = re.compile(r"(\{[^{}]*\})(?!\})")
+    _regex_repl = r"<red>\1</red>"
+
+    def patch(r):
+        r.update(message=re.sub(_regex_pattern, _regex_repl, r["message"]))
+
+    logger.add(writer, format="{message}", colorize=colorize)
+    logger_patched = logger.patch(patch)
+    logger_patched.opt(colors=colors).debug("A {}, {a}", "W", a="M")
+
+    assert writer.read() == expected
