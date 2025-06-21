@@ -26,12 +26,14 @@ jobs:
         allow-failure:
         - false
         include:
-        - os: ubuntu-20.04
+        - os: ubuntu-22.04
           python-version: '3.5'
           allow-failure: false
-        - os: ubuntu-20.04
+          container: python:3.5-slim
+        - os: ubuntu-22.04
           python-version: '3.6'
           allow-failure: false
+          container: python:3.6-slim
         - os: windows-2022
           python-version: '3.12'
           allow-failure: false
@@ -42,16 +44,18 @@ jobs:
           python-version: 3.14-dev
           allow-failure: true
     runs-on: ${{ matrix.os }}
+    # Some versions of Python are not longer supported by GitHub Actions.
+    # For those, we use a container image and skip the setup-python step.
+    # It will be empty and ignored for the other matrix entries.
+    container: ${{ matrix.container }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
     - name: Set up Python
+      if: ${{ matrix.container == null }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-      env:
-        # Workaround for https://github.com/actions/setup-python/issues/866
-        PIP_TRUSTED_HOST: pypi.python.org pypi.org files.pythonhosted.org
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -60,11 +64,23 @@ jobs:
       run: |
         tox -e tests
       continue-on-error: ${{ matrix.allow-failure }}
-    - name: Upload coverage to Codecov
+    - name: Upload coverage data
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ matrix.python-version }}-${{ matrix.os }}
+        path: coverage.xml
+      continue-on-error: ${{ matrix.allow-failure }}
+  push-coverage-to-codecov:
+    runs-on: ubuntu-22.04
+    needs: tests
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+    - name: Upload to Codecov
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        flags: ${{ matrix.os }}_${{ matrix.python-version }}
         verbose: true
         fail_ci_if_error: true
-      continue-on-error: ${{ matrix.allow-failure }}
