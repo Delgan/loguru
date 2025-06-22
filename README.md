@@ -385,7 +385,21 @@ notifier.add(f"discord://{WEBHOOK_ID}/{WEBHOOK_TOKEN}")
 logger.add(notifier.notify, level="ERROR", filter={"apprise": False})
 ```
 
-This can be seamlessly integrated using the [`logprise`](https://github.com/svaningelgem/logprise) library.
+This can be seamlessly integrated using the [`logprise`](https://github.com/svaningelgem/logprise) library, which provides a zero-configuration setup that combines Loguru's powerful logging with Apprise's multi-platform notifications:
+```python
+# Import the integrated logger
+from logprise import appriser, logger
+
+# Just use logurus logger as usual, but:
+#   logs of ERROR level or higher are automatically sent as notifications at the end of
+#   your script (or periodically for longer-running ones)
+logger.info("Regular log message")  # This will be shown as-is
+logger.error("This triggers a notification!")  # This will be shown and sent as a notification
+
+# Notification targets are loaded from user or system-wide configuration files automatically
+#   or can be configured programmatically
+appriser.add("discord://webhook_id/webhook_token")
+```
 
 <s>
 
