@@ -1,4 +1,0 @@
-Erratum
-
-The commit mentions actions/download-artifact
-but I meant codecov/codecov-action instead.
