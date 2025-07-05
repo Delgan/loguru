@@ -1,6 +1,6 @@
 # fmt: off
 import sys
-from typing import TypeVar, Union
+from typing import TypeVar, Tuple
 
 from loguru import logger
 
@@ -12,7 +12,7 @@ T = TypeVar("T")
 Name = str
 
 
-def foo(a: int, b: Union[Name, float], c: "Name") -> T: 1 / 0
+def foo(a: int, b: Tuple[Name, float], c: "Name") -> T: 1 / 0
 
 
 def main():
