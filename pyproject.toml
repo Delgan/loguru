@@ -48,7 +48,8 @@ dev = [
   "tox==4.27.0 ; python_version>='3.9'",
   # Testing framework.
   "pytest==6.1.2 ; python_version<'3.8'",
-  "pytest==8.3.2 ; python_version>='3.8'",
+  "pytest==8.3.2 ; python_version>='3.8' and python_version<'3.9'",
+  "pytest==8.4.1 ; python_version>='3.9'",
   "pytest-cov==2.12.1 ; python_version<'3.8'",
   "pytest-cov==5.0.0 ; python_version>='3.8' and python_version<'3.9'",
   "pytest-cov==6.2.1 ; python_version>='3.9'",
