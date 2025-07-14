@@ -44,7 +44,8 @@ dev = [
   # Setup.
   "pre-commit==4.2.0 ; python_version>='3.9'",
   "tox==3.27.1 ; python_version<'3.8'",
-  "tox==4.27.0 ; python_version>='3.8'",
+  "tox==4.24.1 ; python_version>='3.8' and python_version<'3.9'",
+  "tox==4.27.0 ; python_version>='3.9'",
   # Testing framework.
   "pytest==6.1.2 ; python_version<'3.8'",
   "pytest==8.3.2 ; python_version>='3.8'",
