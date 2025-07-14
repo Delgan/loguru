@@ -1,5 +1,26 @@
 import re
+from contextlib import contextmanager
 from string import Formatter
+
+
+@contextmanager
+def try_formatting(*exceptions):
+    try:
+        yield
+    except exceptions as e:
+        raise ValueError(
+            "The logging message could not be formatted with the provided arguments.\n"
+            "Common causes include:\n"
+            "  - The message contains unmatched or malformed curly braces.\n"
+            "  - Positional or keyword arguments are missing for the placeholders.\n"
+            "  - The message is not a string.\n"
+            "  - f-strings were used causing double interpolation.\n"
+            "  - Contextual values were passed via kwargs but not meant for formatting.\n"
+            "To avoid this, consider:\n"
+            "  - Escaping non-formatting braces by doubling them.\n"
+            "  - Avoiding f-string in the logged message.\n"
+            "  - Using `logger.bind()` for structured context instead of kwargs.\n"
+        ) from e
 
 
 class Style:
@@ -398,7 +419,10 @@ class Colorizer:
         formatter = Formatter()
         parser = AnsiParser()
 
-        for literal_text, field_name, format_spec, conversion in formatter.parse(string):
+        with try_formatting(TypeError, ValueError):
+            parsing_output = list(formatter.parse(string))
+
+        for literal_text, field_name, format_spec, conversion in parsing_output:
             parser.feed(literal_text, raw=recursive)
 
             if field_name is not None:
@@ -420,7 +444,9 @@ class Colorizer:
                         )
                     auto_arg_index = False
 
-                obj, _ = formatter.get_field(field_name, args, kwargs)
+                with try_formatting(KeyError, IndexError, AttributeError):
+                    obj, _ = formatter.get_field(field_name, args, kwargs)
+
                 obj = formatter.convert_field(obj, conversion)
 
                 format_spec, auto_arg_index = Colorizer._parse_with_formatting(

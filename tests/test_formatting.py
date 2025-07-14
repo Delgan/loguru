@@ -199,30 +199,40 @@ def test_non_string_message_is_str_in_record(writer, colors):
 def test_missing_positional_field_during_formatting(writer, colors):
     logger.add(writer)
 
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError, match="^The logging message could not be formatted") as e:
         logger.opt(colors=colors).info("Foo {} {}", 123)
+
+    assert isinstance(e.value.__cause__, IndexError)
 
 
 @pytest.mark.parametrize("colors", [True, False])
 def test_missing_named_field_during_formatting(writer, colors):
     logger.add(writer)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError, match="^The logging message could not be formatted") as e:
         logger.opt(colors=colors).info("Foo {bar}", baz=123)
 
+    assert isinstance(e.value.__cause__, KeyError)
 
-def test_not_formattable_message(writer):
+
+@pytest.mark.parametrize("colors", [True, False])
+def test_malformed_curly_braces_during_formatting(writer, colors):
     logger.add(writer)
 
-    with pytest.raises(AttributeError):
-        logger.info(123, baz=456)
+    with pytest.raises(ValueError, match="^The logging message could not be formatted") as e:
+        logger.opt(colors=colors).info("This is a curly bracket: {", foo="bar")
+
+    assert isinstance(e.value.__cause__, ValueError)
 
 
-def test_not_formattable_message_with_colors(writer):
+@pytest.mark.parametrize("colors", [True, False])
+def test_not_formattable_message(writer, colors):
     logger.add(writer)
 
-    with pytest.raises(TypeError):
-        logger.opt(colors=True).info(123, baz=456)
+    with pytest.raises(ValueError, match="^The logging message could not be formatted") as e:
+        logger.opt(colors=colors).info(123, baz=456)
+
+    assert isinstance(e.value.__cause__, TypeError if colors else AttributeError)
 
 
 def test_invalid_color_markup(writer):

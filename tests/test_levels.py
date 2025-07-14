@@ -151,7 +151,7 @@ def test_updating_min_level(writer):
 
     a = logger.add(writer, level="DEBUG")
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError, match="^The logging message could not be formatted"):
         logger.debug("An {error} will occur!", nope=None)
 
     logger.trace("Early exit -> no {error}", nope=None)
