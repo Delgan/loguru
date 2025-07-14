@@ -42,7 +42,7 @@ requires-python = ">=3.5,<4.0"
 [project.optional-dependencies]
 dev = [
   # Setup.
-  "pre-commit==4.1.0 ; python_version>='3.9'",
+  "pre-commit==4.2.0 ; python_version>='3.9'",
   "tox==3.27.1 ; python_version<'3.8'",
   "tox==4.24.1 ; python_version>='3.8'",
   # Testing framework.
