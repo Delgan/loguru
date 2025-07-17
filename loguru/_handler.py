@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import threading
 from contextlib import contextmanager
+from queue import Queue
 from threading import Thread
 
 from ._colorizer import Colorizer
@@ -45,7 +46,8 @@ class Handler:
         error_interceptor,
         exception_formatter,
         id_,
-        levels_ansi_codes
+        levels_ansi_codes,
+        multiprocessing_queue,
     ):
         self._name = name
         self._sink = sink
@@ -90,13 +92,19 @@ class Handler:
 
         if self._enqueue:
             if self._multiprocessing_context is None:
-                self._queue = multiprocessing.SimpleQueue()
-                self._confirmation_event = multiprocessing.Event()
-                self._confirmation_lock = multiprocessing.Lock()
+                mp = multiprocessing
             else:
-                self._queue = self._multiprocessing_context.SimpleQueue()
-                self._confirmation_event = self._multiprocessing_context.Event()
-                self._confirmation_lock = self._multiprocessing_context.Lock()
+                mp = self._multiprocessing_context
+
+            if multiprocessing_queue:
+                self._queue = mp.SimpleQueue()
+                self._confirmation_event = mp.Event()
+                self._confirmation_lock = mp.Lock()
+            else:
+                self._queue = Queue()
+                self._confirmation_event = threading.Event()
+                self._confirmation_lock = threading.Lock()
+
             self._queue_lock = create_handler_lock()
             self._owner_process_pid = os.getpid()
             self._thread = Thread(

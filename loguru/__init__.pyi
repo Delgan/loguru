@@ -134,6 +134,7 @@ class BasicHandlerConfig(TypedDict, total=False):
     backtrace: bool
     diagnose: bool
     enqueue: bool
+    multiprocessing_queue: bool
     catch: bool
 
 class FileHandlerConfig(TypedDict, total=False):
@@ -146,6 +147,7 @@ class FileHandlerConfig(TypedDict, total=False):
     backtrace: bool
     diagnose: bool
     enqueue: bool
+    multiprocessing_queue: bool
     catch: bool
     rotation: Optional[
         Union[
@@ -179,6 +181,7 @@ class AsyncHandlerConfig(TypedDict, total=False):
     backtrace: bool
     diagnose: bool
     enqueue: bool
+    multiprocessing_queue: bool
     catch: bool
     context: Optional[Union[str, BaseContext]]
     loop: Optional[AbstractEventLoop]
@@ -207,8 +210,9 @@ class Logger:
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
+        multiprocessing_queue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
-        catch: bool = ...
+        catch: bool = ...,
     ) -> int: ...
     @overload
     def add(
@@ -223,9 +227,9 @@ class Logger:
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
-        catch: bool = ...,
+        multiprocessing_queue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
-        loop: Optional[AbstractEventLoop] = ...
+        loop: Optional[AbstractEventLoop] = ...,
     ) -> int: ...
     @overload
     def add(
@@ -240,6 +244,7 @@ class Logger:
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
+        multiprocessing_queue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...,
         rotation: Optional[
@@ -276,7 +281,7 @@ class Logger:
         onerror: Optional[Callable[[BaseException], None]] = ...,
         exclude: Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]] = ...,
         default: Any = ...,
-        message: str = ...
+        message: str = ...,
     ) -> Catcher: ...
     @overload
     def catch(self, function: _F) -> _F: ...
@@ -290,7 +295,7 @@ class Logger:
         raw: bool = ...,
         capture: bool = ...,
         depth: int = ...,
-        ansi: bool = ...
+        ansi: bool = ...,
     ) -> Logger: ...
     def bind(__self, **kwargs: Any) -> Logger: ...  # noqa: N805
     def contextualize(__self, **kwargs: Any) -> Contextualizer: ...  # noqa: N805
@@ -318,7 +323,7 @@ class Logger:
         levels: Optional[Sequence[LevelConfig]] = ...,
         extra: Optional[Dict[Any, Any]] = ...,
         patcher: Optional[PatcherFunction] = ...,
-        activation: Optional[Sequence[ActivationConfig]] = ...
+        activation: Optional[Sequence[ActivationConfig]] = ...,
     ) -> List[int]: ...
     def reinstall(self) -> None: ...
     # @staticmethod cannot be used with @overload in mypy (python/mypy#7781).
@@ -332,7 +337,7 @@ class Logger:
         pattern: Union[str, Pattern[str]],
         *,
         cast: Union[Dict[str, Callable[[str], Any]], Callable[[Dict[str, str]], None]] = ...,
-        chunk: int = ...
+        chunk: int = ...,
     ) -> Generator[Dict[str, Any], None, None]: ...
     @overload
     def parse(
@@ -341,7 +346,7 @@ class Logger:
         pattern: Union[bytes, Pattern[bytes]],
         *,
         cast: Union[Dict[str, Callable[[bytes], Any]], Callable[[Dict[str, bytes]], None]] = ...,
-        chunk: int = ...
+        chunk: int = ...,
     ) -> Generator[Dict[str, Any], None, None]: ...
     @overload
     def trace(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
@@ -377,7 +382,11 @@ class Logger:
     def exception(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
     def log(
-        __self, __level: Union[int, str], __message: str, *args: Any, **kwargs: Any  # noqa: N805
+        __self,
+        __level: Union[int, str],
+        __message: str,
+        *args: Any,
+        **kwargs: Any,  # noqa: N805
     ) -> None: ...
     @overload
     def log(__self, __level: Union[int, str], __message: Any) -> None: ...  # noqa: N805
