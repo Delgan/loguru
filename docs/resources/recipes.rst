@@ -1057,8 +1057,8 @@ Another thing to keep in mind when dealing with multiprocessing is the fact that
 
 .. _recipes-testing:
 
-Testing logging
----------------
+Unit testing logs emitted by Loguru
+-----------------------------------
 
 Logging calls can be tested using |logot|_, a high-level log testing library with built-in support for Loguru::
 
