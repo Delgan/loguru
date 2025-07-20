@@ -660,9 +660,9 @@ class Logger:
         - a |str| which corresponds to the compressed or archived file extension. This can be one
           of: ``"gz"``, ``"bz2"``, ``"xz"``, ``"lzma"``, ``"tar"``, ``"tar.gz"``, ``"tar.bz2"``,
           ``"tar.xz"``, ``"zip"``.
-        - a |callable|_ which will be invoked before file termination. It should accept the path of
-          the log file as argument and process to whatever it wants (custom compression, network
-          sending, removing it, etc.).
+        - a |callable|_ which will be invoked after closing (and possibly renaming) the currently
+          logged file. It should accept the path of the log file as argument and process to whatever
+          it wants (custom compression, network sending, renaming it, removing it, etc.).
 
         Either way, if you use a custom function designed according to your preferences, you must be
         very careful not to use the ``logger`` within your function. Otherwise, there is a risk that
