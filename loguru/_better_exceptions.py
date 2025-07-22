@@ -534,7 +534,6 @@ class ExceptionFormatter:
                 yield from self._indent("-" * 35, group_nesting + 1, prefix="+-")
 
     def _format_list(self, frames):
-
         def source_message(filename, lineno, name, line):
             message = '  File "%s", line %d, in %s\n' % (filename, lineno, name)
             if line:
