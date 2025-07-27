@@ -1846,13 +1846,10 @@ class Logger:
         >>> def test_process_spawn():
         ...     spawn_context = multiprocessing.get_context("spawn")
         ...     logger.add("file.log", context=spawn_context, enqueue=True, catch=False)
-        ...
         ...     process = spawn_context.Process(target=subworker, args=(logger,))
         ...     process.start()
         ...     process.join()
-
         ...     assert process.exitcode == 0
-
         ...     logger.info("Main")
         ...     logger.remove()
         """
