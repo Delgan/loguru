@@ -468,6 +468,27 @@ Here is another simple example to record timing of a function::
 
         return wrapped
 
+Finally, here is an example of a generic wrapper that combines a success message with error handling during function execution::
+
+    def with_logging(func):
+        @functools.wraps(func)
+        @logger.catch(message=f"Error in {func.__name__}")
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
+            logger.success(f"Successfully completed {func.__name__}")
+            return result
+
+        return wrapper
+
+    @with_logging
+    def may_fail(x):
+        if x < 0:
+            raise ValueError("Negative value!")
+        return x * 2
+
+    may_fail(10)  # Should log success
+    may_fail(-5)  # Should log an error
+
 
 Using logging function based on custom added levels
 ---------------------------------------------------
