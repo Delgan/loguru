@@ -642,9 +642,10 @@ class Logger:
 
         The ``retention`` occurs at rotation or at sink stop if rotation is ``None``. Files
         resulting from previous sessions or rotations are automatically collected from disk. A file
-        is selected if it matches the pattern ``"basename(.*).ext(.*)"`` (possible time fields are
-        beforehand replaced with ``.*``) based on the configured sink. Afterwards, the list is
-        processed to determine files to be retained. This parameter accepts:
+        is selected if it matches the pattern ``"root(.*).ext(.*)"``, where ``root`` and ``ext`` are
+        derived from ``os.path.splitext()`` applied to the configured sink path (possible time
+        fields are beforehand replaced with ``.*``). Afterwards, the list is processed to determine
+        files to be retained. This parameter accepts:
 
         - an |int| which indicates the number of log files to keep, while older files are deleted.
         - a |timedelta| which specifies the maximum age of files to keep.
