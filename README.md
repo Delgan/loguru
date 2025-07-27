@@ -1,7 +1,7 @@
 <p align="center">
     <a href="#readme">
         <img alt="Loguru logo" src="https://raw.githubusercontent.com/Delgan/loguru/master/docs/_static/img/logo.png">
-        <!-- Logo credits: Sambeet from Pixaday -->
+        <!-- Logo credits: Sambeet from Pixabay -->
         <!-- Logo fonts: Comfortaa + Raleway -->
     </a>
 </p>
