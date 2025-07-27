@@ -268,9 +268,10 @@ class Logger:
         backtrace=_defaults.LOGURU_BACKTRACE,
         diagnose=_defaults.LOGURU_DIAGNOSE,
         enqueue=_defaults.LOGURU_ENQUEUE,
+        multiprocessing_queue=_defaults.LOGURU_MULTIPROCESSING_QUEUE,
         context=_defaults.LOGURU_CONTEXT,
         catch=_defaults.LOGURU_CATCH,
-        **kwargs
+        **kwargs,
     ):
         r"""Add a handler sending log messages to a sink adequately configured.
 
@@ -300,9 +301,13 @@ class Logger:
             Whether the exception trace should display the variables values to eases the debugging.
             This should be set to ``False`` in production to avoid leaking sensitive data.
         enqueue : |bool|, optional
-            Whether the messages to be logged should first pass through a multiprocessing-safe queue
-            before reaching the sink. This is useful while logging to a file through multiple
+            Whether the messages to be logged should first pass through a multiprocessing/threading
+            queue before reaching the sink. This is useful while logging to a file through multiple
             processes. This also has the advantage of making logging calls non-blocking.
+        multiprocessing_queue : |bool|, optional
+            Whether to enqueue messages to a multiprocessing-safe queue or a simple queue.
+            If you program will never spawn child processes, you may choose to use the simple queue
+            to reduce the enqueue overhead.
         context : |multiprocessing.Context| or |str|, optional
             A context object or name that will be used for all tasks involving internally the
             |multiprocessing| module, in particular when ``enqueue=True``. If ``None``, the default
@@ -1030,6 +1035,7 @@ class Logger:
                 error_interceptor=error_interceptor,
                 exception_formatter=exception_formatter,
                 levels_ansi_codes=self._core.levels_ansi_codes,
+                multiprocessing_queue=multiprocessing_queue,
             )
 
             handlers = self._core.handlers.copy()
@@ -1164,7 +1170,7 @@ class Logger:
         default=None,
         message="An error has been caught in function '{record[function]}', "
         "process '{record[process].name}' ({record[process].id}), "
-        "thread '{record[thread].name}' ({record[thread].id}):"
+        "thread '{record[thread].name}' ({record[thread].id}):",
     ):
         """Return a decorator to automatically log possibly caught error in wrapped function.
 
@@ -1316,7 +1322,6 @@ class Logger:
                 elif isasyncgenfunction(function):
 
                     class AsyncGenCatchWrapper(AsyncGenerator):
-
                         def __init__(self, gen):
                             self._gen = gen
 
@@ -1365,7 +1370,7 @@ class Logger:
         raw=False,
         capture=True,
         depth=0,
-        ansi=False
+        ansi=False,
     ):
         r"""Parametrize a logging call to slightly change generated log message.
 
