@@ -35,6 +35,7 @@ API Reference
     * :meth:`~loguru._logger.Logger.disable`
     * :meth:`~loguru._logger.Logger.enable`
     * :meth:`~loguru._logger.Logger.configure`
+    * :meth:`~loguru._logger.Logger.reinstall`
     * :meth:`~loguru._logger.Logger.parse`
     * :meth:`~loguru._logger.Logger.trace`
     * :meth:`~loguru._logger.Logger.debug`
