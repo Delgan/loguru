@@ -22,6 +22,7 @@ jobs:
         - '3.11'
         - '3.12'
         - '3.13'
+        - 3.14-dev
         - pypy-3.10
         allow-failure:
         - false
@@ -40,9 +41,6 @@ jobs:
         - os: macos-13
           python-version: '3.12'
           allow-failure: false
-        - os: ubuntu-22.04
-          python-version: 3.14-dev
-          allow-failure: true
     runs-on: ${{ matrix.os }}
     # Some versions of Python are not longer supported by GitHub Actions.
     # For those, we use a container image and skip the setup-python step.
