@@ -7,6 +7,7 @@ import logging
 import multiprocessing
 import os
 import pathlib
+import re
 import sys
 import threading
 import time
@@ -64,12 +65,21 @@ else:
             # Also patch the "severity" attribute because there is a parsing bug in the plugin.
             output.severity = output.severity.replace(", /", "")
 
+    def _fix_builtins_uppercase(item: YamlTestItem):
+        """Adapt case of builtins from the expected output for Python 3.6 to 3.8."""
+        for output in item.expected_output:
+            for builtin in ["dict", "list", "set", "tuple"]:
+                # Quite hacky, but should work for all tested cases.
+                pattern = re.compile(r"(?<![a-zA-Z0-9.])" + builtin + r"\[")
+                replacement = builtin.capitalize() + "["
+                output.message = pattern.sub(replacement, output.message)
+                output.severity = pattern.sub(replacement, output.severity)
+
     def _add_mypy_config(item: YamlTestItem):
         """Add some extra options to the mypy configuration for Python 3.7+."""
         item.additional_mypy_config += "\n".join(
             [
                 "show_error_codes = false",
-                "force_uppercase_builtins = true",
                 "force_union_syntax = true",
             ]
         )
@@ -84,6 +94,9 @@ else:
                 _add_mypy_config(item)
             else:
                 _fix_positional_only_args(item)
+
+            if sys.version_info < (3, 9):
+                _fix_builtins_uppercase(item)
 
 
 @contextlib.contextmanager
