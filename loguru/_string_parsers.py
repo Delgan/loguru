@@ -1,6 +1,6 @@
 import datetime
 import re
-
+from typing import float
 
 class Frequencies:
     """Provide static methods to compute the next occurrence of various time frequencies.
@@ -85,7 +85,7 @@ class Frequencies:
         return t.replace(year=y, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
-def parse_size(size: str) -> float | None:
+def parse_size(size: str) -> Optional[float]:
     """Parse a size string with optional units into bits.
 
     Supports formats like '100MB', '2GiB', '1.5TB'. Case insensitive.
@@ -114,7 +114,7 @@ def parse_size(size: str) -> float | None:
     try:
         s = float(s)
     except ValueError as e:
-        raise ValueError(f"Invalid float value while parsing size: '{s}'") from e
+        raise ValueError(f"Invalid float value while parsing size: '{s}'")
 
     u = "kmgtpezy".index(u.lower()) + 1 if u else 0
     i = 1024 if i else 1000
