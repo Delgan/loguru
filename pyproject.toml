@@ -74,7 +74,7 @@ dev = [
   "sphinx-rtd-theme==3.0.2 ; python_version>='3.11'",
   "myst-parser==4.0.0 ; python_version>='3.11'",
   # Packaging.
-  "build==1.2.2 ; python_version>='3.11'",
+  "build==1.3.0 ; python_version>='3.11'",
   "twine==6.1.0 ; python_version>='3.11'",
 ]
 
