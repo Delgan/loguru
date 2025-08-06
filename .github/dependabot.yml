@@ -3,12 +3,12 @@ updates:
 - package-ecosystem: github-actions
   directory: /
   schedule:
-    interval: monthly
+    interval: quarterly
   labels: []
 - package-ecosystem: pip
   directory: /
   schedule:
-    interval: monthly
+    interval: quarterly
   allow:
   - dependency-type: direct
   labels: []
