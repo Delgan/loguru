@@ -114,8 +114,8 @@ def parse_size(size: str) -> Optional[float]:
 
     try:
         s = float(s)
-    except ValueError:
-        raise ValueError("Invalid float value while parsing size: '%s'" % s)
+    except ValueError as err:
+        raise ValueError("Invalid float value while parsing size: '%s'" % s) from err
 
     u = "kmgtpezy".index(u.lower()) + 1 if u else 0
     i = 1024 if i else 1000
