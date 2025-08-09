@@ -198,7 +198,7 @@ def parse_frequency(frequency: str):
     return frequencies.get(frequency, None)
 
 
-def parse_day(day: str) -> int | None:
+def parse_day(day: str) -> Optional[int]:
     """Parse a weekday string and return its integer value.
 
     Accepts full day names or "w0" to "w6".
@@ -280,7 +280,7 @@ def parse_time(time: str) -> datetime.time:
     raise ValueError(f"Unrecognized format while parsing time: '{time}'")
 
 
-def parse_daytime(daytime: str) -> tuple[int, datetime.time] | None:
+def parse_daytime(daytime: str) -> Optional[tuple[int, datetime.time]]:
     """Parse a string representing a day and time separated by 'at'.
 
     Args:
