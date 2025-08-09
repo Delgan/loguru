@@ -163,7 +163,7 @@ def parse_duration(duration: str) -> Optional[datetime.timedelta]:
         try:
             value = float(value)
         except ValueError as e:
-            raise ValueError(f"Invalid float value while parsing duration: '{value}'") from e
+            raise ValueError("Invalid float value while parsing duration: '%s'" % value) from e
 
         try:
             unit = next(u for r, u in units if re.fullmatch(r, unit, flags=re.I))
