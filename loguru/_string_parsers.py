@@ -122,7 +122,7 @@ def parse_size(size: str) -> Optional[float]:
     return s * i**u / b
 
 
-def parse_duration(duration: str) -> datetime.timedelta | None:
+def parse_duration(duration: str) -> Optional[datetime.timedelta]:
     """Parse a duration string and return a corresponding timedelta object.
 
     The string can include multiple units (years, months, weeks, days, hours, minutes, seconds).
