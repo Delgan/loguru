@@ -114,7 +114,7 @@ def parse_size(size: str) -> Optional[float]:
     try:
         s = float(s)
     except ValueError as e:
-        raise ValueError("Invalid float value while parsing size: '%s'" % s)
+        raise ValueError("Invalid float value while parsing size: '%f'" % s)
 
     u = "kmgtpezy".index(u.lower()) + 1 if u else 0
     i = 1024 if i else 1000
@@ -168,7 +168,7 @@ def parse_duration(duration: str) -> Optional[datetime.timedelta]:
         try:
             unit = next(u for r, u in units if re.fullmatch(r, unit, flags=re.I))
         except StopIteration:
-            raise ValueError("Invalid unit value while parsing duration: '{%d}'" %unit) from None
+            raise ValueError("Invalid unit value while parsing duration: '{%f}'" %unit) from None
 
         seconds += value * unit
 
@@ -308,7 +308,7 @@ def parse_daytime(daytime: str) -> Optional[Tuple[int, datetime.time]]:
         if match and parsed_day is None:
             raise ValueError("Unparsable day")
     except ValueError as e:
-        raise ValueError("Invalid day while parsing daytime: '%d'" % day) from e
+        raise ValueError("Invalid day while parsing daytime: '%s'" % day) from e
 
     try:
         parsed_time = parse_time(time)
