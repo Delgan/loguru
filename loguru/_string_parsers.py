@@ -1,6 +1,6 @@
 import datetime
 import re
-from typing import Optional
+from typing import Optional, Tuple
 
 class Frequencies:
     """Provide static methods to compute the next occurrence of various time frequencies.
@@ -280,7 +280,7 @@ def parse_time(time: str) -> datetime.time:
     raise ValueError(f"Unrecognized format while parsing time: '{time}'")
 
 
-def parse_daytime(daytime: str) -> Optional[tuple[int, datetime.time]]:
+def parse_daytime(daytime: str) -> Optional[Tuple[int, datetime.time]]:
     """Parse a string representing a day and time separated by 'at'.
 
     Args:
