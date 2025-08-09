@@ -229,7 +229,7 @@ def parse_day(day: str) -> Optional[int]:
     if day.startswith("w") and day[1:].isdigit():
         day = int(day[1:])
         if not 0 <= day < 7:
-            raise ValueError(f"Invalid weekday value while parsing day: '%s'" % day)
+            raise ValueError(f"Invalid weekday value while parsing day: '%d'" % day)
     else:
         day = None
 
