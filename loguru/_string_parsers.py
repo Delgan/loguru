@@ -2,6 +2,7 @@ import datetime
 import re
 from typing import Optional, Tuple
 
+
 class Frequencies:
     """Provide static methods to compute the next occurrence of various time frequencies.
 
@@ -168,7 +169,7 @@ def parse_duration(duration: str) -> Optional[datetime.timedelta]:
         try:
             unit = next(u for r, u in units if re.fullmatch(r, unit, flags=re.I))
         except StopIteration:
-            raise ValueError("Invalid unit value while parsing duration: '{%s}'" %unit) from None
+            raise ValueError("Invalid unit value while parsing duration: '{%s}'" % unit) from None
 
         seconds += value * unit
 
