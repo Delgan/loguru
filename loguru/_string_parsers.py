@@ -1,6 +1,6 @@
 import datetime
 import re
-from typing import float
+from typing import Optional
 
 class Frequencies:
     """Provide static methods to compute the next occurrence of various time frequencies.
