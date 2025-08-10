@@ -169,7 +169,7 @@ def parse_duration(duration: str) -> Optional[datetime.timedelta]:
         try:
             unit = next(u for r, u in units if re.fullmatch(r, unit, flags=re.I))
         except StopIteration:
-            raise ValueError("Invalid unit value while parsing duration: '{%s}'" % unit) from None
+            raise ValueError("Invalid unit value while parsing duration: '%s'" % unit) from None
 
         seconds += value * unit
 
@@ -230,7 +230,7 @@ def parse_day(day: str) -> Optional[int]:
     if day.startswith("w") and day[1:].isdigit():
         day = int(day[1:])
         if not 0 <= day < 7:
-            raise ValueError("Invalid weekday value while parsing day: '%d'" % day)
+            raise ValueError("Invalid weekday value while parsing day (expected [0-6]): '%d'" % day)
     else:
         day = None
 
