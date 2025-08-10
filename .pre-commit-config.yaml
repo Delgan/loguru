@@ -3,6 +3,7 @@ repos:
   rev: v5.0.0
   hooks:
   - id: end-of-file-fixer
+  - id: fix-byte-order-marker
   - id: trailing-whitespace
   - id: check-added-large-files
   - id: mixed-line-ending
