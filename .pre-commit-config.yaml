@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: end-of-file-fixer
   - id: fix-byte-order-marker
@@ -9,11 +9,11 @@ repos:
   - id: mixed-line-ending
     args: [--fix=lf]
 - repo: https://github.com/crate-ci/typos
-  rev: v1.26.0
+  rev: v1.35.3
   hooks:
   - id: typos
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.14.0
+  rev: v2.15.0
   hooks:
   - id: pretty-format-ini
     args: [--autofix]
@@ -24,11 +24,11 @@ repos:
   hooks:
   - id: taplo-format
 - repo: https://github.com/ambv/black
-  rev: 24.10.0
+  rev: 25.1.0
   hooks:
   - id: black
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.8.0
+  rev: v0.12.8
   hooks:
-  - id: ruff
+  - id: ruff-check
     args: [--fix, --exit-non-zero-on-fix]

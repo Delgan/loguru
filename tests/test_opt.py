@@ -580,7 +580,7 @@ def test_before_bind(writer):
 
 def test_deprecated_ansi_argument(writer):
     logger.add(writer, format="{message}", colorize=True)
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning, match=r"The 'ansi' parameter is deprecated"):
         logger.opt(ansi=True).info("Foo <red>bar</red> baz")
     assert writer.read() == parse("Foo <red>bar</red> baz\n")
 

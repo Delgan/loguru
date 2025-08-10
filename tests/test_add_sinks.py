@@ -241,12 +241,12 @@ def test_invalid_sink(sink):
 
 
 def test_deprecated_start_and_stop(writer):
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning, match=r"The 'start\(\)' method is deprecated"):
         i = logger.start(writer, format="{message}")
     logger.debug("Test")
     assert writer.read() == "Test\n"
     writer.clear()
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning, match=r"The 'stop\(\)' method is deprecated"):
         logger.stop(i)
     logger.debug("Test")
     assert writer.read() == ""

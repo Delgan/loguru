@@ -53,7 +53,7 @@ class _GeneratorContextManager(ContextManager[_T], Generic[_T]):
     def __call__(self, func: _F) -> _F: ...
     def __exit__(
         self,
-        typ: Optional[Type[BaseException]],
+        type: Optional[Type[BaseException]],
         value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> Optional[bool]: ...

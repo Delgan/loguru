@@ -2185,7 +2185,7 @@ class Logger:
         an ``except`` block. To log an exception that has already been caught, use the ``exception``
         argument of |opt| along with a call to the |error| method (for example).
         """
-        options = (True,) + __self._options[1:]
+        options = (True, *__self._options[1:])
         __self._log("ERROR", False, options, __message, args, kwargs)
 
     def log(__self, __level, __message, *args, **kwargs):  # noqa: N805
