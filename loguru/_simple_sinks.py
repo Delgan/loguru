@@ -8,8 +8,10 @@ from ._asyncio_loop import get_running_loop, get_task_loop
 class StreamSink:
     """A sink that writes log messages to a stream object.
 
-    Args:
-        stream: A stream object that supports write operations.
+    Parameters
+    ----------
+    stream
+        A stream object that supports write operations.
     """
 
     def __init__(self, stream):
@@ -21,8 +23,10 @@ class StreamSink:
     def write(self, message):
         """Write a message to the stream.
 
-        Args:
-            message: The message to write.
+        Parameters
+        ----------
+        message
+            The message to write.
         """
         self._stream.write(message)
         if self._flushable:
@@ -38,7 +42,8 @@ class StreamSink:
 
         Returns
         -------
-            list: List of tasks to complete.
+        list
+            List of tasks to complete.
         """
         if not self._completable:
             return []
@@ -48,8 +53,10 @@ class StreamSink:
 class StandardSink:
     """A sink that writes log messages using the standard logging module.
 
-    Args:
-        handler: A logging handler instance.
+    Parameters
+    ----------
+    handler
+        A logging handler instance.
     """
 
     def __init__(self, handler):
@@ -58,8 +65,10 @@ class StandardSink:
     def write(self, message):
         """Write a message using the standard logging handler.
 
-        Args:
-            message: The message to write.
+        Parameters
+        ----------
+        message
+            The message to write.
         """
         raw_record = message.record
         message = str(message)
@@ -96,7 +105,8 @@ class StandardSink:
 
         Returns
         -------
-            list: Empty list as standard sink has no async tasks.
+        list
+            Empty list as standard sink has no async tasks.
         """
         return []
 
@@ -104,10 +114,14 @@ class StandardSink:
 class AsyncSink:
     """A sink that handles asynchronous logging operations.
 
-    Args:
-        function: The async function to execute.
-        loop: The event loop to use.
-        error_interceptor: An interceptor for handling errors.
+    Parameters
+    ----------
+    function
+        The async function to execute.
+    loop
+        The event loop to use.
+    error_interceptor
+        An interceptor for handling errors.
     """
 
     def __init__(self, function, loop, error_interceptor):
@@ -119,8 +133,10 @@ class AsyncSink:
     def write(self, message):
         """Asynchronously write a message.
 
-        Args:
-            message: The message to write.
+        Parameters
+        ----------
+        message
+            The message to write.
         """
         try:
             loop = self._loop or get_running_loop()
@@ -150,7 +166,8 @@ class AsyncSink:
 
         Returns
         -------
-            list: List of tasks to complete.
+        list
+            List of tasks to complete.
         """
         # To avoid errors due to "self._tasks" being mutated while iterated, the
         # "tasks_to_complete()" method must be protected by the same lock as "write()" (which
@@ -162,8 +179,10 @@ class AsyncSink:
     async def _complete_task(self, task):
         """Complete a single task.
 
-        Args:
-            task: The task to complete.
+        Parameters
+        ----------
+        task
+            The task to complete.
         """
         loop = get_running_loop()
         if get_task_loop(task) is not loop:
@@ -186,8 +205,10 @@ class AsyncSink:
 class CallableSink:
     """A sink that executes a callable function for each log message.
 
-    Args:
-        function: The function to call for each message.
+    Parameters
+    ----------
+    function
+        The function to call for each message.
     """
 
     def __init__(self, function):
@@ -196,8 +217,10 @@ class CallableSink:
     def write(self, message):
         """Write a message by calling the function.
 
-        Args:
-            message: The message to pass to the function.
+        Parameters
+        ----------
+        message
+            The message to pass to the function.
         """
         self._function(message)
 
@@ -210,6 +233,7 @@ class CallableSink:
 
         Returns
         -------
-            list: Empty list as callable sink has no tasks.
+        list
+            Empty list as callable sink has no tasks.
         """
         return []

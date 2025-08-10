@@ -7,9 +7,12 @@ class RecordLevel:
 
     Attributes
     ----------
-        icon (str): The icon representing the log level
-        name (str): The name of the log level
-        no (int): The numeric value of the log level
+    icon : str
+        The icon representing the log level
+    name : str
+        The name of the log level
+    no : int
+        The numeric value of the log level
     """
 
     __slots__ = ("icon", "name", "no")
@@ -17,10 +20,14 @@ class RecordLevel:
     def __init__(self, name, no, icon):
         """Initialize a RecordLevel instance.
 
-        Args:
-            name (str): The name of the log level
-            no (int): The numeric value of the log level
-            icon (str): The icon representing the log level
+        Parameters
+        ----------
+        name : str
+            The name of the log level
+        no : int
+            The numeric value of the log level
+        icon : str
+            The icon representing the log level
         """
         self.name = name
         self.no = no
@@ -31,19 +38,23 @@ class RecordLevel:
 
         Returns
         -------
-            str: Formatted string with name, number and icon
+        str
+            Formatted string with name, number and icon
         """
         return "(name=%r, no=%r, icon=%r)" % (self.name, self.no, self.icon)
 
     def __format__(self, spec):
         """Format the RecordLevel instance.
 
-        Args:
-            spec (str): Format specification
+        Parameters
+        ----------
+        spec : str
+            Format specification
 
         Returns
         -------
-            str: Formatted name according to specification
+        str
+            Formatted name according to specification
         """
         return self.name.__format__(spec)
 
@@ -53,8 +64,10 @@ class RecordFile:
 
     Attributes
     ----------
-        name (str): The name of the file
-        path (str): The path to the file
+    name : str
+        The name of the file
+    path : str
+        The path to the file
     """
 
     __slots__ = ("name", "path")
@@ -62,9 +75,12 @@ class RecordFile:
     def __init__(self, name, path):
         """Initialize a RecordFile instance.
 
-        Args:
-            name (str): The name of the file
-            path (str): The path to the file
+        Parameters
+        ----------
+        name : str
+            The name of the file
+        path : str
+            The path to the file
         """
         self.name = name
         self.path = path
@@ -74,19 +90,23 @@ class RecordFile:
 
         Returns
         -------
-            str: Formatted string with name and path
+        str
+            Formatted string with name and path
         """
         return "(name=%r, path=%r)" % (self.name, self.path)
 
     def __format__(self, spec):
         """Format the RecordFile instance.
 
-        Args:
-            spec (str): Format specification
+        Parameters
+        ----------
+        spec : str
+            Format specification
 
         Returns
         -------
-            str: Formatted name according to specification
+        str
+            Formatted name according to specification
         """
         return self.name.__format__(spec)
 
@@ -96,8 +116,10 @@ class RecordThread:
 
     Attributes
     ----------
-        id (int): The thread ID
-        name (str): The thread name
+    id : int
+        The thread ID
+    name : str
+        The thread name
     """
 
     __slots__ = ("id", "name")
@@ -105,9 +127,12 @@ class RecordThread:
     def __init__(self, id_, name):
         """Initialize a RecordThread instance.
 
-        Args:
-            id_ (int): The thread ID
-            name (str): The thread name
+        Parameters
+        ----------
+        id_ : int
+            The thread ID
+        name : str
+            The thread name
         """
         self.id = id_
         self.name = name
@@ -117,19 +142,23 @@ class RecordThread:
 
         Returns
         -------
-            str: Formatted string with id and name
+        str
+            Formatted string with id and name
         """
         return "(id=%r, name=%r)" % (self.id, self.name)
 
     def __format__(self, spec):
         """Format the RecordThread instance.
 
-        Args:
-            spec (str): Format specification
+        Parameters
+        ----------
+        spec : str
+            Format specification
 
         Returns
         -------
-            str: Formatted ID according to specification
+        str
+            Formatted ID according to specification
         """
         return self.id.__format__(spec)
 
@@ -139,8 +168,10 @@ class RecordProcess:
 
     Attributes
     ----------
-        id (int): The process ID
-        name (str): The process name
+    id : int
+        The process ID
+    name : str
+        The process name
     """
 
     __slots__ = ("id", "name")
@@ -148,9 +179,12 @@ class RecordProcess:
     def __init__(self, id_, name):
         """Initialize a RecordProcess instance.
 
-        Args:
-            id_ (int): The process ID
-            name (str): The process name
+        Parameters
+        ----------
+        id_ : int
+            The process ID
+        name : str
+            The process name
         """
         self.id = id_
         self.name = name
@@ -160,19 +194,23 @@ class RecordProcess:
 
         Returns
         -------
-            str: Formatted string with id and name
+        str
+            Formatted string with id and name
         """
         return "(id=%r, name=%r)" % (self.id, self.name)
 
     def __format__(self, spec):
         """Format the RecordProcess instance.
 
-        Args:
-            spec (str): Format specification
+        Parameters
+        ----------
+        spec : str
+            Format specification
 
         Returns
         -------
-            str: Formatted ID according to specification
+        str
+            Formatted ID according to specification
         """
         return self.id.__format__(spec)
 
@@ -184,9 +222,12 @@ class RecordException(
 
     Attributes
     ----------
-        type: The exception type
-        value: The exception value
-        traceback: The exception traceback
+    type
+        The exception type
+    value
+        The exception value
+    traceback
+        The exception traceback
     """
 
     def __repr__(self):
@@ -194,7 +235,8 @@ class RecordException(
 
         Returns
         -------
-            str: Formatted string with type, value and traceback
+        str
+            Formatted string with type, value and traceback
         """
         return "(type=%r, value=%r, traceback=%r)" % (self.type, self.value, self.traceback)
 
@@ -206,7 +248,8 @@ class RecordException(
 
         Returns
         -------
-            tuple: A tuple containing class and initialization arguments
+        tuple
+            A tuple containing class and initialization arguments
         """
         # The traceback is not picklable, therefore it needs to be removed. Additionally, there's a
         # possibility that the exception value is not picklable either. In such cases, we also need
@@ -226,14 +269,19 @@ class RecordException(
     def _from_pickled_value(cls, type_, pickled_value, traceback_):
         """Create a RecordException instance from a pickled value.
 
-        Args:
-            type_: The exception type
-            pickled_value: The pickled exception value
-            traceback_: The exception traceback
+        Parameters
+        ----------
+        type_
+            The exception type
+        pickled_value
+            The pickled exception value
+        traceback_
+            The exception traceback
 
         Returns
         -------
-            RecordException: A new instance with unpickled value
+        RecordException
+            A new instance with unpickled value
         """
         try:
             # It's safe to use "pickle.loads()" in this case because the pickled value is generated

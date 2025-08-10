@@ -14,12 +14,15 @@ class Frequencies:
     def hourly(t: datetime.datetime) -> datetime.datetime:
         """Compute the next hour occurrence.
 
-        Args:
-            t (datetime.datetime): The reference datetime.
+        Parameters
+        ----------
+        t : datetime.datetime
+            The reference datetime.
 
         Returns
         -------
-            datetime.datetime: Next hour with minutes, seconds, microseconds set to zero.
+        datetime.datetime
+            Next hour with minutes, seconds, microseconds set to zero.
         """
         dt = t + datetime.timedelta(hours=1)
         return dt.replace(minute=0, second=0, microsecond=0)
@@ -28,12 +31,15 @@ class Frequencies:
     def daily(t: datetime.datetime) -> datetime.datetime:
         """Compute the next day occurrence.
 
-        Args:
-            t (datetime.datetime): The reference datetime.
+        Parameters
+        ----------
+        t : datetime.datetime
+            The reference datetime.
 
         Returns
         -------
-            datetime.datetime: Next day with hour, minutes, seconds, microseconds set to zero.
+        datetime.datetime
+            Next day with hour, minutes, seconds, microseconds set to zero.
         """
         dt = t + datetime.timedelta(days=1)
         return dt.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -42,12 +48,15 @@ class Frequencies:
     def weekly(t: datetime.datetime) -> datetime.datetime:
         """Compute the next week occurrence.
 
-        Args:
-            t (datetime.datetime): The reference datetime.
+        Parameters
+        ----------
+        t : datetime.datetime
+            The reference datetime.
 
         Returns
         -------
-            datetime.datetime: Next Monday with hour, minutes, seconds, microseconds set to zero.
+        datetime.datetime
+            Next Monday with hour, minutes, seconds, microseconds set to zero.
         """
         dt = t + datetime.timedelta(days=7 - t.weekday())
         return dt.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -56,13 +65,15 @@ class Frequencies:
     def monthly(t: datetime.datetime) -> datetime.datetime:
         """Compute the next month occurrence.
 
-        Args:
-            t (datetime.datetime): The reference datetime.
+        Parameters
+        ----------
+        t : datetime.datetime
+            The reference datetime.
 
         Returns
         -------
-            datetime.datetime: First day of next month with hour, minutes,
-        seconds, microseconds set to zero.
+        datetime.datetime
+            First day of next month with hour, minutes, seconds, microseconds set to zero.
         """
         if t.month == 12:
             y, m = t.year + 1, 1
@@ -74,13 +85,15 @@ class Frequencies:
     def yearly(t: datetime.datetime) -> datetime.datetime:
         """Compute the next year occurrence.
 
-        Args:
-            t (datetime.datetime): The reference datetime.
+        Parameters
+        ----------
+        t : datetime.datetime
+            The reference datetime.
 
         Returns
         -------
-        datetime.datetime: First day of next year with hour,
-        minutes, seconds, microseconds set to zero.
+        datetime.datetime
+            First day of next year with hour, minutes, seconds, microseconds set to zero.
         """
         y = t.year + 1
         return t.replace(year=y, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -91,16 +104,20 @@ def parse_size(size: str) -> Optional[float]:
 
     Supports formats like '100MB', '2GiB', '1.5TB'. Case insensitive.
 
-    Args:
-        size (str): Size string to parse (e.g., '100MB', '2GiB').
+    Parameters
+    ----------
+    size : str
+        Size string to parse (e.g., '100MB', '2GiB').
 
     Returns
     -------
-        float | None: Size in bits or None if invalid format.
+    float | None
+        Size in bits or None if invalid format.
 
     Raises
     ------
-        ValueError: If numeric value or unit is invalid.
+    ValueError
+        If numeric value or unit is invalid.
     """
     size = size.strip()
     reg = re.compile(r"([e\+\-\.\d]+)\s*([kmgtpezy])?(i)?(b)", flags=re.I)
@@ -129,16 +146,20 @@ def parse_duration(duration: str) -> Optional[datetime.timedelta]:
     The string can include multiple units (years, months, weeks, days, hours, minutes, seconds).
     Example: "1h 30min", "2 days, 3h", "1.5y 2months".
 
-    Args:
-        duration (str): The duration string to parse.
+    Parameters
+    ----------
+    duration : str
+        The duration string to parse.
 
     Returns
     -------
-        datetime.timedelta | None: The parsed duration or None if input is invalid.
+    datetime.timedelta | None
+        The parsed duration or None if input is invalid.
 
     Raises
     ------
-        ValueError: If a value cannot be converted to float or if an invalid unit is encountered.
+    ValueError
+        If a value cannot be converted to float or if an invalid unit is encountered.
     """
     duration = duration.strip()
     reg = r"(?:([e\+\-\.\d]+)\s*([a-z]+)[\s\,]*)"
@@ -181,12 +202,15 @@ def parse_frequency(frequency: str):
 
     Supported frequencies: hourly, daily, weekly, monthly, yearly.
 
-    Args:
-        frequency (str): The frequency string.
+    Parameters
+    ----------
+    frequency : str
+        The frequency string.
 
     Returns
     -------
-        Callable | None: Corresponding Frequencies method or None if unrecognized.
+    Callable | None
+        Corresponding Frequencies method or None if unrecognized.
     """
     frequencies = {
         "hourly": Frequencies.hourly,
@@ -204,16 +228,20 @@ def parse_day(day: str) -> Optional[int]:
 
     Accepts full day names or "w0" to "w6".
 
-    Args:
-        day (str): The day to parse.
+    Parameters
+    ----------
+    day : str
+        The day to parse.
 
     Returns
     -------
-        int | None: Integer value (Monday=0 … Sunday=6), or None if invalid.
+    int | None
+        Integer value (Monday=0 ... Sunday=6), or None if invalid.
 
     Raises
     ------
-        ValueError: If the digit in 'wX' is not in range [0-6].
+    ValueError
+        If the digit in 'wX' is not in range [0-6].
     """
     days = {
         "monday": 0,
@@ -242,16 +270,20 @@ def parse_time(time: str) -> datetime.time:
 
     Supports formats: HH, HH:MM, HH:MM:SS, HH AM/PM, etc.
 
-    Args:
-        time (str): The time string.
+    Parameters
+    ----------
+    time : str
+        The time string.
 
     Returns
     -------
-        datetime.time: The parsed time.
+    datetime.time
+        The parsed time.
 
     Raises
     ------
-        ValueError: If input doesn't match any supported format.
+    ValueError
+        If input doesn't match any supported format.
     """
     time = time.strip()
     reg = re.compile(r"^[\d\.\:]+\s*(?:[ap]m)?$", flags=re.I)
@@ -284,16 +316,20 @@ def parse_time(time: str) -> datetime.time:
 def parse_daytime(daytime: str) -> Optional[Tuple[int, datetime.time]]:
     """Parse a string representing a day and time separated by 'at'.
 
-    Args:
-        daytime (str): The day and time string.
+    Parameters
+    ----------
+    daytime : str
+        The day and time string.
 
     Returns
     -------
-        tuple[int, datetime.time] | None: Parsed (day, time) or None.
+    tuple[int, datetime.time] | None
+        Parsed (day, time) or None.
 
     Raises
     ------
-        ValueError: If the day or time cannot be parsed.
+    ValueError
+        If the day or time cannot be parsed.
     """
     daytime = daytime.strip()
     reg = re.compile(r"^(.*?)\s+at\s+(.*)$", flags=re.I)
