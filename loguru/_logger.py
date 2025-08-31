@@ -297,7 +297,7 @@ class Logger:
             Whether the exception trace formatted should be extended upward, beyond the catching
             point, to show the full stacktrace which generated the error.
         diagnose : |bool|, optional
-            Whether the exception trace should display the variables values to eases the debugging.
+            Whether the exception trace should display the variables values to ease the debugging.
             This should be set to ``False`` in production to avoid leaking sensitive data.
         enqueue : |bool|, optional
             Whether the messages to be logged should first pass through a multiprocessing-safe queue
