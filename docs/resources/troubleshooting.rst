@@ -239,6 +239,47 @@ If you observe such weird behavior, you should review your code carefully to ens
 It is also a common issue with web frameworks like Gunicorn and Uvicorn, as they start multiple workers in parallel. In such cases, you need to set up a log server, and configure workers to send messages to it using a socket. Refer to :ref:`Transmitting log messages across network, processes or Gunicorn workers <inter-process-communication>` for details.
 
 
+Why am I facing errors when I use a custom formatting function?
+---------------------------------------------------------------
+
+When using a custom function to define the log format (by passing a callable to the ``format`` argument of |add|), you must ensure that the function returns a string containing the unformatted template and not an already formatted message.
+
+This string should include placeholders for the fields you want to display (such as ``"{time}"``, ``"{level}"``, ``"{message}"``, etc). Later, Loguru will call an equivalent of |str.format| on this string, passing the log record as keyword arguments to replace the placeholders with actual values. If the returned string is already formatted (i.e., if it contains actual values instead of placeholders), some of the values might be interpreted as placeholders and lead to a ``ValueError`` or ``KeyError`` because they don't correspond to any key in the log record.
+
+For example, the following code is incorrect because the function returns a pre-formatted string::
+
+    def incorrect_dynamic_format(record):
+        # This is wrong because it formats the message immediately.
+        return f"{record['time']} - {record['level']} - {record['message']}"
+
+    logger.add(sys.stderr, format=incorrect_dynamic_format)
+
+Instead, the function should return a string with placeholders, like this::
+
+    def correct_dynamic_format(record):
+        # This is correct because it returns a template string.
+        return "{time} - {level} - {message}\n{exception}"
+
+    logger.add(sys.stderr, format=correct_dynamic_format)
+
+Think about this function as a way to dynamically generate the format template, not to format the message itself. Loguru will handle the actual formatting of the log message later, using the template you provide.
+
+If for some reason you need to format the message yourself, you should save the result in a new field of the record's ``"extra"`` dictionary, and then use this new field in the log format. For example::
+
+    def custom_format_with_extra(record):
+        record["extra"]["custom_msg"] = f"{record['time']} - {record['level']} - {record['message']}"
+        return "{extra[custom_msg]}\n{exception}"
+
+    logger.add(sys.stderr, format=custom_format_with_extra)
+
+Finally, note that if your format contains curly braces that are not meant to be placeholders, you must escape them by doubling them::
+
+    def custom_json_format(record):
+        return '{{ "@timestamp": {time:X}, "levelno": "{level.no}", "msg": "{message}" }}'
+
+    logger.add(sys.stderr, format=custom_json_format)
+
+
 Why logging a message with f-string sometimes raises an exception?
 ------------------------------------------------------------------
 
