@@ -90,7 +90,14 @@ It is not possible to change the level of an existing handler. If you need to mo
     logger.remove()  # Remove the default handler.
     logger.add(sys.stderr, level="INFO")
 
-By default, the level of each handler is ``"DEBUG"``. You can adjust this value :ref:`using environment variables <env>`.
+By default, the level of each handler is ``"DEBUG"``. You can adjust this value :ref:`using environment variables <env>`:
+
+.. code:: text
+
+    export LOGURU_LEVEL="INFO"  # On Linux or macOS.
+    setx LOGURU_LEVEL "INFO"    # On Windows.
+
+Note that this only affects handlers that do not explicitly configure their level.
 
 .. seealso::
 

@@ -749,8 +749,8 @@ class Logger:
         useful if you don't like the log format of the pre-configured sink.
 
         Each of the |add| default parameter can be modified by setting the ``LOGURU_[PARAM]``
-        environment variable. For example on Linux: ``export LOGURU_FORMAT="{time} - {message}"``
-        or ``export LOGURU_DIAGNOSE=NO``.
+        environment variable. For example on Linux: ``export LOGURU_LEVEL="WARNING"``
+        or ``export LOGURU_FORMAT="{time} - {message}"``.
 
         The default levels' attributes can also be modified by setting the ``LOGURU_[LEVEL]_[ATTR]``
         environment variable. For example, on Windows: ``setx LOGURU_DEBUG_COLOR "<blue>"``

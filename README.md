@@ -352,6 +352,8 @@ export LOGURU_FORMAT="{time} | <lvl>{message}</lvl>"
 setx LOGURU_DEBUG_COLOR "<green>"
 ```
 
+Environment variables match the arguments of [`logger.add()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.add), with `LOGURU_LEVEL` notably letting you set the default level of handlers. Common flags like `NO_COLOR` and `FORCE_COLOR` are also supported.
+
 ### Convenient parser
 
 It is often useful to extract specific information from generated logs, this is why Loguru provides a [`parse()`](https://loguru.readthedocs.io/en/stable/api/logger.html#loguru._logger.Logger.parse) method which helps to deal with logs and regexes.

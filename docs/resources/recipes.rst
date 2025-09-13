@@ -196,6 +196,8 @@ Finally, more advanced control over handler's level can be achieved by using a c
     logger.debug("Not logged")
 
 
+Also, note that if the default handler configuration, such as the default level, does not suit your needs, it can be adjusted :ref:`through environment variables <env>`.
+
 .. _configuring-loguru-as-lib-or-app:
 
 Configuring Loguru to be used by a library or an application
