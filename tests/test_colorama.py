@@ -160,7 +160,8 @@ def test_dumb_term_not_colored(monkeypatch, patched, expected):
         ("__stderr__", "1", False),
         ("stdout", "1", False),
         ("stderr", "1", False),
-        ("", "1", False),
+        # Only standard out and err should be affected.
+        ("", "1", True),
         # An empty value for NO_COLOR should not be applied:
         ("__stdout__", "", True),
         ("__stderr__", "", True),
@@ -184,7 +185,8 @@ def test_honor_no_color_standard(monkeypatch, patched, no_color, expected):
         ("__stderr__", "1", True),
         ("stdout", "1", True),
         ("stderr", "1", True),
-        ("", "1", True),
+        # Only standard out and err should be affected.
+        ("", "1", False),
         # An empty value for FORCE_COLOR should not be applied:
         ("__stdout__", "", False),
         ("__stderr__", "", False),
