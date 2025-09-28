@@ -50,15 +50,21 @@
   - sink: Path('file.log')
   - sink: 'lambda m: None'
   - sink: StreamHandler()
+  - sink: io.StringIO()
+  - sink: Proxy()
   main: |
+    import io
     import sys
     from loguru import logger
     from logging import StreamHandler
     from pathlib import Path
+    class Proxy:
+      def write(self, message: str) -> int:
+        return 0
     id = logger.add({{sink}})
     reveal_type(id)
   out: |
-    main:6: note: Revealed type is "builtins.int"
+    main:10: note: Revealed type is "builtins.int"
 
 - case: basic_sink_options
   parametrized:

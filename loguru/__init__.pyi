@@ -112,7 +112,7 @@ class Message(str):
     record: Record
 
 class Writable(Protocol):
-    def write(self, message: Message) -> None: ...
+    def write(self, message: Message) -> Any: ...
 
 FilterDict = Dict[Optional[str], Union[str, int, bool]]
 FilterFunction = Callable[[Record], bool]
