@@ -10,10 +10,11 @@ import sys as _sys
 from . import _defaults
 from ._logger import Core as _Core
 from ._logger import Logger as _Logger
+from ._defaults import DEFAULT_FORMAT
 
 __version__ = "0.7.3"
 
-__all__ = ["logger"]
+__all__ = ["logger", "DEFAULT_FORMAT"]
 
 logger = _Logger(
     core=_Core(),
