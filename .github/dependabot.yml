@@ -15,3 +15,4 @@ updates:
   ignore:
   - dependency-name: '*'
     update-types: [version-update:semver-patch]
+  - dependency-name: pytest-cov  # Latest version needs a new "subprocess" configuration.
