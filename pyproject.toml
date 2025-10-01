@@ -97,6 +97,9 @@ typeCheckingMode = "off"
 [tool.flit.module]
 name = "loguru"
 
+[tool.coverage.run]
+patch = ["subprocess"]
+
 [tool.pytest.ini_options]
 addopts = "-l"
 filterwarnings = [
