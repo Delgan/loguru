@@ -68,7 +68,7 @@ dev = [
   "mypy==v0.971 ; python_version>='3.6' and python_version<'3.7'",
   "mypy==v1.4.1 ; python_version>='3.7' and python_version<'3.8'",
   "mypy==v1.14.1 ; python_version>='3.8' and  python_version<'3.9'",
-  "mypy==v1.17.1 ; python_version>='3.9'",
+  "mypy==v1.18.2 ; python_version>='3.9'",
   # Docs.
   "Sphinx==8.2.1 ; python_version>='3.11'",
   "sphinx-rtd-theme==3.0.2 ; python_version>='3.11'",
