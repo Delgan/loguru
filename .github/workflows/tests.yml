@@ -48,7 +48,7 @@ jobs:
     container: ${{ matrix.container }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Set up Python
       if: ${{ matrix.container == null }}
       uses: actions/setup-python@v5
@@ -73,7 +73,7 @@ jobs:
     needs: tests
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Download artifacts
       uses: actions/download-artifact@v5
     - name: Upload to Codecov
