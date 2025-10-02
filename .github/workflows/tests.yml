@@ -38,7 +38,7 @@ jobs:
         - os: windows-2022
           python-version: '3.12'
           allow-failure: false
-        - os: macos-13
+        - os: macos-15
           python-version: '3.12'
           allow-failure: false
     runs-on: ${{ matrix.os }}
