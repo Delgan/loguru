@@ -23,7 +23,7 @@ jobs:
         - '3.12'
         - '3.13'
         - 3.14-dev
-        - pypy-3.10
+        - pypy-3.11
         allow-failure:
         - false
         include:

@@ -266,6 +266,9 @@ def test_exception_modern(filename, minimum_python_version):
     if sys.version_info < minimum_python_version:
         pytest.skip("Feature not supported in this Python version")
 
+    if filename == "exception_group_catch" and platform.python_implementation() == "PyPy":
+        pytest.skip("Incorrect traceback formatting on PyPy")  #  Issue #5338.
+
     compare_exception("modern", filename)
 
 
