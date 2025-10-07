@@ -18,6 +18,8 @@
 - Make ``logger.catch()`` usable as an asynchronous context manager (`#1084 <https://github.com/Delgan/loguru/issues/1084>`_).
 - Make ``logger.catch()`` compatible with asynchronous generators (`#1302 <https://github.com/Delgan/loguru/issues/1302>`_).
 - Improve feedback for invalid format keys in logger format strings (`#1450 <https://github.com/Delgan/loguru/issues/1450>`_, thanks `@Krishnachaitanyakc <https://github.com/Krishnachaitanyakc>`_).
+- Support python-3.14 template strings as log messages. The comfort of f-string syntax combined with the performance of lazily evaluated formatting. (`#1397 <https://github.com/Delgan/loguru/issues/1302>`_).
+
 
 `0.7.3`_ (2024-12-06)
 =====================

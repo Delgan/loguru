@@ -136,6 +136,16 @@ else:
         return False
 
 
+try:
+    from string.templatelib import Interpolation as _Interpolation
+    from string.templatelib import Template as _Template
+    from string.templatelib import convert as _tmpl_convert
+except ImportError:
+    _Template = None  # type: ignore[assignment,misc]
+    _Interpolation = None  # type: ignore[assignment,misc]
+    _tmpl_convert = None  # type: ignore[assignment,misc]
+
+
 Level = namedtuple("Level", ["name", "no", "color", "icon"])  # noqa: PYI024
 
 start_time = aware_now()
@@ -2025,6 +2035,24 @@ class Logger:
                 buffer = buffer[end:]
                 yield from matches[:-1]
 
+    @staticmethod
+    def _message_to_string(message):
+        """Message can be a string, Any or a Template (for python>=3.14).
+
+        For templates, we convert them into a string analogously to how f-string work.
+        Everything else is just converted to string via str(message).
+        """
+        if _Template is None or not isinstance(message, _Template):
+            return str(message)
+
+        # Code follows PEP-750 example "implementing f-strings with t-strings"
+        def item_to_string(item):
+            if isinstance(item, _Interpolation):
+                return format(_tmpl_convert(item.value, item.conversion), item.format_spec)
+            return item
+
+        return "".join(item_to_string(item) for item in message)
+
     def _log(self, level, from_decorator, options, message, args, kwargs):
         core = self._core
 
@@ -2118,7 +2146,7 @@ class Logger:
             "function": co_name,
             "level": RecordLevel(level_name, level_no, level_icon),
             "line": f_lineno,
-            "message": str(message),
+            "message": Logger._message_to_string(message),
             "module": splitext(file_name)[0],
             "name": name,
             "process": RecordProcess(process.ident, process.name),
