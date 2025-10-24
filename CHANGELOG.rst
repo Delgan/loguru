@@ -1,6 +1,7 @@
 `Unreleased`_
 =============
 
+- Add documentation warning about duplicate log records when using both ``caplog`` and ``propagate_logs`` fixtures together in pytest, with a unified fixture solution (`#1406 <https://github.com/Delgan/loguru/issues/1406>`_).
 - Add new ``logger.reinstall()`` method to automatically set up the ``logger`` in spawned child processes (`#818 <https://github.com/Delgan/loguru/issues/818>`_, thanks `@monchin <https://github.com/monchin>`_).
 - Fix a regression preventing formatting of ``record["time"]`` when using ``zoneinfo.ZoneInfo`` timezones (`#1260 <https://github.com/Delgan/loguru/pull/1260>`_, thanks `@bijlpieter <https://github.com/bijlpieter>`_).
 - Fix possible ``ValueError`` raised on Windows when system clock was set far ahead in the future (`#1291 <https://github.com/Delgan/loguru/issues/1291>`_).
