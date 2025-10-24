@@ -82,7 +82,7 @@ def test_caplog_standard_alone_works(caplog_standard):
     logger.error("TEST_MESSAGE_STANDARD")
 
     matching = [r for r in caplog_standard.records if "TEST_MESSAGE_STANDARD" in r.message]
-    assert len(matching) == 1, f"Expected 1 record, found {len(matching)}"
+    assert len(matching) == 1, "Expected 1 record, found {}".format(len(matching))
 
 
 def test_propagate_logs_standard_alone_works(propagate_logs_standard, caplog):
@@ -113,10 +113,10 @@ def test_caplog_and_propagate_together_causes_duplication(
 
     # This assertion FAILS with standard fixtures (finds 2) but would PASS with unified (finds 1)
     assert len(matching) == 1, (
-        f"DUPLICATION BUG: Expected 1 log record, but found {len(matching)}. "
-        f"This occurs when using both caplog and propagate_logs fixtures together. "
-        f"See docs/resources/migration.rst for the unified fixture solution."
-    )
+        "DUPLICATION BUG: Expected 1 log record, but found {}. "
+        "This occurs when using both caplog and propagate_logs fixtures together. "
+        "See docs/resources/migration.rst for the unified fixture solution."
+    ).format(len(matching))
 
 
 def test_unified_fixture_prevents_duplication(caplog_unified):
@@ -124,7 +124,7 @@ def test_unified_fixture_prevents_duplication(caplog_unified):
     logger.error("TEST_MESSAGE_UNIFIED")
 
     matching = [r for r in caplog_unified.records if "TEST_MESSAGE_UNIFIED" in r.message]
-    assert len(matching) == 1, f"Expected 1 record, found {len(matching)}"
+    assert len(matching) == 1, "Expected 1 record, found {}".format(len(matching))
 
 
 def test_unified_fixture_captures_multiple_logs(caplog_unified):
