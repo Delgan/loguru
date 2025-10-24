@@ -373,6 +373,62 @@ This is done by overriding the |caplog|_ fixture to capture its handler. In your
 
 Run your tests and things should all be working as expected. Additional information can be found in `GH#59`_ and `GH#474`_. You can also install and use the |pytest-loguru|_ package created by `@mcarans`_.
 
+.. warning::
+
+   **Avoiding Duplicate Log Records**
+
+   If you are also using the ``propagate_logs`` fixture (shown below) to enable ``--log-cli-level`` support, be aware that using both fixtures together will cause each log message to be captured **twice** in ``caplog.records``.
+
+   This happens because:
+
+   1. The custom ``caplog`` fixture captures logs directly from Loguru
+   2. The ``propagate_logs`` fixture forwards Loguru logs to Python's logging module
+   3. The ``caplog`` fixture (by default) also captures from Python's logging module
+   4. **Result**: Each log appears twice in ``caplog.records``
+
+   **Solution**: Use the unified fixture below instead of both separate fixtures::
+
+       import logging
+       import pytest
+       from loguru import logger
+       from _pytest.logging import LogCaptureFixture
+
+       @pytest.fixture
+       def caplog(caplog: LogCaptureFixture, request):
+           """
+           Unified fixture: captures loguru logs + respects --log-cli-level.
+           Prevents duplication by handling both use cases intelligently.
+           """
+           # Direct caplog capture (always needed for test assertions)
+           handler_id = logger.add(
+               caplog.handler,
+               format="{message}",
+               level=0,
+               filter=lambda record: record["level"].no >= caplog.handler.level,
+               enqueue=False,
+           )
+
+           # Optional: Terminal propagation (only if --log-cli-level used)
+           cli_level = request.config.getoption("--log-cli-level", None)
+           propagate_id = None
+
+           if cli_level:
+               class PropagateHandler(logging.Handler):
+                   def emit(self, record):
+                       logging.getLogger(record.name).handle(record)
+
+               logger.remove()  # Remove default stderr handler
+               propagate_id = logger.add(PropagateHandler(), format="{message}")
+
+           yield caplog
+
+           # Cleanup
+           logger.remove(handler_id)
+           if propagate_id:
+               logger.remove(propagate_id)
+
+   This unified fixture handles both test assertions (via ``caplog.records``) and terminal output (via ``--log-cli-level``) without duplication. See `#1406 <https://github.com/Delgan/loguru/issues/1406>`_ for more information.
+
 Note that if you want Loguru logs to be propagated to Pytest terminal reporter, you can do so by overriding the ``reportlog`` fixture as follows::
 
     import pytest
