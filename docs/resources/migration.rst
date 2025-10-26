@@ -47,6 +47,8 @@ Switching from Standard Logging to Loguru
 
 .. |pytest| replace:: ``pytest``
 .. _pytest: https://docs.pytest.org/en/latest/
+.. |conftest.py| replace:: ``conftest.py``
+.. _conftest.py: https://docs.pytest.org/en/latest/reference/fixtures.html#conftest-py-sharing-fixtures-across-multiple-files
 .. |caplog| replace:: ``caplog``
 .. _caplog: https://docs.pytest.org/en/latest/logging.html?highlight=caplog#caplog-fixture
 .. |pytest-loguru| replace:: ``pytest-loguru``
@@ -54,8 +56,6 @@ Switching from Standard Logging to Loguru
 
 .. _@mcarans: https://github.com/mcarans
 
-.. _`GH#59`: https://github.com/Delgan/loguru/issues/59
-.. _`GH#474`: https://github.com/Delgan/loguru/issues/474
 
 
 Introduction to logging in Python
@@ -329,7 +329,7 @@ It provides the list of :ref:`logged messages <message>` for each of which you c
 
 .. seealso::
 
-   See :ref:`testing logging <recipes-testing>` for more information.
+   See :ref:`testing logging <recipes-testing>` for alternative approaches.
 
 
 .. _migration-caplog:
@@ -352,53 +352,47 @@ Replacing ``caplog`` fixture from ``pytest`` library
 
 If you've followed all the migration guidelines thus far, you'll notice that this test will fail. This is because |pytest|_ links to the standard library's ``logging`` module.
 
-So to fix things, we need to add a sink that propagates Loguru to the caplog handler.
-This is done by overriding the |caplog|_ fixture to capture its handler. In your ``conftest.py`` file, add the following::
+To ensure compatibility between Loguru and |pytest|_, we need to propagate logs to the standard logging handlers used by |pytest|_. We simply need to |add| these handlers to Loguru's logger using a custom fixture:
+
+* The ``caplog_handler`` handler which captures logs for inspection in tests using the |caplog|_ fixture.
+* The ``log_cli_handler`` which outputs logs in live during tests when the ``--log-cli-level`` flag is used.
+* The ``report_handler`` which displays logs in the terminal summary at the end of tests in case of failures.
+
+In your |conftest.py|_ file, add the following::
 
     import pytest
     from loguru import logger
-    from _pytest.logging import LogCaptureFixture
-
-    @pytest.fixture
-    def caplog(caplog: LogCaptureFixture):
-        handler_id = logger.add(
-            caplog.handler,
-            format="{message}",
-            level=0,
-            filter=lambda record: record["level"].no >= caplog.handler.level,
-            enqueue=False,  # Set to 'True' if your test is spawning child processes.
-        )
-        yield caplog
-        logger.remove(handler_id)
-
-Run your tests and things should all be working as expected. Additional information can be found in `GH#59`_ and `GH#474`_. You can also install and use the |pytest-loguru|_ package created by `@mcarans`_.
-
-Note that if you want Loguru logs to be propagated to Pytest terminal reporter, you can do so by overriding the ``reportlog`` fixture as follows::
-
-    import pytest
-    from loguru import logger
-
-    @pytest.fixture
-    def reportlog(pytestconfig):
-        logging_plugin = pytestconfig.pluginmanager.getplugin("logging-plugin")
-        handler_id = logger.add(logging_plugin.report_handler, format="{message}")
-        yield
-        logger.remove(handler_id)
-
-Finally, when dealing with the ``--log-cli-level`` command-line flag, remember that this option controls the standard ``logging`` logs, not ``loguru`` ones. For this reason, you must first install a ``PropagateHandler`` for compatibility::
 
     @pytest.fixture(autouse=True)
-    def propagate_logs():
+    def propagate_logs(request):
+        """Propagate Loguru logs to standard logging handlers used by Pytest."""
+        plugin = request.config.pluginmanager.getplugin("logging-plugin")
 
-        class PropagateHandler(logging.Handler):
-            def emit(self, record):
-                if logging.getLogger(record.name).isEnabledFor(record.levelno):
-                    logging.getLogger(record.name).handle(record)
-
+        # Remove all existing Loguru handlers, including the default one.
         logger.remove()
-        logger.add(PropagateHandler(), format="{message}")
+
+        handler_ids = []
+
+        for handler in [plugin.caplog_handler, plugin.log_cli_handler, plugin.report_handler]:
+
+            def logs_filter(record, handler=handler):
+                return record["level"].no >= handler.level
+
+            # Note that, by default, all log levels are propagated to standard handlers.
+            # You can adjust the `level` here, modify the handler's level, or use `caplog.set_level()`.
+            handler_id = logger.add(handler, format="{message}", level=0, filter=logs_filter)
+            handler_ids.append(handler_id)
+
         yield
+
+        for handler_id in handler_ids:
+            logger.remove(handler_id)
+
+
+Run your tests and things should all be working as expected. See also `How to manage logging <https://docs.pytest.org/en/stable/how-to/logging.html>`_ from the official Pytest documentation.
+
+You can also install and use the |pytest-loguru|_ package created by `@mcarans`_.
 
 .. seealso::
 
-   See :ref:`testing logging <recipes-testing>` for more information.
+    See :ref:`testing logging <recipes-testing>` for alternative approaches.
