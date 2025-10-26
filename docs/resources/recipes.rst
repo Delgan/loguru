@@ -1083,7 +1083,12 @@ Another thing to keep in mind when dealing with multiprocessing is the fact that
 Unit testing logs emitted by Loguru
 -----------------------------------
 
-Logging calls can be tested using |logot|_, a high-level log testing library with built-in support for Loguru::
+When migrating an existing project from standard :mod:`logging`, it can be useful to migrate your existing test cases too. In particular, you may want to:
+
+- Migrate ``assertLogs()`` from :mod:`unittest` to Loguru: :ref:`migration-assert-logs`
+- Migrate ``caplog`` from |pytest|_ to Loguru: :ref:`migration-caplog`
+
+Alternatively, logging calls can be tested using |logot|_, a high-level log testing library with built-in support for Loguru::
 
     from logot import Logot, logged
 
@@ -1103,9 +1108,3 @@ Enable Loguru log capture in your |pytest|_ configuration:
     See `using logot with Loguru <https://logot.readthedocs.io/latest/integrations/loguru.html>`_ for more information
     about `configuring pytest <https://logot.readthedocs.io/latest/integrations/loguru.html#enabling-for-pytest>`_
     and `configuring unittest <https://logot.readthedocs.io/latest/integrations/loguru.html#enabling-for-unittest>`_.
-
-.. note::
-
-    When migrating an existing project from standard :mod:`logging`, it can be useful to migrate your existing test
-    cases too. See :ref:`migrating assertLogs() <migration-assert-logs>` and :ref:`migrating caplog <migration-caplog>`
-    for more information.
