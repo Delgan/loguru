@@ -375,12 +375,9 @@ In your |conftest.py|_ file, add the following::
 
         for handler in [plugin.caplog_handler, plugin.log_cli_handler, plugin.report_handler]:
 
-            def logs_filter(record, handler=handler):
-                return record["level"].no >= handler.level
-
             # Note that, by default, all log levels are propagated to standard handlers.
             # You can adjust the `level` here, modify the handler's level, or use `caplog.set_level()`.
-            handler_id = logger.add(handler, format="{message}", level=0, filter=logs_filter)
+            handler_id = logger.add(handler, format="{message}", level=0)
             handler_ids.append(handler_id)
 
         yield

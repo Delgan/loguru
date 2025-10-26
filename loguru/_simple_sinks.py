@@ -70,6 +70,8 @@ class StandardSink:
         message
             The message to write.
         """
+        if message.record["level"].no < self._handler.level:
+            return
         raw_record = message.record
         message = str(message)
         exc = raw_record["exception"]

@@ -1,9 +1,14 @@
 import sys
-from logging import FileHandler, Formatter, Handler, NullHandler, StreamHandler
+from logging import FileHandler, Filter, Formatter, Handler, NullHandler, StreamHandler
 
 import pytest
 
 from loguru import logger
+
+
+class RejectAllFilter(Filter):
+    def filter(self, record):
+        return False
 
 
 def test_stream_handler(capsys):
@@ -215,4 +220,31 @@ def test_standard_formatter_with_unregistered_level(capsys):
     logger.log(45, "Test")
     out, err = capsys.readouterr()
     assert out == "45 | Level 45 | Test\n"
+    assert err == ""
+
+
+def test_standard_handler_with_configured_filter(capsys):
+    handler = StreamHandler(sys.stdout)
+    filter_ = RejectAllFilter()
+    logger.add(handler, format="{message}")
+    logger.info("a")
+    handler.addFilter(filter_)
+    logger.info("b")
+    handler.removeFilter(filter_)
+    logger.info("c")
+    out, err = capsys.readouterr()
+    assert out == "a\nc\n"
+    assert err == ""
+
+
+def test_standard_handler_with_configured_level(capsys):
+    handler = StreamHandler(sys.stdout)
+    logger.add(handler, format="{message}")
+    logger.info("a")
+    handler.setLevel("WARNING")
+    logger.info("b")
+    handler.setLevel("INFO")
+    logger.info("c")
+    out, err = capsys.readouterr()
+    assert out == "a\nc\n"
     assert err == ""
