@@ -15,6 +15,7 @@ Frequently Asked Questions and Troubleshooting Tips for Loguru
 .. |bind| replace:: :meth:`~loguru._logger.Logger.bind()`
 .. |opt| replace:: :meth:`~loguru._logger.Logger.opt()`
 .. |patch| replace:: :meth:`~loguru._logger.Logger.patch()`
+.. |log| replace:: :meth:`~loguru._logger.Logger.log()`
 
 .. |colorama| replace:: ``colorama``
 .. _colorama: https://github.com/tartley/colorama
@@ -102,6 +103,24 @@ Note that this only affects handlers that do not explicitly configure their leve
 .. seealso::
 
    :ref:`Changing the level of an existing handler <changing-level-of-existing-handler>`
+
+
+Why isn't the level name shown when using an integer or a built-in level?
+-------------------------------------------------------------------------
+
+You may have noticed that when a numeric value is passed to the |log| function, or equivalently when a level from the standard ``logging`` library is used, it appears in the logs as "Level *NUM*" rather than the expected level name::
+
+    import logging
+    from loguru import logger
+
+    logger.log(logging.INFO, "This is an info message.")
+    # Output: 2025-11-02 12:40:37.266 +01:00 | Level 20 | __main__:<module>:4 - This is an info message.
+
+This behavior is normal and stems from the fact that, unlike the standard logging library, Loguru levels are identified exclusively by their name (and not by their severity).
+
+Indeed, it is entirely possible to define different logging levels that share the same severity number. In such cases, however, it becomes impossible to identify a level based on severity alone. To avoid any ambiguity, Loguru maps each level name with its severity number, but not the opposite.
+
+Consequently, if an integer is provided to |log|, the level is interpreted as an anonymous one and displayed as such.
 
 
 How do I customize the log format and re-use the default one?
