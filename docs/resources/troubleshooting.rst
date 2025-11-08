@@ -105,6 +105,8 @@ Note that this only affects handlers that do not explicitly configure their leve
    :ref:`Changing the level of an existing handler <changing-level-of-existing-handler>`
 
 
+.. _anonymous_levels:
+
 Why isn't the level name shown when using an integer or a built-in level?
 -------------------------------------------------------------------------
 

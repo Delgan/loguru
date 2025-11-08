@@ -69,7 +69,7 @@
 .. _multiprocessing.Context:
    https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 
-.. _FAQ anonymous levels: https://loguru.readthedocs.io/en/latest/resources/troubleshooting.html#why-isn-t-the-level-name-shown-when-using-an-integer-or-a-built-in-level
+.. |FAQ anonymous levels| replace:: :ref:`FAQ anonymous levels <anonymous_levels>`
 
 .. |better_exceptions| replace:: ``better_exceptions``
 .. _better_exceptions: https://github.com/Qix-/better-exceptions
@@ -2205,7 +2205,7 @@ class Logger:
         r"""Log ``message.format(*args, **kwargs)`` with severity ``level``.
 
         Note that if an |int| is provided as ``level``, the level is interpreted as an anonymous
-        one and displayed as such (see also `FAQ anonymous levels`_ for more details).
+        one and displayed as such (see also |FAQ anonymous levels| for more details).
         """
         __self._log(__level, False, __self._options, __message, args, kwargs)
 
