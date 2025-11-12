@@ -297,6 +297,7 @@ class Handler:
                 "module": record["module"],
                 "name": record["name"],
                 "process": {"id": record["process"].id, "name": record["process"].name},
+                "template": record["template"],
                 "thread": {"id": record["thread"].id, "name": record["thread"].name},
                 "time": {"repr": record["time"], "timestamp": record["time"].timestamp()},
             },
