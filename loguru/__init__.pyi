@@ -105,6 +105,7 @@ class Record(TypedDict):
     module: str
     name: Optional[str]
     process: RecordProcess
+    template: str
     thread: RecordThread
     time: datetime
 

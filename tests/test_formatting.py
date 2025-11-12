@@ -195,6 +195,31 @@ def test_non_string_message_is_str_in_record(writer, colors):
     assert output == "[123]\n"
 
 
+def test_template_vs_message_with_formatting(writer):
+    logger.add(writer, format="{template} | {message}")
+    logger.info("Hello {name}", name="World")
+
+    assert writer.read() == "Hello {name} | Hello World\n"
+
+
+@pytest.mark.parametrize(
+    ("message", "args", "kwargs", "expected_template", "expected_message"),
+    [
+        ("{} + {} = {}", [1, 2, 3], {}, "{} + {} = {}", "1 + 2 = 3"),
+        ("{a} + {b} = {c}", [], {"a": 1, "b": 2, "c": 3}, "{a} + {b} = {c}", "1 + 2 = 3"),
+        ("{0} + {two} = {1}", [1, 3], {"two": 2}, "{0} + {two} = {1}", "1 + 2 = 3"),
+        ("{:.2f}", [1], {}, "{:.2f}", "1.00"),
+    ],
+)
+def test_template_preserves_unformatted_message(
+    writer, message, args, kwargs, expected_template, expected_message
+):
+    logger.add(writer, format="{template} | {message}", colorize=False)
+    logger.info(message, *args, **kwargs)
+
+    assert writer.read() == "{} | {}\n".format(expected_template, expected_message)
+
+
 @pytest.mark.parametrize("colors", [True, False])
 def test_missing_positional_field_during_formatting(writer, colors):
     logger.add(writer)
