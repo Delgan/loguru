@@ -1108,3 +1108,64 @@ Enable Loguru log capture in your |pytest|_ configuration:
     See `using logot with Loguru <https://logot.readthedocs.io/latest/integrations/loguru.html>`_ for more information
     about `configuring pytest <https://logot.readthedocs.io/latest/integrations/loguru.html#enabling-for-pytest>`_
     and `configuring unittest <https://logot.readthedocs.io/latest/integrations/loguru.html#enabling-for-unittest>`_.
+
+.. _add_opentelemetry_traces_id:
+
+Add opentelemetry trace_id and span_id to json logs
+---------------------------------------------------
+
+There is no official implementation of opentelemetry for loguru as of now, but one frequent task when integrating logs and opentelemetry
+is adding the trace context to the logs to create a correlation between them.
+
+.. code::
+
+    from loguru import logger
+    import sys
+
+    from opentelemetry.trace import (
+        INVALID_SPAN,
+        INVALID_SPAN_CONTEXT,
+        get_current_span,
+        get_tracer_provider,
+    )
+
+
+    def instrument_loguru():
+        provider = get_tracer_provider()
+        service_name = None
+
+        def add_trace_context(record):
+            record["extra"]["otelSpanID"] = "0"
+            record["extra"]["otelTraceID"] = "0"
+            record["extra"]["otelTraceSampled"] = False
+
+            nonlocal service_name
+            if service_name is None:
+                resource = getattr(provider, "resource", None)
+                if resource:
+                    service_name = resource.attributes.get("service.name") or ""
+                else:
+                    service_name = ""
+
+            record["extra"]["otelServiceName"] = service_name
+
+            span = get_current_span()
+            if span != INVALID_SPAN:
+                ctx = span.get_span_context()
+                if ctx != INVALID_SPAN_CONTEXT:
+                    record["extra"]["otelSpanID"] = format(ctx.span_id, "016x")
+                    record["extra"]["otelTraceID"] = format(ctx.trace_id, "032x")
+                    record["extra"]["otelTraceSampled"] = ctx.trace_flags.sampled
+
+        logger.configure(patcher=add_trace_context)
+
+
+    instrument_loguru()
+
+    logger.remove()
+    format_ = "{time:YYYY-MM-DD HH:MM:SS.sss} {level} [{name}] [{file}:{line} [trace_id={extra[otelTraceID]} span_id={extra[otelSpanID]} resource.service.name={extra[otelServiceName]} trace_sampled={extra[otelTraceSampled]}] - {message}"
+    logger.add(sys.stderr, format=format_)
+
+    logger.info("This is an info message")
+
+Alternatively a custom formatter can be added to be able to save otelSpanID and otelTraceID in the root of the json log
