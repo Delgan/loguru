@@ -1109,15 +1109,14 @@ Enable Loguru log capture in your |pytest|_ configuration:
     about `configuring pytest <https://logot.readthedocs.io/latest/integrations/loguru.html#enabling-for-pytest>`_
     and `configuring unittest <https://logot.readthedocs.io/latest/integrations/loguru.html#enabling-for-unittest>`_.
 
+
 .. _add_opentelemetry_traces_id:
 
-Add opentelemetry trace_id and span_id to json logs
----------------------------------------------------
+Add OpenTelemetry ``trace_id`` and ``span_id`` to logs
+------------------------------------------------------
 
-There is no official implementation of opentelemetry for loguru as of now, but one frequent task when integrating logs and opentelemetry
-is adding the trace context to the logs to create a correlation between them.
-
-.. code::
+There is no official implementation of OpenTelemetry for Loguru as of now, but one frequent task when integrating Loguru and OpenTelemetry
+is adding the trace context to the logs to create a correlation between them. The following example uses |patch| to automatically inject OpenTelemetry trace context into every log record::
 
     from loguru import logger
     import sys
@@ -1168,4 +1167,4 @@ is adding the trace context to the logs to create a correlation between them.
 
     logger.info("This is an info message")
 
-Alternatively a custom formatter can be added to be able to save otelSpanID and otelTraceID in the root of the json log
+Alternatively, a custom formatter can be added to be able to save ``otelSpanID`` and ``otelTraceID`` in the root of the JSON log.
