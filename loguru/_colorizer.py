@@ -333,7 +333,7 @@ class AnsiParser:
                 hex_color = color[1:]
                 if len(hex_color) == 3:
                     r, g, b = list(hex_color)
-                    hex_color = f"{r * 2}{g * 2}{b * 2}"
+                    hex_color = (r * 2) + (g * 2) + (b * 2)
                 rgb = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
                 return "\033[%s;2;%s;%s;%sm" % ((code, *rgb))
             if color.count(",") == 2:
