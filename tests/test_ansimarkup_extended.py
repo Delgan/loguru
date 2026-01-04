@@ -55,13 +55,21 @@ def test_hex_colors(text, expected):
     assert parse(text, strip=False) == expected
 
 
-@pytest.mark.parametrize("short_code", ["abc", "f00", "f12", "bee"], ids=lambda code: f"#{code}")
+@pytest.mark.parametrize(
+    ("short_code", "long_code"),
+    [
+        ("abc", "aabbcc"),
+        ("f00", "ff0000"),
+        ("f12", "ff1122"),
+        ("bee", "bbeeee"),
+        ("Ace", "AAccee"),
+    ],
+    ids=lambda code: "#" + code,
+)
 @pytest.mark.parametrize("layer", ["fg", "bg"])
-def test_hex_short_code_equals_long_code(layer, short_code):
-    r, g, b = list(short_code)
-    long_code = f"{r * 2}{g * 2}{b * 2}"
-    short_code_colorized = parse(f"<{layer} #{short_code}>_</>")
-    long_code_colorized = parse(f"<{layer} #{long_code}>_</>")
+def test_hex_short_code_equals_long_code(layer, short_code, long_code):
+    short_code_colorized = parse("<%s #%s>_</>" % (layer, short_code))
+    long_code_colorized = parse("<%s #%s>_</>" % (layer, long_code))
     assert short_code_colorized == long_code_colorized
 
 
