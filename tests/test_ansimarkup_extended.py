@@ -35,7 +35,7 @@ def test_foreground_colors(text, expected):
     [
         ("<fg #ff0000>1</fg #ff0000>", "\x1b[38;2;255;0;0m" "1" + Style.RESET_ALL),
         ("<bg #00A000>1</bg #00A000>", "\x1b[48;2;0;160;0m" "1" + Style.RESET_ALL),
-        ("<fg #F12>1</fg #F12>", "\x1b[38;2;241;47;18m" "1" + Style.RESET_ALL),
+        ("<fg #F12>1</fg #F12>", "\x1b[38;2;255;17;34m" "1" + Style.RESET_ALL),
     ],
 )
 def test_8bit_colors(text, expected):
@@ -47,12 +47,30 @@ def test_8bit_colors(text, expected):
     [
         ("<fg #ff0000>1</fg #ff0000>", "\x1b[38;2;255;0;0m" "1" + Style.RESET_ALL),
         ("<bg #00A000>1</bg #00A000>", "\x1b[48;2;0;160;0m" "1" + Style.RESET_ALL),
-        ("<fg #F12>1</fg #F12>", "\x1b[38;2;241;47;18m" "1" + Style.RESET_ALL),
-        ("<bg #BEE>1</bg #BEE>", "\x1b[48;2;190;235;238m" "1" + Style.RESET_ALL),
+        ("<fg #F12>1</fg #F12>", "\x1b[38;2;255;17;34m" "1" + Style.RESET_ALL),
+        ("<bg #BEE>1</bg #BEE>", "\x1b[48;2;187;238;238m" "1" + Style.RESET_ALL),
     ],
 )
 def test_hex_colors(text, expected):
     assert parse(text, strip=False) == expected
+
+
+@pytest.mark.parametrize(
+    ("short_code", "long_code"),
+    [
+        ("abc", "aabbcc"),
+        ("f00", "ff0000"),
+        ("f12", "ff1122"),
+        ("bee", "bbeeee"),
+        ("Ace", "AAccee"),
+    ],
+    ids=lambda code: "#" + code,
+)
+@pytest.mark.parametrize("layer", ["fg", "bg"])
+def test_hex_short_code_equals_long_code(layer, short_code, long_code):
+    short_code_colorized = parse("<%s #%s>_</>" % (layer, short_code))
+    long_code_colorized = parse("<%s #%s>_</>" % (layer, long_code))
+    assert short_code_colorized == long_code_colorized
 
 
 @pytest.mark.parametrize(

@@ -316,7 +316,7 @@ class AnsiParser:
 
         # An alternative syntax for setting the color (e.g. <fg red>, <bg red>).
         if tag.startswith("fg ") or tag.startswith("bg "):
-            st, color = tag[:2], tag[3:]
+            st, color = tag[:2], tag[3:].strip(" ")
             code = "38" if st == "fg" else "48"
 
             if st == "fg" and color.lower() in foreground:
@@ -325,10 +325,15 @@ class AnsiParser:
                 return background[color.upper()]
             if color.isdigit() and int(color) <= 255:
                 return "\033[%s;5;%sm" % (code, color)
-            if re.match(r"#(?:[a-fA-F0-9]{3}){1,2}$", color):
+            if (
+                color.startswith("#")
+                and all(s in "0123456789abcdef" for s in color[1:].lower())
+                and len(color[1:]) in [3, 6]
+            ):
                 hex_color = color[1:]
                 if len(hex_color) == 3:
-                    hex_color *= 2
+                    r, g, b = list(hex_color)
+                    hex_color = (r * 2) + (g * 2) + (b * 2)
                 rgb = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
                 return "\033[%s;2;%s;%s;%sm" % ((code, *rgb))
             if color.count(",") == 2:
