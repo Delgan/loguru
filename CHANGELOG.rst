@@ -2,6 +2,7 @@
 =============
 
 - Add new ``logger.reinstall()`` method to automatically set up the ``logger`` in spawned child processes (`#818 <https://github.com/Delgan/loguru/issues/818>`_, thanks `@monchin <https://github.com/monchin>`_).
+- Fix hex color short code expansion (`#1426 <https://github.com/Delgan/loguru/issues/1426>`_, thanks `@turkoid <https://github.com/turkoid>`_).
 - Fix a regression preventing formatting of ``record["time"]`` when using ``zoneinfo.ZoneInfo`` timezones (`#1260 <https://github.com/Delgan/loguru/pull/1260>`_, thanks `@bijlpieter <https://github.com/bijlpieter>`_).
 - Fix possible ``ValueError`` raised on Windows when system clock was set far ahead in the future (`#1291 <https://github.com/Delgan/loguru/issues/1291>`_).
 - Respect the ``.level`` attribute of standard logging ``Handler`` used as sink, which was previously ignored (`#1409 <https://github.com/Delgan/loguru/issues/1409>`_).
@@ -12,7 +13,6 @@
 - Add requirement for ``TERM`` environment variable not to be ``"dumb"`` to enable colorization (`#1287 <https://github.com/Delgan/loguru/pull/1287>`_, thanks `@snosov1 <https://github.com/snosov1>`_).
 - Make ``logger.catch()`` usable as an asynchronous context manager (`#1084 <https://github.com/Delgan/loguru/issues/1084>`_).
 - Make ``logger.catch()`` compatible with asynchronous generators (`#1302 <https://github.com/Delgan/loguru/issues/1302>`_).
-- Fix hex color short code expansion (`#1426 <https://github.com/Delgan/loguru/issues/1426>`_).
 
 `0.7.3`_ (2024-12-06)
 =====================
