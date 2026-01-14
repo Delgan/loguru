@@ -280,7 +280,7 @@ class AnsiParser:
                 if ansi is None:
                     raise ValueError(
                         'Tag "%s" does not correspond to any known color directive, '
-                        "make sure you did not misspelled it (or prepend '\\' to escape it)"
+                        "make sure you have not misspelled it (or prepend '\\' to escape it)"
                         % markup
                     )
 
