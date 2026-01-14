@@ -157,7 +157,7 @@ def test_invalid_color(text, strip):
         ValueError,
         match=(
             '^Tag "<[^>]*>" does not correspond to any known color directive, '
-            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)$"
+            r"make sure you have not misspelled it \(or prepend '\\' to escape it\)$"
         ),
     ):
         parse(text, strip=strip)
@@ -179,7 +179,7 @@ def test_invalid_hex(text, strip):
         ValueError,
         match=(
             '^Tag "<[^>]*>" does not correspond to any known color directive, '
-            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)$"
+            r"make sure you have not misspelled it \(or prepend '\\' to escape it\)$"
         ),
     ):
         parse(text, strip=strip)
@@ -192,7 +192,7 @@ def test_invalid_8bit(text, strip):
         ValueError,
         match=(
             '^Tag "<[^>]*>" does not correspond to any known color directive, '
-            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)$"
+            r"make sure you have not misspelled it \(or prepend '\\' to escape it\)$"
         ),
     ):
         parse(text, strip=strip)
@@ -214,7 +214,7 @@ def test_invalid_rgb(text, strip):
         ValueError,
         match=(
             '^Tag "<[^>]*>" does not correspond to any known color directive, '
-            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)$"
+            r"make sure you have not misspelled it \(or prepend '\\' to escape it\)$"
         ),
     ):
         parse(text, strip=strip)
