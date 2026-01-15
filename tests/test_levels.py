@@ -272,7 +272,7 @@ def test_add_level_unknown_color(color):
         ValueError,
         match=(
             'Tag "<[^>]*>" does not correspond to any known color directive, '
-            r"make sure you did not misspelled it \(or prepend '\\' to escape it\)"
+            r"make sure you have not misspelled it \(or prepend '\\' to escape it\)"
         ),
     ):
         logger.level("foobar", no=20, icon="", color=color)
