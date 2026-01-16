@@ -2122,6 +2122,7 @@ class Logger:
             "module": splitext(file_name)[0],
             "name": name,
             "process": RecordProcess(process.ident, process.name),
+            "template": str(message),
             "thread": RecordThread(thread.ident, thread.name),
             "time": current_datetime,
         }
