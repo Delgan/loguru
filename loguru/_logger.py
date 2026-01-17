@@ -198,9 +198,11 @@ class Core:
         # Cache used internally to quickly access level attributes based on their name or severity.
         # It can also contain integers as keys, it serves to avoid calling "isinstance()" repeatedly
         # when "logger.log()" is used.
-        self.levels_lookup = {
-            name: (name, name, level.no, level.icon) for name, level in self.levels.items()
-        }
+        self.levels_lookup = {}
+        for name, level in self.levels.items():
+            # Update the dictionary for both keys - the log level name and the log level severity number
+            self.levels_lookup[name] = (name, name, level.no, level.icon)
+            self.levels_lookup[level.no] = (name, name, level.no, level.icon)
 
         self.handlers_count = 0
         self.handlers = {}
