@@ -302,10 +302,19 @@ class Logger:
         diagnose : |bool|, optional
             Whether the exception trace should display the variables values to ease the debugging.
             This should be set to ``False`` in production to avoid leaking sensitive data.
-        enqueue : |bool|, optional
+        enqueue : |bool|, |int| or |dict|, optional
             Whether the messages to be logged should first pass through a multiprocessing-safe queue
             before reaching the sink. This is useful while logging to a file through multiple
             processes. This also has the advantage of making logging calls non-blocking.
+
+            If ``True``, an unbounded queue is used (original behavior). If an ``int`` is passed,
+            it specifies the maximum queue size (bounded queue). When the queue is full, logging
+            calls will block until space is available.
+
+            A ``dict`` can be passed for more control with the following keys:
+                - ``"size"`` (int): Maximum queue size. ``0`` means unbounded.
+                - ``"overflow"`` (str): What to do when the queue is full.
+                  ``"block"`` (default) waits for space, ``"drop"`` silently discards the message.
         context : |multiprocessing.Context| or |str|, optional
             A context object or name that will be used for all tasks involving internally the
             |multiprocessing| module, in particular when ``enqueue=True``. If ``None``, the default

@@ -292,3 +292,98 @@ def test_logging_not_unpicklable_exception(exception_value):
     assert type_ is ValueError
     assert value is None
     assert traceback_ is None
+
+
+def test_enqueue_bounded_with_int():
+    x = []
+
+    def sink(message):
+        time.sleep(0.05)
+        x.append(message)
+
+    logger.add(sink, format="{message}", enqueue=5)
+    for i in range(5):
+        logger.debug(i)
+    logger.complete()
+    logger.remove()
+
+    assert len(x) == 5
+
+
+def test_enqueue_bounded_with_dict():
+    x = []
+
+    def sink(message):
+        time.sleep(0.05)
+        x.append(message)
+
+    logger.add(sink, format="{message}", enqueue={"size": 5})
+    for i in range(5):
+        logger.debug(i)
+    logger.complete()
+    logger.remove()
+
+    assert len(x) == 5
+
+
+def test_enqueue_bounded_blocking():
+    x = []
+
+    def slow_sink(message):
+        time.sleep(0.1)
+        x.append(message)
+
+    logger.add(slow_sink, format="{message}", enqueue={"size": 2, "overflow": "block"})
+
+    start = time.time()
+    for i in range(5):
+        logger.debug(i)
+    elapsed = time.time() - start
+
+    logger.complete()
+    logger.remove()
+
+    assert len(x) == 5
+    assert elapsed >= 0.2
+
+
+def test_enqueue_bounded_drop():
+    x = []
+
+    def slow_sink(message):
+        time.sleep(0.1)
+        x.append(message)
+
+    logger.add(slow_sink, format="{message}", enqueue={"size": 2, "overflow": "drop"})
+
+    start = time.time()
+    for i in range(10):
+        logger.debug(i)
+    elapsed = time.time() - start
+
+    logger.complete()
+    logger.remove()
+
+    assert elapsed < 0.1
+    assert len(x) < 10
+
+
+def test_enqueue_bounded_with_context():
+    import multiprocessing
+
+    x = []
+
+    def sink(message):
+        time.sleep(0.05)
+        x.append(message)
+
+    context = multiprocessing.get_context("spawn")
+    logger.add(sink, format="{message}", enqueue={"size": 5}, context=context)
+
+    for i in range(5):
+        logger.debug(i)
+
+    logger.complete()
+    logger.remove()
+
+    assert len(x) == 5
