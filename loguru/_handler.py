@@ -324,7 +324,7 @@ class Handler:
         if self._enqueue:
             state["_sink"] = None
             state["_thread"] = None
-            state["_owner_process"] = None
+            state["_owner_process_pid"] = None
             state["_queue_lock"] = None
         return state
 
