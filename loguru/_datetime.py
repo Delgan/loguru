@@ -109,7 +109,7 @@ def _compile_format(spec):
         "ZZ": ("%s", lambda t, dt: _format_timezone(dt, sep="")),
         "zz": ("%s", lambda t, dt: (dt.tzinfo or timezone.utc).tzname(dt) or ""),
         "X": ("%d", lambda t, dt: dt.timestamp()),
-        "x": ("%d", lambda t, dt: int(dt.timestamp() * 1000000 + dt.microsecond)),
+        "x": ("%d", lambda t, dt: int(dt.timestamp()) * 1000000 + dt.microsecond),
     }
 
     format_string = ""
