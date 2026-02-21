@@ -113,6 +113,12 @@ def test_log_formatting(writer, message, args, kwargs, expected, use_log_functio
     assert writer.read() == expected + "\n"
 
 
+def test_formatting_missing_lineno_frame_context(writer, missing_frame_lineno_value):
+    logger.add(writer, format="{line} {message}", colorize=False)
+    logger.info("Foobar")
+    assert writer.read() == "0 Foobar\n"
+
+
 def test_formatting_incomplete_frame_context(writer, incomplete_frame_context):
     logger.add(writer, format="{name} {message}", colorize=False)
     logger.info("Foobar")

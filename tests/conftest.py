@@ -391,6 +391,30 @@ def incomplete_frame_context(request, monkeypatch):
     yield from request.param(monkeypatch)
 
 
+@pytest.fixture
+def missing_frame_lineno_value(monkeypatch):
+    """Simulate corner case where the "f_lineno" value is not available in stack frames."""
+    getframe_ = loguru._get_frame.load_get_frame_function()
+
+    class MockedFrame:
+        def __init__(self, frame):
+            self._frame = frame
+
+        def __getattribute__(self, name):
+            if name == "f_lineno":
+                return None
+            frame = object.__getattribute__(self, "_frame")
+            return getattr(frame, name)
+
+    def patched_getframe(*args, **kwargs):
+        frame = getframe_(*args, **kwargs)
+        return MockedFrame(frame)
+
+    with monkeypatch.context() as context:
+        context.setattr(loguru._logger, "get_frame", patched_getframe)
+        yield
+
+
 @pytest.fixture(autouse=True)
 def reset_multiprocessing_start_method():
     multiprocessing.set_start_method(None, force=True)

@@ -138,6 +138,7 @@ def compare_exception(dirname, filename):
         "function",
         "head_recursion",
         "missing_attributes_traceback_objects",
+        "missing_lineno_frame_objects",
         "nested",
         "nested_chained_catch_up",
         "nested_decorator_catch_up",

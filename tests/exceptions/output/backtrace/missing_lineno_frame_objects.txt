@@ -1,0 +1,6 @@
+44: An error occurred
+Traceback (most recent call last):
+> File "tests/exceptions/source/backtrace/missing_lineno_frame_objects.py", line 0, in <module>
+  File "tests/exceptions/source/backtrace/missing_lineno_frame_objects.py", line 0, in b
+  File "tests/exceptions/source/backtrace/missing_lineno_frame_objects.py", line 0, in a
+ZeroDivisionError: division by zero
