@@ -4,6 +4,7 @@ import re
 import pytest
 
 from loguru import logger
+from loguru._logger import _Interpolation, _Template
 
 
 @pytest.mark.parametrize(
@@ -246,3 +247,35 @@ def test_invalid_color_markup(writer):
         ValueError, match="^Invalid format, color markups could not be parsed correctly$"
     ):
         logger.add(writer, format="<red>Not closed tag", colorize=True)
+
+
+@pytest.mark.skipif(_Template is None, reason="Template Strings not supported")
+def test_template_string(writer):
+    # We can't just use t"2**8 = {2**8}", because its a syntax error before python-3.14
+    logger.add(writer)
+    logger.info(_Template("2**8 = ", _Interpolation(2**8)))
+    result = writer.read()
+    assert result.endswith("2**8 = 256\n")
+
+
+@pytest.mark.skipif(_Template is None, reason="Template Strings not supported")
+def test_template_string_is_lazy(writer):
+    # We can't just use t"debug = {debug_tracker}", because its a syntax error before python-3.14
+    class StrCalledTracker:
+        def __init__(self):
+            self.str_called = False
+
+        def __str__(self):
+            self.str_called = True
+            return "xxx"
+
+    logger.add(writer, level="INFO")
+    debug_tracker = StrCalledTracker()
+    info_tracker = StrCalledTracker()
+    logger.debug(_Template("debug = ", _Interpolation(debug_tracker)))  # Should be ignored (debug)
+    logger.info(_Template("info = ", _Interpolation(info_tracker)))  # Should be logged (info)
+    result = writer.read()
+    assert len(result.strip().split("\n")) == 1
+    assert result.endswith("info = xxx\n")
+    assert not debug_tracker.str_called
+    assert info_tracker.str_called
