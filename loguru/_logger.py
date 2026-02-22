@@ -2063,7 +2063,7 @@ class Logger:
             co_filename = "<unknown>"
         else:
             f_globals = frame.f_globals
-            f_lineno = frame.f_lineno
+            f_lineno = frame.f_lineno or 0  # Can be None, see python/cpython#89726.
             co_name = frame.f_code.co_name
             co_filename = frame.f_code.co_filename
 

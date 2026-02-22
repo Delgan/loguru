@@ -208,7 +208,11 @@ class ExceptionFormatter:
         def get_info(frame, lineno):
             filename = frame.f_code.co_filename
             function = frame.f_code.co_name
-            source = linecache.getline(filename, lineno).strip()
+            if lineno is None:  # Upstream bug, see python/cpython#89726.
+                source = ""
+                lineno = 0
+            else:
+                source = linecache.getline(filename, lineno).strip()
             return filename, lineno, function, source
 
         infos = []
