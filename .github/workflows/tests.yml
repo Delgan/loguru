@@ -63,7 +63,7 @@ jobs:
         tox -e tests
       continue-on-error: ${{ matrix.allow-failure }}
     - name: Upload coverage data
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: coverage-${{ matrix.python-version }}-${{ matrix.os }}
         path: coverage.xml
