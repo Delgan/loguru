@@ -272,6 +272,7 @@ class Logger:
         enqueue=_defaults.LOGURU_ENQUEUE,
         context=_defaults.LOGURU_CONTEXT,
         catch=_defaults.LOGURU_CATCH,
+        length=_defaults.LOGURU_LENGTH,
         **kwargs
     ):
         r"""Add a handler sending log messages to a sink adequately configured.
@@ -314,6 +315,10 @@ class Logger:
             Whether errors occurring while sink handles logs messages should be automatically
             caught. If ``True``, an exception message is displayed on |sys.stderr| but the exception
             is not propagated to the caller, preventing your app to crash.
+        length : |int|, optional
+            This controls the maximum line length of every line in the exception backtrace,
+            mapping directly to the better_exceptions library's MAX_LENGTH value.
+            Set to None for no limit.
         **kwargs
             Additional parameters that are only valid to configure a coroutine or file sink (see
             below).
@@ -1026,6 +1031,7 @@ class Logger:
                 backtrace=backtrace,
                 hidden_frames_filename=self.catch.__code__.co_filename,
                 prefix=exception_prefix,
+                max_length=length,
             )
 
             handler = Handler(
