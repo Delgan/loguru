@@ -100,14 +100,13 @@ import builtins
 import contextlib
 import functools
 import logging
+import os
 import re
 import sys
 import threading
 import warnings
 from collections import namedtuple
 from inspect import isclass, iscoroutinefunction, isgeneratorfunction
-from multiprocessing import current_process, get_context
-from multiprocessing.context import BaseContext
 from os.path import basename, splitext
 from threading import current_thread
 
@@ -1011,12 +1010,17 @@ class Logger:
             encoding = "ascii"
 
         if isinstance(context, str):
+            from multiprocessing import get_context
+
             context = get_context(context)
-        elif context is not None and not isinstance(context, BaseContext):
-            raise TypeError(
-                "Invalid context, it should be a string or a multiprocessing context, "
-                "not: '%s'" % type(context).__name__
-            )
+        elif context is not None:
+            from multiprocessing.context import BaseContext
+
+            if not isinstance(context, BaseContext):
+                raise TypeError(
+                    "Invalid context, it should be a string or a multiprocessing context, "
+                    "not: '%s'" % type(context).__name__
+                )
 
         with self._core.lock:
             exception_formatter = ExceptionFormatter(
@@ -2096,7 +2100,11 @@ class Logger:
 
         file_name = basename(co_filename)
         thread = current_thread()
-        process = current_process()
+        process_id = os.getpid()
+        try:
+            process_name = sys.modules["multiprocessing"].current_process().name
+        except KeyError:
+            process_name = "MainProcess"
         elapsed = current_datetime - start_time
 
         if exception:
@@ -2121,7 +2129,7 @@ class Logger:
             "message": str(message),
             "module": splitext(file_name)[0],
             "name": name,
-            "process": RecordProcess(process.ident, process.name),
+            "process": RecordProcess(process_id, process_name),
             "thread": RecordThread(thread.ident, thread.name),
             "time": current_datetime,
         }
