@@ -601,7 +601,7 @@ For example, if you want to associate each module with a unique color::
 
     def formatter(record):
         color_tag = color_per_module[record["name"]]
-        return "<" + color_tag + ">[{name}]</> <bold>{message}</>\n{exception}"
+        return f"<{color_tag}>[{{name}}]</> <bold>{{message}}</>\n{{exception}}"
 
     logger.add(sys.stderr, format=formatter)
 
@@ -902,7 +902,7 @@ Calling the ``logger`` from code compiled with Cython may result in "incomplete"
 
 This happens when Loguru tries to access a stack frame which has been suppressed by Cython. In such a case, there is no way for Loguru to retrieve contextual information of the logged message.
 
-You can update the default ``format`` of your handlers and omit the uninteresting fields. You can also tries to |patch| the ``logger`` to manually add information you may know about the caller, for example::
+You can update the default ``format`` of your handlers and omit the uninteresting fields. You can also try to |patch| the ``logger`` to manually add information you may know about the caller, for example::
 
     logger = logger.patch(lambda record: record.update(name="my_cython_module"))
 
