@@ -1,6 +1,5 @@
 import functools
 import json
-import multiprocessing
 import os
 import threading
 from contextlib import contextmanager
@@ -89,6 +88,8 @@ class Handler:
                 self._decolorized_format = self._formatter.strip()
 
         if self._enqueue:
+            import multiprocessing
+
             if self._multiprocessing_context is None:
                 self._queue = multiprocessing.SimpleQueue()
                 self._confirmation_event = multiprocessing.Event()
