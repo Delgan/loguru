@@ -151,7 +151,8 @@ Logging exceptions that occur in your code is important to track bugs, but it's 
 The code:
 
 ```python
-# Caution, "diagnose=True" is the default and may leak sensitive data in prod
+# Caution, "diagnose=True" is the default and may leak sensitive data in prod.
+# Read further for the solution
 logger.add("out.log", backtrace=True, diagnose=True)
 
 def func(a, b):
@@ -190,6 +191,36 @@ ZeroDivisionError: division by zero
 ```
 
 Note that this feature won't work on default Python REPL due to unavailable frame data.
+
+But for passwords and other credentials, you should exclude them using `diagnose_excludes` parameter:
+
+```python
+logger.add("out.log", backtrace=True, diagnose=True, diagnose_excludes=["myS3cr3tP@ss!"])
+
+def connect_to_db(password):
+    # ...
+    raise TimeoutError("could not connect to the database")
+
+password = "myS3cr3tP@ss!"
+connect_to_db(password)
+```
+
+This will replace all occurrences of `myS3cr3tP@ss!` with `<hidden>` so the result traceback would be something like
+
+```none
+2026-03-18 17:06:44.822 | ERROR    | __main__:<module>:15 - What?!
+Traceback (most recent call last):
+
+> File "test.py", line 13, in <module>
+    connect_to_db(password)
+    │             └ '<hidden>'
+    └ <function connect_to_db at 0x7f75b152f740>
+
+  File "test.py", line 9, in connect_to_db
+    raise TimeoutError("could not connect to the database")
+
+TimeoutError: could not connect to the database
+```
 
 See also: [Security considerations when using Loguru](https://loguru.readthedocs.io/en/stable/resources/recipes.html#security-considerations-when-using-loguru).
 

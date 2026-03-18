@@ -145,6 +145,7 @@ class ExceptionFormatter:
         colorize=False,
         backtrace=False,
         diagnose=True,
+        diagnose_excludes=None,
         theme=None,
         style=None,
         max_length=128,
@@ -154,6 +155,11 @@ class ExceptionFormatter:
     ):
         self._colorize = colorize
         self._diagnose = diagnose
+        self._diagnose_excludes = (
+            diagnose_excludes.split(",")
+            if isinstance(diagnose_excludes, str) and diagnose_excludes
+            else diagnose_excludes or []
+        )
         self._theme = theme or dict(self._default_theme)
         self._backtrace = backtrace
         self._syntax_highlighter = SyntaxHighlighter(style)
@@ -345,6 +351,9 @@ class ExceptionFormatter:
         except Exception:
             v = "<unprintable %s object>" % type(v).__name__
 
+        for exclude in self._diagnose_excludes:
+            v = v.replace(repr(exclude)[1:-1], "<hidden>")
+
         max_length = self._max_length
         if max_length is not None and len(v) > max_length:
             v = v[: max_length - 3] + "..."
@@ -472,6 +481,10 @@ class ExceptionFormatter:
         if error_message_index is not None:
             # Remove final new line temporarily.
             error_message = exception_only[error_message_index][:-1]
+
+            for exclude in self._diagnose_excludes:
+                error_message = error_message.replace(repr(exclude)[1:-1], "<hidden>")
+                error_message = error_message.replace(exclude, "<hidden>")
 
             if self._colorize:
                 if ":" in error_message:
