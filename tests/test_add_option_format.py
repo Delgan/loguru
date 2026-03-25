@@ -85,3 +85,50 @@ def test_markup_in_field(writer, colorize):
 def test_invalid_format_builtin(writer):
     with pytest.raises(ValueError, match=r".* most likely a mistake"):
         logger.add(writer, format=format)
+
+
+@pytest.mark.parametrize(
+    "format",
+    [
+        "{nonexistent}",
+        "{foobar} {message}",
+        "{message} {invalid_key}",
+        "{unknown.attr}",
+        "{bogus[key]}",
+    ],
+)
+def test_invalid_format_key(writer, format):
+    with pytest.raises(ValueError, match=r"does not correspond to any known record key"):
+        logger.add(writer, format=format)
+
+
+@pytest.mark.parametrize(
+    "format",
+    [
+        "{message}",
+        "{level}",
+        "{time} {level} {message}",
+        "{level.name} {level.no}",
+        "{file.name}",
+        "{extra[custom]}",
+        "{thread.name} {process.id}",
+        "{elapsed} {exception}",
+        "{function} {line} {module} {name}",
+        "No fields at all",
+    ],
+)
+def test_valid_format_key(writer, format):
+    logger.add(writer, format=format)
+
+
+def test_invalid_format_key_error_message_lists_available_keys(writer):
+    with pytest.raises(ValueError, match=r"elapsed.*exception.*extra.*file") as exc_info:
+        logger.add(writer, format="{nonexistent}")
+    error_message = str(exc_info.value)
+    assert "nonexistent" in error_message
+    assert "logger.bind()" in error_message
+
+
+def test_invalid_format_key_with_dynamic_format_not_validated(writer):
+    # Dynamic (callable) formats are not validated at add() time
+    logger.add(writer, format=lambda _: "{nonexistent}")
