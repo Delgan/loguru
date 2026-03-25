@@ -143,21 +143,23 @@ start_time = aware_now()
 
 context = ContextVar("loguru_context", default={})
 
-_VALID_RECORD_KEYS = frozenset({
-    "elapsed",
-    "exception",
-    "extra",
-    "file",
-    "function",
-    "level",
-    "line",
-    "message",
-    "module",
-    "name",
-    "process",
-    "thread",
-    "time",
-})
+_VALID_RECORD_KEYS = frozenset(
+    {
+        "elapsed",
+        "exception",
+        "extra",
+        "file",
+        "function",
+        "level",
+        "line",
+        "message",
+        "module",
+        "name",
+        "process",
+        "thread",
+        "time",
+    }
+)
 
 
 def _validate_format_keys(format_string):
