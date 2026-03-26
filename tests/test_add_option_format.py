@@ -85,3 +85,61 @@ def test_markup_in_field(writer, colorize):
 def test_invalid_format_builtin(writer):
     with pytest.raises(ValueError, match=r".* most likely a mistake"):
         logger.add(writer, format=format)
+
+
+# ── Tests for invalid format key validation (issue #1450) ─────────────────────
+
+@pytest.mark.parametrize(
+    "fmt",
+    [
+        "{time} {INVALID_KEY} {message}",
+        "{nonexistent}",
+        "{time} {BAD1} {BAD2} {message}",
+        "{UPPER_CASE}",
+    ],
+)
+def test_invalid_format_key_raises_at_add_time(writer, fmt):
+    """logger.add() must raise ValueError immediately for unknown format keys.
+
+    Previously, the error was a cryptic KeyError raised on every log() call,
+    causing the message to be silently dropped. Now the user gets a clear
+    ValueError at configuration time.
+    """
+    with pytest.raises(ValueError, match=r"Invalid format key\(s\)"):
+        logger.add(writer, format=fmt)
+
+
+@pytest.mark.parametrize(
+    "fmt",
+    [
+        "{time} {level} {message}",
+        "{time} {level.name} {message}",
+        "{time} {level.no} {message}",
+        "{extra[mykey]} {message}",
+        "{file.name} {line} {function} {message}",
+        "{process.id} {thread.name} {message}",
+        "{elapsed} {module} {name} {message}",
+    ],
+)
+def test_valid_format_keys_accepted(writer, fmt):
+    """All built-in record keys and their attributes must be accepted."""
+    logger.add(writer, format=fmt)   # must not raise
+
+
+def test_invalid_format_key_error_lists_allowed_keys(writer):
+    """The ValueError message must list both the bad key and all allowed keys."""
+    with pytest.raises(ValueError, match=r"'BADKEY'") as exc_info:
+        logger.add(writer, format="{time} {BADKEY} {message}")
+    msg = str(exc_info.value)
+    # All valid keys must appear in the error
+    for key in ("elapsed", "exception", "extra", "file", "function", "level",
+                "line", "message", "module", "name", "process", "thread", "time"):
+        assert key in msg, f"Expected key {key!r} in error message, got: {msg}"
+
+
+def test_multiple_invalid_keys_listed(writer):
+    """All invalid keys (not just the first) must appear in the ValueError."""
+    with pytest.raises(ValueError, match=r"Invalid format key\(s\)") as exc_info:
+        logger.add(writer, format="{FOO} {BAR} {message}")
+    msg = str(exc_info.value)
+    assert "'BAR'" in msg and "'FOO'" in msg

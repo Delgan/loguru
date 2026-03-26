@@ -991,6 +991,33 @@ class Logger:
                 raise ValueError(
                     "Invalid format, color markups could not be parsed correctly"
                 ) from e
+            # Validate format keys early so users get a clear error at logger.add()
+            # time, not a cryptic KeyError on every log() call.
+            import string as _string
+
+            _VALID_RECORD_KEYS = {
+                "elapsed", "exception", "extra", "file", "function",
+                "level", "line", "message", "module", "name",
+                "process", "thread", "time",
+            }
+            _used_keys = set()
+            for _, _field, _, _ in _string.Formatter().parse(
+                format + terminator + "{exception}"
+            ):
+                if _field is not None:
+                    _root = _field.split(".")[0].split("[")[0]
+                    if _root:
+                        _used_keys.add(_root)
+            _invalid = _used_keys - _VALID_RECORD_KEYS
+            if _invalid:
+                _sorted = sorted(_invalid)
+                raise ValueError(
+                    "Invalid format key(s) %s — allowed keys are: %s"
+                    % (
+                        ", ".join(repr(k) for k in _sorted),
+                        ", ".join(sorted(_VALID_RECORD_KEYS)),
+                    )
+                )
             is_formatter_dynamic = False
         elif callable(format):
             if format == builtins.format:

@@ -322,3 +322,45 @@ def test_invalid_grouped_exception_no_exceptions(writer):
     logger.opt(exception=error).error("Error")
 
     assert writer.read().strip().startswith("| unittest.mock.MagicMock:")
+
+
+# ── Regression test for Python 3.14 tb_lineno=None (issue #1452) ─────────────
+
+def test_format_exception_with_none_tb_lineno(writer):
+    """logger.exception() must not crash when a traceback frame has lineno=None.
+
+    On Python 3.14, asyncio.CancelledError frames (e.g. from anyio connect_tcp)
+    can have tb.tb_lineno = None. The guard `if lineno is None` in
+    _better_exceptions._extract_frames.get_info() must handle this gracefully.
+    """
+    from loguru._better_exceptions import ExceptionFormatter
+
+    formatter = ExceptionFormatter(
+        colorize=False,
+        backtrace=False,
+        diagnose=False,
+        theme=None,
+        style=None,
+        max_length=128,
+        encoding="utf-8",
+        hidden_frames_filename=None,
+        prefix="",
+    )
+
+    try:
+        raise RuntimeError("test exception for tb_lineno regression")
+    except RuntimeError:
+        import sys as _sys
+        _, _, tb = _sys.exc_info()
+
+    # Call _extract_frames — if the guard is absent, TypeError is raised here.
+    frames, _ = formatter._extract_frames(tb, is_first=True)
+    assert isinstance(frames, list)
+
+    # Also verify via logger — no crash, message must be logged
+    logger.add(writer, format="{message}{exception}", diagnose=False, backtrace=False)
+    try:
+        raise ValueError("tb_lineno guard test")
+    except ValueError:
+        logger.exception("Caught")
+    assert "tb_lineno guard test" in writer.read()
