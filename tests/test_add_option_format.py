@@ -1,3 +1,6 @@
+import re
+import sys
+
 import pytest
 
 from loguru import logger
@@ -87,48 +90,38 @@ def test_invalid_format_builtin(writer):
         logger.add(writer, format=format)
 
 
-@pytest.mark.parametrize(
-    "format",
-    [
-        "{nonexistent}",
-        "{foobar} {message}",
-        "{message} {invalid_key}",
-        "{unknown.attr}",
-        "{bogus[key]}",
-    ],
-)
-def test_invalid_format_key(writer, format):
-    with pytest.raises(ValueError, match=r"does not correspond to any known record key"):
-        logger.add(writer, format=format)
+def test_invalid_format_key_emits_helpful_error_with_catch(capsys):
+    logger.add(lambda msg: None, format="{nonexistent}", catch=True)
+    logger.info("Hello")
+    stderr = capsys.readouterr().err
+    assert "nonexistent" in stderr
+    assert "logger.bind(key=value)" in stderr
+    assert "extra[key]" in stderr
+    # Check that available record keys are listed
+    for key in ["elapsed", "exception", "extra", "file", "level", "message"]:
+        assert key in stderr
 
 
-@pytest.mark.parametrize(
-    "format",
-    [
-        "{message}",
-        "{level}",
-        "{time} {level} {message}",
-        "{level.name} {level.no}",
-        "{file.name}",
-        "{extra[custom]}",
-        "{thread.name} {process.id}",
-        "{elapsed} {exception}",
-        "{function} {line} {module} {name}",
-        "No fields at all",
-    ],
-)
-def test_valid_format_key(writer, format):
-    logger.add(writer, format=format)
+def test_invalid_format_key_raises_enhanced_error_without_catch():
+    logger.add(lambda msg: None, format="{nonexistent}", catch=False)
+    with pytest.raises(KeyError, match=r"nonexistent"):
+        logger.info("Hello")
 
 
-def test_invalid_format_key_error_message_lists_available_keys(writer):
-    with pytest.raises(ValueError, match=r"elapsed.*exception.*extra.*file") as exc_info:
-        logger.add(writer, format="{nonexistent}")
+def test_invalid_format_key_error_message_content():
+    logger.add(lambda msg: None, format="{bogus_key}", catch=False)
+    with pytest.raises(KeyError, match=r"logger\.bind") as exc_info:
+        logger.info("Hello")
     error_message = str(exc_info.value)
-    assert "nonexistent" in error_message
-    assert "logger.bind()" in error_message
+    assert "bogus_key" in error_message
+    assert "extra[key]" in error_message
 
 
-def test_invalid_format_key_with_dynamic_format_not_validated(writer):
-    # Dynamic (callable) formats are not validated at add() time
-    logger.add(writer, format=lambda _: "{nonexistent}")
+def test_patcher_added_keys_work_in_format(writer):
+    def patcher(record):
+        record["my_value"] = 42
+
+    logger.add(writer, format="{message} | {my_value}")
+    logger.configure(patcher=patcher)
+    logger.info("Hello")
+    assert "Hello | 42" in writer.read()

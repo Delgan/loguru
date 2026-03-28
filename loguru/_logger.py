@@ -109,7 +109,6 @@ from inspect import isclass, iscoroutinefunction, isgeneratorfunction
 from multiprocessing import current_process, get_context
 from multiprocessing.context import BaseContext
 from os.path import basename, splitext
-from string import Formatter
 from threading import current_thread
 
 from . import _asyncio_loop, _colorama, _defaults, _filters
@@ -142,48 +141,6 @@ Level = namedtuple("Level", ["name", "no", "color", "icon"])  # noqa: PYI024
 start_time = aware_now()
 
 context = ContextVar("loguru_context", default={})
-
-_VALID_RECORD_KEYS = frozenset(
-    {
-        "elapsed",
-        "exception",
-        "extra",
-        "file",
-        "function",
-        "level",
-        "line",
-        "message",
-        "module",
-        "name",
-        "process",
-        "thread",
-        "time",
-    }
-)
-
-
-def _validate_format_keys(format_string):
-    """Validate that all field names in the format string are known record keys.
-
-    This is called at ``add()`` time to give early, actionable feedback when a format
-    string references a key that does not exist in the log record, instead of
-    producing a confusing ``KeyError`` at logging time.
-    """
-    formatter = Formatter()
-    for _, field_name, _, _ in formatter.parse(format_string):
-        if field_name is None:
-            continue
-        # Extract the top-level attribute name (e.g. "level" from "level.name",
-        # "extra" from "extra[key]", etc.).
-        top_level = field_name.split(".")[0].split("[")[0]
-        if top_level and top_level not in _VALID_RECORD_KEYS:
-            raise ValueError(
-                "Invalid format: the field '{%s}' does not correspond to any known record key. "
-                "The available keys are: %s. "
-                "To use custom data, pass it via 'logger.bind()' and reference it as "
-                "'{extra[your_key]}' in the format string."
-                % (field_name, ", ".join(sorted(_VALID_RECORD_KEYS)))
-            )
 
 
 class Core:
@@ -1028,7 +985,6 @@ class Logger:
             )
 
         if isinstance(format, str):
-            _validate_format_keys(format)
             try:
                 formatter = Colorizer.prepare_format(format + terminator + "{exception}")
             except ValueError as e:

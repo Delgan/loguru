@@ -204,6 +204,10 @@ class Handler:
                     self._queue.put(str_record)
                 else:
                     self._sink.write(str_record)
+        except KeyError as e:
+            if not self._error_interceptor.should_catch():
+                raise self._make_key_error(e, record) from e
+            self._error_interceptor.print(record, exception=self._make_key_error(e, record))
         except Exception:
             if not self._error_interceptor.should_catch():
                 raise
@@ -243,6 +247,18 @@ class Handler:
             return
         ansi_code = self._levels_ansi_codes[level_id]
         self._precolorized_formats[level_id] = self._formatter.colorize(ansi_code)
+
+    @staticmethod
+    def _make_key_error(original, record):
+        key = original.args[0] if original.args else "?"
+        available = ", ".join(sorted(record.keys()))
+        message = (
+            "The format string references an unknown key '%s'. "
+            "Available record keys are: %s. "
+            "To include custom data, use 'logger.bind(key=value)' and reference it "
+            "as '{extra[key]}' in the format string." % (key, available)
+        )
+        return KeyError(message)
 
     @property
     def levelno(self):
