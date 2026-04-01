@@ -42,9 +42,7 @@ def test_file_auto_buffering(tmp_path):
 def test_file_line_buffering(tmp_path):
     filepath = tmp_path / "test.log"
     logger.add(filepath, format=lambda _: "{message}", buffering=1)
-    logger.debug("Without newline")
-    assert filepath.read_text() == ""
-    logger.debug("With newline\n")
+    logger.debug("With auto-appended newline")
     assert filepath.read_text() != ""
 
 

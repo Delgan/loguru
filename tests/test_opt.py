@@ -258,13 +258,13 @@ def test_colors_doesnt_raise_unrelated_not_colorize(writer):
 def test_colors_doesnt_raise_unrelated_colorize_dynamic(writer):
     logger.add(writer, format=lambda x: "{message} {extra[trap]}", colorize=True, catch=False)
     logger.bind(trap="</red>").opt(colors=True).debug("A")
-    assert writer.read() == "A </red>"
+    assert writer.read() == "A </red>\n"
 
 
 def test_colors_doesnt_raise_unrelated_not_colorize_dynamic(writer):
     logger.add(writer, format=lambda x: "{message} {extra[trap]}", colorize=False, catch=False)
     logger.bind(trap="</red>").opt(colors=True).debug("A")
-    assert writer.read() == "A </red>"
+    assert writer.read() == "A </red>\n"
 
 
 @pytest.mark.parametrize("colorize", [True, False])
@@ -358,7 +358,7 @@ def test_colors_multiple_calls_level_color_changed(writer, colorize):
 def test_colors_with_dynamic_formatter(writer, colorize):
     logger.add(writer, format=lambda r: "<red>{message}</red>", colorize=colorize)
     logger.opt(colors=True).debug("<b>a</b> <y>b</y>")
-    assert writer.read() == parse("<red><b>a</b> <y>b</y></red>", strip=not colorize)
+    assert writer.read() == parse("<red><b>a</b> <y>b</y></red>\n", strip=not colorize)
 
 
 @pytest.mark.parametrize("colorize", [True, False])
@@ -502,7 +502,7 @@ def test_all_colors_combinations(writer, dynamic_format, colorize, colors, raw, 
     arg = "message"
 
     def formatter(_):
-        return format_ + "\n"
+        return format_
 
     logger.add(writer, format=formatter if dynamic_format else format_, colorize=colorize)
 
@@ -600,7 +600,7 @@ def test_message_update_not_overridden_by_patch(writer, colors):
 def test_message_update_not_overridden_by_format(writer, colors):
     def formatter(record):
         record["message"] += " [Formatted]"
-        return "{level} {message}\n"
+        return "{level} {message}"
 
     logger.add(writer, format=formatter, colorize=True)
     logger.opt(colors=colors).info("Message")
@@ -630,7 +630,7 @@ def test_message_update_not_overridden_by_raw(writer, colors):
 def test_overridden_message_ignore_colors(writer):
     def formatter(record):
         record["message"] += " <blue>[Ignored]</blue> </xyz>"
-        return "{message}\n"
+        return "{message}"
 
     logger.add(writer, format=formatter, colorize=True)
     logger.opt(colors=True).info("<red>Message</red>")

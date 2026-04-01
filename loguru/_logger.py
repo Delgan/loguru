@@ -416,9 +416,8 @@ class Logger:
         record as parameter and must return the unformatted template string. It is critical that
         this string has not been pre-formatted, as Loguru will handle the actual formatting later.
         Returning an already formatted log message would break internal mechanisms and lead to
-        runtime errors. Note that when using a function, you are also responsible for appending the
-        line ending and the exception field, whereas ``"\n{exception}"`` is automatically appended
-        for convenience when the ``format`` is a string.
+        runtime errors. In all cases, the line ending and the exception field are automatically
+        appended for convenience.
 
         The ``filter`` attribute can be used to control which messages are effectively passed to the
         sink and which one are ignored. A function can be used, accepting the record as an
@@ -788,8 +787,8 @@ class Logger:
         >>> def dynamic_format(record):
         ...     # Caution: the template must be returned as-is (with placeholders left unformatted).
         ...     if record["level"].no >= 40:
-        ...         return "<red>{time} {level} {message}</red>\n{exception}"
-        ...     return "{time} {level} {message}\n{exception}"
+        ...         return "<red>{time} {level} {message}</red>"
+        ...     return "{time} {level} {message}"
         ...
         >>> logger.add(sys.stderr, format=dynamic_format)
 
@@ -1033,6 +1032,7 @@ class Logger:
                 sink=wrapped_sink,
                 levelno=levelno,
                 formatter=formatter,
+                formatter_terminator=terminator,
                 is_formatter_dynamic=is_formatter_dynamic,
                 filter_=filter_func,
                 colorize=colorize,

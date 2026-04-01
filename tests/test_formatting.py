@@ -194,7 +194,7 @@ def test_non_string_message_is_str_in_record(writer, colors):
 
     def format(record):
         assert isinstance(record["message"], str)
-        return "[{message}]\n"
+        return "[{message}]"
 
     logger.add(sink, format=format, catch=False)
     logger.opt(colors=colors).info(123)

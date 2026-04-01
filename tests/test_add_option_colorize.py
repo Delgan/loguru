@@ -11,7 +11,7 @@ from .conftest import StreamIsattyException, StreamIsattyFalse, StreamIsattyTrue
     ("format", "message", "expected"),
     [
         ("<red>{message}</red>", "Foo", parse("<red>Foo</red>\n")),
-        (lambda _: "<red>{message}</red>", "Bar", parse("<red>Bar</red>")),
+        (lambda _: "<red>{message}</red>", "Bar", parse("<red>Bar</red>\n")),
         ("{message}", "<red>Baz</red>", "<red>Baz</red>\n"),
         ("{{<red>{message:}</red>}}", "A", parse("{<red>A</red>}\n")),
     ],
@@ -26,7 +26,7 @@ def test_colorized_format(format, message, expected, writer):
     ("format", "message", "expected"),
     [
         ("<red>{message}</red>", "Foo", "Foo\n"),
-        (lambda _: "<red>{message}</red>", "Bar", "Bar"),
+        (lambda _: "<red>{message}</red>", "Bar", "Bar\n"),
         ("{message}", "<red>Baz</red>", "<red>Baz</red>\n"),
         ("{{<red>{message:}</red>}}", "A", "{A}\n"),
     ],

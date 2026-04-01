@@ -10,8 +10,8 @@ from loguru import logger
         ("b", "Nope", "Nope\n"),
         ("c", "{level} {message} {level}", "DEBUG c DEBUG\n"),
         ("d", "{message} {level} {level.no} {level.name}", "d DEBUG 10 DEBUG\n"),
-        ("e", lambda _: "{message}", "e"),
-        ("f", lambda r: "{message} " + r["level"].name, "f DEBUG"),
+        ("e", lambda _: "{message}", "e\n"),
+        ("f", lambda r: "{message} " + r["level"].name, "f DEBUG\n"),
     ],
 )
 def test_format(message, format, expected, writer):
@@ -33,20 +33,11 @@ def test_progressive_format(writer):
         logger.opt(raw=True).debug(".")
     logger.opt(raw=True).debug("\n")
     logger.debug("End")
-    assert writer.read() == ("[DEBUG] Start: .....\n" "[DEBUG] End\n")
+    assert writer.read() == ("[DEBUG] Start: \n" ".....\n" "[DEBUG] End\n" "\n")
 
 
-def test_function_format_without_exception(writer):
-    logger.add(writer, format=lambda _: "{message}\n")
-    try:
-        1 / 0  # noqa: B018
-    except ZeroDivisionError:
-        logger.exception("Error!")
-    assert writer.read() == "Error!\n"
-
-
-def test_function_format_with_exception(writer):
-    logger.add(writer, format=lambda _: "{message}\n{exception}")
+def test_function_format_auto_appends_exception(writer):
+    logger.add(writer, format=lambda _: "{message}")
     try:
         1 / 0  # noqa: B018
     except ZeroDivisionError:

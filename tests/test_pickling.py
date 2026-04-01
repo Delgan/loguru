@@ -264,7 +264,7 @@ def test_pickling_format_function(capsys, colorize):
     with copied_logger_though_pickle(logger) as dupe_logger:
         dupe_logger.info("The message")
     out, err = capsys.readouterr()
-    assert out == parse("-> <red>The message</red>", strip=not colorize)
+    assert out == parse("-> <red>The message</red>\n", strip=not colorize)
     assert err == ""
 
 

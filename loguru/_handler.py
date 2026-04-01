@@ -36,6 +36,7 @@ class Handler:
         name,
         levelno,
         formatter,
+        formatter_terminator,
         is_formatter_dynamic,
         filter_,
         colorize,
@@ -51,6 +52,7 @@ class Handler:
         self._sink = sink
         self._levelno = levelno
         self._formatter = formatter
+        self._formatter_terminator = formatter_terminator
         self._is_formatter_dynamic = is_formatter_dynamic
         self._filter = filter_
         self._colorize = colorize
@@ -134,7 +136,9 @@ class Handler:
                     return
 
             if self._is_formatter_dynamic:
-                dynamic_format = self._formatter(record)
+                dynamic_format = (
+                    self._formatter(record) + self._formatter_terminator + "{exception}"
+                )
 
             formatter_record = record.copy()
 

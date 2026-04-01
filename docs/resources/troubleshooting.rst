@@ -279,7 +279,7 @@ Instead, the function should return a string with placeholders, like this::
 
     def correct_dynamic_format(record):
         # This is correct because it returns a template string.
-        return "{time} - {level} - {message}\n{exception}"
+        return "{time} - {level} - {message}"
 
     logger.add(sys.stderr, format=correct_dynamic_format)
 
@@ -289,7 +289,7 @@ If for some reason you need to format the message yourself, you should save the 
 
     def custom_format_with_extra(record):
         record["extra"]["custom_msg"] = f"{record['time']} - {record['level']} - {record['message']}"
-        return "{extra[custom_msg]}\n{exception}"
+        return "{extra[custom_msg]}"
 
     logger.add(sys.stderr, format=custom_format_with_extra)
 
