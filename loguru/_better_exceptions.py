@@ -29,6 +29,21 @@ else:
             return isinstance(exc, ExceptionGroup)
 
 
+def _get_string_tokens():
+    strings = {tokenize.STRING}
+    string_middles = set()
+
+    if sys.version_info >= (3, 12):
+        strings |= {tokenize.FSTRING_START, tokenize.FSTRING_END, tokenize.FSTRING_MIDDLE}
+        string_middles.add(tokenize.FSTRING_MIDDLE)
+
+    if sys.version_info >= (3, 14):
+        strings |= {tokenize.TSTRING_START, tokenize.TSTRING_END, tokenize.TSTRING_MIDDLE}
+        string_middles.add(tokenize.TSTRING_MIDDLE)
+
+    return frozenset(strings), frozenset(string_middles)
+
+
 class SyntaxHighlighter:
     _default_style = frozenset(
         {
@@ -49,14 +64,7 @@ class SyntaxHighlighter:
     _constants = frozenset({"True", "False", "None"})
     _punctuation = frozenset({"(", ")", "[", "]", "{", "}", ":", ",", ";"})
 
-    if sys.version_info >= (3, 12):
-        _strings = frozenset(
-            {tokenize.STRING, tokenize.FSTRING_START, tokenize.FSTRING_MIDDLE, tokenize.FSTRING_END}
-        )
-        _fstring_middle = tokenize.FSTRING_MIDDLE
-    else:
-        _strings = frozenset({tokenize.STRING})
-        _fstring_middle = None
+    _strings, _string_middles = _get_string_tokens()
 
     def __init__(self, style=None):
         self._style = style or dict(self._default_style)
@@ -69,7 +77,7 @@ class SyntaxHighlighter:
         for token in self.tokenize(source):
             type_, string, (start_row, start_column), (_, end_column), line = token
 
-            if type_ == self._fstring_middle:
+            if type_ in self._string_middles:
                 # When an f-string contains "{{" or "}}", they appear as "{" or "}" in the "string"
                 # attribute of the token. However, they do not count in the column position.
                 end_column += string.count("{") + string.count("}")

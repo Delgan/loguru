@@ -20,7 +20,7 @@
     </a>
 </p>
 
----
+______________________________________________________________________
 
 **Loguru** is a library which aims to bring enjoyable logging in Python.
 
@@ -109,24 +109,17 @@ logger.add("file_Y.log", compression="zip")    # Save some loved space
 
 ### Modern string formatting using braces style
 
-For python-3.14 and higher, you can pass a template string, which will be evaluated lazily. The behavior is the same as with a f-string, but the performance is better: Messages that are never emitted won't pay the cost of evaluation.
+Loguru favors the much more elegant and powerful `{}` formatting over `%`, logging functions are actually equivalent to `str.format()`.
 
 ```python
-version = 3.14
-feature = "t-strings"
-logger.info(t"If you're using Python {version}, prefer {feature} of course!")
+logger.info("We discovered {} is the answer to {question}", 42, question="everything")
 ```
 
-Before python-3.14, you can still use lazily evaluated formatting and the elegant and powerful `{}` formatting: Use a str.format() style string and pass the parameters as additional arguments:
+With latest Python versions, you can also pass [a template string](https://docs.python.org/3/library/string.templatelib.html#template-strings), which will be evaluated lazily and is preferable over f-strings:
 
 ```python
-logger.info("If you're using Python {}, prefer {feature} of course!", 3.6, feature="str.format() style strings")
-```
-
-Note that using f-strings in log messages is not considered best practice for performance reasons, as they are evaluated eagerly. Expensive conversion to string might occur even when in the end they are not needed:
-
-```python
-logger.debug(f"obj = {large_obj}") # Do not do this, prefer the above methods!
+version, feature = 3.14, "t-strings"
+logger.debug(t"If you're using Python {version:f}, prefer {feature} of course!")
 ```
 
 ### Exceptions catching within threads or main

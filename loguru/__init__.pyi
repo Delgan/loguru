@@ -45,6 +45,13 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Protocol, TypedDict
 
+if sys.version_info >= (3, 14):
+    import string.templatelib
+
+    LoggedStr = Union[str, string.templatelib.Template]
+else:
+    LoggedStr = str
+
 _T = TypeVar("_T")
 _F = TypeVar("_F", bound=Callable[..., Any])
 ExcInfo = Tuple[Optional[Type[BaseException]], Optional[BaseException], Optional[TracebackType]]
@@ -276,7 +283,7 @@ class Logger:
         onerror: Optional[Callable[[BaseException], None]] = ...,
         exclude: Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]] = ...,
         default: Any = ...,
-        message: str = ...
+        message: LoggedStr = ...
     ) -> Catcher: ...
     @overload
     def catch(self, function: _F) -> _F: ...
@@ -344,40 +351,46 @@ class Logger:
         chunk: int = ...
     ) -> Generator[Dict[str, Any], None, None]: ...
     @overload
-    def trace(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def trace(__self, __message: LoggedStr, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
     def trace(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def debug(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def debug(__self, __message: LoggedStr, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
     def debug(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def info(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def info(__self, __message: LoggedStr, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
     def info(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def success(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def success(__self, __message: LoggedStr, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
     def success(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def warning(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def warning(__self, __message: LoggedStr, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
     def warning(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def error(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def error(__self, __message: LoggedStr, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
     def error(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def critical(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def critical(__self, __message: LoggedStr, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
     @overload
     def critical(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
-    def exception(__self, __message: str, *args: Any, **kwargs: Any) -> None: ...  # noqa: N805
+    def exception(
+        __self, __message: LoggedStr, *args: Any, **kwargs: Any  # noqa: N805
+    ) -> None: ...
     @overload
     def exception(__self, __message: Any) -> None: ...  # noqa: N805
     @overload
     def log(
-        __self, __level: Union[int, str], __message: str, *args: Any, **kwargs: Any  # noqa: N805
+        __self,  # noqa: N805
+        __level: Union[int, str],
+        __message: LoggedStr,
+        *args: Any,
+        **kwargs: Any
     ) -> None: ...
     @overload
     def log(__self, __level: Union[int, str], __message: Any) -> None: ...  # noqa: N805

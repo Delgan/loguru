@@ -136,14 +136,16 @@ else:
         return False
 
 
-try:
-    from string.templatelib import Interpolation as _Interpolation
-    from string.templatelib import Template as _Template
-    from string.templatelib import convert as _tmpl_convert
-except ImportError:
-    _Template = None  # type: ignore[assignment,misc]
-    _Interpolation = None  # type: ignore[assignment,misc]
-    _tmpl_convert = None  # type: ignore[assignment,misc]
+if sys.version_info >= (3, 14):
+    from string import templatelib
+
+    def is_template(obj):
+        return isinstance(obj, templatelib.Template)
+
+else:
+
+    def is_template(obj):
+        return False
 
 
 Level = namedtuple("Level", ["name", "no", "color", "icon"])  # noqa: PYI024
@@ -443,7 +445,8 @@ class Logger:
 
         Note that while calling a logging method, the keyword arguments (if any) are automatically
         added to the ``extra`` dict for convenient contextualization (in addition to being used for
-        formatting).
+        formatting). Also, if the base message is a template string (Python 3.14+), it will first be
+        converted to a regular string.
 
         .. _levels:
 
@@ -2036,22 +2039,16 @@ class Logger:
                 yield from matches[:-1]
 
     @staticmethod
-    def _message_to_string(message):
-        """Message can be a string, Any or a Template (for python>=3.14).
+    def _template_to_string(template):
 
-        For templates, we convert them into a string analogously to how f-string work.
-        Everything else is just converted to string via str(message).
-        """
-        if _Template is None or not isinstance(message, _Template):
-            return str(message)
-
-        # Code follows PEP-750 example "implementing f-strings with t-strings"
         def item_to_string(item):
-            if isinstance(item, _Interpolation):
-                return format(_tmpl_convert(item.value, item.conversion), item.format_spec)
+            if isinstance(item, templatelib.Interpolation):
+                if isinstance(item.value, templatelib.Template):
+                    return Logger._template_to_string(item.value)
+                return format(templatelib.convert(item.value, item.conversion), item.format_spec)
             return item
 
-        return "".join(item_to_string(item) for item in message)
+        return "".join(item_to_string(item) for item in template)
 
     def _log(self, level, from_decorator, options, message, args, kwargs):
         core = self._core
@@ -2138,6 +2135,9 @@ class Logger:
         else:
             exception = None
 
+        if is_template(message):
+            message = self._template_to_string(message)
+
         log_record = {
             "elapsed": elapsed,
             "exception": exception,
@@ -2146,7 +2146,7 @@ class Logger:
             "function": co_name,
             "level": RecordLevel(level_name, level_no, level_icon),
             "line": f_lineno,
-            "message": Logger._message_to_string(message),
+            "message": str(message),
             "module": splitext(file_name)[0],
             "name": name,
             "process": RecordProcess(process.ident, process.name),

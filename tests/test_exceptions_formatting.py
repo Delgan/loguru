@@ -261,6 +261,7 @@ def test_exception_others(filename):
         ("grouped_max_length", (3, 11)),
         ("grouped_max_depth", (3, 11)),
         ("f_string", (3, 12)),  # Available since 3.6 but in 3.12 the lexer for f-string changed.
+        ("t_string", (3, 14)),
     ],
 )
 def test_exception_modern(filename, minimum_python_version):
