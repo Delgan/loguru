@@ -2,6 +2,31 @@ from os import environ
 
 
 def env(key, type_, default=None):
+    """Read an environment variable and coerce it to the requested type.
+
+    Parameters
+    ----------
+    key : str
+        The name of the environment variable to read.
+    type_ : type
+        The type to coerce the value to. Supported types are ``str``, ``bool``,
+        and ``int``.
+    default : object, optional
+        The value to return when the environment variable is not set.
+        Defaults to ``None``.
+
+    Returns
+    -------
+    object
+        The coerced value of the environment variable, or ``default`` if the
+        variable is not set.
+
+    Raises
+    ------
+    ValueError
+        If the variable's value cannot be coerced to ``type_``, or if
+        ``type_`` is not one of the supported types.
+    """
     if key not in environ:
         return default
 
