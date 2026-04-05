@@ -117,8 +117,8 @@ class Handler:
                 "handler or a '__del__' method. This is not permitted because the logger and its "
                 "handlers are not re-entrant."
             )
-        self._lock_acquired.acquired = True
         try:
+            self._lock_acquired.acquired = True
             with self._lock:
                 yield
         finally:

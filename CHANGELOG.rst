@@ -8,6 +8,7 @@
 - Fix possible internal error when dealing with (rare) frame objects missing a ``f_lineno`` value (`#1435 <https://github.com/Delgan/loguru/issues/1435>`_).
 - Fix a regression preventing formatting of ``record["time"]`` when using ``zoneinfo.ZoneInfo`` timezones (`#1260 <https://github.com/Delgan/loguru/pull/1260>`_, thanks `@bijlpieter <https://github.com/bijlpieter>`_).
 - Fix possible ``ValueError`` raised on Windows when system clock was set far ahead in the future (`#1291 <https://github.com/Delgan/loguru/issues/1291>`_).
+- Fix externally raised ``Exception`` possibly causing invalid state generating repeated ``RuntimeError`` of avoided deadlock (`#1335 <https://github.com/Delgan/loguru/issues/1335>`_).
 - Respect the ``.level`` attribute of standard logging ``Handler`` used as sink, which was previously ignored (`#1409 <https://github.com/Delgan/loguru/issues/1409>`_).
 - Allow the ``rotation`` argument of file sinks to accept a list of rotation conditions, any of which can trigger the rotation (`#1174 <https://github.com/Delgan/loguru/issues/1174>`_, thanks `@CollinHeist <https://github.com/CollinHeist>`_).
 - Honor the ``NO_COLOR`` environment variable which disables color output by default if ``colorize`` is not provided (`#1178 <https://github.com/Delgan/loguru/issues/1178>`_).
