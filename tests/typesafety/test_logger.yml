@@ -289,18 +289,18 @@
     from loguru import logger
     logger.add(lambda m: None, foobar=123)
   out: |
-    main:2: error: No overload variant of "add" of "Logger" matches argument types "Callable[[Any], None]", "int"
+    main:2: error: No overload variant of "add" of "Logger" matches argument types "Callable[[Any], None]", "int"  [call-overload]
     main:2: note: Possible overload variants:
-    main:2: note:     def add(self, sink: Union[TextIO, Writable, Callable[[Message], None], Handler], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ...) -> int
-    main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., context: Union[str, BaseContext, None] = ..., loop: Optional[AbstractEventLoop] = ...) -> int
-    main:2: note:     def add(self, sink: Union[str, PathLike[str]], *, level: Union[str, int] = ..., format: Union[str, Callable[[Record], str]] = ..., filter: Union[str, Callable[[Record], bool], dict[Optional[str], Union[str, int, bool]], None] = ..., colorize: Optional[bool] = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: Union[str, BaseContext, None] = ..., catch: bool = ..., rotation: Union[str, int, time, timedelta, Callable[[Message, TextIO], bool], list[Union[str, int, time, timedelta, Callable[[Message, TextIO], bool]]], None] = ..., retention: Union[str, int, timedelta, Callable[[list[str]], None], None] = ..., compression: Union[str, Callable[[str], None], None] = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., errors: Optional[str] = ..., newline: Optional[str] = ..., closefd: bool = ..., opener: Optional[Callable[[str, int], int]] = ...) -> int
+    main:2: note:     def add(self, sink: TextIO | Writable | Callable[[Message], None] | Handler, *, level: str | int = ..., format: str | Callable[[Record], str] = ..., filter: str | Callable[[Record], bool] | dict[str | None, str | int | bool] | None = ..., colorize: bool | None = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: str | BaseContext | None = ..., catch: bool = ...) -> int
+    main:2: note:     def add(self, sink: Callable[[Message], Awaitable[None]], *, level: str | int = ..., format: str | Callable[[Record], str] = ..., filter: str | Callable[[Record], bool] | dict[str | None, str | int | bool] | None = ..., colorize: bool | None = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., catch: bool = ..., context: str | BaseContext | None = ..., loop: AbstractEventLoop | None = ...) -> int
+    main:2: note:     def add(self, sink: str | PathLike[str], *, level: str | int = ..., format: str | Callable[[Record], str] = ..., filter: str | Callable[[Record], bool] | dict[str | None, str | int | bool] | None = ..., colorize: bool | None = ..., serialize: bool = ..., backtrace: bool = ..., diagnose: bool = ..., enqueue: bool = ..., context: str | BaseContext | None = ..., catch: bool = ..., rotation: str | int | time | timedelta | Callable[[Message, TextIO], bool] | list[str | int | time | timedelta | Callable[[Message, TextIO], bool]] | None = ..., retention: str | int | timedelta | Callable[[list[str]], None] | None = ..., compression: str | Callable[[str], None] | None = ..., delay: bool = ..., watch: bool = ..., mode: str = ..., buffering: int = ..., encoding: str = ..., errors: str | None = ..., newline: str | None = ..., closefd: bool = ..., opener: Callable[[str, int], int] | None = ...) -> int
 
 - case: invalid_logged_object_formatting
   main: |
     from loguru import logger
     logger.info(123, foo=123)
   out: |
-    main:2: error: No overload variant of "info" of "Logger" matches argument types "int", "int"
+    main:2: error: No overload variant of "info" of "Logger" matches argument types "int", "int"  [call-overload]
     main:2: note: Possible overload variants:
     main:2: note:     def info(__self, str, /, *args: Any, **kwargs: Any) -> None
     main:2: note:     def info(__self, Any, /) -> None
@@ -316,11 +316,11 @@
       extra=[1],
     )
   out: |
-    main:3: error: List item 0 has incompatible type "dict[str, str]"; expected "Union[BasicHandlerConfig, FileHandlerConfig, AsyncHandlerConfig]"
-    main:4: error: Extra key "baz" for TypedDict "LevelConfig"
-    main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Optional[Callable[[Record], None]]"
-    main:6: error: List item 0 has incompatible type "dict[str, str]"; expected "tuple[Optional[str], bool]"
-    main:7: error: Argument "extra" to "configure" of "Logger" has incompatible type "list[int]"; expected "Optional[dict[Any, Any]]"
+    main:3: error: List item 0 has incompatible type "dict[str, str]"; expected "BasicHandlerConfig | FileHandlerConfig | AsyncHandlerConfig"  [list-item]
+    main:4: error: Extra key "baz" for TypedDict "LevelConfig"  [typeddict-unknown-key]
+    main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Callable[[Record], None] | None"  [arg-type]
+    main:6: error: List item 0 has incompatible type "dict[str, str]"; expected "tuple[str | None, bool]"  [list-item]
+    main:7: error: Argument "extra" to "configure" of "Logger" has incompatible type "list[int]"; expected "dict[Any, Any] | None"  [arg-type]
 
 - case: reinstall
   main: |
