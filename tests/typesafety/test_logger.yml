@@ -64,7 +64,7 @@
     id = logger.add({{sink}})
     reveal_type(id)
   out: |
-    main:10: note: Revealed type is "builtins.int"
+    main:10: note: Revealed type is "int"
 
 - case: basic_sink_options
   parametrized:
@@ -144,7 +144,7 @@
     func(1, 2) + 3
     reveal_type(func)
   out: |
-    main:6: note: Revealed type is "def (a: builtins.int, b: builtins.int) -> builtins.int"
+    main:6: note: Revealed type is "def (a: int, b: int) -> int"
 
 - case: catch_as_decorator_without_parentheses
   main: |
@@ -155,7 +155,7 @@
     func(1, 2) + 3
     reveal_type(func)
   out: |
-    main:6: note: Revealed type is "def (a: builtins.int, b: builtins.int) -> builtins.int"
+    main:6: note: Revealed type is "def (a: int, b: int) -> int"
 
 - case: catch_as_context_manager
   main: |
@@ -211,7 +211,7 @@
     level = logger.level("INFO")
     reveal_type(level)
   out: |
-    main:4: note: Revealed type is "tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
+    main:4: note: Revealed type is "tuple[str, int, str, str, fallback=loguru.Level]"
 
 - case: level_set
   main: |
@@ -220,7 +220,7 @@
     level = logger.level("FOO", no=11, icon="!", color="<blue>")
     reveal_type(level)
   out: |
-    main:4: note: Revealed type is "tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
+    main:4: note: Revealed type is "tuple[str, int, str, str, fallback=loguru.Level]"
 
 - case: level_update
   main: |
@@ -229,7 +229,7 @@
     level = logger.level("INFO", color="<blue>")
     reveal_type(level)
   out: |
-    main:4: note: Revealed type is "tuple[builtins.str, builtins.int, builtins.str, builtins.str, fallback=loguru.Level]"
+    main:4: note: Revealed type is "tuple[str, int, str, str, fallback=loguru.Level]"
 
 - case: enable_and_disable_logger
   main: |
@@ -250,7 +250,7 @@
     )
     reveal_type(ids)
   out: |
-    main:9: note: Revealed type is "builtins.list[builtins.int]"
+    main:9: note: Revealed type is "list[int]"
 
 - case: configure_stream_handler
   skip: sys.version_info < (3, 7)  # Old Mypy bug: Union of TypedDict not fully supported.
@@ -281,8 +281,8 @@
     reveal_type(iterator)
     reveal_type(match)
   out: |
-    main:5: note: Revealed type is "typing.Generator[builtins.dict[builtins.str, Any], None, None]"
-    main:6: note: Revealed type is "builtins.dict[builtins.str, Any]"
+    main:5: note: Revealed type is "typing.Generator[dict[str, Any], None, None]"
+    main:6: note: Revealed type is "dict[str, Any]"
 
 - case: invalid_add_argument
   main: |
