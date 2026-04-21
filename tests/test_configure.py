@@ -138,7 +138,7 @@ def test_reset_previous_extra(writer):
 
     logger.configure(extra={})
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError, match=r"Failed to format log record: key 'a' not found."):
         logger.debug("Nope")
 
 
@@ -148,7 +148,7 @@ def test_reset_previous_patcher(writer):
 
     logger.configure(patcher=lambda r: None)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError, match=r"Failed to format log record: key 'a' not found."):
         logger.debug("Nope")
 
 

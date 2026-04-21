@@ -65,7 +65,7 @@ def test_invalid_format(writer, format):
 @pytest.mark.parametrize("format", ["<red>", "</red>", "</level><level>", "</>", "<foobar>"])
 def test_invalid_markups(writer, format):
     with pytest.raises(
-        ValueError, match="^Invalid format, color markups could not be parsed correctly$"
+        ValueError, match=r"^Invalid format, color markups could not be parsed correctly$"
     ):
         logger.add(writer, format=format)
 

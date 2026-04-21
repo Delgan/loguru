@@ -83,3 +83,13 @@ def test_multiple_patches(writer):
     logger.patch(patch_1).patch(patch_2).patch(patch_3).info("Test")
 
     assert writer.read() == "12 Test\n"
+
+
+def test_patcher_added_keys_work_in_format(writer):
+    def patcher(record):
+        record["my_value"] = 42
+
+    logger.add(writer, format="{message} | {my_value}")
+    logger.configure(patcher=patcher)
+    logger.info("Hello")
+    assert "Hello | 42" in writer.read()

@@ -2,7 +2,6 @@ from loguru import logger
 
 import sys
 
-
 logger.remove()
 logger.add(sys.stderr, format="", diagnose=False, backtrace=False, colorize=False)
 logger.add(sys.stderr, format="", diagnose=False, backtrace=True, colorize=False)

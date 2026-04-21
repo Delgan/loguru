@@ -39,7 +39,7 @@ def test_patch_record_process(writer):
 
 def test_patch_record_exception(writer):
     def patch(record):
-        type_, value, traceback = record["exception"]
+        type_, value, _ = record["exception"]
         record["exception"] = (type_, value, None)
 
     logger.add(writer, format="")

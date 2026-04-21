@@ -17,7 +17,7 @@ else:
 
 
 def _expected_fallback_time_zone():
-    # For some reason, Python versions and interepreters return different time zones here.
+    # For some reason, Python versions and interpreters return different time zones here.
     return strftime("%Z")
 
 

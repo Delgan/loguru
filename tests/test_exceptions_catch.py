@@ -475,7 +475,7 @@ def test_unprintable_but_decorated_repr(writer):
 
     foo = Foo()
 
-    with pytest.raises(ValueError, match="^Something went wrong$"):
+    with pytest.raises(ValueError, match=r"^Something went wrong$"):
         repr(foo)
 
     assert writer.read().endswith("ValueError: Something went wrong\n")
@@ -507,7 +507,7 @@ def test_unprintable_but_decorated_multiple_sinks(capsys):
 
     foo = Foo()
 
-    with pytest.raises(ValueError, match="^Something went wrong$"):
+    with pytest.raises(ValueError, match=r"^Something went wrong$"):
         repr(foo)
 
     out, err = capsys.readouterr()
@@ -527,7 +527,7 @@ def test_unprintable_but_decorated_repr_with_enqueue(writer):
 
     foo = Foo()
 
-    with pytest.raises(ValueError, match="^Something went wrong$"):
+    with pytest.raises(ValueError, match=r"^Something went wrong$"):
         repr(foo)
 
     logger.complete()
@@ -546,7 +546,7 @@ def test_unprintable_but_decorated_repr_twice(writer):
 
     foo = Foo()
 
-    with pytest.raises(ValueError, match="^Something went wrong$"):
+    with pytest.raises(ValueError, match=r"^Something went wrong$"):
         repr(foo)
 
     assert writer.read().endswith("ValueError: Something went wrong\n")
@@ -562,7 +562,7 @@ def test_unprintable_with_catch_context_manager(writer):
 
     foo = Foo()
 
-    with pytest.raises(ValueError, match="^Something went wrong$"):
+    with pytest.raises(ValueError, match=r"^Something went wrong$"):
         repr(foo)
 
     assert writer.read().endswith("ValueError: Something went wrong\n")
@@ -584,7 +584,7 @@ def test_unprintable_with_catch_context_manager_reused(writer):
 
     foo = Foo()
 
-    with pytest.raises(ValueError, match="^Sink error$"):
+    with pytest.raises(ValueError, match=r"^Sink error$"):
         repr(foo)
 
     logger.remove()
@@ -626,7 +626,7 @@ def test_unprintable_but_decorated_repr_multiple_threads(writer):
 
     foo = Foo()
 
-    with pytest.raises(ValueError, match="^Something went wrong$"):
+    with pytest.raises(ValueError, match=r"^Something went wrong$"):
         repr(foo)
 
     thread.join()

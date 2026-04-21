@@ -151,7 +151,7 @@ def test_updating_min_level(writer):
 
     a = logger.add(writer, level="DEBUG")
 
-    with pytest.raises(ValueError, match="^The logging message could not be formatted"):
+    with pytest.raises(ValueError, match=r"^The logging message could not be formatted"):
         logger.debug("An {error} will occur!", nope=None)
 
     logger.trace("Early exit -> no {error}", nope=None)
@@ -182,7 +182,7 @@ def test_assign_custom_level_method(writer):
 
 def test_updating_level_no_not_allowed_default():
     with pytest.raises(
-        ValueError, match="^Level 'DEBUG' already exists, you can't update its severity no$"
+        ValueError, match=r"^Level 'DEBUG' already exists, you can't update its severity no$"
     ):
         logger.level("DEBUG", 100)
 
@@ -190,7 +190,7 @@ def test_updating_level_no_not_allowed_default():
 def test_updating_level_no_not_allowed_custom():
     logger.level("foobar", no=33)
     with pytest.raises(
-        ValueError, match="^Level 'foobar' already exists, you can't update its severity no$"
+        ValueError, match=r"^Level 'foobar' already exists, you can't update its severity no$"
     ):
         logger.level("foobar", 100)
 
@@ -199,7 +199,7 @@ def test_updating_level_no_not_allowed_custom():
 def test_log_invalid_level_type(writer, level):
     logger.add(writer)
     with pytest.raises(
-        TypeError, match="^Invalid level, it should be an integer or a string, not: '[^']+'$"
+        TypeError, match=r"^Invalid level, it should be an integer or a string, not: '[^']+'$"
     ):
         logger.log(level, "test")
 
@@ -208,7 +208,7 @@ def test_log_invalid_level_type(writer, level):
 def test_log_invalid_level_value(writer, level):
     logger.add(writer)
     with pytest.raises(
-        ValueError, match="^Invalid level value, it should be a positive integer, not: -?[0-9]+"
+        ValueError, match=r"^Invalid level value, it should be a positive integer, not: -?[0-9]+"
     ):
         logger.log(level, "test")
 
@@ -216,7 +216,7 @@ def test_log_invalid_level_value(writer, level):
 @pytest.mark.parametrize("level", ["foo", "debug"])
 def test_log_unknown_level(writer, level):
     logger.add(writer)
-    with pytest.raises(ValueError, match="^Level '[^']+' does not exist$"):
+    with pytest.raises(ValueError, match=r"^Level '[^']+' does not exist$"):
         logger.log(level, "test")
 
 
@@ -235,7 +235,7 @@ def test_add_invalid_level_type(level_value):
 @pytest.mark.parametrize("level_value", [-1, -999])
 def test_add_invalid_level_value(level_value):
     with pytest.raises(
-        ValueError, match="^Invalid level no, it should be a positive integer, not: -?[0-9]+$"
+        ValueError, match=r"^Invalid level no, it should be a positive integer, not: -?[0-9]+$"
     ):
         logger.level("test", level_value)
 
@@ -247,7 +247,7 @@ def test_get_invalid_level(level):
 
 
 def test_get_unknown_level():
-    with pytest.raises(ValueError, match="^Level '[^']+' does not exist$"):
+    with pytest.raises(ValueError, match=r"^Level '[^']+' does not exist$"):
         logger.level("foo")
 
 
@@ -261,7 +261,7 @@ def test_edit_invalid_level(level):
 def test_edit_unknown_level(level_name):
     with pytest.raises(
         ValueError,
-        match="^Level '[^']+' does not exist, you have to create it by specifying a level no$",
+        match=r"^Level '[^']+' does not exist, you have to create it by specifying a level no$",
     ):
         logger.level(level_name, icon="?")
 
@@ -271,7 +271,7 @@ def test_add_level_unknown_color(color):
     with pytest.raises(
         ValueError,
         match=(
-            'Tag "<[^>]*>" does not correspond to any known color directive, '
+            r'Tag "<[^>]*>" does not correspond to any known color directive, '
             r"make sure you have not misspelled it \(or prepend '\\' to escape it\)"
         ),
     ):
@@ -281,7 +281,7 @@ def test_add_level_unknown_color(color):
 @pytest.mark.parametrize("color", ["</>", "</red>", "</foo>"])
 def test_add_level_invalid_markup(color):
     with pytest.raises(
-        ValueError, match='^Closing tag "</[^>]*>" has no corresponding opening tag$'
+        ValueError, match=r'^Closing tag "</[^>]*>" has no corresponding opening tag$'
     ):
         logger.level("foobar", no=20, icon="", color=color)
 
@@ -291,7 +291,7 @@ def test_add_level_invalid_name(color):
     with pytest.raises(
         ValueError,
         match=(
-            "^The '<level>' color tag is not allowed in this context, "
+            r"^The '<level>' color tag is not allowed in this context, "
             r"it has not yet been associated to any color value\.$"
         ),
     ):

@@ -22,7 +22,7 @@ jobs:
         - '3.11'
         - '3.12'
         - '3.13'
-        - 3.14-dev
+        - '3.14'
         - pypy-3.11
         allow-failure:
         - false
@@ -48,7 +48,7 @@ jobs:
     container: ${{ matrix.container }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - name: Set up Python
       if: ${{ matrix.container == null }}
       uses: actions/setup-python@v6
@@ -63,7 +63,7 @@ jobs:
         tox -e tests
       continue-on-error: ${{ matrix.allow-failure }}
     - name: Upload coverage data
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: coverage-${{ matrix.python-version }}-${{ matrix.os }}
         path: coverage.xml
@@ -73,11 +73,11 @@ jobs:
     needs: tests
     steps:
     - name: Checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - name: Download artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v8
     - name: Upload to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true

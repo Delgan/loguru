@@ -7,7 +7,6 @@ import logging
 import multiprocessing
 import os
 import pathlib
-import re
 import sys
 import threading
 import time
@@ -47,56 +46,6 @@ if sys.version_info < (3, 6):
     @pytest.fixture
     def tmp_path(tmp_path):
         return pathlib.Path(str(tmp_path))
-
-
-try:
-    from pytest_mypy_plugins.item import YamlTestItem
-except ImportError:
-    # The plugin is only available starting with Python 3.6.
-    # Additionally, it has dependencies that are not compatible with Python versions in development.
-    # In both cases, the Mypy tests will be skipped.
-    pass
-else:
-
-    def _fix_positional_only_args(item: YamlTestItem):
-        """Remove forward-slash marker from the expected output for Python 3.6."""
-        for output in item.expected_output:
-            output.message = output.message.replace(", /", "")
-            # Also patch the "severity" attribute because there is a parsing bug in the plugin.
-            output.severity = output.severity.replace(", /", "")
-
-    def _fix_builtins_uppercase(item: YamlTestItem):
-        """Adapt case of builtins from the expected output for Python 3.6 to 3.8."""
-        for output in item.expected_output:
-            for builtin in ["dict", "list", "set", "tuple"]:
-                # Quite hacky, but should work for all tested cases.
-                pattern = re.compile(r"(?<![a-zA-Z0-9.])" + builtin + r"\[")
-                replacement = builtin.capitalize() + "["
-                output.message = pattern.sub(replacement, output.message)
-                output.severity = pattern.sub(replacement, output.severity)
-
-    def _add_mypy_config(item: YamlTestItem):
-        """Add some extra options to the mypy configuration for Python 3.7+."""
-        item.additional_mypy_config += "\n".join(
-            [
-                "show_error_codes = false",
-                "force_union_syntax = true",
-            ]
-        )
-
-    def pytest_collection_modifyitems(config, items):
-        """Modify the tests to ensure they produce the same output regardless of Python version."""
-        for item in items:
-            if not isinstance(item, YamlTestItem):
-                continue
-
-            if sys.version_info >= (3, 7):
-                _add_mypy_config(item)
-            else:
-                _fix_positional_only_args(item)
-
-            if sys.version_info < (3, 9):
-                _fix_builtins_uppercase(item)
 
 
 @contextlib.contextmanager

@@ -2058,7 +2058,7 @@ class Logger:
         if level_no < core.min_level:
             return
 
-        (exception, depth, record, lazy, colors, raw, capture, patchers, extra) = options
+        exception, depth, record, lazy, colors, raw, capture, patchers, extra = options
 
         try:
             frame = get_frame(depth + 2)

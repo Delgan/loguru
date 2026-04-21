@@ -1000,7 +1000,7 @@ def test_exception_during_rotation_not_caught(tmp_path, capsys):
         catch=False,
     )
 
-    with pytest.raises(OSError, match="^Rotation error$"):
+    with pytest.raises(OSError, match=r"^Rotation error$"):
         logger.info("A")
 
     logger.info("B")
@@ -1084,7 +1084,7 @@ def test_multiple_rotation_conditions(freeze_time, tmp_path):
 
 
 def test_empty_rotation_condition_list():
-    with pytest.raises(ValueError, match="^Must provide at least one rotation condition$"):
+    with pytest.raises(ValueError, match=r"^Must provide at least one rotation condition$"):
         logger.add("test.log", rotation=[])
 
 
@@ -1113,13 +1113,13 @@ def test_invalid_rotation_type(rotation):
     ],
 )
 def test_unparsable_rotation(rotation):
-    with pytest.raises(ValueError, match="^Cannot parse rotation from: '[^']+'$"):
+    with pytest.raises(ValueError, match=r"^Cannot parse rotation from: '[^']+'$"):
         logger.add("test.log", rotation=rotation)
 
 
 @pytest.mark.parametrize("rotation", ["w7", "w10", "13 at w2", "[not|a|day] at 12:00"])
 def test_invalid_day_rotation(rotation):
-    with pytest.raises(ValueError, match="^Invalid day while parsing daytime: '[^']+'$"):
+    with pytest.raises(ValueError, match=r"^Invalid day while parsing daytime: '[^']+'$"):
         logger.add("test.log", rotation=rotation)
 
 
@@ -1127,23 +1127,23 @@ def test_invalid_day_rotation(rotation):
     "rotation", ["2017.11.12", "11:99", "monday at 2017", "w5 at [not|a|time]"]
 )
 def test_invalid_time_rotation(rotation):
-    with pytest.raises(ValueError, match="^Invalid time while parsing daytime: '[^']+'$"):
+    with pytest.raises(ValueError, match=r"^Invalid time while parsing daytime: '[^']+'$"):
         logger.add("test.log", rotation=rotation)
 
 
 @pytest.mark.parametrize("rotation", ["111.111.111 kb", "e KB"])
 def test_invalid_value_size_rotation(rotation):
-    with pytest.raises(ValueError, match="^Invalid float value while parsing size: '[^']+'$"):
+    with pytest.raises(ValueError, match=r"^Invalid float value while parsing size: '[^']+'$"):
         logger.add("test.log", rotation=rotation)
 
 
 @pytest.mark.parametrize("rotation", ["2 days 8 foobar", "1 foobar 3 days", "3 Ki"])
 def test_invalid_unit_rotation_duration(rotation):
-    with pytest.raises(ValueError, match="^Invalid unit value while parsing duration: '[^']+'$"):
+    with pytest.raises(ValueError, match=r"^Invalid unit value while parsing duration: '[^']+'$"):
         logger.add("test.log", rotation=rotation)
 
 
 @pytest.mark.parametrize("rotation", ["e days", "1.2.3 days"])
 def test_invalid_value_rotation_duration(rotation):
-    with pytest.raises(ValueError, match="^Invalid float value while parsing duration: '[^']+'$"):
+    with pytest.raises(ValueError, match=r"^Invalid float value while parsing duration: '[^']+'$"):
         logger.add("test.log", rotation=rotation)

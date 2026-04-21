@@ -1,21 +1,23 @@
 `Unreleased`_
 =============
 
+- Change the default log format to include the timezone offset since it produces less ambiguous logs (`#856 <https://github.com/Delgan/loguru/pull/856>`_, thanks `@tim-x-y-z <https://github.com/tim-x-y-z>`_).
 - Add new ``logger.reinstall()`` method to automatically set up the ``logger`` in spawned child processes (`#818 <https://github.com/Delgan/loguru/issues/818>`_, thanks `@monchin <https://github.com/monchin>`_).
 - Fix incorrect microsecond value when formatting the log timestamp using ``{time:x}`` (`#1440 <https://github.com/Delgan/loguru/issues/1440>`_).
 - Fix hex color short code expansion (`#1426 <https://github.com/Delgan/loguru/issues/1426>`_, thanks `@turkoid <https://github.com/turkoid>`_).
-- Fix possible internal error when dealing with (rare) frame objects missing a ``f_lineno`` value (`#1435 <https://github.com/Delgan/loguru/issues/1435>`).
+- Fix possible internal error when dealing with (rare) frame objects missing a ``f_lineno`` value (`#1435 <https://github.com/Delgan/loguru/issues/1435>`_).
 - Fix a regression preventing formatting of ``record["time"]`` when using ``zoneinfo.ZoneInfo`` timezones (`#1260 <https://github.com/Delgan/loguru/pull/1260>`_, thanks `@bijlpieter <https://github.com/bijlpieter>`_).
 - Fix possible ``ValueError`` raised on Windows when system clock was set far ahead in the future (`#1291 <https://github.com/Delgan/loguru/issues/1291>`_).
+- Fix externally raised ``Exception`` possibly causing invalid state generating repeated ``RuntimeError`` of avoided deadlock (`#1335 <https://github.com/Delgan/loguru/issues/1335>`_).
 - Respect the ``.level`` attribute of standard logging ``Handler`` used as sink, which was previously ignored (`#1409 <https://github.com/Delgan/loguru/issues/1409>`_).
 - Allow the ``rotation`` argument of file sinks to accept a list of rotation conditions, any of which can trigger the rotation (`#1174 <https://github.com/Delgan/loguru/issues/1174>`_, thanks `@CollinHeist <https://github.com/CollinHeist>`_).
-- Update the default log format to include the timezone offset since it produces less ambiguous logs (`#856 <https://github.com/Delgan/loguru/pull/856>`_, thanks `@tim-x-y-z <https://github.com/tim-x-y-z>`_).
 - Honor the ``NO_COLOR`` environment variable which disables color output by default if ``colorize`` is not provided (`#1178 <https://github.com/Delgan/loguru/issues/1178>`_).
 - Honor the ``FORCE_COLOR`` environment variable which enables color output by default if ``colorize`` is not provided (`#1305 <https://github.com/Delgan/loguru/issues/1305>`_, thanks `@nhurden <https://github.com/nhurden>`_).
 - Add requirement for ``TERM`` environment variable not to be ``"dumb"`` to enable colorization (`#1287 <https://github.com/Delgan/loguru/pull/1287>`_, thanks `@snosov1 <https://github.com/snosov1>`_).
 - Make ``logger.catch()`` usable as an asynchronous context manager (`#1084 <https://github.com/Delgan/loguru/issues/1084>`_).
 - Make ``logger.catch()`` compatible with asynchronous generators (`#1302 <https://github.com/Delgan/loguru/issues/1302>`_).
 - Add new parameter ``diagnose_excludes`` to ``logger.add``, to allow excluding sensitive data from variables when ``diagnose=True`` (`#1447 <https://github.com/Delgan/loguru/issues/1447>`_).
+- Improve feedback for invalid format keys in logger format strings (`#1450 <https://github.com/Delgan/loguru/issues/1450>`_, thanks `@Krishnachaitanyakc <https://github.com/Krishnachaitanyakc>`_).
 
 `0.7.3`_ (2024-12-06)
 =====================

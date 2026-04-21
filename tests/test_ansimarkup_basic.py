@@ -95,7 +95,7 @@ def test_nested(text, expected):
 @pytest.mark.parametrize("text", ["<b>", "<Y><b></b>", "<b><b></b>"])
 def test_strict_parsing(text):
     with pytest.raises(
-        ValueError, match='^Opening tag "<[^>]*>" has no corresponding closing tag$'
+        ValueError, match=r'^Opening tag "<[^>]*>" has no corresponding closing tag$'
     ):
         parse(text, strip=False)
 
@@ -173,7 +173,7 @@ def test_escaping(text, expected):
 @pytest.mark.parametrize("strip", [True, False])
 def test_mismatched_error(text, strip):
     with pytest.raises(
-        ValueError, match='^Closing tag "<[^>]*>" has no corresponding opening tag$'
+        ValueError, match=r'^Closing tag "<[^>]*>" has no corresponding opening tag$'
     ):
         parse(text, strip=strip)
 
@@ -183,7 +183,7 @@ def test_mismatched_error(text, strip):
 )
 @pytest.mark.parametrize("strip", [True, False])
 def test_unbalanced_error(text, strip):
-    with pytest.raises(ValueError, match='^Closing tag "<[^>]*>" violates nesting rules$'):
+    with pytest.raises(ValueError, match=r'^Closing tag "<[^>]*>" violates nesting rules$'):
         parse(text, strip=strip)
 
 
@@ -191,7 +191,7 @@ def test_unbalanced_error(text, strip):
 @pytest.mark.parametrize("strip", [True, False])
 def test_unclosed_error(text, strip):
     with pytest.raises(
-        ValueError, match='^Opening tag "<[^>]*>" has no corresponding closing tag$'
+        ValueError, match=r'^Opening tag "<[^>]*>" has no corresponding closing tag$'
     ):
         parse(text, strip=strip)
 

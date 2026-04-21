@@ -303,7 +303,7 @@ def test_invalid_markup_in_message(writer, message, colorize):
     logger.add(writer, format="<red>{message}</red>", colorize=colorize, catch=False)
     with pytest.raises(
         ValueError,
-        match='(Closing|Opening) tag "[^"]*" has no corresponding (opening|closing) tag',
+        match=r'(Closing|Opening) tag "[^"]*" has no corresponding (opening|closing) tag',
     ):
         logger.opt(colors=True).debug(message)
 
@@ -404,7 +404,7 @@ def test_colors_without_formatting_args(writer, colorize):
 @pytest.mark.parametrize("colorize", [True, False])
 def test_colors_with_recursion_depth_exceeded_in_format(writer, colorize):
     with pytest.raises(
-        ValueError, match="^Invalid format, color markups could not be parsed correctly$"
+        ValueError, match=r"^Invalid format, color markups could not be parsed correctly$"
     ):
         logger.add(writer, format="{message:{message:{message:}}}", colorize=colorize)
 

@@ -62,5 +62,5 @@ def test_invalid_type(monkeypatch):
     with monkeypatch.context() as context:
         key = "INVALID_TYPE"
         context.setenv(key, "42.0")
-        with pytest.raises(ValueError, match="^The requested type '[^']+' is not supported"):
+        with pytest.raises(ValueError, match=r"^The requested type '[^']+' is not supported"):
             env(key, float)

@@ -224,7 +224,7 @@ def test_pickling_no_handler(writer):
 
 def test_pickling_handler_not_serializable():
     logger.add(lambda m: None)
-    with pytest.raises((pickle.PicklingError, AttributeError), match="Can't (pickle|get local)"):
+    with pytest.raises((pickle.PicklingError, AttributeError), match=r"Can't (pickle|get local)"):
         pickle.dumps(logger)
 
 
@@ -270,13 +270,13 @@ def test_pickling_format_function(capsys, colorize):
 
 def test_pickling_filter_function_not_serializable():
     logger.add(print, filter=lambda r: True)
-    with pytest.raises((pickle.PicklingError, AttributeError), match="Can't (pickle|get local)"):
+    with pytest.raises((pickle.PicklingError, AttributeError), match=r"Can't (pickle|get local)"):
         pickle.dumps(logger)
 
 
 def test_pickling_format_function_not_serializable():
     logger.add(print, format=lambda r: "{message}")
-    with pytest.raises((pickle.PicklingError, AttributeError), match="Can't (pickle|get local)"):
+    with pytest.raises((pickle.PicklingError, AttributeError), match=r"Can't (pickle|get local)"):
         pickle.dumps(logger)
 
 

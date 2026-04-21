@@ -35,7 +35,7 @@ def test_filtered_in(filter, writer):
     "filter",
     [
         "test",
-        "testss",
+        "testsx",
         "tests.",
         "tests.test_add_option_filter.",
         ".",
@@ -114,8 +114,8 @@ def test_invalid_filter_dict_values_unknown_level(writer, filter):
     with pytest.raises(
         ValueError,
         match=(
-            "The filter dict contains a module '[^']*' associated to "
-            "a level name which does not exist: '[^']*'"
+            r"The filter dict contains a module '[^']*' associated to "
+            r"a level name which does not exist: '[^']*'"
         ),
     ):
         logger.add(writer, filter=filter)
@@ -125,8 +125,8 @@ def test_invalid_filter_dict_values_wrong_integer_value(writer):
     with pytest.raises(
         ValueError,
         match=(
-            "The filter dict contains a module '[^']*' associated to an invalid level, "
-            "it should be a positive integer, not: '[^']*'"
+            r"The filter dict contains a module '[^']*' associated to an invalid level, "
+            r"it should be a positive integer, not: '[^']*'"
         ),
     ):
         logger.add(writer, filter={"tests": -1})

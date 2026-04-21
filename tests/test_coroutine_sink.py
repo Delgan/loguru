@@ -670,8 +670,8 @@ def test_invalid_coroutine_sink_if_no_loop_with_enqueue():
     with pytest.raises(
         ValueError,
         match=(
-            "^An event loop is required to add a coroutine sink with `enqueue=True`, "
-            "but none has been passed as argument and none is currently running.$"
+            r"^An event loop is required to add a coroutine sink with `enqueue=True`, "
+            r"but none has been passed as argument and none is currently running.$"
         ),
     ):
         logger.add(async_writer, enqueue=True, loop=None)

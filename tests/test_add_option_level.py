@@ -25,11 +25,11 @@ def test_invalid_level_type(writer, level):
 
 def test_invalid_level_value(writer):
     with pytest.raises(
-        ValueError, match="^Invalid level value, it should be a positive integer, not: -1$"
+        ValueError, match=r"^Invalid level value, it should be a positive integer, not: -1$"
     ):
         logger.add(writer, level=-1)
 
 
 def test_unknown_level(writer):
-    with pytest.raises(ValueError, match="^Level 'foo' does not exist$"):
+    with pytest.raises(ValueError, match=r"^Level 'foo' does not exist$"):
         logger.add(writer, level="foo")

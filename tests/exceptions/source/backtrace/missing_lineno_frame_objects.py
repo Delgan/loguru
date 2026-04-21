@@ -3,7 +3,6 @@ from collections import namedtuple
 
 from loguru import logger
 
-
 logger.remove()
 logger.add(
     sys.stderr,

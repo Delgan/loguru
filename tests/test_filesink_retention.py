@@ -303,7 +303,7 @@ def test_exception_during_retention_at_rotation_not_caught(freeze_time, tmp_path
             catch=False,
             delay=delay,
         )
-        with pytest.raises(OSError, match="^Retention error$"):
+        with pytest.raises(OSError, match=r"^Retention error$"):
             logger.debug("AAA")
         frozen.tick()
         logger.debug("BBB")
@@ -332,7 +332,7 @@ def test_exception_during_retention_at_remove(tmp_path, capsys, delay):
     )
     logger.debug("AAA")
 
-    with pytest.raises(OSError, match="^Retention error$"):
+    with pytest.raises(OSError, match=r"^Retention error$"):
         logger.remove(i)
 
     logger.debug("Nope")
@@ -353,11 +353,11 @@ def test_invalid_retention_type(retention):
     "retention", ["W5", "monday at 14:00", "sunday", "nope", "d", "H", "__dict__"]
 )
 def test_unparsable_retention(retention):
-    with pytest.raises(ValueError, match="^Cannot parse retention from: '[^']+'$"):
+    with pytest.raises(ValueError, match=r"^Cannot parse retention from: '[^']+'$"):
         logger.add("test.log", retention=retention)
 
 
 @pytest.mark.parametrize("retention", ["5 MB", "3 hours 2 dayz"])
 def test_invalid_value_retention_duration(retention):
-    with pytest.raises(ValueError, match="^Invalid unit value while parsing duration: '[^']+'$"):
+    with pytest.raises(ValueError, match=r"^Invalid unit value while parsing duration: '[^']+'$"):
         logger.add("test.log", retention=retention)

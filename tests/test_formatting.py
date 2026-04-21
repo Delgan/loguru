@@ -205,7 +205,7 @@ def test_non_string_message_is_str_in_record(writer, colors):
 def test_missing_positional_field_during_formatting(writer, colors):
     logger.add(writer)
 
-    with pytest.raises(ValueError, match="^The logging message could not be formatted") as e:
+    with pytest.raises(ValueError, match=r"^The logging message could not be formatted") as e:
         logger.opt(colors=colors).info("Foo {} {}", 123)
 
     assert isinstance(e.value.__cause__, IndexError)
@@ -215,7 +215,7 @@ def test_missing_positional_field_during_formatting(writer, colors):
 def test_missing_named_field_during_formatting(writer, colors):
     logger.add(writer)
 
-    with pytest.raises(ValueError, match="^The logging message could not be formatted") as e:
+    with pytest.raises(ValueError, match=r"^The logging message could not be formatted") as e:
         logger.opt(colors=colors).info("Foo {bar}", baz=123)
 
     assert isinstance(e.value.__cause__, KeyError)
@@ -225,7 +225,7 @@ def test_missing_named_field_during_formatting(writer, colors):
 def test_malformed_curly_braces_during_formatting(writer, colors):
     logger.add(writer)
 
-    with pytest.raises(ValueError, match="^The logging message could not be formatted") as e:
+    with pytest.raises(ValueError, match=r"^The logging message could not be formatted") as e:
         logger.opt(colors=colors).info("This is a curly bracket: {", foo="bar")
 
     assert isinstance(e.value.__cause__, ValueError)
@@ -235,7 +235,7 @@ def test_malformed_curly_braces_during_formatting(writer, colors):
 def test_not_formattable_message(writer, colors):
     logger.add(writer)
 
-    with pytest.raises(ValueError, match="^The logging message could not be formatted") as e:
+    with pytest.raises(ValueError, match=r"^The logging message could not be formatted") as e:
         logger.opt(colors=colors).info(123, baz=456)
 
     assert isinstance(e.value.__cause__, TypeError if colors else AttributeError)
@@ -243,6 +243,26 @@ def test_not_formattable_message(writer, colors):
 
 def test_invalid_color_markup(writer):
     with pytest.raises(
-        ValueError, match="^Invalid format, color markups could not be parsed correctly$"
+        ValueError, match=r"^Invalid format, color markups could not be parsed correctly$"
     ):
         logger.add(writer, format="<red>Not closed tag", colorize=True)
+
+
+@pytest.mark.parametrize("format_", ["{missing}", lambda _: "{missing}\n"])
+@pytest.mark.parametrize("colorize", [True, False])
+@pytest.mark.parametrize("colors", [True, False])
+def test_invalid_format_key_emits_helpful_error_with_catch(capsys, format_, colorize, colors):
+    logger.add(lambda msg: None, format=format_, catch=True, colorize=colorize)
+    logger.opt(colors=colors).info("Hello")
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert "ValueError: Failed to format log record: key 'missing' not found" in err
+
+
+@pytest.mark.parametrize("format_", ["{missing}", lambda _: "{missing}\n"])
+@pytest.mark.parametrize("colorize", [True, False])
+@pytest.mark.parametrize("colors", [True, False])
+def test_invalid_format_key_raises_enhanced_error_without_catch(format_, colorize, colors):
+    logger.add(lambda msg: None, format=format_, catch=False, colorize=colorize)
+    with pytest.raises(ValueError, match=r"Failed to format log record: key 'missing' not found."):
+        logger.opt(colors=colors).info("Hello")

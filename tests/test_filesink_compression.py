@@ -219,7 +219,7 @@ def test_exception_during_compression_at_rotation_not_caught(freeze_time, tmp_pa
             catch=False,
             delay=delay,
         )
-        with pytest.raises(OSError, match="^Compression error$"):
+        with pytest.raises(OSError, match=r"^Compression error$"):
             logger.debug("AAA")
 
         frozen.tick()
@@ -249,7 +249,7 @@ def test_exception_during_compression_at_remove(tmp_path, capsys, delay):
     )
     logger.debug("AAA")
 
-    with pytest.raises(OSError, match="^Compression error$"):
+    with pytest.raises(OSError, match=r"^Compression error$"):
         logger.remove(i)
 
     logger.debug("Nope")
@@ -273,7 +273,7 @@ def test_invalid_compression_type(compression):
 
 @pytest.mark.parametrize("compression", ["rar", ".7z", "tar.zip", "__dict__"])
 def test_unknown_compression(compression):
-    with pytest.raises(ValueError, match="^Invalid compression format: '[^']+'$"):
+    with pytest.raises(ValueError, match=r"^Invalid compression format: '[^']+'$"):
         logger.add("test.log", compression=compression)
 
 
