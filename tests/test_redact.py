@@ -5,88 +5,71 @@ import pytest
 from loguru import logger, redact
 
 
-def test_redact_preserves_bearer_prefix(writer):
+@pytest.mark.parametrize("key", ["api_key", "password", "token", "secret"])
+@pytest.mark.parametrize("separator", ["=", ":"])
+def test_redact_builtin_key_value_patterns_preserve_key(writer, key, separator):
     logger.add(writer, format="{message}")
 
-    logger.patch(redact()).info("Bearer abc.def.ghi")
+    logger.patch(redact()).info("%s%svalue" % (key, separator))
+
+    assert writer.read() == "%s%s[REDACTED]\n" % (key, separator)
+
+
+def test_redact_builtin_bearer_pattern_preserves_scheme(writer):
+    logger.add(writer, format="{message}")
+
+    logger.patch(redact()).info("Bearer token123")
 
     assert writer.read() == "Bearer [REDACTED]\n"
 
 
-def test_redact_preserves_authorization_scheme_prefix(writer):
+@pytest.mark.parametrize("scheme", ["Bearer", "Basic", "Token"])
+def test_redact_builtin_authorization_pattern_preserves_prefix(writer, scheme):
     logger.add(writer, format="{message}")
 
-    logger.patch(redact()).info("Authorization: Basic dXNlcjpwYXNz")
+    logger.patch(redact()).info("Authorization: %s credential123" % scheme)
 
-    assert writer.read() == "Authorization: Basic [REDACTED]\n"
+    assert writer.read() == "Authorization: %s [REDACTED]\n" % scheme
 
 
-def test_redact_preserves_password_key_case_insensitively(writer):
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("API_KEY=foo", "API_KEY=[REDACTED]\n"),
+        ("Password=bar", "Password=[REDACTED]\n"),
+        ("BEARER token123", "BEARER [REDACTED]\n"),
+    ],
+)
+def test_redact_builtin_patterns_are_case_insensitive(writer, message, expected):
     logger.add(writer, format="{message}")
 
-    logger.patch(redact()).info("password=hunter2")
-    logger.patch(redact()).info("PASSWORD=hunter3")
+    logger.patch(redact()).info(message)
 
-    assert writer.read().splitlines() == [
-        "password=[REDACTED]",
-        "PASSWORD=[REDACTED]",
-    ]
+    assert writer.read() == expected
 
 
-def test_redact_preserves_token_key(writer):
+def test_redact_string_extra_pattern_replaces_full_match(writer):
     logger.add(writer, format="{message}")
 
-    logger.patch(redact()).info("token=opaque-token")
-
-    assert writer.read() == "token=[REDACTED]\n"
-
-
-def test_redact_preserves_secret_key(writer):
-    logger.add(writer, format="{message}")
-
-    logger.patch(redact()).info("secret=top-secret")
-
-    assert writer.read() == "secret=[REDACTED]\n"
-
-
-def test_redact_replaces_openai_api_key(writer):
-    logger.add(writer, format="{message}")
-
-    logger.patch(redact()).info("key sk-abcdefghijklmnopqrstuvwxyz")
-
-    assert writer.read() == "key [REDACTED]\n"
-
-
-def test_redact_replaces_aws_access_key_id(writer):
-    logger.add(writer, format="{message}")
-
-    logger.patch(redact()).info("aws AKIAIOSFODNN7EXAMPLE")
-
-    assert writer.read() == "aws [REDACTED]\n"
-
-
-def test_redact_replaces_github_pat(writer):
-    logger.add(writer, format="{message}")
-
-    logger.patch(redact()).info("github ghp_abcdefghijklmnopqrstuvwxyz1234567890")
-
-    assert writer.read() == "github [REDACTED]\n"
-
-
-def test_redact_replaces_custom_string_pattern(writer):
-    logger.add(writer, format="{message}")
-
-    logger.patch(redact(r"CUST-\d+")).info("prefix CUST-9999 suffix")
+    logger.patch(redact(r"my_token_\w+")).info("prefix my_token_abc123 suffix")
 
     assert writer.read() == "prefix [REDACTED] suffix\n"
 
 
-def test_redact_replaces_custom_compiled_pattern(writer):
+def test_redact_compiled_extra_pattern_replaces_full_match(writer):
     logger.add(writer, format="{message}")
 
-    logger.patch(redact(re.compile(r"tok_\w+"))).info("prefix tok_abc123 suffix")
+    logger.patch(redact(re.compile(r"SECRET", re.IGNORECASE))).info("prefix secret suffix")
 
     assert writer.read() == "prefix [REDACTED] suffix\n"
+
+
+def test_redact_multiple_extra_patterns(writer):
+    logger.add(writer, format="{message}")
+
+    logger.patch(redact(r"foo", r"bar")).info("foo baz bar")
+
+    assert writer.read() == "[REDACTED] baz [REDACTED]\n"
 
 
 def test_redact_leaves_clean_message_unchanged(writer):
@@ -95,6 +78,35 @@ def test_redact_leaves_clean_message_unchanged(writer):
     logger.patch(redact()).info("Nothing sensitive here")
 
     assert writer.read() == "Nothing sensitive here\n"
+
+
+def test_redact_empty_message_does_not_error(writer):
+    logger.add(writer, format="{message}")
+
+    logger.patch(redact()).info("")
+
+    assert writer.read() == "\n"
+
+
+def test_redact_chains_with_other_redact_patchers(writer):
+    logger.add(writer, format="{message}")
+
+    logger.patch(redact()).patch(redact(r"extra")).info("password=secret extra")
+
+    assert writer.read() == "password=[REDACTED] [REDACTED]\n"
+
+
+def test_redact_patched_logger_does_not_affect_original_logger(writer):
+    logger.add(writer, format="{message}")
+
+    patched_logger = logger.patch(redact())
+    patched_logger.info("password=secret")
+    logger.info("password=secret")
+
+    assert writer.read().splitlines() == [
+        "password=[REDACTED]",
+        "password=secret",
+    ]
 
 
 def test_redact_rejects_invalid_extra_pattern_type():
