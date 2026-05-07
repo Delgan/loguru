@@ -5,7 +5,7 @@ import pytest
 from loguru import logger, redact
 
 
-@pytest.mark.parametrize("key", ["api_key", "password", "token", "secret"])
+@pytest.mark.parametrize("key", ["api_key", "apikey", "api-key", "password", "token", "secret"])
 @pytest.mark.parametrize("separator", ["=", ":"])
 def test_redact_builtin_key_value_patterns_preserve_key(writer, key, separator):
     logger.add(writer, format="{message}")
@@ -13,6 +13,14 @@ def test_redact_builtin_key_value_patterns_preserve_key(writer, key, separator):
     logger.patch(redact()).info("%s%svalue" % (key, separator))
 
     assert writer.read() == "%s%s[REDACTED]\n" % (key, separator)
+
+
+def test_redact_builtin_json_key_value_pattern_preserves_quotes(writer):
+    logger.add(writer, format="{message}")
+
+    logger.patch(redact()).info('{"password": "s3cr3t"}')
+
+    assert writer.read() == '{"password": "[REDACTED]"}\n'
 
 
 def test_redact_builtin_bearer_pattern_preserves_scheme(writer):

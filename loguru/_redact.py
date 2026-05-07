@@ -47,9 +47,7 @@ _JSON_KEY_VALUE_RE = re.compile(
     re.IGNORECASE,
 )
 _JSON_KEY_VALUE_SUB = (
-    r"\g<key_quote>\g<key>\g<key_quote>\g<sep>\g<value_quote>"
-    + _REDACTED
-    + r"\g<value_quote>"
+    r"\g<key_quote>\g<key>\g<key_quote>\g<sep>\g<value_quote>" + _REDACTED + r"\g<value_quote>"
 )
 
 # Unquoted ``key=value`` / ``key: value``. The negative look-behind on
