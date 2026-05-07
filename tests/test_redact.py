@@ -23,6 +23,22 @@ def test_redact_builtin_bearer_pattern_preserves_scheme(writer):
     assert writer.read() == "Bearer [REDACTED]\n"
 
 
+def test_redact_builtin_aws_key_pattern_replaces_key(writer):
+    logger.add(writer, format="{message}")
+
+    logger.patch(redact()).info("aws key AKIAABCDEFGHIJKLMNOP is active")
+
+    assert writer.read() == "aws key [REDACTED] is active\n"
+
+
+def test_redact_builtin_connection_string_secret_preserves_prefix(writer):
+    logger.add(writer, format="{message}")
+
+    logger.patch(redact()).info("postgres://db.example/app?password=s3cret&ssl=true")
+
+    assert writer.read() == "postgres://db.example/app?password=[REDACTED]&ssl=true\n"
+
+
 @pytest.mark.parametrize("scheme", ["Bearer", "Basic", "Token"])
 def test_redact_builtin_authorization_pattern_preserves_prefix(writer, scheme):
     logger.add(writer, format="{message}")
@@ -72,6 +88,14 @@ def test_redact_multiple_extra_patterns(writer):
     assert writer.read() == "[REDACTED] baz [REDACTED]\n"
 
 
+def test_redact_multiple_builtin_secrets_in_one_message(writer):
+    logger.add(writer, format="{message}")
+
+    logger.patch(redact()).info("api_key=abc password=s3cret Bearer token123")
+
+    assert writer.read() == "api_key=[REDACTED] password=[REDACTED] Bearer [REDACTED]\n"
+
+
 def test_redact_leaves_clean_message_unchanged(writer):
     logger.add(writer, format="{message}")
 
@@ -107,6 +131,11 @@ def test_redact_patched_logger_does_not_affect_original_logger(writer):
         "password=[REDACTED]",
         "password=secret",
     ]
+
+
+def test_redact_returns_callable():
+    assert callable(redact())
+    assert callable(redact(r"x"))
 
 
 def test_redact_rejects_invalid_extra_pattern_type():
