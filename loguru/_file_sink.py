@@ -277,11 +277,14 @@ class FileSink:
             self._create_dirs(new_path)
 
             if new_path == old_path:
-                creation_time = get_ctime(old_path)
-                root, ext = os.path.splitext(old_path)
-                renamed_path = generate_rename_path(root, ext, creation_time)
-                os.rename(old_path, renamed_path)
-                old_path = renamed_path
+                try:
+                    creation_time = get_ctime(old_path)
+                    root, ext = os.path.splitext(old_path)
+                    renamed_path = generate_rename_path(root, ext, creation_time)
+                    os.rename(old_path, renamed_path)
+                    old_path = renamed_path
+                except OSError:
+                    old_path = None
 
         if is_rotating or self._rotation_function is None:
             if self._compression_function is not None and old_path is not None:

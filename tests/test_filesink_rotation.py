@@ -1011,6 +1011,16 @@ def test_exception_during_rotation_not_caught(tmp_path, capsys):
     assert out == err == ""
 
 
+def test_rotation_missing_file_during_rename(tmp_path):
+    logger.add(tmp_path / "test.log", rotation=0, format="{message}", catch=False)
+    logger.info("1")
+    filepath = tmp_path / "test.log"
+    filepath.unlink()  # simulate external deletion while handle is still open
+    logger.info("2")  # should not raise
+    check_dir(tmp_path, size=2)
+    assert (tmp_path / "test.log").read_text() == "2\n"
+
+
 def test_recipe_rotation_both_size_and_time(freeze_time, tmp_path):
     class Rotator:
         def __init__(self, *, size, at):
@@ -1147,3 +1157,4 @@ def test_invalid_unit_rotation_duration(rotation):
 def test_invalid_value_rotation_duration(rotation):
     with pytest.raises(ValueError, match=r"^Invalid float value while parsing duration: '[^']+'$"):
         logger.add("test.log", rotation=rotation)
+

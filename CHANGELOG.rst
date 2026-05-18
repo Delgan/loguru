@@ -7,6 +7,7 @@
 - Fix hex color short code expansion (`#1426 <https://github.com/Delgan/loguru/issues/1426>`_, thanks `@turkoid <https://github.com/turkoid>`_).
 - Fix possible internal error when dealing with (rare) frame objects missing a ``f_lineno`` value (`#1435 <https://github.com/Delgan/loguru/issues/1435>`_).
 - Fix a regression preventing formatting of ``record["time"]`` when using ``zoneinfo.ZoneInfo`` timezones (`#1260 <https://github.com/Delgan/loguru/pull/1260>`_, thanks `@bijlpieter <https://github.com/bijlpieter>`_).
+- Fix possible ``FileNotFoundError`` during file rotation if the log file is deleted externally (`#519 <https://github.com/Delgan/loguru/issues/519>`_, `#220 <https://github.com/Delgan/loguru/issues/220>`_).
 - Fix possible ``ValueError`` raised on Windows when system clock was set far ahead in the future (`#1291 <https://github.com/Delgan/loguru/issues/1291>`_).
 - Fix externally raised ``Exception`` possibly causing invalid state generating repeated ``RuntimeError`` of avoided deadlock (`#1335 <https://github.com/Delgan/loguru/issues/1335>`_).
 - Respect the ``.level`` attribute of standard logging ``Handler`` used as sink, which was previously ignored (`#1409 <https://github.com/Delgan/loguru/issues/1409>`_).
