@@ -38,7 +38,7 @@ keywords = ["loguru", "logging", "logger", "log"]
 license = { file = "LICENSE" }
 name = "loguru"
 readme = 'README.md'
-requires-python = ">=3.5,<4.0"
+requires-python = ">=3.5"
 
 [project.optional-dependencies]
 dev = [
