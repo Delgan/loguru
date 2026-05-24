@@ -100,7 +100,7 @@ class Frequencies:
 
 
 def parse_size(size: str) -> Optional[float]:
-    """Parse a size string with optional units into bits.
+    """Parse a size string with optional units into bytes.
 
     Supports formats like '100MB', '2GiB', '1.5TB'. Case insensitive.
 
@@ -112,7 +112,7 @@ def parse_size(size: str) -> Optional[float]:
     Returns
     -------
     float | None
-        Size in bits or None if invalid format.
+        Size in bytes or None if invalid format.
 
     Raises
     ------
