@@ -281,6 +281,7 @@ class Logger:
         serialize=_defaults.LOGURU_SERIALIZE,
         backtrace=_defaults.LOGURU_BACKTRACE,
         diagnose=_defaults.LOGURU_DIAGNOSE,
+        diagnose_excludes=_defaults.LOGURU_DIAGNOSE_EXCLUDES,
         enqueue=_defaults.LOGURU_ENQUEUE,
         context=_defaults.LOGURU_CONTEXT,
         catch=_defaults.LOGURU_CATCH,
@@ -314,6 +315,10 @@ class Logger:
         diagnose : |bool|, optional
             Whether the exception trace should display the variables values to ease the debugging.
             This should be set to ``False`` in production to avoid leaking sensitive data.
+        diagnose_excludes : |list| of |str|, optional
+            List of strings to exclude from variables in exceptions with ``diagnose=True``.
+            Use this if you would like to keep more context in production logs,
+            but don't want to leak credentials.
         enqueue : |bool|, optional
             Whether the messages to be logged should first pass through a multiprocessing-safe queue
             before reaching the sink. This is useful while logging to a file through multiple
@@ -1036,6 +1041,7 @@ class Logger:
                 colorize=colorize,
                 encoding=encoding,
                 diagnose=diagnose,
+                diagnose_excludes=diagnose_excludes,
                 backtrace=backtrace,
                 hidden_frames_filename=self.catch.__code__.co_filename,
                 prefix=exception_prefix,

@@ -213,6 +213,7 @@ class Logger:
         serialize: bool = ...,
         backtrace: bool = ...,
         diagnose: bool = ...,
+        diagnose_excludes: list[str] = ...,
         enqueue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...
@@ -229,6 +230,7 @@ class Logger:
         serialize: bool = ...,
         backtrace: bool = ...,
         diagnose: bool = ...,
+        diagnose_excludes: list[str] = ...,
         enqueue: bool = ...,
         catch: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
@@ -246,6 +248,7 @@ class Logger:
         serialize: bool = ...,
         backtrace: bool = ...,
         diagnose: bool = ...,
+        diagnose_excludes: list[str] = ...,
         enqueue: bool = ...,
         context: Optional[Union[str, BaseContext]] = ...,
         catch: bool = ...,
