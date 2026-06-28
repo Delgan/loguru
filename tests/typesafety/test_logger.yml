@@ -333,7 +333,7 @@
     main:4: error: Extra key "baz" for TypedDict "LevelConfig"  [typeddict-unknown-key]
     main:5: error: Argument "patcher" to "configure" of "Logger" has incompatible type "int"; expected "Callable[[Record], None] | None"  [arg-type]
     main:6: error: List item 0 has incompatible type "dict[str, str]"; expected "tuple[str | None, bool]"  [list-item]
-    main:7: error: Argument "extra" to "configure" of "Logger" has incompatible type "list[int]"; expected "dict[Any, Any] | None"  [arg-type]
+    main:7: error: Argument "extra" to "configure" of "Logger" has incompatible type "list[int]"; expected "dict[str, Any] | None"  [arg-type]
 
 - case: reinstall
   main: |
