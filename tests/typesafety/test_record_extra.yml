@@ -1,0 +1,37 @@
+- case: record_extra_keys_are_strings
+  main: |
+    from loguru import Record
+    def func(record: Record) -> None:
+        key: str = "user"
+        value = record["extra"][key]
+  out: ''
+
+- case: record_extra_rejects_integer_key
+  main: |
+    from loguru import Record
+    def func(record: Record) -> None:
+        value = record["extra"][123]
+  out: |
+    main:3: error: Invalid index type "int" for "dict[str, Any]"; expected type "str"  [index]
+
+- case: record_can_be_annotated_without_any_generics_error
+  main: |
+    from loguru import Record
+    def func(record: Record) -> None:
+        print(record)
+  mypy_config: |
+    disallow_any_generics = True
+
+- case: record_extra_update_with_string_keys
+  main: |
+    from loguru import Record
+    def patcher(record: Record) -> None:
+        record["extra"].update(request_id="abc123")
+        record["extra"]["user"] = "alice"
+  out: ''
+
+- case: configure_extra_accepts_string_keys
+  main: |
+    from loguru import logger
+    logger.configure(extra={"app": "myservice", "version": "1.0"})
+  out: ''
