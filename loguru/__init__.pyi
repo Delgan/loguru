@@ -103,7 +103,7 @@ class RecordException(NamedTuple):
 class Record(TypedDict):
     elapsed: timedelta
     exception: Optional[RecordException]
-    extra: Dict[Any, Any]
+    extra: Dict[str, Any]
     file: RecordFile
     function: str
     level: RecordLevel
@@ -323,7 +323,7 @@ class Logger:
         *,
         handlers: Optional[Sequence[HandlerConfig]] = ...,
         levels: Optional[Sequence[LevelConfig]] = ...,
-        extra: Optional[Dict[Any, Any]] = ...,
+        extra: Optional[Dict[str, Any]] = ...,
         patcher: Optional[PatcherFunction] = ...,
         activation: Optional[Sequence[ActivationConfig]] = ...
     ) -> List[int]: ...

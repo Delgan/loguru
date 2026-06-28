@@ -19,7 +19,7 @@
 - Make ``logger.catch()`` usable as an asynchronous context manager (`#1084 <https://github.com/Delgan/loguru/issues/1084>`_).
 - Make ``logger.catch()`` compatible with asynchronous generators (`#1302 <https://github.com/Delgan/loguru/issues/1302>`_).
 - Improve feedback for invalid format keys in logger format strings (`#1450 <https://github.com/Delgan/loguru/issues/1450>`_, thanks `@Krishnachaitanyakc <https://github.com/Krishnachaitanyakc>`_).
-
+- Fix type annotation of ``Record["extra"]`` from ``Dict[Any, Any]`` to ``Dict[str, Any]`` to reflect that keys are always strings, reducing spurious ``Any`` propagation in strictly-typed codebases (`#1482 <https://github.com/Delgan/loguru/issues/1482>`_).
 
 `0.7.3`_ (2024-12-06)
 =====================
