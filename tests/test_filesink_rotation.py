@@ -165,6 +165,42 @@ def test_time_rotation(freeze_time, tmp_path, when, hours):
     assert content == ["a\n", "b\nc\n", "d\n", "e\n"]
 
 
+@pytest.mark.parametrize(
+    ("when", "expected"),
+    [
+        # Created on a Sunday at 12:00. When the rotation time of day is later
+        # than the creation time, the first rotation must still happen on the
+        # requested weekday rather than on the creation day (the weekday was
+        # previously ignored for the first rotation).
+        ("w1 at 13:00", ["a\nb\n", "c\n", "d\n"]),  # Tuesday
+        ("tuesday at 13:00", ["a\nb\n", "c\n", "d\n"]),  # Tuesday, named
+        ("monday at 13:00", ["a\n", "b\nc\n", "d\n"]),  # Monday
+        # When the rotation time is earlier than the creation time the weekday
+        # was already honored; this case must keep its existing behavior.
+        ("w3 at 11:00", ["a\nb\nc\n", "d\n"]),  # Thursday
+    ],
+)
+def test_weekday_rotation_first_rotation_on_requested_weekday(
+    freeze_time, tmp_path, when, expected
+):
+    with freeze_time("2017-06-18 12:00:00") as frozen:  # Sunday
+        i = logger.add(
+            tmp_path / "test_{time}.log",
+            format="{message}",
+            rotation=when,
+            mode="w",
+        )
+
+        for h, m in zip([1, 24, 24, 24 * 7], ["a", "b", "c", "d"]):
+            frozen.tick(delta=datetime.timedelta(hours=h))
+            logger.debug(m)
+
+        logger.remove(i)
+
+    content = [path.read_text() for path in sorted(tmp_path.iterdir())]
+    assert content == expected
+
+
 def test_time_rotation_dst(freeze_time, tmp_path):
     with freeze_time("2018-10-27 05:00:00", ("CET", 3600)):
         i = logger.add(tmp_path / "test_{time}.log", format="{message}", rotation="1 day")
