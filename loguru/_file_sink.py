@@ -106,9 +106,10 @@ class Rotation:
         return file.tell() + len(message) > size_limit
 
     class RotationTime:
-        def __init__(self, step_forward, time_init=None):
+        def __init__(self, step_forward, time_init=None, weekday=None):
             self._step_forward = step_forward
             self._time_init = time_init
+            self._weekday = weekday
             self._limit = None
 
         def __call__(self, message, file):
@@ -136,7 +137,12 @@ class Rotation:
                         microsecond=time_init.microsecond,
                     )
 
-                    if limit <= start_time:
+                    # A weekday rotation's initial limit lands on the creation
+                    # day, which may not be the requested weekday; step forward
+                    # until it does, so the first rotation isn't on the start day.
+                    if limit <= start_time or (
+                        self._weekday is not None and limit.weekday() != self._weekday
+                    ):
                         limit = self._step_forward(limit)
 
                     if time_init.tzinfo is None:
@@ -341,7 +347,7 @@ class FileSink:
                 if time is None:
                     time = datetime.time(0, 0, 0)
                 step_forward = partial(Rotation.forward_weekday, weekday=day)
-                return Rotation.RotationTime(step_forward, time)
+                return Rotation.RotationTime(step_forward, time, weekday=day)
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         if isinstance(rotation, (numbers.Real, decimal.Decimal)):
             return partial(Rotation.rotation_size, size_limit=rotation)
