@@ -1,6 +1,7 @@
 import multiprocessing
 import os
 import pickle
+import threading
 
 import pytest
 
@@ -118,3 +119,116 @@ def test_pickle_while_multiprocessing_enabled():
     assert restored._mp_pending is False
     assert restored._mp_state is None
     logger.disable_multiprocessing()
+
+
+def test_enable_multiprocessing_twice_is_idempotent(tmp_path):
+    logger.remove()
+    logger.add(tmp_path / "out.log", format="{message}")
+    logger.enable_multiprocessing()
+    logger.enable_multiprocessing()  # should be a no-op, not start a second manager
+    logger.disable_multiprocessing()
+
+
+def test_disable_multiprocessing_without_enable_is_noop():
+    logger.disable_multiprocessing()  # should not raise
+
+
+def test_listener_reraises_when_catch_false(tmp_path):
+    def broken_sink(msg):
+        raise ValueError("boom")
+
+    caught = []
+
+    def record_thread_exception(args):
+        caught.append(args.exc_value)
+
+    original_hook = threading.excepthook
+    threading.excepthook = record_thread_exception
+    try:
+        logger.remove()
+        logger.add(broken_sink, catch=False)
+        logger.enable_multiprocessing(catch=False)
+        ctx = multiprocessing.get_context("spawn")
+        p = ctx.Process(target=child_log, args=("trigger",))
+        p.start()
+        p.join()
+        logger.complete()
+        logger.disable_multiprocessing()
+    finally:
+        threading.excepthook = original_hook
+    assert len(caught) == 1
+    assert isinstance(caught[0], ValueError)
+
+
+def test_owner_logs_normally_after_enabling(tmp_path):
+    logfile = tmp_path / "out.log"
+    logger.remove()
+    logger.add(logfile, format="{message}")
+    logger.enable_multiprocessing()
+    logger.info("from the owner itself")  # exercises try_attach's early-return path
+    logger.complete()
+    logger.disable_multiprocessing()
+    assert "from the owner itself" in logfile.read_text()
+
+
+def test_connect_child_when_owner_unreachable(monkeypatch):
+    # simulate stale env vars pointing at nothing
+    monkeypatch.setenv("LOGURU_MP_HOST", "127.0.0.1")
+    monkeypatch.setenv("LOGURU_MP_PORT", "1")  # nothing listening here
+    monkeypatch.setenv("LOGURU_MP_KEY", "00" * 24)
+    from loguru import _multiprocessing
+
+    core = logger._core
+    core._mp_pending = True
+    _multiprocessing.try_attach(core)
+    assert core._mp_queue is None  # connect failed silently, as designed
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
+def test_disable_multiprocessing_from_forked_child_is_noop(tmp_path):
+    logger.remove()
+    logger.add(tmp_path / "out.log", format="{message}")
+    logger.enable_multiprocessing()
+
+    def child():
+        logger.disable_multiprocessing()  # should be a no-op here, not the real owner
+
+    ctx = multiprocessing.get_context("fork")
+    p = ctx.Process(target=child)
+    p.start()
+    p.join()
+    assert p.exitcode == 0
+    logger.disable_multiprocessing()
+
+
+def test_try_attach_only_attempts_once():
+    from loguru import _multiprocessing
+
+    core = logger._core
+    core._mp_pending = True
+    core._mp_attempted = True  # simulate an already-attempted core
+    _multiprocessing.try_attach(core)  # should return immediately, no attempt made
+    assert core._mp_queue is None
+    core._mp_attempted = False  # reset so we don't affect other tests
+
+
+def test_connect_child_without_env_vars_does_nothing(monkeypatch):
+    from loguru import _multiprocessing
+
+    monkeypatch.delenv("LOGURU_MP_HOST", raising=False)
+    core = logger._core
+    _multiprocessing.connect_child(core)
+    assert core._mp_queue is None
+
+
+def test_connect_child_raises_when_owner_unreachable_and_catch_false(monkeypatch):
+    from loguru import _multiprocessing
+
+    monkeypatch.setenv("LOGURU_MP_HOST", "127.0.0.1")
+    monkeypatch.setenv("LOGURU_MP_PORT", "1")  # nothing listening here
+    monkeypatch.setenv("LOGURU_MP_KEY", "00" * 24)
+    monkeypatch.setenv("LOGURU_MP_CATCH", "0")  # catch=False
+    core = logger._core
+    with pytest.raises(OSError, match=r"Connection refused|refused|actively refused"):
+        _multiprocessing.connect_child(core)
+    assert core._mp_queue is None

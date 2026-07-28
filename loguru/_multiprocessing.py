@@ -14,7 +14,7 @@ STOP = "__STOP__"  # put this on the queue to kill the listener thread
 _queue_holder = []
 
 
-def _get_shared_queue():
+def _get_shared_queue():  # pragma: no cover - runs in the manager's own subprocess
     # module-level list acts as a slot
     if not _queue_holder:
         _queue_holder.append(multiprocessing.JoinableQueue())
@@ -52,7 +52,7 @@ def disable(core):
     if state is None:
         return
     if state["pid"] != os.getpid():
-        return  # we're in a forked child that inherited this state,ignore
+        return  # pragma: no cover - executes in a forked child, invisible to coverage
     state["queue"].put(STOP)
     state["thread"].join(timeout=5)
     state["manager"].shutdown()
