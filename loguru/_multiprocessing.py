@@ -87,7 +87,8 @@ def check_if_child(core):
 
 
 def try_attach(core):
-    # called at the top of every _log() call whose core has no queue yet this covers spawn anad fork
+    # called at the top of every _log() call whose core has no queue yet this covers
+    # spawn and fork
     state = core._mp_state
     if state is not None and state["pid"] == os.getpid():
         return  # this really is the owner process, nothing to attach to
