@@ -228,6 +228,7 @@ class Core:
         self._mp_queue = None
         self._mp_state = None
         self._mp_catch = True
+        self._mp_attempted = False
 
         self.thread_locals = threading.local()
         self.lock = create_logger_lock()
@@ -240,6 +241,7 @@ class Core:
         state["_mp_pending"] = False
         state["_mp_queue"] = None
         state["_mp_state"] = None
+        state["_mp_attempted"] = False
         return state
 
     def __setstate__(self, state):
@@ -2069,8 +2071,8 @@ class Logger:
     def _log(self, level, from_decorator, options, message, args, kwargs):
         core = self._core
 
-        if core._mp_pending:
-            _multiprocessing.connect_child(core)
+        if core._mp_queue is None:
+            _multiprocessing.try_attach(core)
         if core._mp_queue is None and not core.handlers:
             return
 

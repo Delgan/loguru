@@ -1,9 +1,8 @@
 import atexit
 import multiprocessing
-import os
-import queue as stdqueue
-import threading
 import multiprocessing.managers
+import os
+import threading
 
 # these get put in the environment so a spawned child process can find the parent's queue
 ENV_HOST = "LOGURU_MP_HOST"
@@ -20,6 +19,7 @@ def _get_shared_queue():
     if not _queue_holder:
         _queue_holder.append(multiprocessing.JoinableQueue())
     return _queue_holder[0]
+
 
 class QueueManager(multiprocessing.managers.SyncManager):
     pass
@@ -44,9 +44,6 @@ def enable(core, context=None, catch=True):
     os.environ[ENV_PORT] = str(port)
     os.environ[ENV_KEY] = manager._authkey.hex()
     os.environ[ENV_CATCH] = "1" if catch else "0"
-    if hasattr(os, "register_at_fork"):
-        # a forked child doesn't re-run "import loguru", so it never re-checks
-        os.register_at_fork(after_in_child=lambda: check_if_child(core))
     atexit.register(disable, core)
 
 
@@ -88,21 +85,36 @@ def check_if_child(core):
     if ENV_HOST in os.environ:
         core._mp_pending = True
 
+def try_attach(core):
+    # called at the top of every _log() call whose core has no queue yet this covers spawn anad fork
+    state = core._mp_state
+    if state is not None and state["pid"] == os.getpid():
+        return  # this really is the owner process, nothing to attach to
+    if core._mp_attempted:
+        return
+    if not (core._mp_pending or ENV_HOST in os.environ):
+        return
+    core._mp_attempted = True
+    connect_child(core)
+
 
 def connect_child(core):
     core._mp_pending = False
     host = os.environ.get(ENV_HOST)
     port = os.environ.get(ENV_PORT)
     key = os.environ.get(ENV_KEY)
+    catch = os.environ.get(ENV_CATCH, "1") == "1"
     if not host:
         return
     manager = QueueManager(address=(host, int(port)), authkey=bytes.fromhex(key))
     try:
         manager.connect()
     except Exception:
+        if not catch:
+            raise
         return
     core._mp_queue = manager.get_queue()
-    core._mp_catch = os.environ.get(ENV_CATCH, "1") == "1"
+    core._mp_catch = catch
 
 
 def send(core, record, level_id, from_decorator, raw):
