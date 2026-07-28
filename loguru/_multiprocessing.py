@@ -18,9 +18,8 @@ _queue_holder = []
 def _get_shared_queue():
     # module-level list acts as a slot
     if not _queue_holder:
-        _queue_holder.append(stdqueue.Queue())
+        _queue_holder.append(multiprocessing.JoinableQueue())
     return _queue_holder[0]
-
 
 class QueueManager(multiprocessing.managers.SyncManager):
     pass
@@ -72,10 +71,8 @@ def _listen(core, q, catch):
     while True:
         item = q.get()
         if item == STOP:
+            q.task_done()
             return
-        if item[0] == "__flush__":
-            item[1].set()
-            continue
         record, level_id, from_decorator, raw = item
         try:
             for handler in core.handlers.values():
@@ -83,6 +80,8 @@ def _listen(core, q, catch):
         except Exception:
             if not catch:
                 raise
+        finally:
+            q.task_done()
 
 
 def check_if_child(core):
@@ -118,6 +117,4 @@ def flush(core):
     state = core._mp_state
     if state is None or state["pid"] != os.getpid():
         return  # not enabled, or we're a forked child, not the owner
-    done = state["manager"].Event()
-    state["queue"].put(("__flush__", done))
-    done.wait(timeout=5)
+    state["queue"].join()
