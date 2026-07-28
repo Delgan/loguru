@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import queue as stdqueue
 import threading
+import multiprocessing.managers
 
 # these get put in the environment so a spawned child process can find the parent's queue
 ENV_HOST = "LOGURU_MP_HOST"
