@@ -1,0 +1,111 @@
+import atexit
+import multiprocessing
+import os
+import threading
+from multiprocessing.managers import SyncManager
+import queue as stdqueue
+# these get put in the environment so a spawned child process can find the parent's queue
+ENV_HOST = "LOGURU_MP_HOST"
+ENV_PORT = "LOGURU_MP_PORT"
+ENV_KEY = "LOGURU_MP_KEY"
+ENV_CATCH = "LOGURU_MP_CATCH"
+STOP = "__STOP__"  # put this on the queue to kill the listener thread
+
+_queue_holder = []
+def _get_shared_queue():
+    # module-level list acts as a slot
+    if not _queue_holder:
+        _queue_holder.append(stdqueue.Queue())
+    return _queue_holder[0]
+
+class QueueManager(multiprocessing.managers.SyncManager):
+    pass
+
+QueueManager.register("get_queue", callable=_get_shared_queue)
+
+def enable(core, context=None, catch=True):
+    if core._mp_state is not None:
+        return  # already on, don't start a second manager
+    manager = QueueManager(address=("127.0.0.1", 0))
+    manager.start()
+    q = manager.get_queue()
+    core._mp_state = {"manager": manager,"queue": q,"pid": os.getpid(),"catch": catch}
+    t = threading.Thread(target=_listen, args=(core, q, catch), daemon=True)
+    t.start()
+    core._mp_state["thread"] = t
+    # manager.address is (host,port)
+    host, port = manager.address
+    os.environ[ENV_HOST] = str(host)
+    os.environ[ENV_PORT] = str(port)
+    os.environ[ENV_KEY] = manager._authkey.hex()
+    os.environ[ENV_CATCH] = "1" if catch else "0"
+    if hasattr(os, "register_at_fork"):
+        # a forked child doesn't re-run "import loguru", so it never re-checks
+        os.register_at_fork(after_in_child=lambda: check_if_child(core))
+    atexit.register(disable, core)
+
+def disable(core):
+    state = core._mp_state
+    if state is None:
+        return
+    if state["pid"] != os.getpid():
+        return   # we're in a forked child that inherited this state,ignore
+    state["queue"].put(STOP)
+    state["thread"].join(timeout=5)
+    state["manager"].shutdown()
+    core._mp_state = None
+    _queue_holder.clear()
+    os.environ.pop(ENV_HOST, None)
+    os.environ.pop(ENV_PORT, None)
+    os.environ.pop(ENV_KEY, None)
+    os.environ.pop(ENV_CATCH, None)
+
+def _listen(core, q, catch):
+    while True:
+        item = q.get()
+        if item == STOP:
+            return
+        if item[0] == "__flush__":
+            item[1].set()
+            continue
+        record, level_id, from_decorator, raw = item
+        try:
+            for handler in core.handlers.values():
+                handler.emit(record, level_id, from_decorator, raw, None)
+        except Exception:
+            if not catch:
+                raise
+
+def check_if_child(core):
+    if ENV_HOST in os.environ:
+        core._mp_pending = True
+
+def connect_child(core):
+    core._mp_pending = False
+    host = os.environ.get(ENV_HOST)
+    port = os.environ.get(ENV_PORT)
+    key = os.environ.get(ENV_KEY)
+    if not host:
+        return
+    manager = QueueManager(address=(host, int(port)), authkey=bytes.fromhex(key))
+    try:
+        manager.connect()
+    except Exception as e:
+        return
+    core._mp_queue = manager.get_queue()
+    core._mp_catch = os.environ.get(ENV_CATCH, "1") == "1"
+
+def send(core, record, level_id, from_decorator, raw):
+    try:
+        core._mp_queue.put((record, level_id, from_decorator, raw))
+    except Exception as e:
+        if not core._mp_catch:
+            raise
+
+def flush(core):
+    state = core._mp_state
+    if state is None or state["pid"] != os.getpid():
+        return  # not enabled, or we're a forked child, not the owner
+    done = state["manager"].Event()
+    state["queue"].put(("__flush__", done))
+    done.wait(timeout=5)

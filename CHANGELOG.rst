@@ -3,6 +3,7 @@
 
 - Change the default log format to include the timezone offset since it produces less ambiguous logs (`#856 <https://github.com/Delgan/loguru/pull/856>`_, thanks `@tim-x-y-z <https://github.com/tim-x-y-z>`_).
 - Add new ``logger.reinstall()`` method to automatically set up the ``logger`` in spawned child processes (`#818 <https://github.com/Delgan/loguru/issues/818>`_, thanks `@monchin <https://github.com/monchin>`_).
+- Add new ``logger.enable_multiprocessing()`` and ``logger.disable_multiprocessing()`` methods to automatically forward logs emitted by child processes (whether forked or spawned) to the sinks configured in the main process, without needing to pass the ``logger`` around manually.
 - Add support for template strings used as log messages (`#1397 <https://github.com/Delgan/loguru/issues/1397>`_, thanks `@TurtleOrangina <https://github.com/TurtleOrangina>`_).
 - Fix incorrect microsecond value when formatting the log timestamp using ``{time:x}`` (`#1440 <https://github.com/Delgan/loguru/issues/1440>`_).
 - Fix parsing of 12-hour rotation times without seconds (`#1474 <https://github.com/Delgan/loguru/issues/1474>`_, thanks `@c-tonneslan <https://github.com/c-tonneslan>`_).

@@ -111,7 +111,7 @@ from multiprocessing.context import BaseContext
 from os.path import basename, splitext
 from threading import current_thread
 
-from . import _asyncio_loop, _colorama, _defaults, _filters
+from . import _asyncio_loop, _colorama, _defaults, _filters,_multiprocessing
 from ._better_exceptions import ExceptionFormatter
 from ._colorizer import Colorizer, try_formatting
 from ._contextvars import ContextVar
@@ -224,6 +224,10 @@ class Core:
         self.enabled = {}
         self.activation_list = []
         self.activation_none = True
+        self._mp_pending = False
+        self._mp_queue = None
+        self._mp_state = None
+        self._mp_catch = True
 
         self.thread_locals = threading.local()
         self.lock = create_logger_lock()
@@ -232,6 +236,10 @@ class Core:
         state = self.__dict__.copy()
         state["thread_locals"] = None
         state["lock"] = None
+        # none of these are picklable and a copied/pickled core should behave like a fresh one that hasn't attached yet
+        state["_mp_pending"] = False
+        state["_mp_queue"] = None
+        state["_mp_state"] = None
         return state
 
     def __setstate__(self, state):
@@ -1177,7 +1185,15 @@ class Logger:
                 for task in tasks:
                     yield from task.__await__()
 
+        _multiprocessing.flush(self._core)
         return AwaitableCompleter()
+
+    def enable_multiprocessing(self, context=None, catch=True):
+        """Forward logs from child processes to this process"""
+        _multiprocessing.enable(self._core, context, catch)
+
+    def disable_multiprocessing(self):
+        _multiprocessing.disable(self._core)
 
     def catch(
         self,
@@ -2053,7 +2069,9 @@ class Logger:
     def _log(self, level, from_decorator, options, message, args, kwargs):
         core = self._core
 
-        if not core.handlers:
+        if core._mp_pending:
+            _multiprocessing.connect_child(core)
+        if core._mp_queue is None and not core.handlers:
             return
 
         try:
@@ -2074,7 +2092,7 @@ class Logger:
             level_id, level_name, level_no, level_icon = cache
             core.levels_lookup[level] = cache
 
-        if level_no < core.min_level:
+        if core._mp_queue is None and level_no < core.min_level:
             return
 
         exception, depth, record, lazy, colors, raw, capture, patchers, extra = options
@@ -2188,8 +2206,11 @@ class Logger:
         for patcher in patchers:
             patcher(log_record)
 
-        for handler in core.handlers.values():
-            handler.emit(log_record, level_id, from_decorator, raw, colored_message)
+        if core._mp_queue is not None:
+            _multiprocessing.send(core, log_record, level_id, from_decorator, raw)
+        else:
+            for handler in core.handlers.values():
+                handler.emit(log_record, level_id, from_decorator, raw, colored_message)
 
     def trace(__self, __message, *args, **kwargs):  # noqa: N805
         r"""Log ``message.format(*args, **kwargs)`` with severity ``'TRACE'``."""
