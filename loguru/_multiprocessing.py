@@ -85,6 +85,7 @@ def check_if_child(core):
     if ENV_HOST in os.environ:
         core._mp_pending = True
 
+
 def try_attach(core):
     # called at the top of every _log() call whose core has no queue yet this covers spawn anad fork
     state = core._mp_state
