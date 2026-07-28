@@ -133,31 +133,46 @@ def test_disable_multiprocessing_without_enable_is_noop():
     logger.disable_multiprocessing()  # should not raise
 
 
-def test_listener_reraises_when_catch_false(tmp_path):
+def test_listener_reraises_when_catch_false(tmp_path, capfd):
     def broken_sink(msg):
         raise ValueError("boom")
 
+    has_hook = hasattr(threading, "excepthook")
     caught = []
 
-    def record_thread_exception(args):
-        caught.append(args.exc_value)
+    if has_hook:
+        # overwrite whatever pytest's own plugin installed, so our hook runs
+        # instead
+        original_hook = threading.excepthook
 
-    original_hook = threading.excepthook
-    threading.excepthook = record_thread_exception
+        def record_thread_exception(args):
+            caught.append(args.exc_value)
+
+        threading.excepthook = record_thread_exception
+
     try:
         logger.remove()
         logger.add(broken_sink, catch=False)
         logger.enable_multiprocessing(catch=False)
+
         ctx = multiprocessing.get_context("spawn")
         p = ctx.Process(target=child_log, args=("trigger",))
         p.start()
         p.join()
+
         logger.complete()
         logger.disable_multiprocessing()
     finally:
-        threading.excepthook = original_hook
-    assert len(caught) == 1
-    assert isinstance(caught[0], ValueError)
+        if has_hook:
+            threading.excepthook = original_hook
+
+    if has_hook:
+        assert len(caught) == 1
+        assert isinstance(caught[0], ValueError)
+    else:
+        _, err = capfd.readouterr()
+        assert "ValueError" in err
+        assert "boom" in err
 
 
 def test_owner_logs_normally_after_enabling(tmp_path):
