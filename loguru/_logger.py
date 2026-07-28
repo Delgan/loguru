@@ -236,7 +236,7 @@ class Core:
         state = self.__dict__.copy()
         state["thread_locals"] = None
         state["lock"] = None
-        # none of these are picklable and a copied/pickled core should behave like a fresh one that hasn't attached yet
+        # none of these are picklable
         state["_mp_pending"] = False
         state["_mp_queue"] = None
         state["_mp_state"] = None
@@ -1189,7 +1189,7 @@ class Logger:
         return AwaitableCompleter()
 
     def enable_multiprocessing(self, context=None, catch=True):
-        """Forward logs from child processes to this process"""
+        """Forward logs from child processes to this process."""
         _multiprocessing.enable(self._core, context, catch)
 
     def disable_multiprocessing(self):

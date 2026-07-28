@@ -1,9 +1,9 @@
 import atexit
 import multiprocessing
 import os
-import threading
-from multiprocessing.managers import SyncManager
 import queue as stdqueue
+import threading
+
 # these get put in the environment so a spawned child process can find the parent's queue
 ENV_HOST = "LOGURU_MP_HOST"
 ENV_PORT = "LOGURU_MP_PORT"
@@ -12,16 +12,21 @@ ENV_CATCH = "LOGURU_MP_CATCH"
 STOP = "__STOP__"  # put this on the queue to kill the listener thread
 
 _queue_holder = []
+
+
 def _get_shared_queue():
     # module-level list acts as a slot
     if not _queue_holder:
         _queue_holder.append(stdqueue.Queue())
     return _queue_holder[0]
 
+
 class QueueManager(multiprocessing.managers.SyncManager):
     pass
 
+
 QueueManager.register("get_queue", callable=_get_shared_queue)
+
 
 def enable(core, context=None, catch=True):
     if core._mp_state is not None:
@@ -29,7 +34,7 @@ def enable(core, context=None, catch=True):
     manager = QueueManager(address=("127.0.0.1", 0))
     manager.start()
     q = manager.get_queue()
-    core._mp_state = {"manager": manager,"queue": q,"pid": os.getpid(),"catch": catch}
+    core._mp_state = {"manager": manager, "queue": q, "pid": os.getpid(), "catch": catch}
     t = threading.Thread(target=_listen, args=(core, q, catch), daemon=True)
     t.start()
     core._mp_state["thread"] = t
@@ -44,12 +49,13 @@ def enable(core, context=None, catch=True):
         os.register_at_fork(after_in_child=lambda: check_if_child(core))
     atexit.register(disable, core)
 
+
 def disable(core):
     state = core._mp_state
     if state is None:
         return
     if state["pid"] != os.getpid():
-        return   # we're in a forked child that inherited this state,ignore
+        return  # we're in a forked child that inherited this state,ignore
     state["queue"].put(STOP)
     state["thread"].join(timeout=5)
     state["manager"].shutdown()
@@ -59,6 +65,7 @@ def disable(core):
     os.environ.pop(ENV_PORT, None)
     os.environ.pop(ENV_KEY, None)
     os.environ.pop(ENV_CATCH, None)
+
 
 def _listen(core, q, catch):
     while True:
@@ -76,9 +83,11 @@ def _listen(core, q, catch):
             if not catch:
                 raise
 
+
 def check_if_child(core):
     if ENV_HOST in os.environ:
         core._mp_pending = True
+
 
 def connect_child(core):
     core._mp_pending = False
@@ -90,17 +99,19 @@ def connect_child(core):
     manager = QueueManager(address=(host, int(port)), authkey=bytes.fromhex(key))
     try:
         manager.connect()
-    except Exception as e:
+    except Exception:
         return
     core._mp_queue = manager.get_queue()
     core._mp_catch = os.environ.get(ENV_CATCH, "1") == "1"
 
+
 def send(core, record, level_id, from_decorator, raw):
     try:
         core._mp_queue.put((record, level_id, from_decorator, raw))
-    except Exception as e:
+    except Exception:
         if not core._mp_catch:
             raise
+
 
 def flush(core):
     state = core._mp_state

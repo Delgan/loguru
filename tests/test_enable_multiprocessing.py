@@ -1,17 +1,20 @@
 import multiprocessing
-import time
-from loguru import logger
-import pickle
 import os
-import sys
+import pickle
+
 import pytest
+
+from loguru import logger
+
 FORK_AVAILABLE = "fork" in multiprocessing.get_all_start_methods()
+
 
 def child_log(msg):
     logger.remove()  # this process's core.handlers is now empty
     assert len(logger._core.handlers) == 0
     logger.info(msg)
-    
+
+
 @pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
 def test_fork_child_forwards(tmp_path):
     logfile = tmp_path / "out.log"
@@ -27,6 +30,7 @@ def test_fork_child_forwards(tmp_path):
     content = logfile.read_text()
     assert "hello from child" in content
 
+
 def test_spawn_child_forwards(tmp_path):
     logfile = tmp_path / "out.log"
     logger.remove()
@@ -41,9 +45,11 @@ def test_spawn_child_forwards(tmp_path):
     content = logfile.read_text()
     assert "hello from spawned child" in content
 
+
 def child_log_n(n):
     logger.remove()
     logger.info("line-{}", n)
+
 
 def test_multiple_children_all_forward(tmp_path):
     logfile = tmp_path / "out.log"
@@ -63,6 +69,7 @@ def test_multiple_children_all_forward(tmp_path):
     assert set(lines) == expected
     assert len(lines) == 10  # nothing dropped, nothing duplicated
 
+
 def test_not_enabled_child_does_not_forward(tmp_path):
     logfile = tmp_path / "out.log"
     logger.remove()
@@ -75,6 +82,7 @@ def test_not_enabled_child_does_not_forward(tmp_path):
     logger.complete()
     content = logfile.read_text()
     assert "should not appear" not in content
+
 
 class NotPicklable:
     def __reduce__(self):
@@ -99,6 +107,7 @@ def test_send_raises_when_catch_false(tmp_path):
     logger.disable_multiprocessing()
     # the child process should have exited non-zero because send() raised
     assert p.exitcode != 0
+
 
 def test_pickle_while_multiprocessing_enabled():
     logger.remove()  # no handlers at all, keep this test focused on _mp_* fields only
