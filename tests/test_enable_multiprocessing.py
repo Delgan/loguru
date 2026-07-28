@@ -3,17 +3,21 @@ import time
 from loguru import logger
 import pickle
 import os
+import sys
+import pytest
+FORK_AVAILABLE = "fork" in multiprocessing.get_all_start_methods()
 
 def child_log(msg):
     logger.remove()  # this process's core.handlers is now empty
     assert len(logger._core.handlers) == 0
     logger.info(msg)
     
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
 def test_fork_child_forwards(tmp_path):
     logfile = tmp_path / "out.log"
     logger.remove()
     logger.add(logfile, format="{message}", enqueue=True)
-    logger.enable_multiprocessing()
+    logger.enable_multiprocessing(catch=False)
     ctx = multiprocessing.get_context("fork")
     p = ctx.Process(target=child_log, args=("hello from child",))
     p.start()
