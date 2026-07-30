@@ -74,14 +74,20 @@ class Retention:
             return (-os.stat(log).st_mtime, log)
 
         for log in sorted(logs, key=key_log)[number:]:
-            os.remove(log)
+            try:
+                os.remove(log)
+            except PermissionError:
+                pass
 
     @staticmethod
     def retention_age(logs, seconds):
         t = datetime.datetime.now().timestamp()
         for log in logs:
-            if os.stat(log).st_mtime <= t - seconds:
-                os.remove(log)
+            try:
+                if os.stat(log).st_mtime <= t - seconds:
+                    os.remove(log)
+            except PermissionError:
+                pass
 
 
 class Rotation:
