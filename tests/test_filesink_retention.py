@@ -378,7 +378,7 @@ def test_permission_error_ignored_during_retention_age(tmp_path, monkeypatch, ca
     for name, content in [("test.log.1", "A"), ("test.log.2", "B")]:
         filepath = tmp_path / name
         filepath.write_text(content)
-        os.utime(filepath, (past, past))
+        os.utime(str(filepath), (past, past))
 
     monkeypatch.setattr(os, "remove", make_remove_failing_for("test.log.1"))
 
@@ -397,7 +397,7 @@ def test_error_during_retention_not_ignored(tmp_path, monkeypatch, retention):
     past = datetime.datetime.now().timestamp() - 7200
     filepath = tmp_path / "test.log.1"
     filepath.write_text("A")
-    os.utime(filepath, (past, past))
+    os.utime(str(filepath), (past, past))
 
     monkeypatch.setattr(os, "remove", Mock(side_effect=OSError("Removal error")))
 
@@ -432,7 +432,7 @@ def test_file_in_use_ignored_during_retention_age(tmp_path, capsys):
     for name, content in [("test.log.1", "A"), ("test.log.2", "B")]:
         filepath = tmp_path / name
         filepath.write_text(content)
-        os.utime(filepath, (past, past))
+        os.utime(str(filepath), (past, past))
 
     with tmp_path.joinpath("test.log.1").open("r"):
         i = logger.add(tmp_path / "test.log", format="{message}", retention="1 hour", catch=False)
