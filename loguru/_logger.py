@@ -1352,7 +1352,7 @@ class Logger:
                                     return await self._gen.asend(value)
                                 except StopAsyncIteration:
                                     pass
-                                except:
+                                except Exception:
                                     raise
                             raise StopAsyncIteration
 
