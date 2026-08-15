@@ -71,17 +71,35 @@ class Retention:
     @staticmethod
     def retention_count(logs, number):
         def key_log(log):
-            return (-os.stat(log).st_mtime, log)
+            try:
+                return (-os.stat(log).st_mtime, log)
+            except FileNotFoundError:
+                # The file disappeared between the glob and the sort, so it
+                # cannot be part of the retained set anyway.
+                return (0, log)
 
         for log in sorted(logs, key=key_log)[number:]:
-            os.remove(log)
+            try:
+                os.remove(log)
+            except (PermissionError, FileNotFoundError):
+                # Another process may hold the file open (Windows) or have
+                # deleted it concurrently. Skip it rather than aborting the
+                # whole retention sweep, which would also leave the other
+                # out-of-retention files undeleted.
+                continue
 
     @staticmethod
     def retention_age(logs, seconds):
         t = datetime.datetime.now().timestamp()
         for log in logs:
-            if os.stat(log).st_mtime <= t - seconds:
-                os.remove(log)
+            try:
+                if os.stat(log).st_mtime <= t - seconds:
+                    os.remove(log)
+            except (PermissionError, FileNotFoundError):
+                # Same as ``retention_count``: a file locked by another
+                # process (Windows) or concurrently deleted must not abort
+                # the sweep or bubble up during interpreter exit.
+                continue
 
 
 class Rotation:
@@ -174,7 +192,7 @@ class FileSink:
         mode="a",
         buffering=1,
         encoding="utf8",
-        **kwargs
+        **kwargs,
     ):
         self.encoding = encoding
 
