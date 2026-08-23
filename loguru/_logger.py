@@ -1355,8 +1355,6 @@ class Logger:
                                     return await self._gen.asend(value)
                                 except StopAsyncIteration:
                                     pass
-                                except:
-                                    raise
                             raise StopAsyncIteration
 
                         async def athrow(self, *args, **kwargs):
