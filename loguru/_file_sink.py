@@ -91,10 +91,8 @@ class Rotation:
 
     @staticmethod
     def forward_weekday(t, weekday):
-        while True:
-            t += datetime.timedelta(days=1)
-            if t.weekday() == weekday:
-                return t
+        days = (weekday - t.weekday()) % 7 or 7
+        return t + datetime.timedelta(days=days)
 
     @staticmethod
     def forward_interval(t, interval):
@@ -106,10 +104,10 @@ class Rotation:
         return file.tell() + len(message) > size_limit
 
     class RotationTime:
-        def __init__(self, step_forward, time_init=None, weekday=None):
+        def __init__(self, step_forward, time_target=None, day_target=None):
             self._step_forward = step_forward
-            self._time_init = time_init
-            self._weekday = weekday
+            self._time_target = time_target
+            self._day_target = day_target
             self._limit = None
 
         def __call__(self, message, file):
@@ -123,29 +121,29 @@ class Rotation:
                     creation_time, tz=datetime.timezone.utc
                 )
 
-                time_init = self._time_init
-
-                if time_init is None:
+                if self._time_target is None:
                     limit = start_time.astimezone(record_time.tzinfo).replace(tzinfo=None)
                     limit = self._step_forward(limit)
                 else:
-                    tzinfo = record_time.tzinfo if time_init.tzinfo is None else time_init.tzinfo
+                    tzinfo = (
+                        record_time.tzinfo
+                        if self._time_target.tzinfo is None
+                        else self._time_target.tzinfo
+                    )
                     limit = start_time.astimezone(tzinfo).replace(
-                        hour=time_init.hour,
-                        minute=time_init.minute,
-                        second=time_init.second,
-                        microsecond=time_init.microsecond,
+                        hour=self._time_target.hour,
+                        minute=self._time_target.minute,
+                        second=self._time_target.second,
+                        microsecond=self._time_target.microsecond,
                     )
 
-                    # A weekday rotation's initial limit lands on the creation
-                    # day, which may not be the requested weekday; step forward
-                    # until it does, so the first rotation isn't on the start day.
-                    if limit <= start_time or (
-                        self._weekday is not None and limit.weekday() != self._weekday
-                    ):
+                    if self._day_target is not None and limit.weekday() != self._day_target:
+                        limit = Rotation.forward_weekday(limit, self._day_target)
+
+                    if limit <= start_time:
                         limit = self._step_forward(limit)
 
-                    if time_init.tzinfo is None:
+                    if self._time_target.tzinfo is None:
                         limit = limit.replace(tzinfo=None)
 
                 self._limit = limit
@@ -347,7 +345,7 @@ class FileSink:
                 if time is None:
                     time = datetime.time(0, 0, 0)
                 step_forward = partial(Rotation.forward_weekday, weekday=day)
-                return Rotation.RotationTime(step_forward, time, weekday=day)
+                return Rotation.RotationTime(step_forward, time, day)
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         if isinstance(rotation, (numbers.Real, decimal.Decimal)):
             return partial(Rotation.rotation_size, size_limit=rotation)
