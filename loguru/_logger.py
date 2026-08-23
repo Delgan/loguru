@@ -523,8 +523,8 @@ class Logger:
         | line       | The line number in the source   | None                       |
         |            | code                            |                            |
         +------------+---------------------------------+----------------------------+
-        | message    | The logged message (not yet     | None                       |
-        |            | formatted)                      |                            |
+        | message    | The logged message, formatted   | None                       |
+        |            | by ``*args`` and ``**kwargs``   |                            |
         +------------+---------------------------------+----------------------------+
         | module     | The module where the logging    | None                       |
         |            | call was made                   |                            |
@@ -534,6 +534,9 @@ class Logger:
         +------------+---------------------------------+----------------------------+
         | process    | The process in which the        | ``name``, ``id`` (default) |
         |            | logging call was made           |                            |
+        +------------+---------------------------------+----------------------------+
+        | template   | The unformatted message, with   | None                       |
+        |            | brace placeholders retained     |                            |
         +------------+---------------------------------+----------------------------+
         | thread     | The thread in which the         | ``name``, ``id`` (default) |
         |            | logging call was made           |                            |

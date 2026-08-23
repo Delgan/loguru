@@ -4,6 +4,7 @@
 - Change the default log format to include the timezone offset since it produces less ambiguous logs (`#856 <https://github.com/Delgan/loguru/pull/856>`_, thanks `@tim-x-y-z <https://github.com/tim-x-y-z>`_).
 - Add new ``logger.reinstall()`` method to automatically set up the ``logger`` in spawned child processes (`#818 <https://github.com/Delgan/loguru/issues/818>`_, thanks `@monchin <https://github.com/monchin>`_).
 - Add support for template strings used as log messages (`#1397 <https://github.com/Delgan/loguru/issues/1397>`_, thanks `@TurtleOrangina <https://github.com/TurtleOrangina>`_).
+- Add ``record["template"]`` that includes the raw, unformatted message (`#1349 <https://github.com/Delgan/loguru/issues/1349>`_, thanks `@sentrivana <https://github.com/sentrivana>`_).
 - Fix incorrect microsecond value when formatting the log timestamp using ``{time:x}`` (`#1440 <https://github.com/Delgan/loguru/issues/1440>`_).
 - Fix parsing of 12-hour rotation times without seconds (`#1474 <https://github.com/Delgan/loguru/issues/1474>`_, thanks `@c-tonneslan <https://github.com/c-tonneslan>`_).
 - Fix a ``"<weekday> at <time>"`` rotation firing its first rotation on the creation day instead of the requested weekday when the time of day was later than the creation time (`#1484 <https://github.com/Delgan/loguru/pull/1484>`_, thanks `@gaoflow <https://github.com/gaoflow>`_).
@@ -20,7 +21,6 @@
 - Make ``logger.catch()`` usable as an asynchronous context manager (`#1084 <https://github.com/Delgan/loguru/issues/1084>`_).
 - Make ``logger.catch()`` compatible with asynchronous generators (`#1302 <https://github.com/Delgan/loguru/issues/1302>`_).
 - Improve feedback for invalid format keys in logger format strings (`#1450 <https://github.com/Delgan/loguru/issues/1450>`_, thanks `@Krishnachaitanyakc <https://github.com/Krishnachaitanyakc>`_).
-- Add ``record["template"]`` that includes the raw, unformatted message (`#1349 <https://github.com/Delgan/loguru/issues/1349>`_).
 
 
 `0.7.3`_ (2024-12-06)
