@@ -159,7 +159,8 @@ def parse_duration(duration: str) -> Optional[datetime.timedelta]:
     Raises
     ------
     ValueError
-        If a value cannot be converted to float or if an invalid unit is encountered.
+        If a value cannot be converted to float, if an invalid unit is encountered,
+        or if the duration exceeds the range representable by ``datetime.timedelta``.
     """
     duration = duration.strip()
     reg = r"(?:([e\+\-\.\d]+)\s*([a-z]+)[\s\,]*)"
@@ -194,7 +195,10 @@ def parse_duration(duration: str) -> Optional[datetime.timedelta]:
 
         seconds += value * unit
 
-    return datetime.timedelta(seconds=seconds)
+    try:
+        return datetime.timedelta(seconds=seconds)
+    except OverflowError as error:
+        raise ValueError("Duration out of range while parsing duration: '%s'" % duration) from error
 
 
 def parse_frequency(frequency: str):
