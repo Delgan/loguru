@@ -41,7 +41,7 @@ def _format_timezone(dt, *, sep):
     tzinfo = dt.tzinfo or timezone.utc
     offset = tzinfo.utcoffset(dt).total_seconds()
     sign = "+" if offset >= 0 else "-"
-    (h, m), s = divmod(abs(offset // 60), 60), abs(offset) % 60
+    (h, m), s = divmod(abs(offset) // 60, 60), abs(offset) % 60
     z = "%s%02d%s%02d" % (sign, h, sep, m)
     if s > 0:
         if s.is_integer():
