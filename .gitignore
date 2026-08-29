@@ -105,3 +105,6 @@ ENV/
 
 # Idea IDE
 .idea/
+.cie/
+.venv/
+.forge/

@@ -1,3 +1,4 @@
+import math
 import re
 from calendar import day_abbr, day_name, month_abbr, month_name
 from datetime import datetime as datetime_
@@ -16,10 +17,16 @@ def _builtin_datetime_formatter(is_utc, format_string, dt):
     return dt.strftime(format_string)
 
 
-def _loguru_datetime_formatter(is_utc, format_string, formatters, dt):
-    if is_utc:
+def _loguru_datetime_formatter(is_utc, format_string, formatters, t, dt=None):
+    if dt is None:
+        # Called with a single datetime value (the common case, e.g. via
+        # ``datetime.__format__``); derive the struct_time from it.
+        dt = t
+        if is_utc:
+            dt = dt.astimezone(timezone.utc)
+        t = dt.timetuple()
+    elif is_utc:
         dt = dt.astimezone(timezone.utc)
-    t = dt.timetuple()
     args = tuple(f(t, dt) for f in formatters)
     return format_string % args
 
@@ -109,7 +116,7 @@ def _compile_format(spec):
         "ZZ": ("%s", lambda t, dt: _format_timezone(dt, sep="")),
         "zz": ("%s", lambda t, dt: (dt.tzinfo or timezone.utc).tzname(dt) or ""),
         "X": ("%d", lambda t, dt: dt.timestamp()),
-        "x": ("%d", lambda t, dt: int(dt.timestamp()) * 1000000 + dt.microsecond),
+        "x": ("%d", lambda t, dt: math.floor(dt.timestamp()) * 1000000 + dt.microsecond),
     }
 
     format_string = ""
