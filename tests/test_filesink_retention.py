@@ -361,3 +361,11 @@ def test_unparsable_retention(retention):
 def test_invalid_value_retention_duration(retention):
     with pytest.raises(ValueError, match=r"^Invalid unit value while parsing duration: '[^']+'$"):
         logger.add("test.log", retention=retention)
+
+
+@pytest.mark.parametrize("retention", ["1e14s", "1e20s", "1e309s"])
+def test_out_of_range_retention_duration(retention):
+    with pytest.raises(
+        ValueError, match=r"^Duration out of range while parsing duration: '[^']+'$"
+    ):
+        logger.add("test.log", retention=retention)

@@ -137,6 +137,7 @@ def test_size_rotation(freeze_time, tmp_path, size):
         ("1 hour", [0.5, 1, 0.1, 100, 1000]),
         ("7 days", [24 * 7 - 1, 1, 48, 24 * 10, 24 * 365]),
         ("1h 30 minutes", [1.4, 0.2, 1, 2, 10]),
+        ("1e6s", [240, 48, 200, 100, 300]),
         ("1 w, 2D", [24 * 8, 24 * 2, 24, 24 * 9, 24 * 9]),
         ("1.5d", [30, 10, 0.9, 48, 35]),
         ("1.222 hours, 3.44s", [1.222, 0.1, 1, 1.2, 2]),
@@ -1151,4 +1152,12 @@ def test_invalid_unit_rotation_duration(rotation):
 @pytest.mark.parametrize("rotation", ["e days", "1.2.3 days"])
 def test_invalid_value_rotation_duration(rotation):
     with pytest.raises(ValueError, match=r"^Invalid float value while parsing duration: '[^']+'$"):
+        logger.add("test.log", rotation=rotation)
+
+
+@pytest.mark.parametrize("rotation", ["1e14s", "1e20s", "1e309s"])
+def test_out_of_range_rotation_duration(rotation):
+    with pytest.raises(
+        ValueError, match=r"^Duration out of range while parsing duration: '[^']+'$"
+    ):
         logger.add("test.log", rotation=rotation)
