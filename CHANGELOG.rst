@@ -6,6 +6,7 @@
 - Add support for template strings used as log messages (`#1397 <https://github.com/Delgan/loguru/issues/1397>`_, thanks `@TurtleOrangina <https://github.com/TurtleOrangina>`_).
 - Add ``record["template"]`` that includes the raw, unformatted message (`#1349 <https://github.com/Delgan/loguru/issues/1349>`_, thanks `@sentrivana <https://github.com/sentrivana>`_).
 - Fix incorrect microsecond value when formatting the log timestamp using ``{time:x}`` (`#1440 <https://github.com/Delgan/loguru/issues/1440>`_).
+- Fix negative timezone offsets with a sub-minute component being formatted one minute too large by ``{time:Z}`` and ``{time:ZZ}`` (`#1500 <https://github.com/Delgan/loguru/issues/1500>`_).
 - Fix parsing of 12-hour rotation times without seconds (`#1474 <https://github.com/Delgan/loguru/issues/1474>`_, thanks `@c-tonneslan <https://github.com/c-tonneslan>`_).
 - Fix a ``"<weekday> at <time>"`` rotation firing its first rotation on the creation day instead of the requested weekday when the time of day was later than the creation time (`#1484 <https://github.com/Delgan/loguru/pull/1484>`_, thanks `@gaoflow <https://github.com/gaoflow>`_).
 - Fix hex color short code expansion (`#1426 <https://github.com/Delgan/loguru/issues/1426>`_, thanks `@turkoid <https://github.com/turkoid>`_).
