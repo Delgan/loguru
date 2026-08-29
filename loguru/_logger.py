@@ -1358,7 +1358,39 @@ class Logger:
                             raise StopAsyncIteration
 
                         async def athrow(self, *args, **kwargs):
-                            return await self._gen.athrow(*args, **kwargs)
+                            injected = self._normalize_thrown(*args)
+                            unhandled = None
+                            with catcher:
+                                try:
+                                    return await self._gen.athrow(injected)
+                                except StopAsyncIteration:
+                                    pass
+                                except BaseException as error:
+                                    if error is injected:
+                                        unhandled = error
+                                    else:
+                                        raise
+                            if unhandled is not None:
+                                raise unhandled
+                            raise StopAsyncIteration
+
+                        @staticmethod
+                        def _normalize_thrown(*args):
+                            if not args:
+                                return None
+                            exception = args[0]
+                            if isinstance(exception, BaseException):
+                                return exception
+                            if isclass(exception) and issubclass(exception, BaseException):
+                                value = args[1] if len(args) > 1 else None
+                                if value is None:
+                                    return exception()
+                                if isinstance(value, exception):
+                                    return value
+                                if isinstance(value, tuple):
+                                    return exception(*value)
+                                return exception(value)
+                            return None
 
                     def catch_wrapper(*args, **kwargs):
                         gen = function(*args, **kwargs)

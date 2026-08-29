@@ -101,11 +101,41 @@ def test_decorate_async_generator_then_async_throw():
     asyncio.run(coro())
 
 
+def test_decorate_async_generator_athrow_with_new_error_reraised():
+    logged = []
+    logger.remove()
+    logger.add(lambda message: logged.append(message.record["message"]), format="{message}", colorize=False)
+
+    @logger.catch(reraise=True)
+    async def generator():
+        try:
+            yield 1
+        except TimeoutError:
+            raise RuntimeError("boom")
+
+    async def coro():
+        gen = generator()
+        await gen.asend(None)
+        try:
+            await gen.athrow(TimeoutError)
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("RuntimeError not raised")
+
+    asyncio.run(coro())
+    assert len(logged) == 1
+
+    logger.remove()
+    logger.add(lambda m: None, format="", diagnose=True, backtrace=True, colorize=True)
+
+
 test_decorate_async_generator()
 test_decorate_async_generator_with_error()
 test_decorate_async_generator_with_error_reraised()
 test_decorate_async_generator_then_async_send()
 test_decorate_async_generator_then_async_throw()
+test_decorate_async_generator_athrow_with_new_error_reraised()
 
 logger.add(sys.stderr, format="{message}")
 logger.info("Done")
