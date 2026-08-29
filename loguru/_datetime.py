@@ -3,6 +3,7 @@ from calendar import day_abbr, day_name, month_abbr, month_name
 from datetime import datetime as datetime_
 from datetime import timedelta, timezone
 from functools import lru_cache, partial
+from math import floor
 from time import localtime, strftime
 
 tokens = r"H{1,2}|h{1,2}|m{1,2}|s{1,2}|S+|YYYY|YY|M{1,4}|D{1,4}|Z{1,2}|zz|A|X|x|E|Q|dddd|ddd|d"
@@ -108,8 +109,8 @@ def _compile_format(spec):
         "Z": ("%s", lambda t, dt: _format_timezone(dt, sep=":")),
         "ZZ": ("%s", lambda t, dt: _format_timezone(dt, sep="")),
         "zz": ("%s", lambda t, dt: (dt.tzinfo or timezone.utc).tzname(dt) or ""),
-        "X": ("%d", lambda t, dt: dt.timestamp()),
-        "x": ("%d", lambda t, dt: int(dt.timestamp()) * 1000000 + dt.microsecond),
+        "X": ("%d", lambda t, dt: floor(dt.timestamp())),
+        "x": ("%d", lambda t, dt: floor(dt.timestamp()) * 1000000 + dt.microsecond),
     }
 
     format_string = ""
