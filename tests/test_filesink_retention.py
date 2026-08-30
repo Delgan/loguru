@@ -343,6 +343,108 @@ def test_exception_during_retention_at_remove(tmp_path, capsys, delay):
     assert out == err == ""
 
 
+def make_remove_failing_for(filename):
+    real_remove = os.remove
+
+    def remove(path):
+        if os.path.basename(path) == filename:
+            raise PermissionError(
+                "The process cannot access the file because it is being used by another process"
+            )
+        real_remove(path)
+
+    return remove
+
+
+def test_permission_error_ignored_during_retention_count(tmp_path, monkeypatch, capsys):
+    tmp_path.joinpath("test.log.1").write_text("A")
+    tmp_path.joinpath("test.log.2").write_text("B")
+
+    monkeypatch.setattr(os, "remove", make_remove_failing_for("test.log.1"))
+
+    i = logger.add(tmp_path / "test.log", format="{message}", retention=0, catch=False)
+    logger.debug("test")
+    logger.remove(i)
+
+    check_dir(tmp_path, files=[("test.log.1", "A")])
+
+    out, err = capsys.readouterr()
+    assert out == err == ""
+
+
+def test_permission_error_ignored_during_retention_age(tmp_path, monkeypatch, capsys):
+    past = datetime.datetime.now().timestamp() - 7200
+
+    for name, content in [("test.log.1", "A"), ("test.log.2", "B")]:
+        filepath = tmp_path / name
+        filepath.write_text(content)
+        os.utime(str(filepath), (past, past))
+
+    monkeypatch.setattr(os, "remove", make_remove_failing_for("test.log.1"))
+
+    i = logger.add(tmp_path / "test.log", format="{message}", retention="1 hour", catch=False)
+    logger.debug("test")
+    logger.remove(i)
+
+    check_dir(tmp_path, files=[("test.log", "test\n"), ("test.log.1", "A")])
+
+    out, err = capsys.readouterr()
+    assert out == err == ""
+
+
+@pytest.mark.parametrize("retention", [0, "1 hour"])
+def test_error_during_retention_not_ignored(tmp_path, monkeypatch, retention):
+    past = datetime.datetime.now().timestamp() - 7200
+    filepath = tmp_path / "test.log.1"
+    filepath.write_text("A")
+    os.utime(str(filepath), (past, past))
+
+    monkeypatch.setattr(os, "remove", Mock(side_effect=OSError("Removal error")))
+
+    i = logger.add(tmp_path / "test.log", format="{message}", retention=retention, catch=False)
+    logger.debug("test")
+
+    with pytest.raises(OSError, match=r"^Removal error$"):
+        logger.remove(i)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows can't delete file in use")
+def test_file_in_use_ignored_during_retention_count(tmp_path, capsys):
+    filepath = tmp_path / "test.log.1"
+    filepath.write_text("A")
+    tmp_path.joinpath("test.log.2").write_text("B")
+
+    with filepath.open("r"):
+        i = logger.add(tmp_path / "test.log", format="{message}", retention=0, catch=False)
+        logger.debug("test")
+        logger.remove(i)
+
+    check_dir(tmp_path, files=[("test.log.1", "A")])
+
+    out, err = capsys.readouterr()
+    assert out == err == ""
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows can't delete file in use")
+def test_file_in_use_ignored_during_retention_age(tmp_path, capsys):
+    past = datetime.datetime.now().timestamp() - 7200
+
+    for name, content in [("test.log.1", "A"), ("test.log.2", "B")]:
+        filepath = tmp_path / name
+        filepath.write_text(content)
+        os.utime(str(filepath), (past, past))
+
+    with tmp_path.joinpath("test.log.1").open("r"):
+        i = logger.add(tmp_path / "test.log", format="{message}", retention="1 hour", catch=False)
+        logger.debug("test")
+        logger.remove(i)
+
+    check_dir(tmp_path, files=[("test.log", "test\n"), ("test.log.1", "A")])
+
+    out, err = capsys.readouterr()
+    assert out == err == ""
+
+
 @pytest.mark.parametrize("retention", [datetime.time(12, 12, 12), os, object()])
 def test_invalid_retention_type(retention):
     with pytest.raises(TypeError):
