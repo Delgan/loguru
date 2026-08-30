@@ -93,10 +93,31 @@ def test_decorate_async_generator_then_async_throw():
         await gen.asend(None)
         try:
             await gen.athrow(ValueError)
-        except ValueError:
+        except StopAsyncIteration:
             pass
         else:
-            raise AssertionError("ValueError not raised")
+            raise AssertionError("StopAsyncIteration not raised")
+
+    asyncio.run(coro())
+
+
+def test_decorate_async_generator_then_async_throw_with_handled_error():
+    @logger.catch
+    async def generator():
+        try:
+            yield 1
+        except ValueError:
+            pass
+
+    async def coro():
+        gen = generator()
+        await gen.asend(None)
+        try:
+            await gen.athrow(ValueError)
+        except StopAsyncIteration:
+            pass
+        else:
+            raise AssertionError("StopAsyncIteration not raised")
 
     asyncio.run(coro())
 
@@ -106,6 +127,7 @@ test_decorate_async_generator_with_error()
 test_decorate_async_generator_with_error_reraised()
 test_decorate_async_generator_then_async_send()
 test_decorate_async_generator_then_async_throw()
+test_decorate_async_generator_then_async_throw_with_handled_error()
 
 logger.add(sys.stderr, format="{message}")
 logger.info("Done")

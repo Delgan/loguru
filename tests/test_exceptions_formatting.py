@@ -248,6 +248,7 @@ def test_exception_others(filename):
     [
         ("type_hints", (3, 6)),
         ("exception_formatting_async_generator", (3, 6)),
+        ("exception_formatting_async_generator_throw", (3, 6)),
         ("decorate_async_generator", (3, 7)),
         ("positional_only_argument", (3, 8)),
         ("walrus_operator", (3, 8)),
