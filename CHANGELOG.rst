@@ -1,6 +1,7 @@
 `Unreleased`_
 =============
 
+- Fix possible ``PermissionError`` raised on Windows during file retention sweep when another process keeps a log file open; the sweep now skips locked or concurrently deleted files and still deletes the others (`#1495 <https://github.com/Delgan/loguru/issues/1495>`_).
 - Change the default log format to include the timezone offset since it produces less ambiguous logs (`#856 <https://github.com/Delgan/loguru/pull/856>`_, thanks `@tim-x-y-z <https://github.com/tim-x-y-z>`_).
 - Add new ``logger.reinstall()`` method to automatically set up the ``logger`` in spawned child processes (`#818 <https://github.com/Delgan/loguru/issues/818>`_, thanks `@monchin <https://github.com/monchin>`_).
 - Add support for template strings used as log messages (`#1397 <https://github.com/Delgan/loguru/issues/1397>`_, thanks `@TurtleOrangina <https://github.com/TurtleOrangina>`_).
