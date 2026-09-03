@@ -353,6 +353,13 @@ class FileSink:
                 "not a bool (True would rotate at 1 byte)"
             )
         if isinstance(rotation, (numbers.Real, decimal.Decimal)):
+            # A negative limit (or NaN) makes the size comparison meaningless: the file would
+            # be rotated on every single message, or never. Both entry points, the string one
+            # ("-1 MB") and the numeric one (-1), are funnelled through here.
+            if not rotation >= 0:
+                raise ValueError(
+                    "Invalid size while parsing rotation (expected >= 0): '%s'" % rotation
+                )
             return partial(Rotation.rotation_size, size_limit=rotation)
         if isinstance(rotation, datetime.time):
             return Rotation.RotationTime(Rotation.forward_day, rotation)
