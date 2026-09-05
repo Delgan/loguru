@@ -110,11 +110,14 @@ Another danger due to external input is the possibility of a log injection attac
     logger.info("User " + username + " logged in.")
 
 
-Note that by default, Loguru will display the value of existing variables when an ``Exception`` is logged. This is very useful for debugging but could lead to credentials appearing in log files. Make sure to turn it off in production (or set the ``LOGURU_DIAGNOSE=NO`` environment variable).
+Note that by default, Loguru will display the value of existing variables when an ``Exception`` is logged. This is very useful for debugging but could lead to credentials appearing in log files. Make sure to add your sensitive data to `diagnose_excludes` or turn it off in production (or set the ``LOGURU_DIAGNOSE=NO`` environment variable).
 
 .. code::
 
+    logger.add("out.log", diagnose=True, diagnose_excludes=["myS3cr3tP@ss!"])
+    # or disable diagnose using
     logger.add("out.log", diagnose=False)
+    # or set the ``LOGURU_DIAGNOSE=NO`` environment variable
 
 
 Another thing you should consider is to change the access permissions of your log file. Loguru creates files using the built-in |open| function, which means by default they might be read by a different user than the owner. If this is not desirable, be sure to modify the default access rights.

@@ -166,6 +166,7 @@ def test_backtrace(filename):
         "attributes",
         "chained_both",
         "encoding",
+        "excludes",
         "global_variable",
         "indentation_error",
         "keyword_argument",

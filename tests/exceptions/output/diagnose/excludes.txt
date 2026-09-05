@@ -1,0 +1,13 @@
+
+[33m[1mTraceback (most recent call last):[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mexcludes.py[0m", line [33m23[0m, in [35m<module>[0m
+    [1mconnect_to_db[0m[1m([0m[1mpassword[0m[1m)[0m
+    [36m│             └ [0m[36m[1m'<hidden>'[0m
+    [36m└ [0m[36m[1m<function connect_to_db at 0xDEADBEEF>[0m
+
+  File "[32mtests/exceptions/source/diagnose/[0m[32m[1mexcludes.py[0m", line [33m18[0m, in [35mconnect_to_db[0m
+    [35m[1mraise[0m [1mTimeoutError[0m[1m([0m[36m"tried to connect to "[0m [35m[1m+[0m [1mrepr[0m[1m([0m[1mconnection_string[0m[1m)[0m[1m)[0m
+    [36m                                                 └ [0m[36m[1m'foo bar <hidden> baz'[0m
+
+[31m[1mTimeoutError[0m:[1m tried to connect to 'foo bar <hidden> baz'[0m
