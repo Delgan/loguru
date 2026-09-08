@@ -348,10 +348,21 @@ class FileSink:
                 return Rotation.RotationTime(step_forward, time, day)
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
         if isinstance(rotation, (numbers.Real, decimal.Decimal)):
+            if rotation < 0:
+                raise ValueError(
+                    "Invalid rotation size: %r (must be a non-negative number, "
+                    "a negative limit would trigger rotation on every message)" % (rotation,)
+                )
             return partial(Rotation.rotation_size, size_limit=rotation)
         if isinstance(rotation, datetime.time):
             return Rotation.RotationTime(Rotation.forward_day, rotation)
         if isinstance(rotation, datetime.timedelta):
+            if rotation <= datetime.timedelta(0):
+                raise ValueError(
+                    "Invalid rotation interval: %r (must be a strictly positive "
+                    "timedelta, a zero or negative interval never advances and "
+                    "causes an infinite loop or a runaway search for the next limit)" % (rotation,)
+                )
             step_forward = partial(Rotation.forward_interval, interval=rotation)
             return Rotation.RotationTime(step_forward)
         if callable(rotation):
@@ -368,8 +379,20 @@ class FileSink:
                 raise ValueError("Cannot parse retention from: '%s'" % retention)
             return FileSink._make_retention_function(interval)
         if isinstance(retention, int):
+            if retention < 0:
+                raise ValueError(
+                    "Invalid retention count: %r (must be a non-negative integer, "
+                    "a negative count relies on list-slicing wraparound and removes "
+                    "an arbitrary file instead of the intended number of files)" % (retention,)
+                )
             return partial(Retention.retention_count, number=retention)
         if isinstance(retention, datetime.timedelta):
+            if retention < datetime.timedelta(0):
+                raise ValueError(
+                    "Invalid retention interval: %r (must be a non-negative "
+                    "timedelta, a negative interval deletes every existing file "
+                    "immediately regardless of age)" % (retention,)
+                )
             return partial(Retention.retention_age, seconds=retention.total_seconds())
         if callable(retention):
             return retention
