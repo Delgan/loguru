@@ -1,6 +1,7 @@
 `Unreleased`_
 =============
 
+- Fix ``rotation``/``retention`` silently misbehaving on negative or zero values: a negative size rotated on every message, a zero or negative interval could hang indefinitely or raise repeated internal errors, and a negative retention duration or count deleted files unexpectedly. These are now rejected with a clear ``ValueError`` at ``logger.add()`` time (`#1511 <https://github.com/Delgan/loguru/pull/1511>`_).
 - Change the default log format to include the timezone offset since it produces less ambiguous logs (`#856 <https://github.com/Delgan/loguru/pull/856>`_, thanks `@tim-x-y-z <https://github.com/tim-x-y-z>`_).
 - Add new ``logger.reinstall()`` method to automatically set up the ``logger`` in spawned child processes (`#818 <https://github.com/Delgan/loguru/issues/818>`_, thanks `@monchin <https://github.com/monchin>`_).
 - Add support for template strings used as log messages (`#1397 <https://github.com/Delgan/loguru/issues/1397>`_, thanks `@TurtleOrangina <https://github.com/TurtleOrangina>`_).
