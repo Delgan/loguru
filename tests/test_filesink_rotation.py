@@ -1089,6 +1089,28 @@ def test_multiple_rotation_conditions(freeze_time, tmp_path):
     )
 
 
+def test_multiple_rotation_conditions_all_evaluated(freeze_time, tmp_path):
+    # Every condition of a group must be evaluated, even after one of them returned True.
+    # Otherwise, the conditions that were skipped keep a limit in the past, which makes them
+    # trigger a spurious extra rotation on the next logged message.
+    with freeze_time("2020-01-01 06:00:00"):
+        logger.add(tmp_path / "file.log", rotation=["13:00", "12:00"], format="{message}")
+        logger.info("a")
+
+        with freeze_time("2020-01-01 13:00:01") as frozen:
+            logger.info("b")
+            frozen.tick()
+            logger.info("c")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("file.2020-01-01_06-00-00_000000.log", "a\n"),
+            ("file.log", "b\nc\n"),
+        ],
+    )
+
+
 def test_empty_rotation_condition_list():
     with pytest.raises(ValueError, match=r"^Must provide at least one rotation condition$"):
         logger.add("test.log", rotation=[])
