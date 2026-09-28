@@ -78,7 +78,7 @@ dev = [
 ]
 
 [project.urls]
-Changelog = "https://github.com/Delgan/loguru/blob/master/CHANGELOG.rst"
+Changelog = "https://github.com/Delgan/loguru/blob/master/CHANGELOG.md"
 Documentation = "https://loguru.readthedocs.io/en/stable/index.html"
 Homepage = "https://github.com/Delgan/loguru"
 

@@ -1,5 +1,5 @@
 # Contributing
 
-```{include} ../../CONTRIBUTING.rst
+```{include} ../../CONTRIBUTING.md
 :parser: rst
 ```

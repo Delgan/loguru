@@ -1,5 +1,5 @@
 # Changelog
 
-```{include} ../../CHANGELOG.rst
+```{include} ../../CHANGELOG.md
 :parser: rst
 ```
