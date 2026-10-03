@@ -162,7 +162,15 @@ class Rotation:
             self._rotations = rotations
 
         def __call__(self, message, file) -> bool:
-            return any(rotation(message, file) for rotation in self._rotations)
+            # Note that the conditions must all be evaluated, even after one of them returned
+            # True, because "RotationTime" instances keep their limit up-to-date as a side-effect
+            # of being called. Skipping them would leave a stale limit in the past, causing a
+            # spurious extra rotation on the next logged message.
+            should_rotate = False
+            for rotation in self._rotations:
+                if rotation(message, file):
+                    should_rotate = True
+            return should_rotate
 
 
 class FileSink:
