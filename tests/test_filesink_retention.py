@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from loguru import logger
+from loguru._file_sink import Retention
 
 from .conftest import check_dir
 
@@ -341,6 +342,86 @@ def test_exception_during_retention_at_remove(tmp_path, capsys, delay):
 
     out, err = capsys.readouterr()
     assert out == err == ""
+
+
+def test_retention_count_skips_locked_file(tmp_path, monkeypatch):
+    # Regression test for #1495: a file locked by another process (Windows)
+    # must not abort the sweep or propagate during interpreter exit.
+    for i, mtime in enumerate([100.0, 200.0, 300.0]):
+        path = tmp_path.joinpath("test.%d.log" % i)
+        path.write_text("test")
+        os.utime(path, (mtime, mtime))
+
+    locked = str(tmp_path.joinpath("test.0.log"))
+    real_remove = os.remove
+
+    def fake_remove(path):
+        if os.fspath(path) == locked:
+            raise PermissionError("file is locked")
+        return real_remove(path)
+
+    monkeypatch.setattr(os, "remove", fake_remove)
+
+    Retention.retention_count(
+        [locked] + [str(tmp_path.joinpath("test.%d.log" % i)) for i in (1, 2)],
+        number=1,
+    )
+
+    # The sweep did not abort: the locked file remains but the other
+    # out-of-retention files were still deleted.
+    assert os.path.exists(locked)
+    check_dir(tmp_path, size=2)
+
+
+def test_retention_count_skips_concurrently_deleted_file(tmp_path, monkeypatch):
+    # A file deleted concurrently must not abort the sweep either.
+    for i, mtime in enumerate([100.0, 200.0, 300.0]):
+        path = tmp_path.joinpath("test.%d.log" % i)
+        path.write_text("test")
+        os.utime(path, (mtime, mtime))
+
+    gone = str(tmp_path.joinpath("test.0.log"))
+    os.remove(gone)
+
+    real_remove = os.remove
+
+    def fake_remove(path):
+        if os.fspath(path) == gone:
+            raise FileNotFoundError("already deleted")
+        return real_remove(path)
+
+    monkeypatch.setattr(os, "remove", fake_remove)
+
+    Retention.retention_count(
+        [gone] + [str(tmp_path.joinpath("test.%d.log" % i)) for i in (1, 2)], number=1
+    )
+
+    check_dir(tmp_path, size=1)
+
+
+def test_retention_age_skips_locked_file(tmp_path, monkeypatch):
+    # Same as above for the age-based retention.
+    now = datetime.datetime.now().timestamp()
+    for i, mtime in enumerate([now - 100, now - 50, now]):
+        path = tmp_path.joinpath("test.%d.log" % i)
+        path.write_text("test")
+        os.utime(path, (mtime, mtime))
+
+    locked = str(tmp_path.joinpath("test.0.log"))
+    real_remove = os.remove
+
+    def fake_remove(path):
+        if os.fspath(path) == locked:
+            raise PermissionError("file is locked")
+        return real_remove(path)
+
+    monkeypatch.setattr(os, "remove", fake_remove)
+
+    logs = [str(tmp_path.joinpath("test.%d.log" % i)) for i in range(3)]
+    Retention.retention_age(logs, seconds=10)
+
+    assert os.path.exists(locked)
+    check_dir(tmp_path, size=2)
 
 
 @pytest.mark.parametrize("retention", [datetime.time(12, 12, 12), os, object()])
