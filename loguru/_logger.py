@@ -987,7 +987,8 @@ class Logger:
 
         if isinstance(level, str):
             levelno = self.level(level).no
-        elif isinstance(level, int):
+        elif isinstance(level, int) and not isinstance(level, bool):
+            # bool subclasses int; level=True would silently become severity 1
             levelno = level
         else:
             raise TypeError(
@@ -1091,7 +1092,10 @@ class Logger:
         >>> logger.remove(i)
         >>> logger.info("No longer logging")
         """
-        if not (handler_id is None or isinstance(handler_id, int)):
+        # bool subclasses int; remove(True) would silently remove handler id 1
+        if not (
+            handler_id is None or (isinstance(handler_id, int) and not isinstance(handler_id, bool))
+        ):
             raise TypeError(
                 "Invalid handler id, it should be an integer as returned "
                 "by the 'add()' method (or None), not: '%s'" % type(handler_id).__name__
@@ -1700,7 +1704,8 @@ class Logger:
         if icon is None:
             icon = old_icon
 
-        if not isinstance(no, int):
+        # bool subclasses int; no=True would silently become severity 1
+        if isinstance(no, bool) or not isinstance(no, int):
             raise TypeError(
                 "Invalid level no, it should be an integer, not: '%s'" % type(no).__name__
             )
@@ -2067,7 +2072,8 @@ class Logger:
         except (KeyError, TypeError):
             if isinstance(level, str):
                 raise ValueError("Level '%s' does not exist" % level) from None
-            if not isinstance(level, int):
+            # bool subclasses int; logger.log(True, ...) would silently use severity 1
+            if isinstance(level, bool) or not isinstance(level, int):
                 raise TypeError(
                     "Invalid level, it should be an integer or a string, not: '%s'"
                     % type(level).__name__
