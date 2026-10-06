@@ -1093,7 +1093,9 @@ class Logger:
         >>> logger.info("No longer logging")
         """
         # bool subclasses int; remove(True) would silently remove handler id 1
-        if not (handler_id is None or (isinstance(handler_id, int) and not isinstance(handler_id, bool))):
+        if not (
+            handler_id is None or (isinstance(handler_id, int) and not isinstance(handler_id, bool))
+        ):
             raise TypeError(
                 "Invalid handler id, it should be an integer as returned "
                 "by the 'add()' method (or None), not: '%s'" % type(handler_id).__name__

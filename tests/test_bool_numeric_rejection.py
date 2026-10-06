@@ -1,4 +1,5 @@
 """bool subclasses int/Real; True must not silently become 1."""
+
 import sys
 
 import pytest
