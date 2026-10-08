@@ -279,6 +279,7 @@ class Logger:
         filter=_defaults.LOGURU_FILTER,
         colorize=_defaults.LOGURU_COLORIZE,
         serialize=_defaults.LOGURU_SERIALIZE,
+        sanitize=_defaults.LOGURU_SANITIZE,
         backtrace=_defaults.LOGURU_BACKTRACE,
         diagnose=_defaults.LOGURU_DIAGNOSE,
         enqueue=_defaults.LOGURU_ENQUEUE,
@@ -308,6 +309,11 @@ class Logger:
         serialize : |bool|, optional
             Whether the logged message and its records should be first converted to a JSON string
             before being sent to the sink.
+        sanitize : |bool|, optional
+            Whether the C0, DEL and C1 control characters contained in the logged message should be
+            escaped before being sent to the sink. This prevents malicious or untrusted content
+            (such as ANSI/OSC escape sequences) from being interpreted by the terminal. Note that
+            this only affects the message itself, not the formatting of the log record.
         backtrace : |bool|, optional
             Whether the exception trace formatted should be extended upward, beyond the catching
             point, to show the full stacktrace which generated the error.
@@ -1053,6 +1059,7 @@ class Logger:
                 filter_=filter_func,
                 colorize=colorize,
                 serialize=serialize,
+                sanitize=sanitize,
                 enqueue=enqueue,
                 multiprocessing_context=context,
                 id_=handler_id,
