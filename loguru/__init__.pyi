@@ -139,6 +139,7 @@ class BasicHandlerConfig(TypedDict, total=False):
     filter: Optional[Union[str, FilterFunction, FilterDict]]
     colorize: Optional[bool]
     serialize: bool
+    sanitize: bool
     backtrace: bool
     diagnose: bool
     enqueue: bool
@@ -151,6 +152,7 @@ class FileHandlerConfig(TypedDict, total=False):
     filter: Optional[Union[str, FilterFunction, FilterDict]]
     colorize: Optional[bool]
     serialize: bool
+    sanitize: bool
     backtrace: bool
     diagnose: bool
     enqueue: bool
@@ -184,6 +186,7 @@ class AsyncHandlerConfig(TypedDict, total=False):
     filter: Optional[Union[str, FilterFunction, FilterDict]]
     colorize: Optional[bool]
     serialize: bool
+    sanitize: bool
     backtrace: bool
     diagnose: bool
     enqueue: bool
@@ -212,6 +215,7 @@ class Logger:
         filter: Optional[Union[str, FilterFunction, FilterDict]] = ...,
         colorize: Optional[bool] = ...,
         serialize: bool = ...,
+        sanitize: bool = ...,
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
@@ -228,6 +232,7 @@ class Logger:
         filter: Optional[Union[str, FilterFunction, FilterDict]] = ...,
         colorize: Optional[bool] = ...,
         serialize: bool = ...,
+        sanitize: bool = ...,
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
@@ -245,6 +250,7 @@ class Logger:
         filter: Optional[Union[str, FilterFunction, FilterDict]] = ...,
         colorize: Optional[bool] = ...,
         serialize: bool = ...,
+        sanitize: bool = ...,
         backtrace: bool = ...,
         diagnose: bool = ...,
         enqueue: bool = ...,
