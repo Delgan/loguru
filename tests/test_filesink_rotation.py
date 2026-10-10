@@ -1094,6 +1094,16 @@ def test_empty_rotation_condition_list():
         logger.add("test.log", rotation=[])
 
 
+@pytest.mark.parametrize("rotation", [True, False])
+def test_rotation_rejects_bool(rotation):
+    with pytest.raises(
+        TypeError,
+        match=r"^Invalid rotation, it should be a size, a time, a timedelta, or a callable, "
+        r"not a bool",
+    ):
+        logger.add("test.log", rotation=rotation)
+
+
 @pytest.mark.parametrize(
     "rotation", [object(), os, datetime.date(2017, 11, 11), datetime.datetime.now(), 1j]
 )

@@ -343,6 +343,15 @@ def test_exception_during_retention_at_remove(tmp_path, capsys, delay):
     assert out == err == ""
 
 
+@pytest.mark.parametrize("retention", [True, False])
+def test_retention_rejects_bool(retention):
+    with pytest.raises(
+        TypeError,
+        match=r"^Invalid retention, it should be a count, a timedelta, or a callable, not a bool",
+    ):
+        logger.add("test.log", retention=retention)
+
+
 @pytest.mark.parametrize("retention", [datetime.time(12, 12, 12), os, object()])
 def test_invalid_retention_type(retention):
     with pytest.raises(TypeError):

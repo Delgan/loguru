@@ -6,6 +6,10 @@ import pytest
 from loguru import logger
 
 
+class HandlerIdSubclass(int):
+    pass
+
+
 class StopSinkError:
     def write(self, message):
         print(message, end="")
@@ -106,7 +110,9 @@ def test_invalid_handler_id_value(writer):
         logger.remove(42)
 
 
-@pytest.mark.parametrize("handler_id", [sys.stderr, sys, object(), int])
+@pytest.mark.parametrize(
+    "handler_id", [sys.stderr, sys, object(), int, True, False, HandlerIdSubclass(1)]
+)
 def test_invalid_handler_id_type(handler_id):
     with pytest.raises(TypeError, match=r"^Invalid handler id.*"):
         logger.remove(handler_id)
