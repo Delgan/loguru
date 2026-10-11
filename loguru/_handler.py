@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import threading
 from contextlib import contextmanager
+from queue import Full
 from threading import Thread
 
 from ._colorizer import Colorizer
@@ -55,7 +56,7 @@ class Handler:
         self._filter = filter_
         self._colorize = colorize
         self._serialize = serialize
-        self._enqueue = enqueue
+        self._enqueue = bool(enqueue)
         self._multiprocessing_context = multiprocessing_context
         self._error_interceptor = error_interceptor
         self._exception_formatter = exception_formatter
@@ -73,6 +74,7 @@ class Handler:
         self._queue_lock = None
         self._confirmation_event = None
         self._confirmation_lock = None
+        self._enqueue_overflow = "block"
         self._owner_process_pid = None
         self._thread = None
 
@@ -89,12 +91,26 @@ class Handler:
                 self._decolorized_format = self._formatter.strip()
 
         if self._enqueue:
+            if enqueue is True:
+                maxsize = 0
+            elif hasattr(enqueue, "get"):
+                maxsize = enqueue.get("size", 0)
+                self._enqueue_overflow = enqueue.get("overflow", "block")
+            else:
+                maxsize = enqueue
+
             if self._multiprocessing_context is None:
-                self._queue = multiprocessing.SimpleQueue()
+                if maxsize > 0:
+                    self._queue = multiprocessing.Queue(maxsize=maxsize)
+                else:
+                    self._queue = multiprocessing.SimpleQueue()
                 self._confirmation_event = multiprocessing.Event()
                 self._confirmation_lock = multiprocessing.Lock()
             else:
-                self._queue = self._multiprocessing_context.SimpleQueue()
+                if maxsize > 0:
+                    self._queue = self._multiprocessing_context.Queue(maxsize=maxsize)
+                else:
+                    self._queue = self._multiprocessing_context.SimpleQueue()
                 self._confirmation_event = self._multiprocessing_context.Event()
                 self._confirmation_lock = self._multiprocessing_context.Lock()
             self._queue_lock = create_handler_lock()
@@ -201,7 +217,13 @@ class Handler:
                 if self._stopped:
                     return
                 if self._enqueue:
-                    self._queue.put(str_record)
+                    if self._enqueue_overflow == "drop":
+                        try:
+                            self._queue.put(str_record, block=False)
+                        except Full:
+                            pass
+                    else:
+                        self._queue.put(str_record)
                 else:
                     self._sink.write(str_record)
         except Exception:
