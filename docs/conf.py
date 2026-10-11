@@ -52,7 +52,10 @@ templates_path = ["_templates"]
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = [".rst", ".md"]
+source_suffix = {
+    ".md": "markdown",
+    ".rst": "restructuredtext",
+}
 
 # The master toctree document.
 master_doc = "index"
@@ -172,9 +175,16 @@ napoleon_use_rtype = False
 napoleon_use_ivar = True
 myst_heading_anchors = 3
 
-# MyST parser complains that headers where the README start at H2 and not H1.
-# We may be able to get rid of this warning if we convert the reST files to MyST.
-suppress_warnings = ["myst.header"]
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+    "fieldlist",
+    "tasklist",
+]
+
+# suppress_warnings removed - warning "myst.header" shouldn't appear anymore.
+# (as long as no file starts with H2).
+suppress_warnings = []
 
 
 def setup(app):
