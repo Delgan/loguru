@@ -1091,7 +1091,7 @@ class Logger:
         >>> logger.remove(i)
         >>> logger.info("No longer logging")
         """
-        if not (handler_id is None or isinstance(handler_id, int)):
+        if not (handler_id is None or type(handler_id) is int):
             raise TypeError(
                 "Invalid handler id, it should be an integer as returned "
                 "by the 'add()' method (or None), not: '%s'" % type(handler_id).__name__

@@ -347,6 +347,11 @@ class FileSink:
                 step_forward = partial(Rotation.forward_weekday, weekday=day)
                 return Rotation.RotationTime(step_forward, time, day)
             raise ValueError("Cannot parse rotation from: '%s'" % rotation)
+        if isinstance(rotation, bool):
+            raise TypeError(
+                "Invalid rotation, it should be a size, a time, a timedelta, or a callable, "
+                "not a bool (True would rotate at 1 byte)"
+            )
         if isinstance(rotation, (numbers.Real, decimal.Decimal)):
             return partial(Rotation.rotation_size, size_limit=rotation)
         if isinstance(rotation, datetime.time):
@@ -367,6 +372,11 @@ class FileSink:
             if interval is None:
                 raise ValueError("Cannot parse retention from: '%s'" % retention)
             return FileSink._make_retention_function(interval)
+        if isinstance(retention, bool):
+            raise TypeError(
+                "Invalid retention, it should be a count, a timedelta, or a callable, "
+                "not a bool (True would keep 1 file)"
+            )
         if isinstance(retention, int):
             return partial(Retention.retention_count, number=retention)
         if isinstance(retention, datetime.timedelta):
