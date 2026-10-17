@@ -1,5 +1,7 @@
+import logging
 import sys
 from logging import FileHandler, Filter, Formatter, Handler, NullHandler, StreamHandler
+from threading import Thread, current_thread
 
 import pytest
 
@@ -248,3 +250,64 @@ def test_standard_handler_with_configured_level(capsys):
     out, err = capsys.readouterr()
     assert out == "a\nc\n"
     assert err == ""
+
+
+@pytest.mark.parametrize("enqueue", [False, True])
+@pytest.mark.parametrize("threaded", [False, True])
+def test_standard_handler_preserves_thread(capsys, enqueue, threaded):
+    handler = StreamHandler(sys.stdout)
+    handler.setFormatter(Formatter("%(thread)d %(threadName)s %(message)s"))
+    logger.add(handler, format="{message}", enqueue=enqueue, catch=False)
+
+    if threaded:
+        thread = Thread(target=logger.info, args=("Test",), name="log-producer")
+        thread.start()
+        thread.join()
+    else:
+        thread = current_thread()
+        logger.info("Test")
+
+    logger.complete()
+
+    out, err = capsys.readouterr()
+    assert out == "{} {} Test\n".format(thread.ident, thread.name)
+    assert err == ""
+
+
+@pytest.mark.parametrize("enqueue", [False, True])
+def test_standard_handler_filters_by_producer_thread(capsys, enqueue):
+    handler = StreamHandler(sys.stdout)
+    handler.addFilter(lambda record: record.threadName == "log-producer")
+    logger.add(handler, format="{message}", enqueue=enqueue, catch=False)
+
+    thread = Thread(target=logger.info, args=("Test",), name="log-producer")
+    thread.start()
+    thread.join()
+    logger.complete()
+
+    out, err = capsys.readouterr()
+    assert out == "Test\n"
+    assert err == ""
+
+
+@pytest.mark.parametrize("enqueue", [False, True])
+@pytest.mark.parametrize("log_threads", [False, True])
+def test_standard_handler_respects_log_threads(monkeypatch, enqueue, log_threads):
+    monkeypatch.setattr(logging, "logThreads", log_threads)
+    records = []
+
+    class RecordHandler(Handler):
+        def emit(self, record):
+            records.append(record)
+
+    logger.add(RecordHandler(), format="{message}", enqueue=enqueue, catch=False)
+
+    thread = Thread(target=logger.info, args=("Test",), name="log-producer")
+    thread.start()
+    thread.join()
+    logger.complete()
+
+    assert len(records) == 1
+    record = records[0]
+    assert record.thread == (thread.ident if log_threads else None)
+    assert record.threadName == (thread.name if log_threads else None)
