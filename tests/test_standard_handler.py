@@ -1,4 +1,7 @@
+import multiprocessing
+import os
 import sys
+import threading
 from logging import FileHandler, Filter, Formatter, Handler, NullHandler, StreamHandler
 
 import pytest
@@ -9,6 +12,11 @@ from loguru import logger
 class RejectAllFilter(Filter):
     def filter(self, record):
         return False
+
+
+def worker(logger):
+    logger.info("A message")
+    logger.complete()
 
 
 def test_stream_handler(capsys):
@@ -247,4 +255,54 @@ def test_standard_handler_with_configured_level(capsys):
     logger.info("c")
     out, err = capsys.readouterr()
     assert out == "a\nc\n"
+    assert err == ""
+
+
+def test_thread_info_with_enqueue(capsys):
+    handler = StreamHandler(sys.stdout)
+    handler.setFormatter(Formatter("%(threadName)s %(thread)d"))
+
+    logger.add(handler, format="{message}", enqueue=True)
+
+    thread = threading.Thread(target=worker, args=(logger,), name="test-thread")
+    thread.start()
+    thread.join()
+
+    out, err = capsys.readouterr()
+    assert out == "{} {}\n".format(thread.name, thread.ident)
+    assert err == ""
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows does not support forking")
+def test_process_info_with_enqueue_fork(capsys):
+    handler = StreamHandler(sys.stdout)
+    handler.setFormatter(Formatter("%(processName)s %(process)d"))
+
+    context = multiprocessing.get_context("fork")
+
+    logger.add(handler, format="{message}", enqueue=True, context=context)
+
+    process = context.Process(target=worker, args=(logger,), name="test-process")
+    process.start()
+    process.join()
+
+    out, err = capsys.readouterr()
+    assert out == "{} {}\n".format(process.name, process.ident)
+    assert err == ""
+
+
+def test_process_info_with_enqueue_spawn(capsys):
+    handler = StreamHandler(sys.stdout)
+    handler.setFormatter(Formatter("%(processName)s %(process)d"))
+
+    context = multiprocessing.get_context("spawn")
+
+    logger.add(handler, format="{message}", enqueue=True, context=context)
+
+    process = context.Process(target=worker, args=(logger,), name="test-process")
+    process.start()
+    process.join()
+
+    out, err = capsys.readouterr()
+    assert out == "{} {}\n".format(process.name, process.ident)
     assert err == ""

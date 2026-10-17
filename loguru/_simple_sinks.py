@@ -96,6 +96,13 @@ class StandardSink:
             record.exc_text = "\n"
 
         record.levelname = raw_record["level"].name
+
+        record.thread = raw_record["thread"].id
+        record.threadName = raw_record["thread"].name
+
+        record.process = raw_record["process"].id
+        record.processName = raw_record["process"].name
+
         self._handler.handle(record)
 
     def stop(self):
