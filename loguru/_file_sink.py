@@ -27,6 +27,38 @@ def generate_rename_path(root, ext, creation_time):
     return renamed_path
 
 
+def rename_file(path_in, path_out):
+    try:
+        os.rename(path_in, path_out)
+    except OSError as error:
+        raise OSError(
+            "Could not rename log file {!r} to {!r}.\n"
+            "Another handler or process may be using the same file and caused a "
+            "conflict.\n"
+            "Make sure no two active handlers were added with the same filename pattern (the "
+            "'{{time}}' field is not an effective differentiator): rotation, retention and "
+            "compression procedures may otherwise rename or delete each other's files.\n"
+            "A common cause is logger configuration being inadvertently repeated in spawned child "
+            "processes or Gunicorn workers.\n".format(path_in, path_out)
+        ) from error
+
+
+def remove_file(path):
+    try:
+        os.remove(path)
+    except OSError as error:
+        raise OSError(
+            "Could not delete log file {!r}.\n"
+            "Another handler or process may be using the same file and caused a "
+            "conflict.\n"
+            "Make sure no two active handlers were added with the same filename pattern (the "
+            "'{{time}}' field is not an effective differentiator): rotation, retention and "
+            "compression procedures may otherwise rename or delete each other's files.\n"
+            "A common cause is logger configuration being inadvertently repeated in spawned child "
+            "processes or Gunicorn workers.\n".format(path)
+        ) from error
+
+
 class FileDateFormatter:
     def __init__(self, datetime=None):
         self.datetime = datetime or aware_now()
@@ -62,9 +94,9 @@ class Compression:
             creation_time = get_ctime(path_out)
             root, ext_before = os.path.splitext(path_in)
             renamed_path = generate_rename_path(root, ext_before + ext, creation_time)
-            os.rename(path_out, renamed_path)
+            rename_file(path_out, renamed_path)
         compress_function(path_in, path_out)
-        os.remove(path_in)
+        remove_file(path_in)
 
 
 class Retention:
@@ -74,14 +106,14 @@ class Retention:
             return (-os.stat(log).st_mtime, log)
 
         for log in sorted(logs, key=key_log)[number:]:
-            os.remove(log)
+            remove_file(log)
 
     @staticmethod
     def retention_age(logs, seconds):
         t = datetime.datetime.now().timestamp()
         for log in logs:
             if os.stat(log).st_mtime <= t - seconds:
-                os.remove(log)
+                remove_file(log)
 
 
 class Rotation:
@@ -284,7 +316,7 @@ class FileSink:
                 creation_time = get_ctime(old_path)
                 root, ext = os.path.splitext(old_path)
                 renamed_path = generate_rename_path(root, ext, creation_time)
-                os.rename(old_path, renamed_path)
+                rename_file(old_path, renamed_path)
                 old_path = renamed_path
 
         if is_rotating or self._rotation_function is None:

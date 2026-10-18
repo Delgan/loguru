@@ -646,6 +646,13 @@ class Logger:
         current date at file creation. The file is closed at sink stop, i.e. when the application
         ends or the handler is removed.
 
+        .. warning::
+
+            A file sink must not share its output path with another file handler (using ``"{time}"``
+            alone does not prevent conflicts). In particular, make sure the logger configuration
+            isn't duplicated by spawned child processes or Gunicorn workers. See the
+            :ref:`file handler conflicts FAQ <file-handler-conflicts>` for details.
+
         The ``rotation`` check is made before logging each message. If there is already an existing
         file with the same name that the file to be created, then the existing file is renamed by
         appending the date to its basename to prevent file overwriting. This parameter accepts:

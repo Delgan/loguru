@@ -366,6 +366,19 @@ def test_exception_during_retention_at_remove_not_caught(tmp_path, capsys, delay
     assert out == err == ""
 
 
+def test_deletion_error_during_retention(tmp_path, monkeypatch):
+    path = tmp_path / "test.log"
+    i = logger.add(path, retention=0, catch=False)
+    remove = Mock(side_effect=PermissionError("Deletion error"))
+
+    with monkeypatch.context() as context:
+        context.setattr(os, "remove", remove)
+        with pytest.raises(OSError, match=r"same filename pattern"):
+            logger.remove(i)
+
+    remove.assert_called_once_with(str(path))
+
+
 @pytest.mark.parametrize("retention", [True, False])
 def test_retention_rejects_bool(retention):
     with pytest.raises(
