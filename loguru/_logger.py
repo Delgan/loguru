@@ -101,6 +101,7 @@ import contextlib
 import functools
 import logging
 import re
+import string
 import sys
 import threading
 import warnings
@@ -430,7 +431,8 @@ class Logger:
         Returning an already formatted log message would break internal mechanisms and lead to
         runtime errors. Note that when using a function, you are also responsible for appending the
         line ending and the exception field, whereas ``"\n{exception}"`` is automatically appended
-        for convenience when the ``format`` is a string.
+        for convenience when the ``format`` is a string (unless the ``{exception}`` field is already
+        explicitly referenced).
 
         The ``filter`` attribute can be used to control which messages are effectively passed to the
         sink and which one are ignored. A function can be used, accepting the record as an
@@ -1001,8 +1003,14 @@ class Logger:
             )
 
         if isinstance(format, str):
+            # The "\n{exception}" suffix is implicitly appended for convenience, but only if the
+            # format string does not already reference the "{exception}" field. Otherwise, the
+            # exception would be formatted and rendered twice in the logged message.
+            if not any(name == "exception" for _, name, *_ in string.Formatter().parse(format)):
+                format += terminator + "{exception}"
+
             try:
-                formatter = Colorizer.prepare_format(format + terminator + "{exception}")
+                formatter = Colorizer.prepare_format(format)
             except ValueError as e:
                 raise ValueError(
                     "Invalid format, color markups could not be parsed correctly"

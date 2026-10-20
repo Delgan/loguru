@@ -56,6 +56,59 @@ def test_function_format_with_exception(writer):
     assert lines[-1] == "ZeroDivisionError: division by zero"
 
 
+def test_string_format_with_exception(writer):
+    logger.add(writer, format="{message}\n{exception}")
+    try:
+        1 / 0  # noqa: B018
+    except ZeroDivisionError:
+        logger.exception("Error!")
+    output = writer.read()
+    assert output.startswith("Error!\nTraceback (most recent call last):")
+    assert output.rstrip("\n").endswith("ZeroDivisionError: division by zero")
+    assert output.count("ZeroDivisionError: division by zero") == 1
+
+
+def test_string_format_with_escaped_exception(writer):
+    logger.add(writer, format=r"{{exception}} {message}")
+    try:
+        1 / 0  # noqa: B018
+    except ZeroDivisionError:
+        logger.exception("Error!")
+    output = writer.read()
+    assert output.startswith("{exception} Error!\nTraceback (most recent call last):")
+    assert output.count("ZeroDivisionError: division by zero") == 1
+
+
+@pytest.mark.parametrize("colorize", [True, False])
+def test_string_format_with_exception_is_not_duplicated(writer, colorize):
+    logger.add(writer, format="{message} | {exception}", colorize=colorize)
+    try:
+        1 / 0  # noqa: B018
+    except ZeroDivisionError:
+        logger.exception("Error!")
+    output = writer.read()
+    assert output.count("Traceback (most recent call last):") == 1
+    assert output.count("division by zero") == 1
+
+
+def test_string_format_with_exception_in_the_middle(writer):
+    logger.add(writer, format="[{message}]{exception}[end]\n")
+    try:
+        1 / 0  # noqa: B018
+    except ZeroDivisionError:
+        logger.exception("Error!")
+    output = writer.read()
+    assert output.startswith("[Error!]Traceback (most recent call last):")
+    assert output.endswith("ZeroDivisionError: division by zero\n[end]\n")
+    assert output.count("ZeroDivisionError: division by zero") == 1
+
+
+def test_string_format_with_exception_is_not_duplicated_when_no_exception(writer):
+    logger.add(writer, format="{message} | {exception}\n")
+    logger.info("No error")
+    assert writer.read() == "No error | \n"
+
+
 @pytest.mark.parametrize("format", [-1, 3.4, object()])
 def test_invalid_format(writer, format):
     with pytest.raises(TypeError):
