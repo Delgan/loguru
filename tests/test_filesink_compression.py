@@ -249,6 +249,34 @@ def test_exception_during_compression_at_remove(tmp_path, capsys, delay):
     )
     logger.debug("AAA")
 
+    logger.remove(i)
+
+    logger.debug("Nope")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.log", "AAA\n"),
+        ],
+    )
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err.count("Logging error in Loguru Handler") == 1
+    assert err.count("OSError: Compression error") == 1
+
+
+@pytest.mark.parametrize("delay", [True, False])
+def test_exception_during_compression_at_remove_not_caught(tmp_path, capsys, delay):
+    i = logger.add(
+        tmp_path / "test.log",
+        format="{message}",
+        compression=Mock(side_effect=[OSError("Compression error"), None]),
+        catch=False,
+        delay=delay,
+    )
+    logger.debug("AAA")
+
     with pytest.raises(OSError, match=r"^Compression error$"):
         logger.remove(i)
 
