@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import os
 import pathlib
 import tempfile
@@ -1142,6 +1143,14 @@ def test_invalid_rotation_type(rotation):
 )
 def test_unparsable_rotation(rotation):
     with pytest.raises(ValueError, match=r"^Cannot parse rotation from: '[^']+'$"):
+        logger.add("test.log", rotation=rotation)
+
+
+@pytest.mark.parametrize(
+    "rotation", ["-1 MB", "-0.5 GB", "-1e400 B", -1, -0.5, float("nan"), decimal.Decimal("-1")]
+)
+def test_invalid_size_rotation(rotation):
+    with pytest.raises(ValueError, match=r"^Invalid size while parsing rotation"):
         logger.add("test.log", rotation=rotation)
 
 
