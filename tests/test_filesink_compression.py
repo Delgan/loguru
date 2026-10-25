@@ -293,6 +293,33 @@ def test_exception_during_compression_at_remove_not_caught(tmp_path, capsys, del
     assert out == err == ""
 
 
+def test_deletion_error_during_compression(tmp_path, monkeypatch):
+    path = tmp_path / "test.log"
+    i = logger.add(path, compression="gz", catch=False)
+    remove = Mock(side_effect=PermissionError("Deletion error"))
+
+    with monkeypatch.context() as context:
+        context.setattr(os, "remove", remove)
+        with pytest.raises(OSError, match="same filename pattern"):
+            logger.remove(i)
+
+    remove.assert_called_once_with(str(path))
+
+
+def test_rename_error_during_compression(tmp_path, monkeypatch):
+    archive = tmp_path / "test.log.gz"
+    archive.touch()
+    i = logger.add(tmp_path / "test.log", compression="gz", catch=False)
+    rename = Mock(side_effect=PermissionError("Rename error"))
+
+    with monkeypatch.context() as context:
+        context.setattr(os, "rename", rename)
+        with pytest.raises(OSError, match="same filename pattern"):
+            logger.remove(i)
+
+    assert rename.call_count == 1
+
+
 @pytest.mark.parametrize("compression", [0, True, os, object(), {"zip"}])
 def test_invalid_compression_type(compression):
     with pytest.raises(TypeError):
