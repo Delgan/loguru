@@ -71,6 +71,19 @@ def test_remove_enqueue_filesink(tmp_path):
 
 
 def test_exception_in_stop_during_remove_one(capsys):
+    i = logger.add(StopSinkError(), catch=True, format="{message}")
+    logger.info("A")
+    logger.remove(i)
+    logger.info("Nope")
+
+    out, err = capsys.readouterr()
+
+    assert out == "A\n"
+    assert err.count("Logging error in Loguru Handler") == 1
+    assert err.count("OSError: Stop error") == 1
+
+
+def test_exception_in_stop_not_caught_during_remove_one(capsys):
     i = logger.add(StopSinkError(), catch=False, format="{message}")
     logger.info("A")
     with pytest.raises(OSError, match=r"Stop error"):
@@ -81,6 +94,20 @@ def test_exception_in_stop_during_remove_one(capsys):
 
     assert out == "A\n"
     assert err == ""
+
+
+def test_exception_in_stop_during_remove_all(capsys):
+    logger.add(StopSinkError(), catch=True, format="{message}")
+    logger.add(StopSinkError(), catch=True, format="{message}")
+    logger.info("A")
+    logger.remove()
+    logger.info("Nope")
+
+    out, err = capsys.readouterr()
+
+    assert out == "A\nA\n"
+    assert err.count("Logging error in Loguru Handler") == 2
+    assert err.count("OSError: Stop error") == 2
 
 
 def test_exception_in_stop_not_caught_during_remove_all(capsys):
