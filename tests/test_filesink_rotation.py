@@ -104,6 +104,79 @@ def test_size_rotation(freeze_time, tmp_path, size):
     )
 
 
+def test_size_rotation_counts_encoded_bytes(freeze_time, tmp_path):
+    with freeze_time("2018-01-01 00:00:00") as frozen:
+        i = logger.add(
+            tmp_path / "test_{time}.log",
+            format="{message}",
+            rotation=6,
+            mode="w",
+            encoding="utf-8",
+            newline="\n",
+        )
+
+        frozen.tick()
+        logger.debug("abc")
+
+        frozen.tick()
+        logger.debug("\u00e9")
+
+        frozen.tick()
+        logger.remove(i)
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test_2018-01-01_00-00-00_000000.log", "abc\n"),
+            ("test_2018-01-01_00-00-02_000000.log", "\u00e9\n"),
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    ("newline", "expected_files"),
+    [
+        ("\r\n", 3),
+        ("\n", 2),
+        ("", 2),
+    ],
+)
+def test_size_rotation_counts_translated_newlines(freeze_time, tmp_path, newline, expected_files):
+    with freeze_time("2018-01-01 00:00:00") as frozen:
+        i = logger.add(
+            tmp_path / "test_{time}.log",
+            format="{message}",
+            rotation=9,
+            mode="w",
+            newline=newline,
+        )
+
+        for message in ["abc", "def", "ghi"]:
+            frozen.tick()
+            logger.debug(message)
+
+        frozen.tick()
+        logger.remove(i)
+
+    files = list(tmp_path.iterdir())
+    assert len(files) == expected_files
+    for file in files:
+        assert file.stat().st_size <= 9
+
+
+def test_size_rotation_default_newline_uses_os_linesep(freeze_time, tmp_path, monkeypatch):
+    monkeypatch.setattr(os, "linesep", "\r\n")
+    rotation = loguru._file_sink.FileSink._make_rotation_function(10)
+    with open(tmp_path / "test.log", "w", newline="\r\n") as file:
+        file.write("abc\r\ndef\r\n")
+        assert rotation("ghi\n", file) is True
+    monkeypatch.setattr(os, "linesep", "\n")
+    rotation = loguru._file_sink.FileSink._make_rotation_function(10)
+    with open(tmp_path / "test.log", "w", newline="\n") as file:
+        file.write("abc\ndef\n")
+        assert rotation("g\n", file) is False
+
+
 @pytest.mark.parametrize(
     ("when", "hours"),
     [

@@ -131,9 +131,16 @@ class Rotation:
         return t + interval
 
     @staticmethod
-    def rotation_size(message, file, size_limit):
+    def rotation_size(message, file, size_limit, newline=None):
+        # "file.tell()" is a byte offset, so the message must be measured in bytes as well,
+        # after the newline translation applied by the text-mode file.
+        if newline is None:
+            newline = os.linesep
+        if newline not in ("", "\n"):
+            message = message.replace("\n", newline)
+        size = len(message.encode(file.encoding, file.errors or "strict"))
         file.seek(0, 2)
-        return file.tell() + len(message) > size_limit
+        return file.tell() + size > size_limit
 
     class RotationTime:
         def __init__(self, step_forward, time_target=None, day_target=None):
@@ -218,7 +225,7 @@ class FileSink:
         self._path = str(path)
 
         self._glob_patterns = self._make_glob_patterns(self._path)
-        self._rotation_function = self._make_rotation_function(rotation)
+        self._rotation_function = self._make_rotation_function(rotation, kwargs.get("newline"))
         self._retention_function = self._make_retention_function(retention)
         self._compression_function = self._make_compression_function(compression)
 
@@ -350,22 +357,22 @@ class FileSink:
         return [escaped, escaped + ".*", root + ".*" + ext, root + ".*" + ext + ".*"]
 
     @staticmethod
-    def _make_rotation_function(rotation):
+    def _make_rotation_function(rotation, newline=None):
         if rotation is None:
             return None
         if isinstance(rotation, (list, tuple, set)):
             if len(rotation) == 0:
                 raise ValueError("Must provide at least one rotation condition")
             return Rotation.RotationGroup(
-                [FileSink._make_rotation_function(rot) for rot in rotation]
+                [FileSink._make_rotation_function(rot, newline) for rot in rotation]
             )
         if isinstance(rotation, str):
             size = string_parsers.parse_size(rotation)
             if size is not None:
-                return FileSink._make_rotation_function(size)
+                return FileSink._make_rotation_function(size, newline)
             interval = string_parsers.parse_duration(rotation)
             if interval is not None:
-                return FileSink._make_rotation_function(interval)
+                return FileSink._make_rotation_function(interval, newline)
             frequency = string_parsers.parse_frequency(rotation)
             if frequency is not None:
                 return Rotation.RotationTime(frequency)
@@ -373,7 +380,7 @@ class FileSink:
             if daytime is not None:
                 day, time = daytime
                 if day is None:
-                    return FileSink._make_rotation_function(time)
+                    return FileSink._make_rotation_function(time, newline)
                 if time is None:
                     time = datetime.time(0, 0, 0)
                 step_forward = partial(Rotation.forward_weekday, weekday=day)
@@ -385,7 +392,7 @@ class FileSink:
                 "not a bool (True would rotate at 1 byte)"
             )
         if isinstance(rotation, (numbers.Real, decimal.Decimal)):
-            return partial(Rotation.rotation_size, size_limit=rotation)
+            return partial(Rotation.rotation_size, size_limit=rotation, newline=newline)
         if isinstance(rotation, datetime.time):
             return Rotation.RotationTime(Rotation.forward_day, rotation)
         if isinstance(rotation, datetime.timedelta):
