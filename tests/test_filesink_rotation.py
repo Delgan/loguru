@@ -124,13 +124,11 @@ def test_size_rotation_counts_encoded_bytes(freeze_time, tmp_path):
         frozen.tick()
         logger.remove(i)
 
-    check_dir(
-        tmp_path,
-        files=[
-            ("test_2018-01-01_00-00-00_000000.log", "abc\n"),
-            ("test_2018-01-01_00-00-02_000000.log", "\u00e9\n"),
-        ],
-    )
+    check_dir(tmp_path, size=2)
+    first = tmp_path / "test_2018-01-01_00-00-00_000000.log"
+    second = tmp_path / "test_2018-01-01_00-00-02_000000.log"
+    assert first.read_bytes() == b"abc\n"
+    assert second.read_bytes() == "\u00e9\n".encode("utf-8")
 
 
 @pytest.mark.parametrize(
@@ -167,12 +165,12 @@ def test_size_rotation_counts_translated_newlines(freeze_time, tmp_path, newline
 def test_size_rotation_default_newline_uses_os_linesep(freeze_time, tmp_path, monkeypatch):
     monkeypatch.setattr(os, "linesep", "\r\n")
     rotation = loguru._file_sink.FileSink._make_rotation_function(10)
-    with open(tmp_path / "test.log", "w", newline="\r\n") as file:
+    with open(str(tmp_path / "test.log"), "w", newline="\r\n") as file:
         file.write("abc\r\ndef\r\n")
         assert rotation("ghi\n", file) is True
     monkeypatch.setattr(os, "linesep", "\n")
     rotation = loguru._file_sink.FileSink._make_rotation_function(10)
-    with open(tmp_path / "test.log", "w", newline="\n") as file:
+    with open(str(tmp_path / "test.log"), "w", newline="\n") as file:
         file.write("abc\ndef\n")
         assert rotation("g\n", file) is False
 
