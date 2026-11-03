@@ -9,6 +9,7 @@
 - Fix parsing of 12-hour rotation times without seconds (`#1474 <https://github.com/Delgan/loguru/issues/1474>`_, thanks `@c-tonneslan <https://github.com/c-tonneslan>`_).
 - Fix a ``"<weekday> at <time>"`` rotation firing its first rotation on the creation day instead of the requested weekday when the time of day was later than the creation time (`#1484 <https://github.com/Delgan/loguru/pull/1484>`_, thanks `@gaoflow <https://github.com/gaoflow>`_).
 - Fix hex color short code expansion (`#1426 <https://github.com/Delgan/loguru/issues/1426>`_, thanks `@turkoid <https://github.com/turkoid>`_).
+- Fix possible regular expression denial of service (ReDoS) when parsing color markups in strings containing long sequences of backslashes (`#1537 <https://github.com/Delgan/loguru/issues/1537>`_).
 - Fix possible internal error when dealing with (rare) frame objects missing a ``f_lineno`` value (`#1435 <https://github.com/Delgan/loguru/issues/1435>`_).
 - Fix a regression preventing formatting of ``record["time"]`` when using ``zoneinfo.ZoneInfo`` timezones (`#1260 <https://github.com/Delgan/loguru/pull/1260>`_, thanks `@bijlpieter <https://github.com/bijlpieter>`_).
 - Fix possible ``ValueError`` raised on Windows when system clock was set far ahead in the future (`#1291 <https://github.com/Delgan/loguru/issues/1291>`_).
