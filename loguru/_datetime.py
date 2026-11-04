@@ -68,13 +68,6 @@ def _compile_format(spec):
     if "%" in spec:
         return partial(_builtin_datetime_formatter, is_utc, spec)
 
-    if "SSSSSSS" in spec:
-        raise ValueError(
-            "Invalid time format: the provided format string contains more than six successive "
-            "'S' characters. This may be due to an attempt to use nanosecond precision, which "
-            "is not supported."
-        )
-
     rep = {
         "YYYY": ("%04d", lambda t, dt: t.tm_year),
         "YY": ("%02d", lambda t, dt: t.tm_year % 100),
@@ -123,6 +116,13 @@ def _compile_format(spec):
         pos = end
 
         token = match.group(0)
+
+        if token.startswith("SSSSSSS"):
+            raise ValueError(
+                "Invalid time format: the provided format string contains more than six successive "
+                "'S' characters. This may be due to an attempt to use nanosecond precision, which "
+                "is not supported."
+            )
 
         try:
             specifier, formatter = rep[token]
