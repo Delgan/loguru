@@ -47,15 +47,16 @@ def test_parse_file_written_with_default_encoding(tmp_path, monkeypatch):
             encoding = "cp1252"
         return builtins_open(file, mode, *args, encoding=encoding, **kwargs)
 
-    monkeypatch.setattr(builtins, "open", non_utf8_locale_open)
+    with monkeypatch.context() as context:
+        context.setattr(builtins, "open", non_utf8_locale_open)
 
-    file = tmp_path / "test.log"
-    logger.add(file, format="{level.no} - {message}")
-    logger.info("Être 日本語 🙂")
-    logger.remove()
+        file = tmp_path / "test.log"
+        logger.add(file, format="{level.no} - {message}")
+        logger.info("Être 日本語 🙂")
+        logger.remove()
 
-    result, *_ = list(logger.parse(file, r"(?P<lvl>\d+) - (?P<msg>.*)"))
-    assert result == dict(lvl="20", msg="Être 日本語 🙂")
+        result, *_ = list(logger.parse(file, r"(?P<lvl>\d+) - (?P<msg>.*)"))
+        assert result == dict(lvl="20", msg="Être 日本語 🙂")
 
 
 def test_parse_string_pattern(fileobj):
