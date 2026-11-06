@@ -1947,7 +1947,9 @@ class Logger:
         Parameters
         ----------
         file : |str|, |Path| or |file-like object|_
-            The path of the log file to be parsed, or an already opened file object.
+            The path of the log file to be parsed, or an already opened file object. A path is read
+            as UTF-8, the default encoding of file sinks. To parse a log file using another
+            encoding, open it beforehand and pass the file object instead.
         pattern : |str| or |re.Pattern|_
             The regex to use for logs parsing, it should contain named groups which will be included
             in the returned dict.
@@ -1988,7 +1990,7 @@ class Logger:
 
             @contextlib.contextmanager
             def opener():
-                with open(str(file)) as fileobj:
+                with open(str(file), encoding="utf8") as fileobj:
                     yield fileobj
 
         elif hasattr(file, "read") and callable(file.read):

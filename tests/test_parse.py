@@ -1,3 +1,4 @@
+import builtins
 import io
 import pathlib
 import re
@@ -36,6 +37,25 @@ def test_parse_pathlib(tmp_path):
     file.write_text(TEXT)
     result, *_ = list(logger.parse(pathlib.Path(str(file)), r"(?P<r>Random)"))
     assert result == dict(r="Random")
+
+
+def test_parse_file_written_with_default_encoding(tmp_path, monkeypatch):
+    builtins_open = builtins.open
+
+    def non_utf8_locale_open(file, mode="r", *args, encoding=None, **kwargs):
+        if encoding is None and "b" not in mode:
+            encoding = "cp1252"
+        return builtins_open(file, mode, *args, encoding=encoding, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", non_utf8_locale_open)
+
+    file = tmp_path / "test.log"
+    logger.add(file, format="{level.no} - {message}")
+    logger.info("Être 日本語 🙂")
+    logger.remove()
+
+    result, *_ = list(logger.parse(file, r"(?P<lvl>\d+) - (?P<msg>.*)"))
+    assert result == dict(lvl="20", msg="Être 日本語 🙂")
 
 
 def test_parse_string_pattern(fileobj):

@@ -18,6 +18,7 @@
 - Fix incorrect formatting of negative timestamps (`#1501 <https://github.com/Delgan/loguru/issues/1501>`_).
 - Fix incorrect thread and process identifiers of standard logging ``Handler`` records when using ``enqueue=True`` (`#1527 <https://github.com/Delgan/loguru/issues/1527>`_).
 - Fix ``catch=True`` being ignored for exceptions raised during sink termination, such as file retention or compression triggered by ``logger.remove()`` (`#1532 <https://github.com/Delgan/loguru/issues/1532>`_).
+- Fix ``logger.parse()`` decoding log files with the locale encoding instead of UTF-8 when given a path, which failed on non-ASCII logs written using the file sink default encoding on Windows.
 - Respect the ``.level`` attribute of standard logging ``Handler`` used as sink, which was previously ignored (`#1409 <https://github.com/Delgan/loguru/issues/1409>`_).
 - Allow the ``rotation`` argument of file sinks to accept a list of rotation conditions, any of which can trigger the rotation (`#1174 <https://github.com/Delgan/loguru/issues/1174>`_, thanks `@CollinHeist <https://github.com/CollinHeist>`_).
 - Honor the ``NO_COLOR`` environment variable which disables color output by default if ``colorize`` is not provided (`#1178 <https://github.com/Delgan/loguru/issues/1178>`_).
