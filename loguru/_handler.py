@@ -9,6 +9,14 @@ from threading import Thread
 from ._colorizer import Colorizer
 from ._locks_machinery import create_handler_lock
 
+# Neutralise C0 (0x00-0x1F), DEL (0x7F) and C1 (0x80-0x9F) control characters so that they can't
+# be interpreted by the terminal as ANSI/OSC escape sequences. Each one is replaced by its visible
+# "\\xNN" representation. The newline is included on purpose: it is the most common way to forge
+# fake log entries.
+_CONTROL_CHARACTERS_TRANSLATION = {
+    codepoint: "\\x%02x" % codepoint for codepoint in (*range(0x20), 0x7F, *range(0x80, 0xA0))
+}
+
 
 def prepare_colored_format(format_, ansi_level):
     colored = Colorizer.prepare_format(format_)
@@ -40,6 +48,7 @@ class Handler:
         filter_,
         colorize,
         serialize,
+        sanitize,
         enqueue,
         multiprocessing_context,
         error_interceptor,
@@ -55,6 +64,7 @@ class Handler:
         self._filter = filter_
         self._colorize = colorize
         self._serialize = serialize
+        self._sanitize = sanitize
         self._enqueue = enqueue
         self._multiprocessing_context = multiprocessing_context
         self._error_interceptor = error_interceptor
@@ -138,6 +148,17 @@ class Handler:
 
             formatter_record = record.copy()
 
+            if self._sanitize:
+                # The message is the untrusted part of the record, so we escape its control
+                # characters to prevent terminal escape-sequence injection. Color tokens are
+                # discarded as they no longer match the sanitized message.
+                message = record["message"].translate(_CONTROL_CHARACTERS_TRANSLATION)
+                colored_message = None
+            else:
+                message = record["message"]
+
+            formatter_record["message"] = message
+
             if not record["exception"]:
                 formatter_record["exception"] = ""
             else:
@@ -151,7 +172,7 @@ class Handler:
 
             if is_raw:
                 if colored_message is None or not self._colorize:
-                    formatted = record["message"]
+                    formatted = message
                 else:
                     ansi_level = self._levels_ansi_codes[level_id]
                     formatted = colored_message.colorize(ansi_level)
@@ -169,7 +190,7 @@ class Handler:
                         dynamic_format, ansi_level
                     )
                     coloring_message = formatter.make_coloring_message(
-                        record["message"], ansi_level=ansi_level, colored_message=colored_message
+                        message, ansi_level=ansi_level, colored_message=colored_message
                     )
                     formatter_record["message"] = coloring_message
                     formatted = self._format_record(precomputed_format, formatter_record)
@@ -186,7 +207,7 @@ class Handler:
                     ansi_level = self._levels_ansi_codes[level_id]
                     precomputed_format = self._precolorized_formats[level_id]
                     coloring_message = self._formatter.make_coloring_message(
-                        record["message"], ansi_level=ansi_level, colored_message=colored_message
+                        message, ansi_level=ansi_level, colored_message=colored_message
                     )
                     formatter_record["message"] = coloring_message
                     formatted = self._format_record(precomputed_format, formatter_record)
