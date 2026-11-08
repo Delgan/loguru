@@ -524,12 +524,17 @@ class ExceptionFormatter:
         yield from self._indent("".join(frames_lines), group_nesting)
 
         if is_grouped:
-            exc = None
+            # The closing ruler must be omitted only if the last formatted exception is itself a
+            # group, since the nested call already took care of closing it.
+            closed_by_nested_group = False
             for n, exc in enumerate(value.exceptions, start=1):
+                closed_by_nested_group = False
                 ruler = "+" + (" %s " % ("..." if n > 15 else n)).center(35, "-")
                 yield from self._indent(ruler, group_nesting, prefix="+-" if n == 1 else "  ")
                 if n > 15:
-                    message = "and %d more exceptions\n" % (len(value.exceptions) - 15)
+                    remaining = len(value.exceptions) - 15
+                    plural = "s" if remaining > 1 else ""
+                    message = "and %d more exception%s\n" % (remaining, plural)
                     yield from self._indent(message, group_nesting + 1)
                     break
                 elif group_nesting == 10 and is_exception_group(exc):
@@ -542,7 +547,8 @@ class ExceptionFormatter:
                         seen=seen,
                         group_nesting=group_nesting + 1,
                     )
-            if not is_exception_group(exc) or group_nesting == 10:
+                    closed_by_nested_group = is_exception_group(exc)
+            if not closed_by_nested_group:
                 yield from self._indent("-" * 35, group_nesting + 1, prefix="+-")
 
     def _format_list(self, frames):
