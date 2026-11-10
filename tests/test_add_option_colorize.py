@@ -1,4 +1,5 @@
 import os
+import time
 
 import pytest
 
@@ -93,3 +94,13 @@ def test_override_force_color(monkeypatch):
         logger.add(stream, format="<blue>{message}</blue>", colorize=False)
         logger.debug("Message", colorize=False)
         assert stream.getvalue() == "Message\n"
+
+
+def test_search_through_pathological_pattern():
+    # It's a reDoS if the internal regex is greedy.
+    logger.add(lambda _: None)
+    start = time.perf_counter()
+    logger.opt(colors=True).info("\\" * 200000)
+    end = time.perf_counter()
+    elapsed = end - start
+    assert elapsed < 1.0

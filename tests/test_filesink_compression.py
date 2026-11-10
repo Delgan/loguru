@@ -249,6 +249,34 @@ def test_exception_during_compression_at_remove(tmp_path, capsys, delay):
     )
     logger.debug("AAA")
 
+    logger.remove(i)
+
+    logger.debug("Nope")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.log", "AAA\n"),
+        ],
+    )
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err.count("Logging error in Loguru Handler") == 1
+    assert err.count("OSError: Compression error") == 1
+
+
+@pytest.mark.parametrize("delay", [True, False])
+def test_exception_during_compression_at_remove_not_caught(tmp_path, capsys, delay):
+    i = logger.add(
+        tmp_path / "test.log",
+        format="{message}",
+        compression=Mock(side_effect=[OSError("Compression error"), None]),
+        catch=False,
+        delay=delay,
+    )
+    logger.debug("AAA")
+
     with pytest.raises(OSError, match=r"^Compression error$"):
         logger.remove(i)
 
@@ -263,6 +291,33 @@ def test_exception_during_compression_at_remove(tmp_path, capsys, delay):
 
     out, err = capsys.readouterr()
     assert out == err == ""
+
+
+def test_deletion_error_during_compression(tmp_path, monkeypatch):
+    path = tmp_path / "test.log"
+    i = logger.add(path, compression="gz", catch=False)
+    remove = Mock(side_effect=PermissionError("Deletion error"))
+
+    with monkeypatch.context() as context:
+        context.setattr(os, "remove", remove)
+        with pytest.raises(OSError, match="same filename pattern"):
+            logger.remove(i)
+
+    remove.assert_called_once_with(str(path))
+
+
+def test_rename_error_during_compression(tmp_path, monkeypatch):
+    archive = tmp_path / "test.log.gz"
+    archive.touch()
+    i = logger.add(tmp_path / "test.log", compression="gz", catch=False)
+    rename = Mock(side_effect=PermissionError("Rename error"))
+
+    with monkeypatch.context() as context:
+        context.setattr(os, "rename", rename)
+        with pytest.raises(OSError, match="same filename pattern"):
+            logger.remove(i)
+
+    assert rename.call_count == 1
 
 
 @pytest.mark.parametrize("compression", [0, True, os, object(), {"zip"}])

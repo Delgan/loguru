@@ -23,7 +23,8 @@ jobs:
         - '3.12'
         - '3.13'
         - '3.14'
-        - pypy-3.11
+        - '3.15'
+        - pypy-3.12
         allow-failure:
         - false
         include:
@@ -51,7 +52,7 @@ jobs:
       uses: actions/checkout@v7
     - name: Set up Python
       if: ${{ matrix.container == null }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies

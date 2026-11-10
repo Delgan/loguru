@@ -187,7 +187,8 @@ class AnsiParser:
         }
     )
 
-    _regex_tag = re.compile(r"(\\*)(</?(?:[fb]g\s)?[^<>\s]*>)")
+    # The negative lookbehind prevents quadratic re-scan of the whole input.
+    _regex_tag = re.compile(r"(?<!\\)(\\*)(</?(?:[fb]g\s)?[^<>\s]*>)")
 
     def __init__(self):
         self._tokens = []

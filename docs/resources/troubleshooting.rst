@@ -260,6 +260,44 @@ If you observe such weird behavior, you should review your code carefully to ens
 It is also a common issue with web frameworks like Gunicorn and Uvicorn, as they start multiple workers in parallel. In such cases, you need to set up a log server, and configure workers to send messages to it using a socket. Refer to :ref:`Transmitting log messages across network, processes or Gunicorn workers <inter-process-communication>` for details.
 
 
+.. _file-handler-conflicts:
+
+Why am I sometimes facing ``PermissionError`` exceptions raised by file handlers?
+---------------------------------------------------------------------------------
+
+Such an error can occur for the same reason described in the previous section: two handlers accessing the same file concurrently. This is an unsafe situation that you should be careful to avoid, but which can happen inadvertently when multiple processes or workers are involved. If multiple handlers are configured with overlapping file paths, conflicts will inevitably occur during rotation, retention or compression procedures.
+
+On Windows, renaming or deleting an open file can raise ``PermissionError``. On Linux, deletion may succeed while the other handler keeps writing to a file that is no longer accessible by its path, silently losing logs.
+
+Using a timestamp such as ``"app_{time}.log"`` does not isolate handlers. Although they may initially open different files, they can rotate at the same time and end up writing to the same file. Moreover, ``retention`` collects files by replacing ``{time}`` fields with wildcards and thus could delete files belonging to another handler::
+
+    first = logger.add("app_{time}.log", retention=1)
+    logger.info("The first handler is still running")
+    second = logger.add("app_{time}.log", retention=1)
+    logger.remove(second)  # Retention may try to delete the first handler's open file.
+
+
+You must ensure each file handler living in your application use a distinct file path pattern. Separate directories are a simple way to ensure isolation::
+
+    logger.add("logs/first/app_{time}.log", retention=1)
+    logger.add("logs/second/app_{time}.log", retention=1)
+
+When using FastAPI with Gunicorn or Uvicorn workers, you can configure a per-worker file path based on process ID to avoid any risk of conflict, for example::
+
+    @asynccontextmanager
+    async def lifespan(app):
+        pid = os.getpid()
+        logger.add(f"logs/{pid}/app_{{time}}.log", retention=1)
+        yield
+
+Alternatively, you can either:
+
+- :ref:`configure a single file handler and share it with child processes <multiprocessing-compatibility>` ;
+- :ref:`route messages to a dedicated logging process <inter-process-communication>`.
+
+Setting ``enqueue=True`` on independently added handlers does not coordinate them.
+
+
 Why am I facing errors when I use a custom formatting function?
 ---------------------------------------------------------------
 

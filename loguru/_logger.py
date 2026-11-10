@@ -646,6 +646,13 @@ class Logger:
         current date at file creation. The file is closed at sink stop, i.e. when the application
         ends or the handler is removed.
 
+        .. warning::
+
+            A file sink must not share its output path with another file handler (using ``"{time}"``
+            alone does not prevent conflicts). In particular, make sure the logger configuration
+            isn't duplicated by spawned child processes or Gunicorn workers. See the
+            :ref:`file handler conflicts FAQ <file-handler-conflicts>` for details.
+
         The ``rotation`` check is made before logging each message. If there is already an existing
         file with the same name that the file to be created, then the existing file is renamed by
         appending the date to its basename to prevent file overwriting. This parameter accepts:
@@ -711,7 +718,7 @@ class Logger:
         prepending a ``\`` like for example ``\<blue>``. To prevent the escaping to occur, you can
         simply double the ``\`` (e.g. ``\\<blue>`` will print a literal ``\`` before colored text).
         If, for some reason, you need to escape a string programmatically, note that the regex used
-        internally to parse markup tags is ``r"(\\*)(</?(?:[fb]g\s)?[^<>\s]*>)"``.
+        internally to parse markup tags is ``r"(?<!\\)(\\*)(</?(?:[fb]g\s)?[^<>\s]*>)"``.
 
         Note that when logging a message with ``opt(colors=True)``, color tags present in the
         formatting arguments (``args`` and ``kwargs``) are completely ignored. This is important if
@@ -1091,7 +1098,7 @@ class Logger:
         >>> logger.remove(i)
         >>> logger.info("No longer logging")
         """
-        if not (handler_id is None or isinstance(handler_id, int)):
+        if not (handler_id is None or type(handler_id) is int):
             raise TypeError(
                 "Invalid handler id, it should be an integer as returned "
                 "by the 'add()' method (or None), not: '%s'" % type(handler_id).__name__
@@ -1940,7 +1947,9 @@ class Logger:
         Parameters
         ----------
         file : |str|, |Path| or |file-like object|_
-            The path of the log file to be parsed, or an already opened file object.
+            The path of the log file to be parsed, or an already opened file object. A path is read
+            as UTF-8, the default encoding of file sinks. To parse a log file using another
+            encoding, open it beforehand and pass the file object instead.
         pattern : |str| or |re.Pattern|_
             The regex to use for logs parsing, it should contain named groups which will be included
             in the returned dict.
@@ -1981,7 +1990,7 @@ class Logger:
 
             @contextlib.contextmanager
             def opener():
-                with open(str(file)) as fileobj:
+                with open(str(file), encoding="utf8") as fileobj:
                     yield fileobj
 
         elif hasattr(file, "read") and callable(file.read):

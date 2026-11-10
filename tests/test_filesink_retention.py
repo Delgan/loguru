@@ -326,6 +326,29 @@ def test_exception_during_retention_at_remove(tmp_path, capsys, delay):
     i = logger.add(
         tmp_path / "test.log",
         format="{message}",
+        retention=Mock(side_effect=[Exception("Retention error"), None]),
+        catch=True,
+        delay=delay,
+    )
+    logger.debug("AAA")
+
+    logger.remove(i)
+
+    logger.debug("Nope")
+
+    check_dir(tmp_path, files=[("test.log", "AAA\n")])
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err.count("Logging error in Loguru Handler") == 1
+    assert err.count("Exception: Retention error") == 1
+
+
+@pytest.mark.parametrize("delay", [True, False])
+def test_exception_during_retention_at_remove_not_caught(tmp_path, capsys, delay):
+    i = logger.add(
+        tmp_path / "test.log",
+        format="{message}",
         retention=Mock(side_effect=[OSError("Retention error"), None]),
         catch=False,
         delay=delay,
@@ -341,6 +364,28 @@ def test_exception_during_retention_at_remove(tmp_path, capsys, delay):
 
     out, err = capsys.readouterr()
     assert out == err == ""
+
+
+def test_deletion_error_during_retention(tmp_path, monkeypatch):
+    path = tmp_path / "test.log"
+    i = logger.add(path, retention=0, catch=False)
+    remove = Mock(side_effect=PermissionError("Deletion error"))
+
+    with monkeypatch.context() as context:
+        context.setattr(os, "remove", remove)
+        with pytest.raises(OSError, match=r"same filename pattern"):
+            logger.remove(i)
+
+    remove.assert_called_once_with(str(path))
+
+
+@pytest.mark.parametrize("retention", [True, False])
+def test_retention_rejects_bool(retention):
+    with pytest.raises(
+        TypeError,
+        match=r"^Invalid retention, it should be a count, a timedelta, or a callable, not a bool",
+    ):
+        logger.add("test.log", retention=retention)
 
 
 @pytest.mark.parametrize("retention", [datetime.time(12, 12, 12), os, object()])

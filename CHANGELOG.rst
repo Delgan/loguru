@@ -10,12 +10,16 @@
 - Fix a ``"<weekday> at <time>"`` rotation firing its first rotation on the creation day instead of the requested weekday when the time of day was later than the creation time (`#1484 <https://github.com/Delgan/loguru/pull/1484>`_, thanks `@gaoflow <https://github.com/gaoflow>`_).
 - Fix the ``rotation`` conditions listed after the first one not being evaluated when it already triggered a rotation, which could cause a spurious extra rotation on the next logged message (`#1174 <https://github.com/Delgan/loguru/issues/1174>`_).
 - Fix hex color short code expansion (`#1426 <https://github.com/Delgan/loguru/issues/1426>`_, thanks `@turkoid <https://github.com/turkoid>`_).
+- Fix possible regular expression denial of service (ReDoS) when parsing color markups in strings containing long sequences of backslashes (`#1537 <https://github.com/Delgan/loguru/issues/1537>`_).
 - Fix possible internal error when dealing with (rare) frame objects missing a ``f_lineno`` value (`#1435 <https://github.com/Delgan/loguru/issues/1435>`_).
 - Fix a regression preventing formatting of ``record["time"]`` when using ``zoneinfo.ZoneInfo`` timezones (`#1260 <https://github.com/Delgan/loguru/pull/1260>`_, thanks `@bijlpieter <https://github.com/bijlpieter>`_).
 - Fix possible ``ValueError`` raised on Windows when system clock was set far ahead in the future (`#1291 <https://github.com/Delgan/loguru/issues/1291>`_).
 - Fix externally raised ``Exception`` possibly causing invalid state generating repeated ``RuntimeError`` of avoided deadlock (`#1335 <https://github.com/Delgan/loguru/issues/1335>`_).
 - Fix incorrect formatting of negative timezone offsets with sub-minute components (`#1500 <https://github.com/Delgan/loguru/issues/1500>`_).
 - Fix incorrect formatting of negative timestamps (`#1501 <https://github.com/Delgan/loguru/issues/1501>`_).
+- Fix incorrect thread and process identifiers of standard logging ``Handler`` records when using ``enqueue=True`` (`#1527 <https://github.com/Delgan/loguru/issues/1527>`_).
+- Fix ``catch=True`` being ignored for exceptions raised during sink termination, such as file retention or compression triggered by ``logger.remove()`` (`#1532 <https://github.com/Delgan/loguru/issues/1532>`_).
+- Fix ``logger.parse()`` decoding log files with the locale encoding instead of UTF-8 when given a path, which failed on non-ASCII logs written using the file sink default encoding on Windows (`#1540 <https://github.com/Delgan/loguru/pull/1540>`_).
 - Respect the ``.level`` attribute of standard logging ``Handler`` used as sink, which was previously ignored (`#1409 <https://github.com/Delgan/loguru/issues/1409>`_).
 - Allow the ``rotation`` argument of file sinks to accept a list of rotation conditions, any of which can trigger the rotation (`#1174 <https://github.com/Delgan/loguru/issues/1174>`_, thanks `@CollinHeist <https://github.com/CollinHeist>`_).
 - Honor the ``NO_COLOR`` environment variable which disables color output by default if ``colorize`` is not provided (`#1178 <https://github.com/Delgan/loguru/issues/1178>`_).

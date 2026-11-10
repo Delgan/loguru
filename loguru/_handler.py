@@ -220,7 +220,12 @@ class Handler:
                 if hasattr(self._queue, "close"):
                     self._queue.close()
 
-            self._sink.stop()
+            try:
+                self._sink.stop()
+            except Exception:
+                if not self._error_interceptor.should_catch():
+                    raise
+                self._error_interceptor.print(None)
 
     def complete_queue(self):
         if not self._enqueue:

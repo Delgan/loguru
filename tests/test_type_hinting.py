@@ -1,3 +1,4 @@
+import platform
 import sys
 
 import pytest
@@ -10,6 +11,9 @@ except ImportError:
 
 
 @pytest.mark.skipif(mypy_api is None, reason="Requires mypy to be installed.")
+@pytest.mark.skipif(
+    platform.python_implementation() == "PyPy", reason="Mypy is not supported on PyPy."
+)
 def test_mypy_import():
     # Check stub file is valid and can be imported by Mypy.
     # There exist others tests in "typesafety" subfolder but they require a recent Python version.
