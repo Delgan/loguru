@@ -1,5 +1,5 @@
-`Unreleased`_
-=============
+`0.8.0`_ (2026-11-11)
+=====================
 
 - Change the default log format to include the timezone offset since it produces less ambiguous logs (`#856 <https://github.com/Delgan/loguru/pull/856>`_, thanks `@tim-x-y-z <https://github.com/tim-x-y-z>`_).
 - Add new ``logger.reinstall()`` method to automatically set up the ``logger`` in spawned child processes (`#818 <https://github.com/Delgan/loguru/issues/818>`_, thanks `@monchin <https://github.com/monchin>`_).
@@ -265,8 +265,8 @@
 
 Initial release.
 
-
-.. _Unreleased: https://github.com/delgan/loguru/compare/0.7.3...master
+.. _Unreleased: https://github.com/delgan/loguru/compare/0.8.0...master
+.. _0.8.0: https://github.com/delgan/loguru/releases/tag/0.8.0
 .. _0.7.3: https://github.com/delgan/loguru/releases/tag/0.7.3
 .. _0.7.2: https://github.com/delgan/loguru/releases/tag/0.7.2
 .. _0.7.1: https://github.com/delgan/loguru/releases/tag/0.7.1
