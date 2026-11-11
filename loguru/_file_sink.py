@@ -194,7 +194,12 @@ class Rotation:
             self._rotations = rotations
 
         def __call__(self, message, file) -> bool:
-            return any(rotation(message, file) for rotation in self._rotations)
+            # Don't early exit: all conditions must be evaluated as they have desired side-effects.
+            should_rotate = False
+            for rotation in self._rotations:
+                if rotation(message, file):
+                    should_rotate = True
+            return should_rotate
 
 
 class FileSink:
