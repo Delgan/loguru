@@ -194,10 +194,7 @@ class Rotation:
             self._rotations = rotations
 
         def __call__(self, message, file) -> bool:
-            # Note that the conditions must all be evaluated, even after one of them returned
-            # True, because "RotationTime" instances keep their limit up-to-date as a side-effect
-            # of being called. Skipping them would leave a stale limit in the past, causing a
-            # spurious extra rotation on the next logged message.
+            # Don't early exit: all conditions must be evaluated as they have desired side-effects.
             should_rotate = False
             for rotation in self._rotations:
                 if rotation(message, file):
