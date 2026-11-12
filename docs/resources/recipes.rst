@@ -37,6 +37,7 @@ Code Snippets and Recipes for Loguru
 .. |level| replace:: :meth:`~loguru._logger.Logger.level()`
 .. |configure| replace:: :meth:`~loguru._logger.Logger.configure()`
 .. |complete| replace:: :meth:`~loguru._logger.Logger.complete()`
+.. |enable_multiprocessing| replace:: :meth:`~loguru._logger.Logger.enable_multiprocessing()`
 
 .. _`unicode`: https://docs.python.org/3/howto/unicode.html
 
@@ -1077,6 +1078,41 @@ Another thing to keep in mind when dealing with multiprocessing is the fact that
         with context.Pool(4, initializer=worker.set_logger, initargs=(logger, )) as pool:
             results = pool.map(worker.work, [1, 10, 100])
 
+.. _multiprocessing-automatic:
+
+Automatically forwarding logs from child processes
+----------------------------------------------------
+
+As shown above, safely logging from multiple processes to a single sink can require a bit of
+tinkering, especially with the ``"spawn"`` start method where the ``logger`` cannot simply be
+passed to a worker function without care. The |enable_multiprocessing| method removes this
+boilerplate: once called in the main process, any child process (whether started by forking or
+spawning) automatically forwards its log records back to the main process, which re-dispatches
+them through its own configured sinks. A child process only needs to import the ``logger`` and
+log as usual, no plumbing required::
+
+    import multiprocessing
+    from loguru import logger
+
+    def worker():
+        from loguru import logger
+        logger.info("Logging from a child process")
+
+    if __name__ == "__main__":
+        logger.add("file.log", enqueue=True)
+        logger.enable_multiprocessing()
+
+        process = multiprocessing.Process(target=worker)
+        process.start()
+        process.join()
+
+        logger.complete()  # Wait for forwarded records to be written.
+        logger.disable_multiprocessing()
+
+A single background thread in the main process reads the forwarded records and writes them to
+the sinks in the order they were received, so output stays ordered and sinks are never written
+to concurrently. Because the ``logger.complete()`` call waits until every forwarded record has
+actually been written, it is recommended to call it before ``logger.disable_multiprocessing()``.
 
 .. _recipes-testing:
 

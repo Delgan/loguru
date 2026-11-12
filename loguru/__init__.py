@@ -7,7 +7,7 @@ Just ``from loguru import logger``.
 import atexit as _atexit
 import sys as _sys
 
-from . import _defaults
+from . import _defaults, _multiprocessing
 from ._logger import Core as _Core
 from ._logger import Logger as _Logger
 
@@ -30,5 +30,6 @@ logger = _Logger(
 
 if _defaults.LOGURU_AUTOINIT and _sys.stderr:
     logger.add(_sys.stderr)
+_multiprocessing.check_if_child(logger._core)
 
 _atexit.register(logger.remove)
