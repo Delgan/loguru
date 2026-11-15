@@ -2,6 +2,7 @@
 =============
 
 - Make file rotation more resilient to transient filesystem errors, such as on NFS (`#1547 <https://github.com/Delgan/loguru/pull/1547>`_).
+- Fix missing member tracebacks when logging a ``BaseExceptionGroup`` containing non-``Exception`` errors such as cancellation or process-exit exceptions.
 
 
 `0.8.0`_ (2026-11-11)
