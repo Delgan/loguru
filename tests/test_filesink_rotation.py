@@ -1017,6 +1017,50 @@ def test_exception_during_rotation_not_caught(tmp_path, capsys):
     assert out == err == ""
 
 
+def test_exception_during_file_close_on_rotation(tmp_path, monkeypatch, capsys):
+    builtin_open = open
+    opened_files = []
+
+    class CloseErrorFile:
+        def __init__(self, file):
+            self._file = file
+
+        def __getattr__(self, name):
+            return getattr(self._file, name)
+
+        def close(self):
+            self._file.close()
+            raise OSError("Close error")
+
+    def patched_open(*args, **kwargs):
+        file = builtin_open(*args, **kwargs)
+        if not opened_files:
+            file = CloseErrorFile(file)
+        opened_files.append(file)
+        return file
+
+    monkeypatch.setattr(loguru._file_sink, "open", patched_open, raising=False)
+
+    logger.add(
+        tmp_path / "test.log",
+        rotation=Mock(side_effect=[False, True, False]),
+        format="{message}",
+        catch=True,
+    )
+
+    logger.info("A")
+    logger.info("B")
+    logger.info("C")
+
+    check_dir(tmp_path, files=[("test.log", "A\nC\n")])
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err.count("Logging error in Loguru Handler") == 1
+    assert err.count("OSError: Close error") == 1
+    assert "I/O operation on closed file" not in err
+
+
 def test_recipe_rotation_both_size_and_time(freeze_time, tmp_path):
     class Rotator:
         def __init__(self, *, size, at):

@@ -1,3 +1,9 @@
+`Unreleased`_
+=============
+
+- Fix file sink permanently failing with ``ValueError: I/O operation on closed file`` after an error while closing the file during rotation (`#1544 <https://github.com/Delgan/loguru/issues/1544>`_).
+
+
 `0.8.0`_ (2026-11-11)
 =====================
 
