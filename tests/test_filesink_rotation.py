@@ -1125,6 +1125,26 @@ def test_rename_error_during_rotation(tmp_path, monkeypatch):
     assert rename.call_count == 1
 
 
+def test_close_error_during_rotation(tmp_path):
+    handler_id = logger.add(tmp_path / "test.log", rotation="10 B", catch=False)
+    logger.info("Initial")
+
+    sink = logger._core.handlers[handler_id]._sink
+    orig_close = sink._file.close
+
+    def flaky_close():
+        orig_close()
+        raise OSError("Simulated close error")
+
+    sink._file.close = flaky_close
+
+    with pytest.raises(OSError, match="Simulated close error"):
+        logger.info("Trigger rotation")
+
+    logger.info("After rotation")
+    assert (tmp_path / "test.log").exists()
+
+
 @pytest.mark.parametrize("rotation", [True, False])
 def test_rotation_rejects_bool(rotation):
     with pytest.raises(

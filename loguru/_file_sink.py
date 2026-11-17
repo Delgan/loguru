@@ -281,13 +281,18 @@ class FileSink:
             self._file_ino = result[ST_INO]
 
     def _close_file(self):
-        self._file.flush()
-        self._file.close()
+        file = self._file
 
         self._file = None
         self._file_path = None
         self._file_dev = -1
         self._file_ino = -1
+
+        if file is not None:
+            try:
+                file.flush()
+            finally:
+                file.close()
 
     def _reopen_if_needed(self):
         # Implemented based on standard library:
