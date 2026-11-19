@@ -281,7 +281,6 @@ class FileSink:
             self._file_ino = result[ST_INO]
 
     def _close_file(self):
-        self._file.flush()
         self._file.close()
 
         self._file = None
