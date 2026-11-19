@@ -194,7 +194,6 @@ def sink_with_logger():
 def freeze_time(monkeypatch):
     ctimes = {}
     freezegun_localtime = freezegun.api.fake_localtime
-    builtins_open = builtins.open
 
     fakes = {
         "zone": "UTC",
@@ -244,12 +243,6 @@ def freeze_time(monkeypatch):
 
         return struct_time(attributes)
 
-    def patched_open(filepath, *args, **kwargs):
-        if not os.path.exists(filepath):
-            tz = datetime.timezone(datetime.timedelta(seconds=fakes["offset"]), name=fakes["zone"])
-            ctimes[filepath] = datetime.datetime.now().replace(tzinfo=tz).timestamp()
-        return builtins_open(filepath, *args, **kwargs)
-
     @contextlib.contextmanager
     def freeze_time(date, timezone=("UTC", 0), *, include_tm_zone=True, tm_gmtoff_override=None):
         # Freezegun does not behave very well with UTC and timezones, see spulec/freezegun#348.
@@ -271,6 +264,15 @@ def freeze_time(monkeypatch):
         tz_offset = datetime.timedelta(seconds=offset)
         tzinfo = datetime.timezone(tz_offset, zone)
         date = date.replace(tzinfo=tzinfo)
+
+        builtins_open = builtins.open
+
+        def patched_open(filepath, *args, **kwargs):
+            if not os.path.exists(filepath):
+                delta = datetime.timedelta(seconds=fakes["offset"])
+                tz = datetime.timezone(delta, name=fakes["zone"])
+                ctimes[filepath] = datetime.datetime.now().replace(tzinfo=tz).timestamp()
+            return builtins_open(filepath, *args, **kwargs)
 
         with monkeypatch.context() as context:
             context.setitem(fakes, "zone", zone)
