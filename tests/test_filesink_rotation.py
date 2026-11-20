@@ -1247,6 +1247,63 @@ def test_rename_error_during_rotation_mode(freeze_time, tmp_path, monkeypatch, m
     )
 
 
+@pytest.mark.parametrize("mode", ["a", "w"])
+def test_size_rotation_retry_after_rename_error(freeze_time, tmp_path, monkeypatch, mode):
+    with freeze_time("2020-01-01"):
+        logger.add(
+            tmp_path / "test.log",
+            rotation=10,
+            format="{message}",
+            mode=mode,
+            catch=False,
+        )
+        logger.info("First")
+
+        with monkeypatch.context() as context:
+            context.setattr(os, "rename", Mock(side_effect=PermissionError("Rename error")))
+            with pytest.raises(OSError, match="same filename pattern"):
+                logger.info("Rotating")
+
+        logger.info("B")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log", "First\n"),
+            ("test.log", "B\n"),
+        ],
+    )
+
+
+@pytest.mark.parametrize("mode", ["a", "w"])
+def test_time_rotation_retry_after_rename_error(freeze_time, tmp_path, monkeypatch, mode):
+    with freeze_time("2020-01-01") as frozen:
+        logger.add(
+            tmp_path / "test.log",
+            rotation="1 second",
+            format="{message}",
+            mode=mode,
+            catch=False,
+        )
+        logger.info("First")
+        frozen.tick()
+
+        with monkeypatch.context() as context:
+            context.setattr(os, "rename", Mock(side_effect=PermissionError("Rename error")))
+            with pytest.raises(OSError, match="same filename pattern"):
+                logger.info("Rotating")
+
+        logger.info("B")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log", "First\n"),
+            ("test.log", "B\n"),
+        ],
+    )
+
+
 def test_rotation_retry_after_external_move(tmp_path, monkeypatch):
     path = tmp_path / "test.log"
     compression = Mock()
