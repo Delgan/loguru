@@ -229,6 +229,7 @@ class FileSink:
 
         self._file = None
         self._file_path = None
+        self._pending_rotation = None
 
         self._watch = watch
         self._file_dev = -1
@@ -240,6 +241,11 @@ class FileSink:
             self._create_file(path)
 
     def write(self, message):
+        if self._pending_rotation is not None:
+            self._terminate_file(is_rotating=True)
+            self._file.write(message)
+            return
+
         if self._file is None:
             path = self._create_path()
             self._create_dirs(path)
@@ -314,6 +320,12 @@ class FileSink:
     def _terminate_file(self, *, is_rotating=False):
         old_path = self._file_path
 
+        if is_rotating:
+            if self._pending_rotation is not None:
+                old_path = self._pending_rotation
+            else:
+                self._pending_rotation = old_path
+
         if self._file is not None:
             self._close_file()
 
@@ -327,6 +339,8 @@ class FileSink:
                 renamed_path = generate_rename_path(root, ext, creation_time)
                 rename_file(old_path, renamed_path)
                 old_path = renamed_path
+
+            self._pending_rotation = None
 
         if is_rotating or self._rotation_function is None:
             if self._compression_function is not None and old_path is not None:
