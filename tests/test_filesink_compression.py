@@ -48,6 +48,34 @@ def test_compression_at_rotation(tmp_path, mode, freeze_time):
     )
 
 
+def test_compression_after_rotation_retry(freeze_time, tmp_path, monkeypatch):
+    with freeze_time("2020-01-01"):
+        logger.add(
+            tmp_path / "test.log",
+            rotation=Mock(side_effect=[False, True]),
+            compression="gz",
+            format="{message}",
+            catch=False,
+        )
+        logger.info("First")
+
+        with monkeypatch.context() as context:
+            context.setattr(os, "rename", Mock(side_effect=PermissionError("Rename error")))
+            with pytest.raises(OSError, match="same filename pattern"):
+                logger.info("Rotating")
+
+        check_dir(tmp_path, files=[("test.log", "First\n")])
+        logger.info("Second")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log.gz", None),
+            ("test.log", "Second\n"),
+        ],
+    )
+
+
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
 def test_compression_at_remove_without_rotation(tmp_path, mode):
     i = logger.add(tmp_path / "file.log", compression="gz", mode=mode)

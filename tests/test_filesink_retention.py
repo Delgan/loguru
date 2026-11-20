@@ -236,6 +236,27 @@ def test_retention_at_rotation(tmp_path, mode):
     check_dir(tmp_path, size=2)
 
 
+def test_retention_after_rotation_retry(tmp_path, monkeypatch):
+    (tmp_path / "test.log.1").write_text("Old\n")
+    logger.add(
+        tmp_path / "test.log",
+        rotation=Mock(side_effect=[False, True]),
+        retention=0,
+        format="{message}",
+        catch=False,
+    )
+    logger.info("First")
+
+    with monkeypatch.context() as context:
+        context.setattr(os, "rename", Mock(side_effect=PermissionError("Rename error")))
+        with pytest.raises(OSError, match="same filename pattern"):
+            logger.info("Rotating")
+
+    check_dir(tmp_path, files=[("test.log.1", "Old\n"), ("test.log", "First\n")])
+    logger.info("Second")
+    check_dir(tmp_path, files=[("test.log", "Second\n")])
+
+
 @pytest.mark.parametrize("mode", ["a", "a+", "w", "x"])
 def test_retention_at_remove_without_rotation(tmp_path, mode):
     i = logger.add(tmp_path / "file.log", retention=0, mode=mode)
