@@ -323,6 +323,8 @@ class FileSink:
         if is_rotating:
             if self._pending_rotation is not None:
                 old_path = self._pending_rotation
+                if not os.path.exists(old_path):
+                    old_path = None
             else:
                 self._pending_rotation = old_path
 

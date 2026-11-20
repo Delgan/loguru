@@ -1247,6 +1247,31 @@ def test_rename_error_during_rotation_mode(freeze_time, tmp_path, monkeypatch, m
     )
 
 
+def test_rotation_retry_after_external_move(tmp_path, monkeypatch):
+    path = tmp_path / "test.log"
+    compression = Mock()
+    logger.add(
+        path,
+        rotation=Mock(side_effect=[False, True]),
+        compression=compression,
+        format="{message}",
+        catch=False,
+    )
+    logger.info("First")
+
+    rename = Mock(side_effect=PermissionError("Rename error"))
+    with monkeypatch.context() as context:
+        context.setattr(os, "rename", rename)
+        with pytest.raises(OSError, match="same filename pattern"):
+            logger.info("Rotating")
+
+    path.rename(tmp_path / "moved.log")
+    logger.info("Second")
+
+    compression.assert_not_called()
+    check_dir(tmp_path, files=[("moved.log", "First\n"), ("test.log", "Second\n")])
+
+
 @pytest.mark.parametrize("mode", ["w", "a"])
 def test_compression_error_during_rotation_mode(freeze_time, tmp_path, mode):
     with freeze_time("2020-01-01"):
