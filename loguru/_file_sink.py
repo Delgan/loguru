@@ -274,6 +274,10 @@ class FileSink:
         self._file = open(path, **self._kwargs)
         self._file_path = path
 
+        if self._rotation_function is not None:
+            # Prevent overwriting logs if previous rotation failed to rename the file.
+            self._kwargs["mode"] = "a+" if "+" in self._kwargs["mode"] else "a"
+
         if self._watch:
             fileno = self._file.fileno()
             result = os.fstat(fileno)
@@ -281,12 +285,13 @@ class FileSink:
             self._file_ino = result[ST_INO]
 
     def _close_file(self):
-        self._file.close()
-
-        self._file = None
-        self._file_path = None
-        self._file_dev = -1
-        self._file_ino = -1
+        try:
+            self._file.close()
+        finally:
+            self._file = None
+            self._file_path = None
+            self._file_dev = -1
+            self._file_ino = -1
 
     def _reopen_if_needed(self):
         # Implemented based on standard library:

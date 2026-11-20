@@ -1,3 +1,4 @@
+import builtins
 import datetime
 import os
 import pathlib
@@ -901,6 +902,68 @@ def test_function_rotation(freeze_time, tmp_path):
         )
 
 
+@pytest.mark.parametrize("delay", [False, True])
+def test_rotation_appends_to_existing_destination(freeze_time, tmp_path, delay):
+    (tmp_path / "test_2020.log").write_text("old\n")
+    (tmp_path / "test_2021.log").write_text("existing\n")
+
+    with freeze_time("2020-01-01") as frozen:
+        rotation = Mock(side_effect=[False, True])
+        logger.add(
+            tmp_path / "test_{time:YYYY}.log",
+            rotation=rotation,
+            mode="w",
+            delay=delay,
+            format="{message}",
+        )
+        logger.info("first")
+        frozen.move_to("2021-01-01")
+        logger.info("second")
+
+    check_dir(
+        tmp_path,
+        files=[("test_2020.log", "first\n"), ("test_2021.log", "existing\nsecond\n")],
+    )
+
+
+def test_rotation_with_read_write_mode(freeze_time, tmp_path):
+    def rotation(message, file):
+        if message == "third\n":
+            file.seek(0)
+            assert file.read() == "second\n"
+        return message == "second\n"
+
+    with freeze_time("2020-01-01"):
+        logger.add(tmp_path / "test.log", rotation=rotation, mode="w+", format="{message}")
+        logger.info("first")
+        logger.info("second")
+        logger.info("third")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log", "first\n"),
+            ("test.log", "second\nthird\n"),
+        ],
+    )
+
+
+def test_rotation_with_exclusive_mode(freeze_time, tmp_path):
+    with freeze_time("2020-01-01"):
+        rotation = Mock(side_effect=[False, True])
+        logger.add(tmp_path / "test.log", rotation=rotation, mode="x", format="{message}")
+        logger.info("first")
+        logger.info("second")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log", "first\n"),
+            ("test.log", "second\n"),
+        ],
+    )
+
+
 @pytest.mark.parametrize("mode", ["w", "x"])
 def test_rotation_at_remove(freeze_time, tmp_path, mode):
     with freeze_time("2018-01-01"):
@@ -1104,6 +1167,155 @@ def test_multiple_rotation_conditions_all_evaluated(freeze_time, tmp_path):
         files=[
             ("file.2020-01-01_06-00-00_000000.log", "a\n"),
             ("file.log", "b\nc\n"),
+        ],
+    )
+
+
+@pytest.mark.parametrize("mode", ["w", "a"])
+def test_close_error_during_rotation_mode(freeze_time, tmp_path, monkeypatch, mode):
+    with freeze_time("2020-01-01"):
+        builtin_open = builtins.open
+
+        def patched_open(*args, **kwargs):
+            file = builtin_open(*args, **kwargs)
+            wrapped_file = Mock(wraps=file)
+
+            def flaky_close():
+                file.close()
+                raise OSError("Error during close")
+
+            wrapped_file.close.side_effect = flaky_close
+            return wrapped_file
+
+        with monkeypatch.context() as context:
+            context.setattr(builtins, "open", patched_open, raising=False)
+
+            rotation = Mock(side_effect=[False, True, False])
+            logger.add(
+                tmp_path / "test.log",
+                rotation=rotation,
+                format="{message}",
+                mode=mode,
+                catch=False,
+            )
+
+        logger.info("First")
+
+        with pytest.raises(OSError, match="Error during close"):
+            # This message is lost. Unfortunate, but that is consistent with a "open()" failure.
+            logger.info("Rotating")
+
+        logger.info("Second")
+
+    check_dir(tmp_path, files=[("test.log", "First\nSecond\n")])
+
+
+@pytest.mark.parametrize("mode", ["w", "a"])
+def test_rename_error_during_rotation_mode(freeze_time, tmp_path, monkeypatch, mode):
+    with freeze_time("2020-01-01"):
+        logger.add(
+            tmp_path / "test.log",
+            rotation=Mock(side_effect=[False, True, False]),
+            format="{message}",
+            mode=mode,
+            catch=False,
+        )
+        logger.info("First")
+
+        rename = Mock(side_effect=PermissionError("Rename error"))
+        with monkeypatch.context() as context:
+            context.setattr(os, "rename", rename)
+            with pytest.raises(OSError, match="same filename pattern"):
+                logger.info("Rotating")
+
+        logger.info("Second")
+
+    check_dir(tmp_path, files=[("test.log", "First\nSecond\n")])
+
+
+@pytest.mark.parametrize("mode", ["w", "a"])
+def test_compression_error_during_rotation_mode(freeze_time, tmp_path, mode):
+    with freeze_time("2020-01-01"):
+        compression = Mock(side_effect=OSError("Compression error"))
+        logger.add(
+            tmp_path / "test.log",
+            rotation=Mock(side_effect=[False, True, False]),
+            compression=compression,
+            format="{message}",
+            mode=mode,
+            catch=False,
+        )
+        logger.info("First")
+
+        with pytest.raises(OSError, match="Compression error"):
+            logger.info("Rotating")
+
+        logger.info("Second")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log", "First\n"),
+            ("test.log", "Second\n"),
+        ],
+    )
+
+
+@pytest.mark.parametrize("mode", ["w", "a"])
+def test_retention_error_during_rotation_mode(freeze_time, tmp_path, mode):
+    with freeze_time("2020-01-01"):
+        retention = Mock(side_effect=OSError("Retention error"))
+        logger.add(
+            tmp_path / "test.log",
+            rotation=Mock(side_effect=[False, True, False]),
+            retention=retention,
+            format="{message}",
+            mode=mode,
+            catch=False,
+        )
+        logger.info("First")
+
+        with pytest.raises(OSError, match="Retention error"):
+            logger.info("Rotating")
+
+        logger.info("Second")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log", "First\n"),
+            ("test.log", "Second\n"),
+        ],
+    )
+
+
+@pytest.mark.parametrize("mode", ["w", "a"])
+def test_reopen_error_during_rotation_mode(freeze_time, tmp_path, mode):
+    opener = Mock(wraps=os.open)
+
+    with freeze_time("2020-01-01"):
+        logger.add(
+            tmp_path / "test.log",
+            rotation=Mock(side_effect=[False, True, False]),
+            format="{message}",
+            mode=mode,
+            opener=opener,
+            catch=False,
+        )
+        logger.info("First")
+
+        opener.side_effect = OSError("Re-open error")
+        with pytest.raises(OSError, match="Re-open error"):
+            logger.info("Rotating")
+
+        opener.side_effect = None
+        logger.info("Second")
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log", "First\n"),
+            ("test.log", "Second\n"),
         ],
     )
 
