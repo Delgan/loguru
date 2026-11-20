@@ -1190,7 +1190,7 @@ def test_close_error_during_rotation_mode(freeze_time, tmp_path, monkeypatch, mo
         with monkeypatch.context() as context:
             context.setattr(builtins, "open", patched_open, raising=False)
 
-            rotation = Mock(side_effect=[False, True, False])
+            rotation = Mock(side_effect=[False, True])
             logger.add(
                 tmp_path / "test.log",
                 rotation=rotation,
@@ -1207,7 +1207,13 @@ def test_close_error_during_rotation_mode(freeze_time, tmp_path, monkeypatch, mo
 
         logger.info("Second")
 
-    check_dir(tmp_path, files=[("test.log", "First\nSecond\n")])
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log", "First\n"),
+            ("test.log", "Second\n"),
+        ],
+    )
 
 
 @pytest.mark.parametrize("mode", ["w", "a"])
@@ -1215,7 +1221,7 @@ def test_rename_error_during_rotation_mode(freeze_time, tmp_path, monkeypatch, m
     with freeze_time("2020-01-01"):
         logger.add(
             tmp_path / "test.log",
-            rotation=Mock(side_effect=[False, True, False]),
+            rotation=Mock(side_effect=[False, True]),
             format="{message}",
             mode=mode,
             catch=False,
@@ -1227,10 +1233,18 @@ def test_rename_error_during_rotation_mode(freeze_time, tmp_path, monkeypatch, m
             context.setattr(os, "rename", rename)
             with pytest.raises(OSError, match="same filename pattern"):
                 logger.info("Rotating")
+            with pytest.raises(OSError, match="same filename pattern"):
+                logger.info("Retrying")
 
         logger.info("Second")
 
-    check_dir(tmp_path, files=[("test.log", "First\nSecond\n")])
+    check_dir(
+        tmp_path,
+        files=[
+            ("test.2020-01-01_00-00-00_000000.log", "First\n"),
+            ("test.log", "Second\n"),
+        ],
+    )
 
 
 @pytest.mark.parametrize("mode", ["w", "a"])
