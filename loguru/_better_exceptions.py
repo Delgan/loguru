@@ -13,11 +13,11 @@ import traceback
 if sys.version_info >= (3, 11):
 
     def is_exception_group(exc):
-        return isinstance(exc, ExceptionGroup)
+        return isinstance(exc, BaseExceptionGroup)
 
 else:
     try:
-        from exceptiongroup import ExceptionGroup
+        from exceptiongroup import BaseExceptionGroup
     except ImportError:
 
         def is_exception_group(exc):
@@ -26,7 +26,7 @@ else:
     else:
 
         def is_exception_group(exc):
-            return isinstance(exc, ExceptionGroup)
+            return isinstance(exc, BaseExceptionGroup)
 
 
 def _get_string_tokens():

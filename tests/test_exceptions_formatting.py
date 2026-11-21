@@ -256,6 +256,7 @@ def test_exception_others(filename):
         ("exception_group_catch", (3, 11)),
         ("notes", (3, 11)),
         ("grouped_simple", (3, 11)),
+        ("grouped_base_exception", (3, 11)),
         ("grouped_nested", (3, 11)),
         ("grouped_with_cause_and_context", (3, 11)),
         ("grouped_as_cause_and_context", (3, 11)),
