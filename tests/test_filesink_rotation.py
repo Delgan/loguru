@@ -1473,9 +1473,11 @@ def test_unparsable_rotation(rotation):
         logger.add("test.log", rotation=rotation)
 
 
-@pytest.mark.parametrize("rotation", ["-1 MB", -0.5, float("nan"), decimal.Decimal("-1")])
+@pytest.mark.parametrize(
+    "rotation", ["-1 MB", -0.5, "-1e400 B", float("nan"), decimal.Decimal("-1")]
+)
 def test_invalid_size_rotation(rotation):
-    with pytest.raises(ValueError, match=r"^Invalid size while parsing rotation"):
+    with pytest.raises(ValueError, match=r"^Invalid rotation size"):
         logger.add("test.log", rotation=rotation)
 
 
@@ -1511,14 +1513,6 @@ def test_invalid_value_rotation_duration(rotation):
         logger.add("test.log", rotation=rotation)
 
 
-@pytest.mark.parametrize("rotation", [-1, -1.5, "-1 B", "-100 MB"])
-def test_negative_size_rotation_is_rejected(rotation):
-    # A negative size limit makes "file.tell() + len(message) > size_limit"
-    # always true, so it would silently rotate on every single message.
-    with pytest.raises(ValueError, match=r"^Invalid rotation size: .+$"):
-        logger.add("test.log", rotation=rotation)
-
-
 @pytest.mark.parametrize(
     "rotation",
     [
@@ -1528,21 +1522,14 @@ def test_negative_size_rotation_is_rejected(rotation):
         "-1 day",
     ],
 )
-def test_non_positive_interval_rotation_is_rejected(rotation):
-    # A zero interval never advances the internal rotation limit, which is
-    # an infinite loop in RotationTime.__call__(); a negative interval walks
-    # the limit backwards until datetime arithmetic overflows. Both must be
-    # rejected up front instead of breaking logging at call time.
-    with pytest.raises(ValueError, match=r"^Invalid rotation interval: .+$"):
-        logger.add("test.log", rotation=rotation)
+def test_invalid_interval_rotation(tmp_path, rotation):
+    with pytest.raises(ValueError, match=r"^Invalid rotation interval"):
+        logger.add(tmp_path / "test.log", rotation=rotation)
 
 
 @pytest.mark.parametrize("rotation", [0, 0.0, "0 B", "0 MB"])
-def test_zero_size_rotation_is_allowed(rotation):
-    # Unlike a zero *interval*, a zero *size* limit doesn't loop -- it just
-    # rotates on every message, which existing tests rely on intentionally
-    # (e.g. as a convenient way to force rotation in compression tests).
-    logger.add("test.log", rotation=rotation)
+def test_zero_size_rotation_is_allowed(tmp_path, rotation):
+    logger.add(tmp_path / "test.log", rotation=rotation)
 
 
 @pytest.mark.parametrize("rotation", ["1e14s", "1e20s", "1e309s"])

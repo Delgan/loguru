@@ -438,25 +438,17 @@ def test_out_of_range_retention_duration(retention):
 
 
 @pytest.mark.parametrize("retention", [-1, -5])
-def test_negative_count_retention_is_rejected(retention):
-    # A negative count relies on Python's list-slicing wraparound
-    # (sorted(logs)[number:]), which removes an arbitrary single file
-    # instead of behaving like the documented "keep N files" contract.
-    with pytest.raises(ValueError, match=r"^Invalid retention count: .+$"):
-        logger.add("test.log", retention=retention)
+def test_invalid_retention_count(tmp_path, retention):
+    with pytest.raises(ValueError, match=r"^Invalid retention count"):
+        logger.add(tmp_path / "test.log", retention=retention)
 
 
 @pytest.mark.parametrize("retention", [datetime.timedelta(seconds=-1), "-1 day", "-30 minutes"])
-def test_negative_interval_retention_is_rejected(retention):
-    # retention_age() computes "mtime <= now - seconds"; a negative seconds
-    # value pushes the cutoff into the future, so every existing file
-    # -- regardless of age -- is deleted immediately.
-    with pytest.raises(ValueError, match=r"^Invalid retention interval: .+$"):
-        logger.add("test.log", retention=retention)
+def test_invalid_retention_interval(tmp_path, retention):
+    with pytest.raises(ValueError, match=r"^Invalid retention interval"):
+        logger.add(tmp_path / "test.log", retention=retention)
 
 
 @pytest.mark.parametrize("retention", [0, datetime.timedelta(0), "0 seconds"])
-def test_zero_retention_is_allowed(retention):
-    # Zero is a deliberate, if aggressive, "keep nothing" choice and does
-    # not exhibit the negative-value bugs above, so it stays permitted.
-    logger.add("test.log", retention=retention)
+def test_zero_retention_is_allowed(tmp_path, retention):
+    logger.add(tmp_path / "test.log", retention=retention)
