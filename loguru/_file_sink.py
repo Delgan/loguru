@@ -410,6 +410,10 @@ class FileSink:
                 "not a bool (True would rotate at 1 byte)"
             )
         if isinstance(rotation, (numbers.Real, decimal.Decimal)):
+            if not rotation >= 0:
+                raise ValueError(
+                    "Invalid size while parsing rotation (expected >= 0): '%s'" % rotation
+                )
             return partial(Rotation.rotation_size, size_limit=rotation)
         if isinstance(rotation, datetime.time):
             return Rotation.RotationTime(Rotation.forward_day, rotation)
