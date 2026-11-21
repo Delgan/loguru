@@ -1,4 +1,3 @@
-import asyncio
 import os
 import platform
 import re
@@ -257,6 +256,7 @@ def test_exception_others(filename):
         ("exception_group_catch", (3, 11)),
         ("notes", (3, 11)),
         ("grouped_simple", (3, 11)),
+        ("grouped_base_exception", (3, 11)),
         ("grouped_nested", (3, 11)),
         ("grouped_with_cause_and_context", (3, 11)),
         ("grouped_as_cause_and_context", (3, 11)),
@@ -326,52 +326,3 @@ def test_invalid_grouped_exception_no_exceptions(writer):
     logger.opt(exception=error).error("Error")
 
     assert writer.read().strip().startswith("| unittest.mock.MagicMock:")
-
-
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="No exceptiongroup backport available")
-@pytest.mark.parametrize("base_error", [KeyboardInterrupt, SystemExit, asyncio.CancelledError])
-@pytest.mark.parametrize("nested", [False, True])
-def test_base_exception_group_members(writer, base_error, nested):
-    if sys.version_info >= (3, 11):
-        from builtins import BaseExceptionGroup
-    else:
-        from exceptiongroup import BaseExceptionGroup
-
-    error = BaseExceptionGroup(
-        "mixed failures", [ValueError("data failed"), base_error("worker stopped")]
-    )
-    if nested:
-        error = BaseExceptionGroup("outer failures", [error, RuntimeError("cleanup failed")])
-
-    logger.add(writer, format="{message}", backtrace=False, diagnose=False, catch=False)
-    try:
-        raise error
-    except BaseException:
-        logger.exception("operation failed")
-
-    output = writer.read()
-    standard = "".join(traceback.format_exception(type(error), error, error.__traceback__))
-    for text in ["ValueError: data failed", base_error.__name__ + ": worker stopped"]:
-        assert text in standard
-        assert text in output
-    if nested:
-        assert "RuntimeError: cleanup failed" in output
-    assert "Exception Group Traceback" in output
-
-
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="No exceptiongroup backport available")
-def test_regular_exception_group_members(writer):
-    if sys.version_info >= (3, 11):
-        from builtins import ExceptionGroup
-    else:
-        from exceptiongroup import ExceptionGroup
-
-    logger.add(writer, format="{message}", backtrace=False, diagnose=False, catch=False)
-    try:
-        raise ExceptionGroup("ordinary failures", [ValueError("data failed")])
-    except Exception:
-        logger.exception("operation failed")
-
-    output = writer.read()
-    assert "ExceptionGroup: ordinary failures" in output
-    assert "ValueError: data failed" in output
