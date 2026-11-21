@@ -435,3 +435,20 @@ def test_out_of_range_retention_duration(retention):
         ValueError, match=r"^Duration out of range while parsing duration: '[^']+'$"
     ):
         logger.add("test.log", retention=retention)
+
+
+@pytest.mark.parametrize("retention", [-1, -5])
+def test_invalid_retention_count(tmp_path, retention):
+    with pytest.raises(ValueError, match=r"^Invalid retention count"):
+        logger.add(tmp_path / "test.log", retention=retention)
+
+
+@pytest.mark.parametrize("retention", [datetime.timedelta(seconds=-1), "-1 day", "-30 minutes"])
+def test_invalid_retention_interval(tmp_path, retention):
+    with pytest.raises(ValueError, match=r"^Invalid retention interval"):
+        logger.add(tmp_path / "test.log", retention=retention)
+
+
+@pytest.mark.parametrize("retention", [0, datetime.timedelta(0), "0 seconds"])
+def test_zero_retention_is_allowed(tmp_path, retention):
+    logger.add(tmp_path / "test.log", retention=retention)

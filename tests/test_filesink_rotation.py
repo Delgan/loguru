@@ -1473,9 +1473,11 @@ def test_unparsable_rotation(rotation):
         logger.add("test.log", rotation=rotation)
 
 
-@pytest.mark.parametrize("rotation", ["-1 MB", -0.5, float("nan"), decimal.Decimal("-1")])
+@pytest.mark.parametrize(
+    "rotation", ["-1 MB", -0.5, "-1e400 B", float("nan"), decimal.Decimal("-1")]
+)
 def test_invalid_size_rotation(rotation):
-    with pytest.raises(ValueError, match=r"^Invalid size while parsing rotation"):
+    with pytest.raises(ValueError, match=r"^Invalid rotation size"):
         logger.add("test.log", rotation=rotation)
 
 
@@ -1509,6 +1511,25 @@ def test_invalid_unit_rotation_duration(rotation):
 def test_invalid_value_rotation_duration(rotation):
     with pytest.raises(ValueError, match=r"^Invalid float value while parsing duration: '[^']+'$"):
         logger.add("test.log", rotation=rotation)
+
+
+@pytest.mark.parametrize(
+    "rotation",
+    [
+        datetime.timedelta(0),
+        datetime.timedelta(seconds=-1),
+        "0 seconds",
+        "-1 day",
+    ],
+)
+def test_invalid_interval_rotation(tmp_path, rotation):
+    with pytest.raises(ValueError, match=r"^Invalid rotation interval"):
+        logger.add(tmp_path / "test.log", rotation=rotation)
+
+
+@pytest.mark.parametrize("rotation", [0, 0.0, "0 B", "0 MB"])
+def test_zero_size_rotation_is_allowed(tmp_path, rotation):
+    logger.add(tmp_path / "test.log", rotation=rotation)
 
 
 @pytest.mark.parametrize("rotation", ["1e14s", "1e20s", "1e309s"])

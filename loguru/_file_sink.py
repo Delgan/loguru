@@ -407,17 +407,17 @@ class FileSink:
         if isinstance(rotation, bool):
             raise TypeError(
                 "Invalid rotation, it should be a size, a time, a timedelta, or a callable, "
-                "not a bool (True would rotate at 1 byte)"
+                "not a bool"
             )
         if isinstance(rotation, (numbers.Real, decimal.Decimal)):
             if not rotation >= 0:
-                raise ValueError(
-                    "Invalid size while parsing rotation (expected >= 0): '%s'" % rotation
-                )
+                raise ValueError("Invalid rotation size (expected >= 0): '%s'" % rotation)
             return partial(Rotation.rotation_size, size_limit=rotation)
         if isinstance(rotation, datetime.time):
             return Rotation.RotationTime(Rotation.forward_day, rotation)
         if isinstance(rotation, datetime.timedelta):
+            if rotation <= datetime.timedelta(0):
+                raise ValueError("Invalid rotation interval (expected > 0): '%s'" % rotation)
             step_forward = partial(Rotation.forward_interval, interval=rotation)
             return Rotation.RotationTime(step_forward)
         if callable(rotation):
@@ -435,12 +435,15 @@ class FileSink:
             return FileSink._make_retention_function(interval)
         if isinstance(retention, bool):
             raise TypeError(
-                "Invalid retention, it should be a count, a timedelta, or a callable, "
-                "not a bool (True would keep 1 file)"
+                "Invalid retention, it should be a count, a timedelta, or a callable, not a bool"
             )
         if isinstance(retention, int):
+            if retention < 0:
+                raise ValueError("Invalid retention count (expected >= 0): '%s'" % retention)
             return partial(Retention.retention_count, number=retention)
         if isinstance(retention, datetime.timedelta):
+            if retention < datetime.timedelta(0):
+                raise ValueError("Invalid retention interval (expected >= 0): '%s'" % retention)
             return partial(Retention.retention_age, seconds=retention.total_seconds())
         if callable(retention):
             return retention
