@@ -1,3 +1,9 @@
+`Unreleased`_
+=============
+
+- Make file rotation more resilient to transient filesystem errors, such as on NFS (`#1547 <https://github.com/Delgan/loguru/pull/1547>`_).
+
+
 `0.8.0`_ (2026-11-11)
 =====================
 
