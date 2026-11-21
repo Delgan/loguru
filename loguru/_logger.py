@@ -657,8 +657,8 @@ class Logger:
         file with the same name that the file to be created, then the existing file is renamed by
         appending the date to its basename to prevent file overwriting. This parameter accepts:
 
-        - an |int| which corresponds to the maximum file size in bytes before that the current
-          logged file is closed and a new one started over.
+        - an |int| which specifies the (approximate) maximum file size in bytes before the current
+          log file is closed and a new one is started.
         - a |timedelta| which indicates the frequency of each new rotation.
         - a |time| which specifies the hour when the daily rotation should occur.
         - a |str| for human-friendly parametrization of one of the previously enumerated types.
