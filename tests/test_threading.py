@@ -16,7 +16,7 @@ class NonSafeSink:
         if self.stopped:
             raise RuntimeError("Can't write on stopped sink")
 
-        length = len(message)
+        length = len(message) // 2
         self.written += message[:length]
         time.sleep(self.sleep_time)
         self.written += message[length:]
