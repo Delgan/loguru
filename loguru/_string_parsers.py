@@ -120,7 +120,7 @@ def parse_size(size: str) -> Optional[float]:
         If numeric value or unit is invalid.
     """
     size = size.strip()
-    reg = re.compile(r"([e\+\-\.\d]+)\s*([kmgtpezy])?(i)?(b)", flags=re.I)
+    reg = re.compile(r"([e\+\-\.\d]+?)\s*([kmgtpezy])?(i)?(b)", flags=re.I)
 
     match = reg.fullmatch(size)
 

@@ -23,6 +23,11 @@ from loguru import _string_parsers
         ("1.5 B", 1.5),
         ("1.5e1 KB", 15000),
         ("1.5 KiB", 1536),
+        # Specific edge cases due to E being both an exponent marker and a unit prefix.
+        ("1.5e1EB", 1.5e19),
+        ("1e-1EB", 1e17),
+        ("1EB", 1e18),
+        ("1EiB", 1024**6),
     ],
 )
 def test_parse_size(size, expected):
