@@ -106,6 +106,28 @@ def test_size_rotation(freeze_time, tmp_path, size):
     )
 
 
+def test_size_rotation_multibyte_characters(freeze_time, tmp_path):
+    with freeze_time("2018-01-01 00:00:00") as frozen:
+        i = logger.add(tmp_path / "test_{time}.log", format="{message}", rotation=6, mode="w")
+
+        frozen.tick()
+        logger.debug("abc")
+
+        frozen.tick()
+        logger.debug("é")
+
+        frozen.tick()
+        logger.remove(i)
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test_2018-01-01_00-00-00_000000.log", "abc\n"),
+            ("test_2018-01-01_00-00-02_000000.log", "é\n"),
+        ],
+    )
+
+
 @pytest.mark.parametrize(
     ("when", "hours"),
     [
