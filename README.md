@@ -115,7 +115,7 @@ Loguru favors the much more elegant and powerful `{}` formatting over `%`, loggi
 logger.info("We discovered {} is the answer to {question}", 42, question="everything")
 ```
 
-With latest Python versions, you can also pass [a template string](https://docs.python.org/3/library/string.templatelib.html#template-strings), which will be evaluated lazily and is preferable over f-strings:
+With latest Python versions, you can also pass [a template string](https://docs.python.org/3/library/string.templatelib.html#template-strings), which will be formatted lazily and is preferable over f-strings:
 
 ```python
 version, feature = 3.14, "t-strings"
