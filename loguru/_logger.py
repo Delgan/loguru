@@ -240,6 +240,12 @@ class Core:
         self.lock = create_logger_lock()
 
 
+@functools.lru_cache(maxsize=256)
+def _split_filename(co_filename):
+    file_name = basename(co_filename)
+    return file_name, splitext(file_name)[0]
+
+
 class Logger:
     """An object to dispatch logging messages to configured handlers.
 
@@ -2134,7 +2140,7 @@ class Logger:
 
         current_datetime = aware_now()
 
-        file_name = basename(co_filename)
+        file_name, module_name = _split_filename(co_filename)
         thread = current_thread()
         process = current_process()
         elapsed = current_datetime - start_time
@@ -2162,7 +2168,7 @@ class Logger:
             "level": RecordLevel(level_name, level_no, level_icon),
             "line": f_lineno,
             "message": str(message),
-            "module": splitext(file_name)[0],
+            "module": module_name,
             "name": name,
             "process": RecordProcess(process.ident, process.name),
             "template": str(message),
