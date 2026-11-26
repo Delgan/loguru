@@ -150,6 +150,11 @@ def _fallback_tzinfo(timestamp):
     return timezone(timedelta(seconds=seconds), zone)
 
 
+@lru_cache(maxsize=16)
+def _make_timezone(seconds, zone):
+    return timezone(timedelta(seconds=seconds), zone)
+
+
 def _get_tzinfo(timestamp):
     try:
         local = localtime(timestamp)
@@ -166,7 +171,7 @@ def _get_tzinfo(timestamp):
         return _fallback_tzinfo(timestamp)
 
     try:
-        return timezone(timedelta(seconds=seconds), zone)
+        return _make_timezone(seconds, zone)
     except ValueError:
         # The number of seconds returned by "tm_gmtoff" might be invalid on Windows (year 2038+).
         # Curiously, the fallback workaround does not exhibit the same problem.
@@ -177,4 +182,19 @@ def aware_now():
     now = datetime_.now()
     timestamp = now.timestamp()
     tzinfo = _get_tzinfo(timestamp)
-    return datetime.combine(now.date(), now.time().replace(tzinfo=tzinfo))
+
+    # Compatibility workaround for Python 3.5.
+    fold = getattr(now, "fold", 0)
+    kwargs = {"fold": fold} if fold else {}
+
+    return datetime(
+        now.year,
+        now.month,
+        now.day,
+        now.hour,
+        now.minute,
+        now.second,
+        now.microsecond,
+        tzinfo,
+        **kwargs,
+    )
