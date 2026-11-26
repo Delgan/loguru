@@ -113,7 +113,7 @@ from threading import current_thread
 
 from . import _asyncio_loop, _colorama, _defaults, _filters
 from ._better_exceptions import ExceptionFormatter
-from ._colorizer import Colorizer, try_formatting
+from ._colorizer import Colorizer, raise_formatting_error
 from ._contextvars import ContextVar
 from ._datetime import aware_now
 from ._error_interceptor import ErrorInterceptor
@@ -2199,8 +2199,10 @@ class Logger:
             log_record["message"] = colored_message.stripped
         elif args or kwargs:
             colored_message = None
-            with try_formatting(KeyError, IndexError, AttributeError, ValueError):
+            try:
                 log_record["message"] = message.format(*args, **kwargs)
+            except (KeyError, IndexError, AttributeError, ValueError) as e:
+                raise_formatting_error(e)
         else:
             colored_message = None
 
