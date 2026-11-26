@@ -114,6 +114,7 @@ def test_size_rotation_multibyte_characters(freeze_time, tmp_path):
             rotation=6,
             mode="w",
             encoding="utf-8",
+            newline="\n",
         )
 
         frozen.tick()
@@ -131,13 +132,19 @@ def test_size_rotation_multibyte_characters(freeze_time, tmp_path):
             ("test_2018-01-01_00-00-00_000000.log", "abc\n"),
             ("test_2018-01-01_00-00-02_000000.log", "é\n"),
         ],
+        encoding="utf-8",
     )
 
 
 def test_size_rotation_depends_on_encoding(freeze_time, tmp_path):
     with freeze_time("2018-01-01 00:00:00") as frozen:
         i = logger.add(
-            tmp_path / "test.log", format="{message}", rotation=6, mode="w", encoding="latin-1"
+            tmp_path / "test.log",
+            format="{message}",
+            rotation=6,
+            mode="w",
+            encoding="latin-1",
+            newline="\n",
         )
 
         frozen.tick()

@@ -76,7 +76,7 @@ def parse(text, *, strip=False, strict=True):
     return parser.colorize(tokens, "")
 
 
-def check_dir(dir, *, files=None, size=None):
+def check_dir(dir, *, files=None, size=None, encoding=None):
     actual_files = set(dir.iterdir())
     seen = set()
     if size is not None:
@@ -88,7 +88,7 @@ def check_dir(dir, *, files=None, size=None):
             assert filepath in actual_files
             assert filepath not in seen
             if content is not None:
-                assert filepath.read_text() == content
+                assert filepath.read_text(encoding=encoding) == content
             seen.add(filepath)
 
 
