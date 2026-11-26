@@ -3,24 +3,28 @@ from contextlib import contextmanager
 from string import Formatter
 
 
+def raise_formatting_error(e):
+    raise ValueError(
+        "The logging message could not be formatted with the provided arguments.\n"
+        "Common causes include:\n"
+        "  - The message contains unmatched or malformed curly braces.\n"
+        "  - Positional or keyword arguments are missing for the placeholders.\n"
+        "  - The message is not a string.\n"
+        "  - f-strings were used causing double interpolation.\n"
+        "  - Contextual values were passed via kwargs but not meant for formatting.\n"
+        "To avoid this, consider:\n"
+        "  - Escaping non-formatting braces by doubling them.\n"
+        "  - Avoiding f-string in the logged message.\n"
+        "  - Using `logger.bind()` for structured context instead of kwargs.\n"
+    ) from e
+
+
 @contextmanager
 def try_formatting(*exceptions):
     try:
         yield
     except exceptions as e:
-        raise ValueError(
-            "The logging message could not be formatted with the provided arguments.\n"
-            "Common causes include:\n"
-            "  - The message contains unmatched or malformed curly braces.\n"
-            "  - Positional or keyword arguments are missing for the placeholders.\n"
-            "  - The message is not a string.\n"
-            "  - f-strings were used causing double interpolation.\n"
-            "  - Contextual values were passed via kwargs but not meant for formatting.\n"
-            "To avoid this, consider:\n"
-            "  - Escaping non-formatting braces by doubling them.\n"
-            "  - Avoiding f-string in the logged message.\n"
-            "  - Using `logger.bind()` for structured context instead of kwargs.\n"
-        ) from e
+        raise_formatting_error(e)
 
 
 class Style:
