@@ -38,6 +38,33 @@ def _default_datetime_formatter(dt):
     )
 
 
+def _iso_millis_formatter(dt):
+    return "%04d-%02d-%02d %02d:%02d:%02d.%03d" % (
+        dt.year,
+        dt.month,
+        dt.day,
+        dt.hour,
+        dt.minute,
+        dt.second,
+        dt.microsecond // 1000,
+    )
+
+
+def _iso_seconds_formatter(dt):
+    return "%04d-%02d-%02d %02d:%02d:%02d" % (
+        dt.year,
+        dt.month,
+        dt.day,
+        dt.hour,
+        dt.minute,
+        dt.second,
+    )
+
+
+def _hms_formatter(dt):
+    return "%02d:%02d:%02d" % (dt.hour, dt.minute, dt.second)
+
+
 def _format_timezone(dt, *, sep):
     tzinfo = dt.tzinfo or timezone.utc
     offset = tzinfo.utcoffset(dt).total_seconds()
@@ -56,6 +83,12 @@ def _format_timezone(dt, *, sep):
 def _compile_format(spec):
     if spec == "YYYY-MM-DD HH:mm:ss.SSS Z":
         return _default_datetime_formatter
+    if spec == "YYYY-MM-DD HH:mm:ss.SSS":
+        return _iso_millis_formatter
+    if spec == "YYYY-MM-DD HH:mm:ss":
+        return _iso_seconds_formatter
+    if spec == "HH:mm:ss":
+        return _hms_formatter
 
     is_utc = spec.endswith("!UTC")
 
