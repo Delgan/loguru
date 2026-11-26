@@ -391,8 +391,6 @@ class FileSink:
             frequency = string_parsers.parse_frequency(rotation)
             if frequency is not None:
                 return Rotation.RotationTime(frequency)
-            # Parsing a daytime must come before parsing a duration: a time such as "5 PM" would
-            # otherwise be mistaken for a duration with an invalid unit.
             daytime = string_parsers.parse_daytime(rotation)
             if daytime is not None:
                 day, time = daytime
