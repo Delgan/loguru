@@ -106,6 +106,54 @@ def test_size_rotation(freeze_time, tmp_path, size):
     )
 
 
+def test_size_rotation_multibyte_characters(freeze_time, tmp_path):
+    with freeze_time("2018-01-01 00:00:00") as frozen:
+        i = logger.add(
+            tmp_path / "test_{time}.log",
+            format="{message}",
+            rotation=6,
+            mode="w",
+            encoding="utf-8",
+        )
+
+        frozen.tick()
+        logger.debug("abc")
+
+        frozen.tick()
+        logger.debug("é")
+
+        frozen.tick()
+        logger.remove(i)
+
+    check_dir(
+        tmp_path,
+        files=[
+            ("test_2018-01-01_00-00-00_000000.log", "abc\n"),
+            ("test_2018-01-01_00-00-02_000000.log", "é\n"),
+        ],
+    )
+
+
+def test_size_rotation_depends_on_encoding(freeze_time, tmp_path):
+    with freeze_time("2018-01-01 00:00:00") as frozen:
+        i = logger.add(
+            tmp_path / "test.log", format="{message}", rotation=6, mode="w", encoding="latin-1"
+        )
+
+        frozen.tick()
+        logger.debug("abc")
+
+        frozen.tick()
+        logger.debug("é")
+
+        frozen.tick()
+        logger.remove(i)
+
+    # In latin-1, "é" fits in one byte: 4 + 2 bytes do not exceed the 6 bytes limit.
+    check_dir(tmp_path, size=1)
+    assert (tmp_path / "test.log").read_bytes() == "abc\né\n".encode("latin-1")
+
+
 @pytest.mark.parametrize(
     ("when", "hours"),
     [

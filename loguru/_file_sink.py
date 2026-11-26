@@ -133,7 +133,8 @@ class Rotation:
     @staticmethod
     def rotation_size(message, file, size_limit):
         file.seek(0, 2)
-        return file.tell() + len(message) > size_limit
+        message_size = len(message.encode(file.encoding, file.errors))
+        return file.tell() + message_size > size_limit
 
     class RotationTime:
         def __init__(self, step_forward, time_target=None, day_target=None):

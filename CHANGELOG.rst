@@ -3,6 +3,7 @@
 
 - Make file rotation more resilient to transient filesystem errors, such as on NFS (`#1547 <https://github.com/Delgan/loguru/pull/1547>`_).
 - Fix incomplete tracebacks when logging a ``BaseExceptionGroup`` containing non-``Exception`` errors (`#1542 <https://github.com/Delgan/loguru/issues/1542>`_, thanks `@Rajatendu1 <https://github.com/Rajatendu1>`_).
+- Fix size-based file rotation measuring the message length in characters instead of encoded bytes, which let files exceed the configured byte limit when logging multibyte text (`#1535 <https://github.com/Delgan/loguru/issues/1535>`_).
 
 
 `0.8.0`_ (2026-11-11)
