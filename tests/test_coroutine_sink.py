@@ -821,3 +821,60 @@ def test_enqueue_coroutine_with_debug_mode(capsys):
     out, err = capsys.readouterr()
     assert out == "Enqueued\n"
     assert err == ""
+
+
+def test_cancel_cross_thread_task_before_and_after_start():
+    called = False
+    cancelled = False
+
+    with new_event_loop_context() as loop:
+        loop.set_debug(True)
+
+        async def main():
+            started = asyncio.Event()
+            never = asyncio.Event()
+            worker_done = threading.Event()
+
+            async def sink_before(msg):
+                nonlocal called
+                called = True
+
+            async def sink_after(msg):
+                nonlocal cancelled
+                started.set()
+                try:
+                    await never.wait()
+                except asyncio.CancelledError:
+                    cancelled = True
+                    raise
+
+            # Case 1: cancel before the scheduled callback runs on the loop thread.
+            logger.add(sink_before, loop=loop, format="{message}", catch=False)
+
+            def worker_before():
+                logger.info("Before start")
+                logger.remove()
+                worker_done.set()
+
+            thread = threading.Thread(target=worker_before)
+            thread.start()
+            worker_done.wait(timeout=2.0)
+            thread.join()
+            await asyncio.sleep(0)
+
+            # Case 2: cancel after the cross-thread task has started running.
+            logger.add(sink_after, loop=loop, format="{message}", catch=False)
+
+            thread = threading.Thread(target=logger.info, args=("After start",))
+            thread.start()
+            await asyncio.wait_for(started.wait(), timeout=2.0)
+            thread.join()
+
+            logger.remove()
+            await asyncio.sleep(0)
+            await asyncio.sleep(0)
+
+        loop.run_until_complete(main())
+
+    assert called is False
+    assert cancelled is True

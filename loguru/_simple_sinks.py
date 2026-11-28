@@ -185,7 +185,7 @@ class AsyncSink:
 
         def check_exception(task):
             if task.cancelled():
-                if future is not None and not future.done():
+                if future is not None:
                     future.cancel()
                 return
             exc = task.exception()
@@ -214,28 +214,13 @@ class AsyncSink:
         def create_task():
             if future.cancelled():
                 return
-            coroutine = None
-            try:
-                coroutine = self._function(message)
-                task = loop.create_task(coroutine)
-            except Exception as exc:
-                if coroutine is not None:
-                    coroutine.close()
-                if not future.done():
-                    future.set_result(None)
-                if not self._error_interceptor.should_catch():
-                    raise
-                self._error_interceptor.print(message.record, exception=exc)
-                return
-
+            coroutine = self._function(message)
+            task = loop.create_task(coroutine)
             task.add_done_callback(self._make_done_callback(message.record, future=future))
 
             def cancel_task(f):
-                if f.cancelled():
-                    try:
-                        loop.call_soon_threadsafe(task.cancel)
-                    except RuntimeError:
-                        pass
+                if f.cancelled() and not loop.is_closed():
+                    loop.call_soon_threadsafe(task.cancel)
 
             future.add_done_callback(cancel_task)
 
@@ -253,10 +238,7 @@ class AsyncSink:
             if isinstance(task, concurrent.futures.Future):
                 task.cancel()
             elif loop.is_running() and running_loop is not loop:
-                try:
-                    loop.call_soon_threadsafe(task.cancel)
-                except RuntimeError:
-                    pass
+                loop.call_soon_threadsafe(task.cancel)
             else:
                 task.cancel()
 
