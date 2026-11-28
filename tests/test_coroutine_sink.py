@@ -675,3 +675,139 @@ def test_invalid_coroutine_sink_if_no_loop_with_enqueue():
         ),
     ):
         logger.add(async_writer, enqueue=True, loop=None)
+
+
+def test_log_from_other_thread_with_debug_mode(capsys):
+    errors = []
+
+    async def main():
+        loop = asyncio.get_running_loop()
+        logger.add(async_writer, loop=loop, format="{message}", catch=False)
+
+        def worker():
+            try:
+                logger.info("From worker")
+            except Exception as exc:
+                errors.append(exc)
+
+        thread = threading.Thread(target=worker)
+        thread.start()
+        thread.join()
+
+        await logger.complete()
+
+    asyncio.run(main(), debug=True)
+
+    out, err = capsys.readouterr()
+    assert errors == []
+    assert out == "From worker\n"
+    assert err == ""
+
+
+def test_log_from_other_thread_wakes_idle_loop():
+    messages = []
+
+    async def main():
+        received = asyncio.Event()
+        loop_idle = threading.Event()
+
+        async def sink(msg):
+            messages.append(msg)
+            received.set()
+
+        loop = asyncio.get_running_loop()
+        logger.add(sink, loop=loop, format="{message}", catch=False)
+
+        def worker():
+            loop_idle.wait(timeout=2.0)
+            logger.info("Wake up")
+
+        thread = threading.Thread(target=worker)
+        thread.start()
+
+        loop.call_soon(loop_idle.set)
+        await asyncio.wait_for(received.wait(), timeout=1.0)
+        thread.join()
+        await logger.complete()
+
+    asyncio.run(main())
+
+    assert messages == ["Wake up\n"]
+
+
+def test_remove_from_other_thread_with_debug_mode():
+    errors = []
+    cancelled = False
+
+    async def main():
+        started = asyncio.Event()
+        never = asyncio.Event()
+
+        async def sink(msg):
+            nonlocal cancelled
+            started.set()
+            try:
+                await never.wait()
+            except asyncio.CancelledError:
+                cancelled = True
+                raise
+
+        loop = asyncio.get_running_loop()
+        logger.add(sink, loop=loop, format="{message}", catch=False)
+        logger.info("Pending")
+        await started.wait()
+
+        def worker():
+            try:
+                logger.remove()
+            except Exception as exc:
+                errors.append(exc)
+
+        thread = threading.Thread(target=worker)
+        thread.start()
+        thread.join()
+        await asyncio.sleep(0)
+
+    asyncio.run(main(), debug=True)
+
+    assert errors == []
+    assert cancelled is True
+
+
+def test_exception_from_other_thread_caught(capsys):
+    async def sink(msg):
+        raise Exception("Oh no")
+
+    async def main():
+        loop = asyncio.get_running_loop()
+        logger.add(sink, loop=loop, catch=True)
+
+        thread = threading.Thread(target=logger.info, args=("Hello world",))
+        thread.start()
+        thread.join()
+
+        await logger.complete()
+
+    asyncio.run(main(), debug=True)
+
+    out, err = capsys.readouterr()
+    lines = err.strip().splitlines()
+
+    assert out == ""
+    assert lines[0] == "--- Logging error in Loguru Handler #0 ---"
+    assert re.match(r"Record was: \{.*Hello world.*\}", lines[1])
+    assert lines[-2] == "Exception: Oh no"
+    assert lines[-1] == "--- End of logging error ---"
+
+
+def test_enqueue_coroutine_with_debug_mode(capsys):
+    async def main():
+        logger.add(async_writer, enqueue=True, format="{message}", catch=False)
+        logger.info("Enqueued")
+        await logger.complete()
+
+    asyncio.run(main(), debug=True)
+
+    out, err = capsys.readouterr()
+    assert out == "Enqueued\n"
+    assert err == ""
