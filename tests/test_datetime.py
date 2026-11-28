@@ -275,6 +275,18 @@ def test_localtime_raising_exception(writer, freeze_time, monkeypatch, exception
             assert result == "2011 01 02 03 04 05 600000 +0200 %s\n" % zone
 
 
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="datetime.fold is not available")
+def test_formatting_time_fold(writer, freeze_time, monkeypatch):
+    now = datetime.datetime(2024, 11, 3, 1, 30, fold=1)
+    with freeze_time(now, ("EST", -18000)), monkeypatch.context() as context:
+        # Freezegun drops fold when constructing the frozen datetime.
+        context.setattr(datetime.datetime, "now", Mock(return_value=now))
+
+        logger.add(writer, format="{time.fold}")
+        logger.debug("Test")
+        assert writer.read() == "1\n"
+
+
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="No zoneinfo module available")
 @pytest.mark.skipif(os.name == "nt", reason="No IANA database available")
 @pytest.mark.parametrize(
