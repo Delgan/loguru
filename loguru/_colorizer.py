@@ -1,5 +1,4 @@
 import re
-from contextlib import contextmanager
 from string import Formatter
 
 
@@ -17,14 +16,6 @@ def raise_formatting_error(e):
         "  - Avoiding f-string in the logged message.\n"
         "  - Using `logger.bind()` for structured context instead of kwargs.\n"
     ) from e
-
-
-@contextmanager
-def try_formatting(*exceptions):
-    try:
-        yield
-    except exceptions as e:
-        raise_formatting_error(e)
 
 
 class Style:
@@ -429,8 +420,10 @@ class Colorizer:
         formatter = Formatter()
         parser = AnsiParser()
 
-        with try_formatting(TypeError, ValueError):
+        try:
             parsing_output = list(formatter.parse(string))
+        except (TypeError, ValueError) as e:
+            raise_formatting_error(e)
 
         for literal_text, field_name, format_spec, conversion in parsing_output:
             parser.feed(literal_text, raw=recursive)
@@ -454,8 +447,10 @@ class Colorizer:
                         )
                     auto_arg_index = False
 
-                with try_formatting(KeyError, IndexError, AttributeError):
+                try:
                     obj, _ = formatter.get_field(field_name, args, kwargs)
+                except (KeyError, IndexError, AttributeError) as e:
+                    raise_formatting_error(e)
 
                 obj = formatter.convert_field(obj, conversion)
 
