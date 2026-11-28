@@ -680,23 +680,25 @@ def test_invalid_coroutine_sink_if_no_loop_with_enqueue():
 def test_log_from_other_thread_with_debug_mode(capsys):
     errors = []
 
-    async def main():
-        loop = asyncio.get_running_loop()
-        logger.add(async_writer, loop=loop, format="{message}", catch=False)
+    with new_event_loop_context() as loop:
+        loop.set_debug(True)
 
-        def worker():
-            try:
-                logger.info("From worker")
-            except Exception as exc:
-                errors.append(exc)
+        async def main():
+            logger.add(async_writer, loop=loop, format="{message}", catch=False)
 
-        thread = threading.Thread(target=worker)
-        thread.start()
-        thread.join()
+            def worker():
+                try:
+                    logger.info("From worker")
+                except Exception as exc:
+                    errors.append(exc)
 
-        await logger.complete()
+            thread = threading.Thread(target=worker)
+            thread.start()
+            thread.join()
 
-    asyncio.run(main(), debug=True)
+            await logger.complete()
+
+        loop.run_until_complete(main())
 
     out, err = capsys.readouterr()
     assert errors == []
@@ -707,30 +709,31 @@ def test_log_from_other_thread_with_debug_mode(capsys):
 def test_log_from_other_thread_wakes_idle_loop():
     messages = []
 
-    async def main():
-        received = asyncio.Event()
-        loop_idle = threading.Event()
+    with new_event_loop_context() as loop:
 
-        async def sink(msg):
-            messages.append(msg)
-            received.set()
+        async def main():
+            received = asyncio.Event()
+            loop_idle = threading.Event()
 
-        loop = asyncio.get_running_loop()
-        logger.add(sink, loop=loop, format="{message}", catch=False)
+            async def sink(msg):
+                messages.append(msg)
+                received.set()
 
-        def worker():
-            loop_idle.wait(timeout=2.0)
-            logger.info("Wake up")
+            logger.add(sink, loop=loop, format="{message}", catch=False)
 
-        thread = threading.Thread(target=worker)
-        thread.start()
+            def worker():
+                loop_idle.wait(timeout=2.0)
+                logger.info("Wake up")
 
-        loop.call_soon(loop_idle.set)
-        await asyncio.wait_for(received.wait(), timeout=1.0)
-        thread.join()
-        await logger.complete()
+            thread = threading.Thread(target=worker)
+            thread.start()
 
-    asyncio.run(main())
+            loop.call_soon(loop_idle.set)
+            await asyncio.wait_for(received.wait(), timeout=1.0)
+            thread.join()
+            await logger.complete()
+
+        loop.run_until_complete(main())
 
     assert messages == ["Wake up\n"]
 
@@ -739,36 +742,38 @@ def test_remove_from_other_thread_with_debug_mode():
     errors = []
     cancelled = False
 
-    async def main():
-        started = asyncio.Event()
-        never = asyncio.Event()
+    with new_event_loop_context() as loop:
+        loop.set_debug(True)
 
-        async def sink(msg):
-            nonlocal cancelled
-            started.set()
-            try:
-                await never.wait()
-            except asyncio.CancelledError:
-                cancelled = True
-                raise
+        async def main():
+            started = asyncio.Event()
+            never = asyncio.Event()
 
-        loop = asyncio.get_running_loop()
-        logger.add(sink, loop=loop, format="{message}", catch=False)
-        logger.info("Pending")
-        await started.wait()
+            async def sink(msg):
+                nonlocal cancelled
+                started.set()
+                try:
+                    await never.wait()
+                except asyncio.CancelledError:
+                    cancelled = True
+                    raise
 
-        def worker():
-            try:
-                logger.remove()
-            except Exception as exc:
-                errors.append(exc)
+            logger.add(sink, loop=loop, format="{message}", catch=False)
+            logger.info("Pending")
+            await started.wait()
 
-        thread = threading.Thread(target=worker)
-        thread.start()
-        thread.join()
-        await asyncio.sleep(0)
+            def worker():
+                try:
+                    logger.remove()
+                except Exception as exc:
+                    errors.append(exc)
 
-    asyncio.run(main(), debug=True)
+            thread = threading.Thread(target=worker)
+            thread.start()
+            thread.join()
+            await asyncio.sleep(0)
+
+        loop.run_until_complete(main())
 
     assert errors == []
     assert cancelled is True
@@ -778,17 +783,19 @@ def test_exception_from_other_thread_caught(capsys):
     async def sink(msg):
         raise Exception("Oh no")
 
-    async def main():
-        loop = asyncio.get_running_loop()
-        logger.add(sink, loop=loop, catch=True)
+    with new_event_loop_context() as loop:
+        loop.set_debug(True)
 
-        thread = threading.Thread(target=logger.info, args=("Hello world",))
-        thread.start()
-        thread.join()
+        async def main():
+            logger.add(sink, loop=loop, catch=True)
 
-        await logger.complete()
+            thread = threading.Thread(target=logger.info, args=("Hello world",))
+            thread.start()
+            thread.join()
 
-    asyncio.run(main(), debug=True)
+            await logger.complete()
+
+        loop.run_until_complete(main())
 
     out, err = capsys.readouterr()
     lines = err.strip().splitlines()
@@ -801,12 +808,15 @@ def test_exception_from_other_thread_caught(capsys):
 
 
 def test_enqueue_coroutine_with_debug_mode(capsys):
-    async def main():
-        logger.add(async_writer, enqueue=True, format="{message}", catch=False)
-        logger.info("Enqueued")
-        await logger.complete()
+    with new_event_loop_context() as loop:
+        loop.set_debug(True)
 
-    asyncio.run(main(), debug=True)
+        async def main():
+            logger.add(async_writer, enqueue=True, format="{message}", catch=False)
+            logger.info("Enqueued")
+            await logger.complete()
+
+        loop.run_until_complete(main())
 
     out, err = capsys.readouterr()
     assert out == "Enqueued\n"
