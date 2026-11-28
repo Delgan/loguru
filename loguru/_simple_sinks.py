@@ -1,8 +1,10 @@
+import asyncio
+import concurrent.futures
 import inspect
 import logging
 import weakref
 
-from ._asyncio_loop import get_running_loop, get_task_loop
+from ._asyncio_loop import get_running_loop
 
 
 class StreamSink:
@@ -137,7 +139,7 @@ class AsyncSink:
         self._function = function
         self._loop = loop
         self._error_interceptor = error_interceptor
-        self._tasks = weakref.WeakSet()
+        self._tasks = weakref.WeakKeyDictionary()
 
     def write(self, message):
         """Asynchronously write a message.
@@ -148,27 +150,97 @@ class AsyncSink:
             The message to write.
         """
         try:
-            loop = self._loop or get_running_loop()
+            running_loop = get_running_loop()
         except RuntimeError:
+            running_loop = None
+
+        loop = self._loop or running_loop
+        if loop is None:
+            return
+
+        if loop.is_running() and running_loop is not loop:
+            self._schedule_threadsafe(loop, message)
             return
 
         coroutine = self._function(message)
         task = loop.create_task(coroutine)
+        task.add_done_callback(self._make_done_callback(message.record))
+        self._tasks[task] = loop
 
-        def check_exception(future):
-            if future.cancelled() or future.exception() is None:
+    def _make_done_callback(self, record, future=None):
+        """Create a completion callback that handles exceptions and resolves an optional future.
+
+        Parameters
+        ----------
+        record
+            The log record associated with the task.
+        future
+            Optional thread-safe future tracking completion of a cross-thread task.
+
+        Returns
+        -------
+        callable
+            Done callback for an ``asyncio.Task``.
+        """
+
+        def check_exception(task):
+            if task.cancelled():
+                if future is not None:
+                    future.cancel()
+                return
+            exc = task.exception()
+            if future is not None and not future.done():
+                future.set_result(None)
+            if exc is None:
                 return
             if not self._error_interceptor.should_catch():
-                raise future.exception()
-            self._error_interceptor.print(message.record, exception=future.exception())
+                raise exc
+            self._error_interceptor.print(record, exception=exc)
 
-        task.add_done_callback(check_exception)
-        self._tasks.add(task)
+        return check_exception
+
+    def _schedule_threadsafe(self, loop, message):
+        """Schedule a coroutine task on an event loop running in another thread.
+
+        Parameters
+        ----------
+        loop
+            The target event loop.
+        message
+            The message to write.
+        """
+        future = concurrent.futures.Future()
+
+        def create_task():
+            if future.cancelled():
+                return
+            coroutine = self._function(message)
+            task = loop.create_task(coroutine)
+            task.add_done_callback(self._make_done_callback(message.record, future=future))
+
+            def cancel_task(f):
+                if f.cancelled() and not loop.is_closed():
+                    loop.call_soon_threadsafe(task.cancel)
+
+            future.add_done_callback(cancel_task)
+
+        loop.call_soon_threadsafe(create_task)
+        self._tasks[future] = loop
 
     def stop(self):
         """Cancel all pending tasks."""
-        for task in self._tasks:
-            task.cancel()
+        try:
+            running_loop = get_running_loop()
+        except RuntimeError:
+            running_loop = None
+
+        for task, loop in list(self._tasks.items()):
+            if isinstance(task, concurrent.futures.Future):
+                task.cancel()
+            elif loop.is_running() and running_loop is not loop:
+                loop.call_soon_threadsafe(task.cancel)
+            else:
+                task.cancel()
 
     def tasks_to_complete(self):
         """Return list of tasks that need to be completed.
@@ -183,19 +255,23 @@ class AsyncSink:
         # happens to be the handler lock). However, the tasks must not be awaited while the lock is
         # acquired as this could lead to a deadlock. Therefore, we first need to collect the tasks
         # to complete, then return them so that they can be awaited outside of the lock.
-        return [self._complete_task(task) for task in self._tasks]
+        return [self._complete_task(task, loop) for task, loop in self._tasks.items()]
 
-    async def _complete_task(self, task):
+    async def _complete_task(self, task, task_loop):
         """Complete a single task.
 
         Parameters
         ----------
         task
             The task to complete.
+        task_loop
+            The event loop associated with the task.
         """
         loop = get_running_loop()
-        if get_task_loop(task) is not loop:
+        if task_loop is not loop:
             return
+        if isinstance(task, concurrent.futures.Future):
+            task = asyncio.wrap_future(task, loop=loop)
         try:
             await task
         except Exception:
@@ -208,7 +284,7 @@ class AsyncSink:
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self._tasks = weakref.WeakSet()
+        self._tasks = weakref.WeakKeyDictionary()
 
 
 class CallableSink:
